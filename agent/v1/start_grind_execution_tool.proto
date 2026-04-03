@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message StartGrindExecutionArgs {
+  optional string explanation = 1;
+  string tool_call_id = 2;
+}
+
+message StartGrindExecutionError {
+  string error = 1;
+}
+
+message StartGrindExecutionResult {
+  oneof result {
+    StartGrindExecutionSuccess success = 1;
+    StartGrindExecutionError error = 2;
+  }
+}
+
+message StartGrindExecutionSuccess {
+}
+
+message StartGrindExecutionToolCall {
+  StartGrindExecutionArgs args = 1;
+  StartGrindExecutionResult result = 2;
+}

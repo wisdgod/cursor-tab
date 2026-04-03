@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/repository.proto";
+import "aiserver/v1/utils.proto";
+
+message InlineGPT4PromptProtoV1 {
+  CurrentFileInfo current_file = 1;
+}
+
+message StreamInlineLongCompletionRequest {
+  message ContextBlock {
+    enum ContextType {
+      CONTEXT_TYPE_UNSPECIFIED = 0;
+      CONTEXT_TYPE_RECENT_LOCATIONS = 1;
+    }
+
+    ContextType context_type = 1;
+    repeated CodeBlock blocks = 2;
+  }
+
+  CurrentFileInfo current_file = 1;
+  repeated RepositoryInfo repositories = 6;
+  repeated ContextBlock context_blocks = 7;
+  ExplicitContext explicit_context = 13;
+  ModelDetails model_details = 14;
+  LinterErrors linter_errors = 15;
+}

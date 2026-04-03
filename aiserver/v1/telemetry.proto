@@ -1,0 +1,305 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+enum InteractionType {
+  INTERACTION_TYPE_UNSPECIFIED = 0;
+  INTERACTION_TYPE_CLICK = 1;
+  INTERACTION_TYPE_KEYPRESS = 2;
+}
+
+enum PerformanceEventType {
+  PERFORMANCE_EVENT_TYPE_UNSPECIFIED = 0;
+  PERFORMANCE_EVENT_TYPE_CLICK = 1;
+  PERFORMANCE_EVENT_TYPE_POINTER = 2;
+  PERFORMANCE_EVENT_TYPE_TOUCH = 3;
+  PERFORMANCE_EVENT_TYPE_KEYDOWN = 4;
+  PERFORMANCE_EVENT_TYPE_KEYUP = 5;
+  PERFORMANCE_EVENT_TYPE_SCROLL = 6;
+  PERFORMANCE_EVENT_TYPE_LONG_ANIMATION_FRAME = 7;
+  PERFORMANCE_EVENT_TYPE_MOUSEDOWN = 8;
+  PERFORMANCE_EVENT_TYPE_MOUSEUP = 9;
+}
+
+enum ProfileKind {
+  PROFILE_KIND_UNSPECIFIED = 0;
+  PROFILE_KIND_WALL = 1;
+  PROFILE_KIND_ALLOCATION = 2;
+  PROFILE_KIND_CPU = 3;
+}
+
+enum SpanKind {
+  SPAN_KIND_UNSPECIFIED = 0;
+  SPAN_KIND_INTERNAL = 1;
+  SPAN_KIND_SERVER = 2;
+  SPAN_KIND_CLIENT = 3;
+  SPAN_KIND_PRODUCER = 4;
+  SPAN_KIND_CONSUMER = 5;
+}
+
+message CapturedProfile {
+  google.protobuf.Timestamp timestamp = 1;
+  google.protobuf.Duration duration = 2;
+  bytes profile_data = 3;
+  string profile_config_id = 4;
+  ProfileKind profile_kind = 5;
+  map<string, string> tags = 6;
+}
+
+message CapturedWebProfile {
+  google.protobuf.Timestamp timestamp = 1;
+  bytes trace_data = 3;
+  map<string, string> tags = 4;
+}
+
+message ChatRequestTelemetryEvent {
+  string chat_request_uuid = 1;
+  string requested_model = 2;
+  string actual_model = 3;
+  google.protobuf.Timestamp start_time = 4;
+  google.protobuf.Timestamp end_time = 5;
+  google.protobuf.Duration duration = 6;
+  bool success = 7;
+  optional string error_message = 8;
+  optional string transport = 9;
+  string completion_status = 10;
+  map<string, string> metadata = 11;
+  optional double total_ttft_ms = 12;
+  optional double total_generate_ms = 13;
+  optional double total_stream_ms = 14;
+  optional double total_request_ms = 15;
+  optional int32 model_call_count = 16;
+  optional double total_tool_call_latency = 17;
+  optional int32 tool_call_count = 18;
+}
+
+message Interaction {
+  string id = 1;
+  InteractionType type = 2;
+  double performance_start_timestamp = 3;
+  double performance_end_timestamp = 4;
+}
+
+message PerformanceEvent {
+  PerformanceEventType event_type = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  double performance_timestamp = 3;
+  optional double duration = 4;
+  optional string target_element = 5;
+  optional string target_class = 6;
+  optional string target_id = 7;
+  optional string target_aria_id = 26;
+  optional int32 client_x = 8;
+  optional int32 client_y = 9;
+  optional string key = 10;
+  optional string code = 11;
+  optional bool ctrl_key = 12;
+  optional bool alt_key = 13;
+  optional bool shift_key = 14;
+  optional bool meta_key = 15;
+  optional double scroll_x = 16;
+  optional double scroll_y = 17;
+  optional double scroll_delta_x = 18;
+  optional double scroll_delta_y = 19;
+  optional double render_start = 21;
+  optional double style_and_layout_start = 22;
+  optional double first_ui_event_timestamp = 23;
+  optional double blocking_duration = 24;
+  repeated ScriptTiming scripts = 25;
+  map<string, string> metadata = 20;
+}
+
+message PerformanceMetric {
+  google.protobuf.Timestamp timestamp = 1;
+  string name = 2;
+  double value = 3;
+  optional string unit = 4;
+  map<string, string> metadata = 5;
+}
+
+message ReportInlineActionRequest {
+  string action = 1;
+  string generation_uuid = 2;
+}
+
+message ReportInlineActionResponse {
+}
+
+message ReportMetricsRequest {
+  message Metric {
+    optional double value = 1;
+    map<string, string> tags = 2;
+  }
+
+  message NamedMetric {
+    string name = 1;
+    optional double value = 2;
+    map<string, string> tags = 3;
+  }
+
+  map<string, aiserver.v1.ReportMetricsRequest.Metric> metrics = 1;
+  repeated NamedMetric metrics_list = 2;
+}
+
+message ReportMetricsResponse {
+}
+
+message ScriptTiming {
+  string name = 1;
+  double start_time = 2;
+  double duration = 3;
+  double execution_start = 4;
+  double forced_style_and_layout_duration = 5;
+  double pause_duration = 6;
+  string source_url = 7;
+  string source_function_name = 8;
+  int32 source_char_position = 9;
+  optional string invoker = 10;
+  string invoker_type = 11;
+  string window_attribution = 12;
+}
+
+message Status {
+  enum StatusCode {
+    STATUS_CODE_UNSPECIFIED = 0;
+    STATUS_CODE_OK = 1;
+    STATUS_CODE_ERROR = 2;
+  }
+
+  string message = 1;
+  StatusCode code = 2;
+}
+
+message SubmitChatRequestEventsRequest {
+  string session_id = 1;
+  repeated ChatRequestTelemetryEvent events = 2;
+  string client_version = 3;
+  string client_commit = 4;
+  map<string, string> platform_tags = 5;
+  optional string window_type = 6;
+}
+
+message SubmitChatRequestEventsResponse {
+  bool success = 1;
+  optional string error_message = 2;
+  int32 events_processed = 3;
+}
+
+message SubmitInteractionWindowRequest {
+  google.protobuf.Timestamp time_origin = 1;
+  CapturedWebProfile web_profile = 2;
+  repeated Interaction interactions = 3;
+  string session_id = 4;
+}
+
+message SubmitInteractionWindowResponse {
+  bool success = 1;
+  optional string error_message = 2;
+}
+
+message SubmitPerformanceEventsRequest {
+  string session_id = 1;
+  repeated PerformanceEvent events = 2;
+  optional SystemMetadata system_metadata = 3;
+  string client_version = 4;
+  string client_commit = 5;
+  map<string, string> platform_tags = 6;
+  optional string window_type = 7;
+  repeated PerformanceMetric metrics = 8;
+}
+
+message SubmitPerformanceEventsResponse {
+  bool success = 1;
+  optional string error_message = 2;
+  int32 events_processed = 3;
+}
+
+message SubmitProfileRequest {
+  repeated CapturedProfile profiles = 1;
+}
+
+message SubmitProfileResponse {
+  repeated string profile_ids = 1;
+}
+
+message SubmitSpansRequest {
+  repeated TraceSpan spans = 1;
+  string client_version = 2;
+  string client_commit = 3;
+}
+
+message SubmitSpansResponse {
+  bool success = 1;
+  optional string error_message = 2;
+}
+
+message SubmitToolCallEventsRequest {
+  string session_id = 1;
+  repeated ToolCallTelemetryEvent events = 2;
+  string client_version = 3;
+  string client_commit = 4;
+  map<string, string> platform_tags = 5;
+  optional string window_type = 6;
+}
+
+message SubmitToolCallEventsResponse {
+  bool success = 1;
+  optional string error_message = 2;
+  int32 events_processed = 3;
+}
+
+message SystemMetadata {
+  google.protobuf.Timestamp timestamp = 1;
+  optional double memory_used_mb = 2;
+  optional double memory_total_mb = 3;
+  optional double cpu_usage_percent = 4;
+  optional int32 active_tabs_count = 5;
+  optional int32 open_editors_count = 6;
+  optional bool window_focused = 7;
+  optional string window_size = 8;
+  map<string, string> additional_metadata = 9;
+}
+
+message ToolCallTelemetryEvent {
+  string tool_call_id = 1;
+  string tool_type = 2;
+  string chat_request_uuid = 3;
+  string model_name = 4;
+  google.protobuf.Timestamp start_time = 5;
+  google.protobuf.Timestamp end_time = 6;
+  google.protobuf.Duration duration = 7;
+  bool is_parallel = 8;
+  optional int32 parallel_batch_size = 9;
+  bool success = 10;
+  optional string error_message = 11;
+  map<string, string> metadata = 12;
+  optional google.protobuf.Duration approval_wait_duration = 13;
+  bool is_stream = 14;
+}
+
+message TraceLink {
+  string trace_id = 1;
+  string span_id = 2;
+  optional string trace_state = 3;
+  map<string, string> attributes = 4;
+  optional uint32 flags = 5;
+}
+
+message TraceSpan {
+  string trace_id = 1;
+  string span_id = 2;
+  optional string parent_span_id = 3;
+  string name = 4;
+  google.protobuf.Timestamp start_time = 5;
+  google.protobuf.Timestamp end_time = 6;
+  map<string, string> attributes = 7;
+  optional bool error = 8;
+  optional string trace_state = 9;
+  optional uint32 flags = 10;
+  optional SpanKind kind = 11;
+  optional Status status = 12;
+  repeated TraceLink links = 13;
+}

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message GetMcpToolsAgentResult {
+  oneof result {
+    GetMcpToolsSuccess success = 1;
+    GetMcpToolsError error = 2;
+  }
+}
+
+message GetMcpToolsArgs {
+  optional string server = 1;
+  optional string tool_name = 2;
+  optional string pattern = 3;
+  string tool_call_id = 4;
+}
+
+message GetMcpToolsError {
+  string error = 1;
+}
+
+message GetMcpToolsSuccess {
+  string content = 1;
+  optional string output_file_path = 2;
+}
+
+message GetMcpToolsToolCall {
+  GetMcpToolsArgs args = 1;
+  GetMcpToolsAgentResult result = 2;
+}

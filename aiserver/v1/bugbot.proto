@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/utils.proto";
+
+enum BugbotDeeplinkEventKind {
+  BUGBOT_DEEPLINK_EVENT_KIND_UNSPECIFIED = 0;
+  BUGBOT_DEEPLINK_EVENT_KIND_CLICKED = 1;
+  BUGBOT_DEEPLINK_EVENT_KIND_HANDLED_DIALOG_SHOWN = 2;
+  BUGBOT_DEEPLINK_EVENT_KIND_HANDLED_CHAT_CREATED = 3;
+  BUGBOT_DEEPLINK_EVENT_KIND_ERROR = 4;
+  BUGBOT_DEEPLINK_EVENT_KIND_HANDLED_FIX_IN_WEB = 5;
+}
+
+message BugBotDiscriminatorPromptProps {
+  StreamBugBotRequest req = 1;
+  BugReport bug = 2;
+  string date = 3;
+  string seed = 4;
+}
+
+message BugBotDiscriminatorTrainingPromptProps {
+  BugBotDiscriminatorPromptProps props = 1;
+  bool is_real_bug = 2;
+}
+
+message BugLocation {
+  string file = 1;
+  int32 start_line = 2;
+  int32 end_line = 3;
+  repeated string code_lines = 4;
+}
+
+message BugReport {
+  repeated BugLocation locations = 1;
+  string id = 2;
+  string description = 3;
+  optional float confidence = 4;
+  optional string category = 5;
+  optional string severity = 6;
+  optional string title = 7;
+  optional string rationale = 9;
+  optional string triggered_by_rule_id = 10;
+}
+
+message BugReports {
+  repeated BugReport bug_reports = 1;
+}
+
+message FileAndOutline {
+  CodeBlock file = 1;
+  optional string outline = 2;
+}
+
+message GetEncryptedBugDataMultipleRequest {
+  string redis_key = 1;
+  string encryption_key = 2;
+}
+
+message GetEncryptedBugDataMultipleResponse {
+  repeated BugReport bug_reports = 1;
+}
+
+message GetEncryptedBugDataRequest {
+  string redis_key = 1;
+  string encryption_key = 2;
+}
+
+message GetEncryptedBugDataResponse {
+  BugReport bug_report = 1;
+}
+
+message LogDeeplinkEventRequest {
+  int32 user_id = 1;
+  string bug_id = 2;
+  optional int64 comment_id = 3;
+  BugbotDeeplinkEventKind event = 4;
+}
+
+message LogDeeplinkEventResponse {
+  bool success = 1;
+}
+
+message RunBugBotPromptProps {
+  StreamBugBotRequest req = 1;
+  string seed = 2;
+  string date = 3;
+  repeated FileAndOutline context_files = 4;
+  optional string file_content_source = 5;
+}
+
+message StreamBugBotRequest {
+  message Range {
+    int32 start_line = 1;
+    int32 end_line_inclusive = 2;
+  }
+
+  GitDiff git_diff = 1;
+  repeated CodeBlock context_files = 13;
+  ModelDetails model_details = 2;
+  optional string user_instructions = 3;
+  optional string bug_detection_guidelines = 4;
+  optional int32 iterations = 5;
+  optional int32 unified_context_lines = 12;
+  bool in_background_subsidized = 6;
+  optional string session_id = 7;
+  optional string price_id = 8;
+  bool has_telemetry = 9;
+  optional string constrain_to_file = 10;
+  optional Range constrain_to_range = 11;
+  optional bool deep_review = 14;
+}

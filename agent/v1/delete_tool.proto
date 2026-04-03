@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/delete_exec.proto";
+
+message DeleteToolCall {
+  DeleteArgs args = 1;
+  DeleteResult result = 2;
+}

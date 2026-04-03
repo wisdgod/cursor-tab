@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/utils.proto";
+
+message StreamAiPreviewsIntent {
+  repeated DocumentSymbolWithText main_symbols_to_analyze_from_go_to_def = 1;
+  HoverDetails main_symbol_hover_details = 4;
+  repeated DocumentSymbolWithText related_symbols = 3;
+  repeated DocumentSymbolWithText main_symbols_to_analyze_from_implementations = 6;
+}
+
+message StreamAiPreviewsRequest {
+  CurrentFileInfo current_file = 1;
+  StreamAiPreviewsIntent intent = 2;
+  ModelDetails model_details = 14;
+  optional bool is_detailed = 15;
+}
+
+message StreamAiPreviewsResponse {
+  string text = 1;
+}

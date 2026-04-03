@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message EditArgs {
+  string path = 1;
+  optional string stream_content = 6;
+}
+
+message EditError {
+  string path = 1;
+  string error = 2;
+  optional string model_visible_error = 5;
+}
+
+message EditFileNotFound {
+  string path = 1;
+}
+
+message EditReadPermissionDenied {
+  string path = 1;
+}
+
+message EditRejected {
+  string path = 1;
+  string reason = 2;
+}
+
+message EditResult {
+  oneof result {
+    EditSuccess success = 1;
+    EditFileNotFound file_not_found = 2;
+    EditReadPermissionDenied read_permission_denied = 3;
+    EditWritePermissionDenied write_permission_denied = 4;
+    EditRejected rejected = 6;
+    EditError error = 7;
+  }
+}
+
+message EditSuccess {
+  string path = 1;
+  optional int32 lines_added = 3;
+  optional int32 lines_removed = 4;
+  optional string diff_string = 5;
+  optional string before_full_file_content = 6;
+  string after_full_file_content = 7;
+  optional string message = 8;
+}
+
+message EditToolCall {
+  EditArgs args = 1;
+  EditResult result = 2;
+}
+
+message EditToolCallDelta {
+  string stream_content_delta = 1;
+}
+
+message EditWritePermissionDenied {
+  string path = 1;
+  string error = 2;
+  bool is_readonly = 3;
+}

@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/grep_exec.proto";
+
+message GrepToolCall {
+  GrepArgs args = 1;
+  GrepResult result = 2;
+}

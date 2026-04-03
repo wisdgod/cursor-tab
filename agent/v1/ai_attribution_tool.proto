@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/utils.proto";
+
+message AiAttributionArgs {
+  repeated string file_paths = 5;
+  optional int32 start_line = 2;
+  optional int32 end_line = 3;
+  repeated string commit_hashes = 6;
+  optional string output_mode = 7;
+  optional int32 max_commits = 9;
+  optional bool include_line_ranges = 10;
+}
+
+message AiAttributionError {
+  string error = 1;
+}
+
+message AiAttributionResult {
+  oneof result {
+    AiAttributionSuccess success = 1;
+    AiAttributionError error = 2;
+  }
+}
+
+message AiAttributionSuccess {
+  string attribution_text = 1;
+  optional OutputLocation output_location = 2;
+}
+
+message AiAttributionToolCall {
+  AiAttributionArgs args = 1;
+  AiAttributionResult result = 2;
+}

@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message GetKnownServersRequest {
+}
+
+message GetKnownServersResponse {
+  repeated MCPServerRegistration servers = 1;
+}
+
+message MCPKnownServerInfo {
+  string name = 1;
+  string description = 2;
+  string icon = 3;
+  string endpoint = 4;
+  bool is_featured = 5;
+}
+
+message McpOAuthStoredClientInfo {
+  string client_id = 1;
+  optional string client_secret = 2;
+  repeated string redirect_uris = 3;
+}
+
+message McpOAuthStoredData {
+  optional string refresh_token = 1;
+  string client_id = 2;
+  optional string client_secret = 3;
+  repeated string redirect_uris = 4;
+  optional string access_token = 5;
+}
+
+message MCPServerRegistration {
+  repeated string domains = 1;
+  MCPKnownServerInfo info = 2;
+}
+
+service MCPRegistryService {
+  rpc GetKnownServers (GetKnownServersRequest) returns (GetKnownServersResponse);
+}

@@ -1,0 +1,189 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/agent.proto";
+import "agent/v1/exec.proto";
+import "agent/v1/kv.proto";
+import "agent/v1/mcp.proto";
+
+message AgentClientMessage {
+  oneof message {
+    AgentRunRequest run_request = 1;
+    ExecClientMessage exec_client_message = 2;
+    ExecClientControlMessage exec_client_control_message = 5;
+    KvClientMessage kv_client_message = 3;
+    ConversationAction conversation_action = 4;
+    InteractionResponse interaction_response = 6;
+    ClientHeartbeat client_heartbeat = 7;
+    PrewarmRequest prewarm_request = 8;
+  }
+}
+
+message AgentServerMessage {
+  oneof message {
+    InteractionUpdate interaction_update = 1;
+    ExecServerMessage exec_server_message = 2;
+    ExecServerControlMessage exec_server_control_message = 5;
+    ConversationStateStructure conversation_checkpoint_update = 3;
+    KvServerMessage kv_server_message = 4;
+    InteractionQuery interaction_query = 7;
+  }
+}
+
+message BlobEntry {
+  bytes id = 1;
+  bytes value = 2;
+}
+
+message ClientHeartbeat {
+}
+
+message CreateTranscriptOverviewRequest {
+  string formatted_conversation = 1;
+}
+
+message CreateTranscriptOverviewResponse {
+  string overview = 1;
+}
+
+message ExecServerAbort {
+  uint32 id = 1;
+}
+
+message ExecServerControlMessage {
+  oneof message {
+    ExecServerAbort abort = 1;
+  }
+}
+
+message GetAllowedModelIntentsRequest {
+}
+
+message GetAllowedModelIntentsResponse {
+  repeated string model_intents = 1;
+}
+
+message GetDefaultModelForCliRequest {
+}
+
+message GetDefaultModelForCliResponse {
+  ModelDetails model = 1;
+}
+
+message GetNewChatNudgeLegacyModelPickerRequest {
+  string current_model = 1;
+  bool max_mode = 2;
+}
+
+message GetNewChatNudgeLegacyModelPickerResponse {
+  optional NewChatNudge nudge = 1;
+}
+
+message GetNewChatNudgeParameterizedModelPickerRequest {
+  RequestedModel current_model = 1;
+}
+
+message GetNewChatNudgeParameterizedModelPickerResponse {
+  optional NewChatNudgeV2 nudge = 1;
+}
+
+message GetUsableModelsRequest {
+  repeated string custom_model_ids = 1;
+}
+
+message GetUsableModelsResponse {
+  repeated ModelDetails models = 1;
+}
+
+message IdeEditorsStateFile {
+  string relative_path = 1;
+  string absolute_path = 2;
+  optional bool is_currently_focused = 3;
+  optional int32 current_line_number = 4;
+  optional string current_line_text = 5;
+  optional int32 line_count = 6;
+}
+
+message IdeEditorsStateLite {
+  repeated IdeEditorsStateFile recently_viewed_files = 1;
+}
+
+message NameAgentRequest {
+  string user_message = 1;
+}
+
+message NameAgentResponse {
+  string name = 1;
+}
+
+message NewChatNudge {
+  string nudge_id = 1;
+  string target_model = 2;
+  string experiment_name = 3;
+  oneof variant {
+    NudgeBumpVariant bump = 4;
+    NudgeAskVariant ask = 5;
+    NudgeSilentSwitchVariant silent_switch = 6;
+  }
+}
+
+message NewChatNudgeV2 {
+  string nudge_id = 1;
+  RequestedModel target_model = 2;
+  string experiment_name = 3;
+  oneof variant {
+    NudgeBumpVariant bump = 4;
+    NudgeAskVariant ask = 5;
+    NudgeSilentSwitchVariant silent_switch = 6;
+  }
+}
+
+message NotifyConversationCloneRequest {
+  string conversation_id = 1;
+  string source_conversation_id = 2;
+  string source_request_id = 3;
+}
+
+message NotifyConversationCloneResponse {
+}
+
+message NudgeAskVariant {
+  string popup_message = 1;
+  string accept_label = 2;
+}
+
+message NudgeBumpVariant {
+  string banner_message = 1;
+}
+
+message NudgeSilentSwitchVariant {
+}
+
+message PrewarmRequest {
+  ModelDetails model_details = 1;
+  optional RequestedModel requested_model = 9;
+  optional string conversation_id = 2;
+  ConversationStateStructure conversation_state = 3;
+  McpTools mcp_tools = 4;
+  optional McpFileSystemOptions mcp_file_system_options = 5;
+  optional string best_of_n_group_id = 6;
+  optional bool try_use_best_of_n_promotion = 7;
+  optional string custom_system_prompt = 8;
+  optional bool suggest_next_prompt = 10;
+  optional string subagent_type_name = 11;
+  optional bool exclude_workspace_context = 12;
+  optional string harness = 13;
+  repeated RequestedModel selected_subagent_models = 14;
+  repeated ModelDetails selected_subagent_model_details = 15;
+}
+
+message UploadConversationBlobsRequest {
+  string conversation_id = 1;
+  repeated BlobEntry blobs = 2;
+  int32 chunk_index = 3;
+  int32 total_chunks = 4;
+}
+
+message UploadConversationBlobsResponse {
+}

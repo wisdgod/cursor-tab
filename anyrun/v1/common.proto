@@ -1,0 +1,212 @@
+syntax = "proto3";
+
+package anyrun.v1;
+
+import "google/protobuf/empty.proto";
+
+enum BlobStorageFormat {
+  BLOB_STORAGE_FORMAT_LEGACY_UNSPECIFIED = 0;
+  BLOB_STORAGE_FORMAT_V1 = 1;
+  BLOB_STORAGE_FORMAT_VM_SNAPSHOT_V1 = 2;
+}
+
+enum DrainingReason {
+  DRAINING_REASON_UNSPECIFIED = 0;
+  DRAINING_REASON_CAPACITY = 1;
+  DRAINING_REASON_UPGRADE = 2;
+  DRAINING_REASON_MANUAL = 3;
+}
+
+message AllowedDomain {
+  string domain = 1;
+}
+
+message Build {
+  string dockerfile = 1;
+  string context = 2;
+}
+
+message DefaultPortConfig {
+  oneof visibility {
+    google.protobuf.Empty public = 1;
+    google.protobuf.Empty private = 2;
+  }
+  oneof authentication {
+    google.protobuf.Empty open = 3;
+    google.protobuf.Empty token = 4;
+  }
+}
+
+message DevContainerConfig {
+  oneof source {
+    GitRepoSourceReference git = 1;
+    TarRepoSourceReference tar = 2;
+    LocalDirectoryReference local = 15;
+    TarGzipUrlSourceReference tar_gzip_url = 16;
+    NoopSourceReference noop = 22;
+  }
+  oneof image {
+    string registry_reference = 4;
+    string snapshot_id = 5;
+    Build build = 6;
+    ExternalSnapshot external_snapshot = 27;
+    string checkpoint_group_id = 28;
+  }
+  oneof workspace {
+    string workspace_path = 7;
+    string workdir_relative_path = 18;
+  }
+  optional bytes prepare_commands_tag = 19;
+  repeated DevContainerExecCommand prepare_commands = 8;
+  optional bytes install_commands_tag = 20;
+  repeated DevContainerExecCommand install_commands = 9;
+  optional bytes verify_commands_tag = 24;
+  repeated DevContainerExecCommand verify_commands = 25;
+  optional bytes start_commands_tag = 21;
+  repeated DevContainerExecCommand start_commands = 10;
+  repeated PortDefinition ports = 11;
+  optional DefaultPortConfig default_port_config = 26;
+  optional string user = 12;
+  repeated DevContainerEnv env = 13;
+  string shell = 14;
+  optional bool privileged = 17;
+  optional uint64 checkpoint_threshold_ms = 23;
+}
+
+message DevContainerEnv {
+  string name = 1;
+  oneof value {
+    string inline = 2;
+    string encrypted = 3;
+  }
+}
+
+message DevContainerExecCommand {
+  string name = 1;
+  optional string user = 2;
+  string command = 3;
+  bool is_system = 4;
+  optional string cache_key = 5;
+  bool failure_tolerant = 6;
+}
+
+message DevContainerSpec {
+  string name = 5;
+  optional string platform = 23;
+  optional uint64 deletion_timestamp = 6;
+  optional uint64 hibernation_timestamp = 14;
+  map<string, string> pod_labels = 7;
+  map<string, string> node_labels = 8;
+  repeated string low_cardinality_pod_labels = 27;
+  ResourceRequests requests = 9;
+  ResourceRequests hibernated_requests = 16;
+  ResourceLimits limits = 10;
+  optional bool cache = 13;
+  optional bool enable_base_container_cache = 20;
+  optional bool enable_checkpoint_read = 18;
+  optional bool enable_checkpoint_write = 19;
+  BlobStorageFormat blob_storage_format = 17;
+  optional string cache_tag = 15;
+  string workload = 21;
+  DevContainerConfig config = 12;
+  optional bool persist_config = 22;
+  optional uint32 expected_fork_count = 24;
+  optional EgressPolicy egress_policy = 26;
+}
+
+message DiskUsage {
+  uint64 bytes_used = 1;
+  uint64 bytes_total = 2;
+  optional double busy_percentage = 3;
+}
+
+message EgressPolicy {
+  oneof policy {
+    google.protobuf.Empty allow_all = 1;
+    EgressRestricted restricted = 2;
+  }
+  repeated ScmConfig scm = 3;
+  bool use_scm_egress_config = 4;
+}
+
+message EgressRestricted {
+  repeated AllowedDomain allowed_domains = 1;
+}
+
+message ExternalSnapshot {
+  string snapshot_id = 1;
+  string presigned_url = 2;
+  ImageMetadata image_metadata = 3;
+  BlobStorageFormat blob_storage_format = 4;
+  optional string node_machine_type = 5;
+}
+
+message GitRepoSourceReference {
+  string cache_uri = 1;
+  string checkout_uri = 2;
+  bytes commit_hash = 3;
+  string http_proxy = 5;
+}
+
+message ImageMetadata {
+  optional string user = 1;
+  map<string, string> env = 2;
+  optional string working_dir = 3;
+  optional string arch = 4;
+}
+
+message LocalDirectoryReference {
+  string path = 1;
+}
+
+message NoopSourceReference {
+}
+
+message PortDefinition {
+  string name = 1;
+  uint32 port = 2;
+  oneof visibility {
+    google.protobuf.Empty public = 3;
+    google.protobuf.Empty private = 4;
+  }
+  oneof authentication {
+    google.protobuf.Empty open = 5;
+    google.protobuf.Empty token = 6;
+  }
+}
+
+message ResourceLimits {
+  optional uint64 cpu_mcores = 1;
+  optional uint64 memory_mb = 2;
+  optional uint64 disk_mb = 3;
+  optional uint64 swap_mb = 4;
+}
+
+message ResourceRequests {
+  uint64 cpu_mcores = 1;
+  uint64 memory_mb = 2;
+  uint64 disk_mb = 3;
+}
+
+message ScmConfig {
+  enum AuthMethod {
+    AUTH_METHOD_UNSPECIFIED = 0;
+    AUTH_METHOD_BASIC = 1;
+    AUTH_METHOD_BEARER = 2;
+  }
+
+  string domain = 1;
+  string auth_value = 2;
+  string proxy_url = 3;
+  AuthMethod auth_method = 4;
+}
+
+message TarGzipUrlSourceReference {
+  string name = 1;
+  string url = 2;
+}
+
+message TarRepoSourceReference {
+  string name = 1;
+  bytes tar_archive = 2;
+}

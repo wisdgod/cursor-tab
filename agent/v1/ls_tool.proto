@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/ls_exec.proto";
+
+message LsToolCall {
+  LsArgs args = 1;
+  LsResult result = 2;
+}

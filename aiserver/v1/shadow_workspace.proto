@@ -1,0 +1,160 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "agent/v1/diagnostics_exec.proto";
+import "aiserver/v1/repository.proto";
+import "aiserver/v1/tools.proto";
+import "aiserver/v1/utils.proto";
+
+message GetLintsForChangeRequest {
+  message File {
+    message IRange {
+      int32 start_line_number = 1;
+      int32 start_column = 2;
+      int32 end_line_number = 3;
+      int32 end_column = 4;
+    }
+
+    message RangeCollection {
+      repeated IRange ranges = 1;
+    }
+
+    string relative_workspace_path = 1;
+    string initial_content = 2;
+    string final_content = 3;
+    optional RangeCollection get_all_lints_not_just_delta_lints_for_ranges_in_final_model = 4;
+  }
+
+  repeated File files = 1;
+  bool include_quick_fixes = 2;
+  bool do_not_use_in_prod_new_files_should_be_temporarily_created_for_increased_accuracy = 3;
+}
+
+message GetLintsForChangeResponse {
+  message Lint {
+    message QuickFix {
+      message Edit {
+        string relative_workspace_path = 1;
+        string text = 2;
+        int32 start_line_number_one_indexed = 3;
+        int32 start_column_one_indexed = 4;
+        int32 end_line_number_inclusive_one_indexed = 5;
+        int32 end_column_one_indexed = 6;
+      }
+
+      string message = 1;
+      string kind = 2;
+      bool is_preferred = 3;
+      repeated Edit edits = 4;
+    }
+
+    string message = 1;
+    string severity = 2;
+    string relative_workspace_path = 3;
+    int32 start_line_number_one_indexed = 4;
+    int32 start_column_one_indexed = 5;
+    int32 end_line_number_inclusive_one_indexed = 6;
+    int32 end_column_one_indexed = 7;
+    repeated QuickFix quick_fixes = 9;
+  }
+
+  repeated Lint lints = 1;
+}
+
+message ShadowHealthCheckRequest {
+}
+
+message ShadowHealthCheckResponse {
+}
+
+message SwCallClientSideV2ToolRequest {
+  ClientSideToolV2Call tool_call = 1;
+  string composer_id = 2;
+}
+
+message SwCallClientSideV2ToolResponse {
+  ClientSideToolV2Result tool_result = 1;
+}
+
+message SwCallDiagnosticsExecutorRequest {
+  agent.v1.DiagnosticsArgs diagnostics_args = 1;
+}
+
+message SwCallDiagnosticsExecutorResponse {
+  agent.v1.DiagnosticsResult diagnostics_result = 1;
+}
+
+message SwCompileRepoIncludeExcludePatternsRequest {
+  optional string include_pattern = 1;
+  optional string exclude_pattern = 2;
+  string path_encryption_key = 3;
+  RepositoryInfo repository_info = 4;
+}
+
+message SwCompileRepoIncludeExcludePatternsResponse {
+  optional string glob_filter = 1;
+  optional string not_glob_filter = 2;
+}
+
+message SwGetEnvironmentInfoRequest {
+}
+
+message SwGetEnvironmentInfoResponse {
+  EnvironmentInfo environment_info = 1;
+}
+
+message SwGetExplicitContextRequest {
+}
+
+message SwGetExplicitContextResponse {
+  ExplicitContext explicit_context = 1;
+}
+
+message SwGetLinterErrorsRequest {
+  repeated string absolute_paths = 1;
+}
+
+message SwGetLinterErrorsResponse {
+  repeated LinterErrors linter_errors = 1;
+}
+
+message SwGetMcpToolsRequest {
+  optional string browser_integration_preference = 1;
+}
+
+message SwGetMcpToolsResponse {
+  repeated MCPParams.Tool tools = 1;
+}
+
+message SwProvideTemporaryAccessTokenRequest {
+  string access_token = 1;
+}
+
+message SwProvideTemporaryAccessTokenResponse {
+}
+
+message SwSyncIndexRequest {
+  RepositoryInfo repository_info = 1;
+  string path_encryption_key = 2;
+  optional double indexing_progress_threshold = 3;
+}
+
+message SwSyncIndexResponse {
+}
+
+message SwTrackModelRequest {
+  string absolute_path = 1;
+}
+
+message SwTrackModelResponse {
+}
+
+message SwWriteTextFileWithLintsRequest {
+  string absolute_path = 1;
+  string new_contents = 2;
+}
+
+message SwWriteTextFileWithLintsResponse {
+  repeated LinterError new_linter_errors = 1;
+}

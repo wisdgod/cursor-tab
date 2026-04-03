@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message BlameByFilePathArgs {
+  string file_path = 1;
+  optional int32 start_line = 2;
+  optional int32 end_line = 3;
+}
+
+message BlameByFilePathError {
+  string error_message = 1;
+}
+
+message BlameByFilePathResult {
+  oneof result {
+    BlameByFilePathSuccess success = 1;
+    BlameByFilePathError error = 2;
+  }
+}
+
+message BlameByFilePathSuccess {
+  string content = 1;
+}
+
+message BlameByFilePathToolCall {
+  BlameByFilePathArgs args = 1;
+  BlameByFilePathResult result = 2;
+}

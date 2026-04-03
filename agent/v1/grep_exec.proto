@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/sandbox.proto";
+
+message GrepArgs {
+  string pattern = 1;
+  optional string path = 2;
+  optional string glob = 3;
+  optional string output_mode = 4;
+  optional int32 context_before = 5;
+  optional int32 context_after = 6;
+  optional int32 context = 7;
+  optional bool case_insensitive = 8;
+  optional string type = 9;
+  optional int32 head_limit = 10;
+  optional bool multiline = 11;
+  optional string sort = 12;
+  optional bool sort_ascending = 13;
+  string tool_call_id = 14;
+  optional SandboxPolicy sandbox_policy = 15;
+  optional int32 offset = 16;
+}
+
+message GrepContentMatch {
+  int32 line_number = 1;
+  string content = 2;
+  bool content_truncated = 3;
+  bool is_context_line = 4;
+}
+
+message GrepContentResult {
+  repeated GrepFileMatch matches = 1;
+  int32 total_lines = 2;
+  int32 total_matched_lines = 3;
+  bool client_truncated = 4;
+  bool ripgrep_truncated = 5;
+  optional int32 head_limit_applied = 6;
+  optional int32 offset_applied = 7;
+}
+
+message GrepCountResult {
+  repeated GrepFileCount counts = 1;
+  int32 total_files = 2;
+  int32 total_matches = 3;
+  bool client_truncated = 4;
+  bool ripgrep_truncated = 5;
+  optional int32 head_limit_applied = 6;
+  optional int32 offset_applied = 7;
+}
+
+message GrepError {
+  string error = 1;
+}
+
+message GrepFileCount {
+  string file = 1;
+  int32 count = 2;
+}
+
+message GrepFileMatch {
+  string file = 1;
+  repeated GrepContentMatch matches = 2;
+}
+
+message GrepFilesResult {
+  repeated string files = 1;
+  int32 total_files = 2;
+  bool client_truncated = 3;
+  bool ripgrep_truncated = 4;
+  optional int32 head_limit_applied = 5;
+  optional int32 offset_applied = 6;
+}
+
+message GrepResult {
+  oneof result {
+    GrepSuccess success = 1;
+    GrepError error = 2;
+  }
+}
+
+message GrepStream {
+  string pattern = 1;
+}
+
+message GrepSuccess {
+  string pattern = 1;
+  string path = 2;
+  string output_mode = 3;
+  map<string, agent.v1.GrepUnionResult> workspace_results = 4;
+  optional GrepUnionResult active_editor_result = 5;
+}
+
+message GrepUnionResult {
+  oneof result {
+    GrepCountResult count = 1;
+    GrepFilesResult files = 2;
+    GrepContentResult content = 3;
+  }
+}

@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package agent.v1;
+
+enum PackageType {
+  PACKAGE_TYPE_UNSPECIFIED = 0;
+  PACKAGE_TYPE_CURSOR_PROJECT = 1;
+  PACKAGE_TYPE_CURSOR_PERSONAL = 2;
+  PACKAGE_TYPE_CLAUDE_SKILL = 3;
+  PACKAGE_TYPE_CLAUDE_PLUGIN = 4;
+}
+
+message CursorPackage {
+  string name = 1;
+  string description = 2;
+  string folder_path = 3;
+  bool enabled = 4;
+  optional string parse_error = 5;
+  repeated CursorPackagePrompt prompts = 6;
+  string readme_file_path = 7;
+  PackageType package_type = 8;
+}
+
+message CursorPackagePrompt {
+  string name = 1;
+  string file_path = 2;
+}

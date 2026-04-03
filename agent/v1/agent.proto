@@ -1,0 +1,921 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/ai_attribution_tool.proto";
+import "agent/v1/apply_agent_diff_tool.proto";
+import "agent/v1/ask_question_tool.proto";
+import "agent/v1/await_tool.proto";
+import "agent/v1/blame_by_file_path_tool.proto";
+import "agent/v1/computer_use_tool.proto";
+import "agent/v1/create_plan_tool.proto";
+import "agent/v1/delete_tool.proto";
+import "agent/v1/edit_tool.proto";
+import "agent/v1/fetch_tool.proto";
+import "agent/v1/generate_image_tool.proto";
+import "agent/v1/get_mcp_tools_tool.proto";
+import "agent/v1/glob_tool.proto";
+import "agent/v1/grep_tool.proto";
+import "agent/v1/ls_tool.proto";
+import "agent/v1/mcp.proto";
+import "agent/v1/mcp_auth_tool.proto";
+import "agent/v1/mcp_resource_tool.proto";
+import "agent/v1/mcp_tool.proto";
+import "agent/v1/pr_management_tool.proto";
+import "agent/v1/read_lints_tool.proto";
+import "agent/v1/read_tool.proto";
+import "agent/v1/record_screen_tool.proto";
+import "agent/v1/reflect_tool.proto";
+import "agent/v1/report_bug_tool.proto";
+import "agent/v1/report_bugfix_results_tool.proto";
+import "agent/v1/request_context_exec.proto";
+import "agent/v1/selected_context.proto";
+import "agent/v1/semsearch_tool.proto";
+import "agent/v1/setup_vm_environment_tool.proto";
+import "agent/v1/shell_exec.proto";
+import "agent/v1/shell_tool.proto";
+import "agent/v1/start_grind_execution_tool.proto";
+import "agent/v1/start_grind_planning_tool.proto";
+import "agent/v1/subagents.proto";
+import "agent/v1/switch_mode_tool.proto";
+import "agent/v1/todo_tool.proto";
+import "agent/v1/web_fetch_tool.proto";
+import "agent/v1/web_search_tool.proto";
+import "agent/v1/write_shell_stdin_tool.proto";
+import "google/protobuf/struct.proto";
+
+enum AgentMode {
+  AGENT_MODE_UNSPECIFIED = 0;
+  AGENT_MODE_AGENT = 1;
+  AGENT_MODE_ASK = 2;
+  AGENT_MODE_PLAN = 3;
+  AGENT_MODE_DEBUG = 4;
+  AGENT_MODE_TRIAGE = 5;
+  AGENT_MODE_PROJECT = 6;
+}
+
+enum BackgroundTaskKind {
+  BACKGROUND_TASK_KIND_UNSPECIFIED = 0;
+  BACKGROUND_TASK_KIND_SHELL = 1;
+  BACKGROUND_TASK_KIND_SUBAGENT = 2;
+}
+
+enum BackgroundTaskStatus {
+  BACKGROUND_TASK_STATUS_UNSPECIFIED = 0;
+  BACKGROUND_TASK_STATUS_SUCCESS = 1;
+  BACKGROUND_TASK_STATUS_ERROR = 2;
+  BACKGROUND_TASK_STATUS_ABORTED = 3;
+}
+
+enum SimulatedMsgReason {
+  SIMULATED_MSG_REASON_UNSPECIFIED = 0;
+  SIMULATED_MSG_REASON_PLAN_EXECUTION = 1;
+  SIMULATED_MSG_REASON_COMMIT_REMINDER = 2;
+  SIMULATED_MSG_REASON_BACKGROUND_TASK_COMPLETION = 3;
+  SIMULATED_MSG_REASON_DIFF_TAB_COMMIT = 4;
+  SIMULATED_MSG_REASON_DIFF_TAB_COMMIT_AND_PUSH = 5;
+  SIMULATED_MSG_REASON_DIFF_TAB_PUSH = 6;
+  SIMULATED_MSG_REASON_DIFF_TAB_CREATE_PR = 7;
+  SIMULATED_MSG_REASON_DIFF_TAB_FIX_MERGE_CONFLICTS = 8;
+  SIMULATED_MSG_REASON_USER_SENT_TO_SUBAGENT = 9;
+  SIMULATED_MSG_REASON_USER_INTERRUPTED_SUBAGENT = 10;
+  SIMULATED_MSG_REASON_USER_QUEUED_TO_SUBAGENT = 11;
+  SIMULATED_MSG_REASON_BABYSIT_PR_IN_CLOUD = 12;
+}
+
+enum SubagentBackgroundReason {
+  SUBAGENT_BACKGROUND_REASON_UNSPECIFIED = 0;
+  SUBAGENT_BACKGROUND_REASON_AGENT_REQUEST = 1;
+  SUBAGENT_BACKGROUND_REASON_USER_REQUEST = 2;
+  SUBAGENT_BACKGROUND_REASON_QUEUED_FOLLOW_UP = 3;
+}
+
+enum ThinkingStyle {
+  THINKING_STYLE_UNSPECIFIED = 0;
+  THINKING_STYLE_DEFAULT = 1;
+  THINKING_STYLE_CODEX = 2;
+  THINKING_STYLE_GPT5 = 3;
+}
+
+message ActiveBranchChange {
+  string path = 1;
+  string branch_name = 2;
+}
+
+message AgentConversationTurn {
+  UserMessage user_message = 1;
+  repeated ConversationStep steps = 2;
+  optional string request_id = 3;
+}
+
+message AgentConversationTurnStructure {
+  bytes user_message = 1;
+  repeated bytes steps = 2;
+  optional string request_id = 3;
+}
+
+message AgentRunRequest {
+  ConversationStateStructure conversation_state = 1;
+  ConversationAction action = 2;
+  ModelDetails model_details = 3;
+  optional RequestedModel requested_model = 9;
+  McpTools mcp_tools = 4;
+  optional string conversation_id = 5;
+  optional McpFileSystemOptions mcp_file_system_options = 6;
+  optional SkillOptions skill_options = 7;
+  optional string custom_system_prompt = 8;
+  optional bool suggest_next_prompt = 10;
+  optional string subagent_type_name = 11;
+  optional bool exclude_workspace_context = 12;
+  optional string harness = 13;
+  repeated RequestedModel selected_subagent_models = 14;
+  repeated ModelDetails selected_subagent_model_details = 15;
+}
+
+message ApiKeyCredentials {
+  string api_key = 1;
+  optional string base_url = 2;
+}
+
+message AskQuestionInteractionQuery {
+  AskQuestionArgs args = 1;
+  string tool_call_id = 2;
+}
+
+message AskQuestionInteractionResponse {
+  AskQuestionResult result = 1;
+}
+
+message AssistantMessage {
+  string text = 1;
+}
+
+message AsyncAskQuestionCompletionAction {
+  string original_tool_call_id = 1;
+  AskQuestionArgs original_args = 2;
+  AskQuestionResult result = 3;
+}
+
+message AzureCredentials {
+  string api_key = 1;
+  string base_url = 2;
+  string deployment = 3;
+}
+
+message BackgroundShellAction {
+  string tool_call_id = 1;
+}
+
+message BackgroundSubagentAction {
+  string tool_call_id = 1;
+}
+
+message BackgroundTaskCompletion {
+  string task_id = 1;
+  BackgroundTaskKind kind = 2;
+  BackgroundTaskStatus status = 3;
+  string title = 4;
+  optional string detail = 5;
+  optional string output_path = 6;
+}
+
+message BackgroundTaskCompletionAction {
+  repeated BackgroundTaskCompletion completions = 1;
+}
+
+message BedrockCredentials {
+  string access_key = 1;
+  string secret_key = 2;
+  string region = 3;
+  optional string session_token = 4;
+}
+
+message CancelAction {
+  string reason = 1;
+}
+
+message CancelSubagentAction {
+  string subagent_id = 1;
+}
+
+message ConversationAction {
+  oneof action {
+    UserMessageAction user_message_action = 1;
+    ResumeAction resume_action = 2;
+    CancelAction cancel_action = 3;
+    SummarizeAction summarize_action = 4;
+    ShellCommandAction shell_command_action = 5;
+    StartPlanAction start_plan_action = 6;
+    ExecutePlanAction execute_plan_action = 7;
+    AsyncAskQuestionCompletionAction async_ask_question_completion_action = 8;
+    CancelSubagentAction cancel_subagent_action = 10;
+    BackgroundTaskCompletionAction background_task_completion_action = 12;
+    BackgroundShellAction background_shell_action = 13;
+    BackgroundSubagentAction background_subagent_action = 14;
+  }
+  optional string triggering_auth_id = 11;
+  optional TriggeringUserInfo triggering_user_info = 15;
+}
+
+message ConversationPlan {
+  string plan = 1;
+}
+
+message ConversationState {
+  repeated string root_prompt_messages_json = 1;
+  repeated ConversationTurn turns = 8;
+  repeated TodoItem todos = 3;
+  repeated string pending_tool_calls = 4;
+  ConversationTokenDetails token_details = 5;
+  optional ConversationSummary summary = 6;
+  optional ConversationPlan plan = 7;
+  optional ConversationSummaryArchive summary_archive = 9;
+  map<string, agent.v1.FileState> file_states = 10;
+  repeated ConversationSummaryArchive summary_archives = 11;
+  map<string, agent.v1.PlanRegistryEntry> plans = 12;
+}
+
+message ConversationStateStructure {
+  repeated bytes turns_old = 2;
+  repeated bytes root_prompt_messages_json = 1;
+  repeated bytes turns = 8;
+  repeated bytes todos = 3;
+  repeated string pending_tool_calls = 4;
+  ConversationTokenDetails token_details = 5;
+  optional bytes summary = 6;
+  optional bytes plan = 7;
+  repeated string previous_workspace_uris = 9;
+  optional AgentMode mode = 10;
+  optional bytes summary_archive = 11;
+  map<string, bytes> file_states = 12;
+  map<string, agent.v1.FileStateStructure> file_states_v2 = 15;
+  repeated bytes summary_archives = 13;
+  repeated StepTiming turn_timings = 14;
+  map<string, agent.v1.SubagentPersistedState> subagent_states = 16;
+  uint32 self_summary_count = 17;
+  repeated string read_paths = 18;
+  optional string active_branch_name = 19;
+  map<string, agent.v1.PlanRegistryEntry> plans = 20;
+  repeated TrackedGitRepo tracked_git_repo_branches = 21;
+  optional string agent_type = 22;
+}
+
+message ConversationStep {
+  oneof message {
+    AssistantMessage assistant_message = 1;
+    ToolCall tool_call = 2;
+    ThinkingMessage thinking_message = 3;
+  }
+}
+
+message ConversationSummary {
+  string summary = 1;
+}
+
+message ConversationSummaryArchive {
+  repeated bytes summarized_messages = 1;
+  string summary = 2;
+  uint32 window_tail = 3;
+  bytes summary_message = 4;
+}
+
+message ConversationTokenDetails {
+  uint32 used_tokens = 1;
+  uint32 max_tokens = 2;
+}
+
+message ConversationTurn {
+  oneof turn {
+    AgentConversationTurn agent_conversation_turn = 1;
+    ShellConversationTurn shell_conversation_turn = 2;
+  }
+}
+
+message ConversationTurnStructure {
+  oneof turn {
+    AgentConversationTurnStructure agent_conversation_turn = 1;
+    ShellConversationTurnStructure shell_conversation_turn = 2;
+  }
+}
+
+message ExecutePlanAction {
+  RequestContext request_context = 1;
+  optional ConversationPlan plan = 2;
+  optional string plan_file_uri = 3;
+  optional string plan_file_content = 4;
+  AgentMode execution_mode = 5;
+  optional string kickoff_message_id = 6;
+  optional string plan_id = 7;
+  optional string plan_file_path = 8;
+}
+
+message ExecutePlanInfo {
+  string plan_id = 1;
+  string plan_title = 2;
+}
+
+message FileState {
+  optional string content = 1;
+  optional string initial_content = 2;
+}
+
+message FileStateStructure {
+  optional bytes content = 1;
+  optional bytes initial_content = 2;
+}
+
+message HeartbeatUpdate {
+}
+
+message InteractionQuery {
+  uint32 id = 1;
+  oneof query {
+    WebSearchRequestQuery web_search_request_query = 2;
+    AskQuestionInteractionQuery ask_question_interaction_query = 3;
+    SwitchModeRequestQuery switch_mode_request_query = 4;
+    CreatePlanRequestQuery create_plan_request_query = 7;
+    SetupVmEnvironmentArgs setup_vm_environment_args = 8;
+    WebFetchRequestQuery web_fetch_request_query = 9;
+    PrManagementRequestQuery pr_management_request_query = 10;
+    McpAuthRequestQuery mcp_auth_request_query = 11;
+    GenerateImageRequestQuery generate_image_request_query = 12;
+  }
+}
+
+message InteractionResponse {
+  uint32 id = 1;
+  oneof result {
+    WebSearchRequestResponse web_search_request_response = 2;
+    AskQuestionInteractionResponse ask_question_interaction_response = 3;
+    SwitchModeRequestResponse switch_mode_request_response = 4;
+    CreatePlanRequestResponse create_plan_request_response = 7;
+    SetupVmEnvironmentResult setup_vm_environment_result = 8;
+    WebFetchRequestResponse web_fetch_request_response = 9;
+    PrManagementResult pr_management_result = 10;
+    McpAuthRequestResponse mcp_auth_request_response = 11;
+    GenerateImageRequestResponse generate_image_request_response = 12;
+  }
+}
+
+message InteractionUpdate {
+  oneof message {
+    TextDeltaUpdate text_delta = 1;
+    PartialToolCallUpdate partial_tool_call = 7;
+    ToolCallDeltaUpdate tool_call_delta = 15;
+    ToolCallStartedUpdate tool_call_started = 2;
+    ToolCallCompletedUpdate tool_call_completed = 3;
+    ThinkingDeltaUpdate thinking_delta = 4;
+    ThinkingCompletedUpdate thinking_completed = 5;
+    UserMessageAppendedUpdate user_message_appended = 6;
+    TokenDeltaUpdate token_delta = 8;
+    SummaryUpdate summary = 9;
+    SummaryStartedUpdate summary_started = 10;
+    SummaryCompletedUpdate summary_completed = 11;
+    ShellOutputDeltaUpdate shell_output_delta = 12;
+    HeartbeatUpdate heartbeat = 13;
+    TurnEndedUpdate turn_ended = 14;
+    StepStartedUpdate step_started = 16;
+    StepCompletedUpdate step_completed = 17;
+    PromptSuggestionUpdate prompt_suggestion = 18;
+    PostRequestPromptUpdate post_request_prompt = 19;
+    ActiveBranchChange active_branch_change = 20;
+  }
+}
+
+message ModelDetails {
+  string model_id = 1;
+  string display_model_id = 3;
+  string display_name = 4;
+  string display_name_short = 5;
+  repeated string aliases = 6;
+  optional ThinkingDetails thinking_details = 2;
+  optional bool max_mode = 7;
+  oneof credentials {
+    ApiKeyCredentials api_key_credentials = 8;
+    AzureCredentials azure_credentials = 9;
+    BedrockCredentials bedrock_credentials = 10;
+  }
+}
+
+message PartialToolCallUpdate {
+  string call_id = 1;
+  ToolCall tool_call = 2;
+  string args_text_delta = 3;
+  string model_call_id = 4;
+}
+
+message PlanRegistryEntry {
+  string id = 1;
+  string path = 2;
+}
+
+message PostRequestPromptUpdate {
+  string title = 1;
+  string message = 2;
+  string button_label = 3;
+  string button_url = 4;
+}
+
+message PostToolUseFailureRequestQuery {
+  string tool_name = 1;
+  google.protobuf.Struct tool_input = 2;
+  string error_message = 3;
+  string failure_type = 4;
+  int64 duration_ms = 5;
+  string tool_use_id = 6;
+  bool is_interrupt = 7;
+  optional string conversation_id = 8;
+  optional string generation_id = 9;
+  optional string model = 10;
+}
+
+message PostToolUseFailureRequestResponse {
+}
+
+message PostToolUseRequestQuery {
+  string tool_name = 1;
+  google.protobuf.Struct tool_input = 2;
+  string tool_output = 3;
+  int64 duration_ms = 4;
+  string tool_use_id = 5;
+  optional string cwd = 6;
+  optional string conversation_id = 7;
+  optional string generation_id = 8;
+  optional string model = 9;
+}
+
+message PostToolUseRequestResponse {
+  optional string additional_context = 1;
+}
+
+message PreCompactRequestQuery {
+  string trigger = 1;
+  double context_usage_percent = 2;
+  int64 context_tokens = 3;
+  int64 context_window_size = 4;
+  int32 message_count = 5;
+  int32 messages_to_compact = 6;
+  bool is_first_compaction = 7;
+  optional string conversation_id = 8;
+  optional string generation_id = 9;
+  optional string model = 10;
+}
+
+message PreCompactRequestResponse {
+  optional string user_message = 1;
+}
+
+message PreparedTaskSubagent {
+  string subagent_id = 1;
+  string subagent_type_name = 2;
+  SubagentType subagent_type = 3;
+  string analytics_subagent_type = 4;
+  string resolved_model_id = 5;
+  bool effective_readonly = 6;
+  bool use_ask_mode_for_subagent = 7;
+  ConversationStateStructure conversation_state = 8;
+  ConversationAction initial_action = 9;
+  uint32 initial_turns_count = 10;
+  string subagent_request_id = 11;
+  string tool_call_id = 12;
+  bool is_resume = 13;
+  optional string parent_request_id = 14;
+  optional string root_parent_request_id = 15;
+  string task_prompt = 16;
+  string task_description = 17;
+  optional SelectedContext selected_context = 18;
+  optional string plugin = 19;
+  optional string marketplace = 20;
+  string parent_model_name = 21;
+  TaskToolCallArgsProto raw_args = 22;
+  SubagentCredentials subagent_credentials = 23;
+  optional string result_suffix = 25;
+  bool enable_execute_hook_exec = 26;
+  repeated string configured_steps = 27;
+  bool readonly_shell_enabled = 28;
+  string tool_name = 29;
+  optional int64 prepared_timestamp_unix_ms = 30;
+  optional string plugin_id = 31;
+  optional string marketplace_id = 32;
+}
+
+message PreToolUseRequestQuery {
+  string tool_name = 1;
+  google.protobuf.Struct tool_input = 2;
+  string tool_use_id = 3;
+  optional string cwd = 4;
+  optional string conversation_id = 5;
+  optional string generation_id = 6;
+  optional string model = 7;
+}
+
+message PreToolUseRequestResponse {
+  optional string permission = 1;
+  optional string user_message = 2;
+  optional string agent_message = 3;
+  optional string updated_input = 4;
+}
+
+message PromptSuggestionUpdate {
+  string suggestion = 1;
+}
+
+message RequestedModel {
+  message ModelParameterValue {
+    string id = 1;
+    string value = 2;
+  }
+
+  string model_id = 1;
+  bool max_mode = 2;
+  repeated ModelParameterValue parameters = 3;
+  oneof credentials {
+    ApiKeyCredentials api_key_credentials = 4;
+    AzureCredentials azure_credentials = 5;
+    BedrockCredentials bedrock_credentials = 6;
+  }
+  bool built_in_model = 7;
+  bool is_variant_string_representation = 8;
+}
+
+message ResumeAction {
+  RequestContext request_context = 2;
+}
+
+message SetActiveBranchArgs {
+  string path = 1;
+  string branch_name = 2;
+}
+
+message SetActiveBranchError {
+  string error = 1;
+}
+
+message SetActiveBranchResult {
+  oneof result {
+    SetActiveBranchSuccess success = 1;
+    SetActiveBranchError error = 2;
+  }
+}
+
+message SetActiveBranchSuccess {
+}
+
+message SetActiveBranchToolCall {
+  SetActiveBranchArgs args = 1;
+  SetActiveBranchResult result = 2;
+}
+
+message ShellCommand {
+  string command = 1;
+}
+
+message ShellCommandAction {
+  ShellCommand shell_command = 1;
+  string exec_id = 2;
+}
+
+message ShellConversationTurn {
+  ShellCommand shell_command = 1;
+  ShellOutput shell_output = 2;
+}
+
+message ShellConversationTurnStructure {
+  bytes shell_command = 1;
+  bytes shell_output = 2;
+}
+
+message ShellOutput {
+  string stdout = 1;
+  string stderr = 2;
+  int32 exit_code = 3;
+}
+
+message ShellOutputDeltaUpdate {
+  oneof event {
+    ShellStreamStdout stdout = 1;
+    ShellStreamStderr stderr = 2;
+    ShellStreamExit exit = 3;
+    ShellStreamStart start = 4;
+  }
+}
+
+message StartPlanAction {
+  UserMessage user_message = 1;
+  RequestContext request_context = 2;
+  bool is_spec = 3;
+}
+
+message StepCompletedUpdate {
+  uint64 step_id = 1;
+  int64 step_duration_ms = 2;
+}
+
+message StepStartedUpdate {
+  uint64 step_id = 1;
+}
+
+message StepTiming {
+  uint64 duration_ms = 1;
+  uint64 timestamp_ms = 2;
+}
+
+message SubagentCredentials {
+  oneof credentials {
+    ApiKeyCredentials api_key_credentials = 1;
+    AzureCredentials azure_credentials = 2;
+    BedrockCredentials bedrock_credentials = 3;
+  }
+}
+
+message SubagentPersistedState {
+  ConversationStateStructure conversation_state = 1;
+  uint64 created_timestamp_ms = 2;
+  uint64 last_used_timestamp_ms = 3;
+  SubagentType subagent_type = 4;
+}
+
+message SubagentStartRequestQuery {
+  string subagent_id = 1;
+  string subagent_type = 2;
+  string task = 3;
+  string parent_conversation_id = 4;
+  optional string tool_call_id = 5;
+  optional string subagent_model = 6;
+  bool is_parallel_worker = 7;
+  optional string git_branch = 8;
+  optional string conversation_id = 9;
+  optional string generation_id = 10;
+  optional string model = 11;
+}
+
+message SubagentStartRequestResponse {
+  optional string permission = 1;
+  optional string user_message = 2;
+}
+
+message SubagentStopRequestQuery {
+  string subagent_id = 1;
+  string subagent_type = 2;
+  string status = 3;
+  int64 duration_ms = 4;
+  optional string summary = 5;
+  string parent_conversation_id = 6;
+  int32 message_count = 7;
+  int32 tool_call_count = 8;
+  optional string error_message = 9;
+  repeated string modified_files = 10;
+  optional string git_branch = 11;
+  optional string conversation_id = 12;
+  optional string generation_id = 13;
+  optional string model = 14;
+  int32 loop_count = 15;
+  optional string task = 16;
+  optional string description = 17;
+}
+
+message SubagentStopRequestResponse {
+  optional string followup_message = 1;
+}
+
+message SummarizeAction {
+}
+
+message SummaryCompletedUpdate {
+  optional string hook_message = 1;
+}
+
+message SummaryStartedUpdate {
+}
+
+message SummaryUpdate {
+  string summary = 1;
+}
+
+message TaskArgs {
+  string description = 1;
+  string prompt = 2;
+  SubagentType subagent_type = 3;
+  optional string model = 4;
+  optional string resume = 5;
+  optional string agent_id = 6;
+  repeated string attachments = 7;
+  TaskMode mode = 8;
+}
+
+message TaskError {
+  string error = 1;
+}
+
+message TaskResult {
+  oneof result {
+    TaskSuccess success = 1;
+    TaskError error = 2;
+  }
+}
+
+message TaskSuccess {
+  repeated ConversationStep conversation_steps = 1;
+  optional string agent_id = 2;
+  bool is_background = 3;
+  optional uint64 duration_ms = 4;
+  optional string result_suffix = 5;
+  SubagentBackgroundReason background_reason = 6;
+  optional string transcript_path = 7;
+}
+
+message TaskToolCall {
+  TaskArgs args = 1;
+  TaskResult result = 2;
+}
+
+message TaskToolCallArgsProto {
+  string description = 1;
+  string prompt = 2;
+  optional string model = 3;
+  string subagent_type = 4;
+  optional string resume = 5;
+  optional bool readonly = 6;
+  optional bool run_in_background = 7;
+  repeated string attachments = 8;
+}
+
+message TaskToolCallDelta {
+  InteractionUpdate interaction_update = 1;
+}
+
+message TextDeltaUpdate {
+  string text = 1;
+}
+
+message ThinkingCompletedUpdate {
+  int32 thinking_duration_ms = 1;
+}
+
+message ThinkingDeltaUpdate {
+  string text = 1;
+  optional ThinkingStyle thinking_style = 2;
+}
+
+message ThinkingDetails {
+}
+
+message ThinkingMessage {
+  string text = 1;
+  uint32 duration_ms = 2;
+}
+
+message TokenDeltaUpdate {
+  int32 tokens = 1;
+}
+
+message ToolCall {
+  oneof tool {
+    ShellToolCall shell_tool_call = 1;
+    DeleteToolCall delete_tool_call = 3;
+    GlobToolCall glob_tool_call = 4;
+    GrepToolCall grep_tool_call = 5;
+    ReadToolCall read_tool_call = 8;
+    UpdateTodosToolCall update_todos_tool_call = 9;
+    ReadTodosToolCall read_todos_tool_call = 10;
+    EditToolCall edit_tool_call = 12;
+    LsToolCall ls_tool_call = 13;
+    ReadLintsToolCall read_lints_tool_call = 14;
+    McpToolCall mcp_tool_call = 15;
+    SemSearchToolCall sem_search_tool_call = 16;
+    CreatePlanToolCall create_plan_tool_call = 17;
+    WebSearchToolCall web_search_tool_call = 18;
+    TaskToolCall task_tool_call = 19;
+    ListMcpResourcesToolCall list_mcp_resources_tool_call = 20;
+    ReadMcpResourceToolCall read_mcp_resource_tool_call = 21;
+    ApplyAgentDiffToolCall apply_agent_diff_tool_call = 22;
+    AskQuestionToolCall ask_question_tool_call = 23;
+    FetchToolCall fetch_tool_call = 24;
+    SwitchModeToolCall switch_mode_tool_call = 25;
+    GenerateImageToolCall generate_image_tool_call = 28;
+    RecordScreenToolCall record_screen_tool_call = 29;
+    ComputerUseToolCall computer_use_tool_call = 30;
+    WriteShellStdinToolCall write_shell_stdin_tool_call = 31;
+    ReflectToolCall reflect_tool_call = 32;
+    SetupVmEnvironmentToolCall setup_vm_environment_tool_call = 33;
+    TruncatedToolCall truncated_tool_call = 34;
+    StartGrindExecutionToolCall start_grind_execution_tool_call = 35;
+    StartGrindPlanningToolCall start_grind_planning_tool_call = 36;
+    WebFetchToolCall web_fetch_tool_call = 37;
+    ReportBugfixResultsToolCall report_bugfix_results_tool_call = 38;
+    AiAttributionToolCall ai_attribution_tool_call = 39;
+    PrManagementToolCall pr_management_tool_call = 40;
+    McpAuthToolCall mcp_auth_tool_call = 41;
+    AwaitToolCall await_tool_call = 42;
+    BlameByFilePathToolCall blame_by_file_path_tool_call = 43;
+    GetMcpToolsToolCall get_mcp_tools_tool_call = 44;
+    ReportBugToolCall report_bug_tool_call = 45;
+    SetActiveBranchToolCall set_active_branch_tool_call = 46;
+  }
+}
+
+message ToolCallCompletedUpdate {
+  string call_id = 1;
+  ToolCall tool_call = 2;
+  string model_call_id = 3;
+}
+
+message ToolCallDelta {
+  oneof delta {
+    ShellToolCallDelta shell_tool_call_delta = 1;
+    TaskToolCallDelta task_tool_call_delta = 2;
+    EditToolCallDelta edit_tool_call_delta = 3;
+  }
+}
+
+message ToolCallDeltaUpdate {
+  string call_id = 1;
+  ToolCallDelta tool_call_delta = 2;
+  string model_call_id = 3;
+}
+
+message ToolCallStartedUpdate {
+  string call_id = 1;
+  ToolCall tool_call = 2;
+  string model_call_id = 3;
+}
+
+message TrackedGitRepo {
+  string repo_path = 1;
+  string branch_name = 2;
+}
+
+message TriggeringUserInfo {
+  optional string auth_id = 1;
+  optional int32 user_id = 2;
+}
+
+message TruncatedToolCall {
+  bytes original_step_blob_id = 1;
+  TruncatedToolCallArgs args = 2;
+  TruncatedToolCallResult result = 3;
+}
+
+message TruncatedToolCallArgs {
+}
+
+message TruncatedToolCallError {
+  string error = 1;
+}
+
+message TruncatedToolCallResult {
+  oneof result {
+    TruncatedToolCallSuccess success = 1;
+    TruncatedToolCallError error = 2;
+  }
+}
+
+message TruncatedToolCallSuccess {
+}
+
+message TurnEndedUpdate {
+  optional int64 input_tokens = 1;
+  optional int64 output_tokens = 2;
+  optional int64 cache_read_tokens = 3;
+  optional int64 cache_write_tokens = 4;
+}
+
+message UserDisplayInfo {
+  int32 user_id = 1;
+  optional string display_name = 2;
+  optional string email = 3;
+  optional string profile_picture_url = 4;
+}
+
+message UserMessage {
+  message SimulatedMessageMetadata {
+    optional string title = 1;
+    optional string task_id = 2;
+  }
+
+  string text = 1;
+  string message_id = 2;
+  optional SelectedContext selected_context = 3;
+  AgentMode mode = 4;
+  optional bool is_simulated_msg = 5;
+  optional string best_of_n_group_id = 6;
+  optional bool try_use_best_of_n_promotion = 7;
+  optional string rich_text = 8;
+  optional SimulatedMsgReason simulated_msg_reason = 9;
+  bytes conversation_state_blob_id = 10;
+  optional string subagent_system_reminder = 11;
+  optional TriggeringUserInfo triggering_user_info = 13;
+  optional ExecutePlanInfo execute_plan_info = 14;
+  optional SimulatedMessageMetadata simulated_message_metadata = 15;
+}
+
+message UserMessageAction {
+  UserMessage user_message = 1;
+  RequestContext request_context = 2;
+  optional bool send_to_interaction_listener = 3;
+  repeated UserMessage prepend_user_messages = 4;
+}
+
+message UserMessageAppendedUpdate {
+  UserMessage user_message = 1;
+}

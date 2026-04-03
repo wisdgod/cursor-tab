@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package agent.v1;
+
+enum CustomSubagentPermissionMode {
+  CUSTOM_SUBAGENT_PERMISSION_MODE_UNSPECIFIED = 0;
+  CUSTOM_SUBAGENT_PERMISSION_MODE_DEFAULT = 1;
+  CUSTOM_SUBAGENT_PERMISSION_MODE_READONLY = 2;
+  CUSTOM_SUBAGENT_PERMISSION_MODE_AGENT_ONLY = 3;
+}
+
+enum TaskMode {
+  TASK_MODE_UNSPECIFIED = 0;
+  TASK_MODE_AGENT = 1;
+  TASK_MODE_PLAN = 2;
+}
+
+message CustomSubagent {
+  string full_path = 1;
+  string name = 2;
+  string description = 3;
+  repeated string tools = 4;
+  string model = 5;
+  string prompt = 6;
+  CustomSubagentPermissionMode permission_mode = 7;
+  bool is_background = 8;
+  optional string plugin = 9;
+  optional string marketplace = 10;
+  optional string plugin_id = 11;
+  optional string marketplace_id = 12;
+}
+
+message SubagentType {
+  oneof type {
+    SubagentTypeUnspecified unspecified = 1;
+    SubagentTypeComputerUse computer_use = 2;
+    SubagentTypeCustom custom = 3;
+    SubagentTypeExplore explore = 4;
+    SubagentTypeMediaReview media_review = 5;
+    SubagentTypeBash bash = 6;
+    SubagentTypeBrowserUse browser_use = 7;
+    SubagentTypeShell shell = 8;
+    SubagentTypeVmSetupHelper vm_setup_helper = 9;
+    SubagentTypeDebug debug = 10;
+    SubagentTypeCursorGuide cursor_guide = 11;
+  }
+}
+
+message SubagentTypeBash {
+}
+
+message SubagentTypeBrowserUse {
+}
+
+message SubagentTypeComputerUse {
+}
+
+message SubagentTypeCursorGuide {
+}
+
+message SubagentTypeCustom {
+  string name = 1;
+}
+
+message SubagentTypeDebug {
+}
+
+message SubagentTypeExplore {
+}
+
+message SubagentTypeMediaReview {
+}
+
+message SubagentTypeShell {
+}
+
+message SubagentTypeUnspecified {
+}
+
+message SubagentTypeVmSetupHelper {
+}

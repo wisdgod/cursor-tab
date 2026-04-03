@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message DocumentationChunk {
+  string doc_name = 1;
+  string page_url = 2;
+  string documentation_chunk = 3;
+  float score = 4;
+  string page_title = 5;
+}
+
+message DocumentationMetadata {
+  string prefix_url = 1;
+  string doc_name = 2;
+  bool is_different_prefix_origin = 3;
+  string true_prefix_url = 4;
+  bool public = 5;
+  optional int32 team_id = 6;
+}
+
+message DocumentationQueryRequest {
+  string doc_identifier = 1;
+  string query = 2;
+  uint32 top_k = 3;
+  bool rerank_results = 4;
+}
+
+message DocumentationQueryResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_NOT_FOUND = 1;
+    STATUS_SUCCESS = 2;
+    STATUS_FAILURE = 3;
+  }
+
+  string doc_identifier = 1;
+  string doc_name = 2;
+  repeated DocumentationChunk doc_chunks = 3;
+  Status status = 4;
+}

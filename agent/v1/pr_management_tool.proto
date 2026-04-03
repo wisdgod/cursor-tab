@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message CreatePrAction {
+  string title = 1;
+  string body = 2;
+  optional string base_branch = 3;
+  optional bool draft = 4;
+  string branch_name = 5;
+}
+
+message PrManagementArgs {
+  string tool_call_id = 1;
+  oneof action {
+    CreatePrAction create_pr = 2;
+    UpdatePrAction update_pr = 3;
+  }
+}
+
+message PrManagementError {
+  string error = 1;
+}
+
+message PrManagementNeedsConfirmation {
+  string message = 1;
+  string discovered_pr_url = 2;
+  int32 discovered_pr_number = 3;
+  string discovered_pr_title = 4;
+  string branch_name = 5;
+}
+
+message PrManagementRegistered {
+  string message = 1;
+  string title = 2;
+  string body = 3;
+  optional string base_branch = 4;
+  optional bool draft = 5;
+  string branch_name = 6;
+}
+
+message PrManagementRejected {
+  string reason = 1;
+}
+
+message PrManagementRequestQuery {
+  PrManagementArgs args = 1;
+}
+
+message PrManagementResult {
+  oneof result {
+    PrManagementSuccess success = 1;
+    PrManagementError error = 2;
+    PrManagementRejected rejected = 3;
+    PrManagementRegistered registered = 4;
+    PrManagementNeedsConfirmation needs_confirmation = 5;
+  }
+}
+
+message PrManagementSuccess {
+  string pr_url = 1;
+  int32 pr_number = 2;
+  string message = 3;
+}
+
+message PrManagementToolCall {
+  PrManagementArgs args = 1;
+  PrManagementResult result = 2;
+}
+
+message UpdatePrAction {
+  optional string pr_url = 1;
+  optional string title = 2;
+  optional string body = 3;
+  optional string base_branch = 4;
+  optional string branch_name = 5;
+}

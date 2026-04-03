@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message AppliedAgentChange {
+  enum ChangeType {
+    CHANGE_TYPE_UNSPECIFIED = 0;
+    CHANGE_TYPE_CREATED = 1;
+    CHANGE_TYPE_MODIFIED = 2;
+    CHANGE_TYPE_DELETED = 3;
+  }
+
+  string path = 1;
+  ChangeType change_type = 2;
+  optional string before_content = 3;
+  optional string after_content = 4;
+  optional string error = 5;
+  optional string message_for_model = 6;
+}
+
+message ApplyAgentDiffArgs {
+  string agent_id = 1;
+}
+
+message ApplyAgentDiffError {
+  string error = 1;
+  repeated AppliedAgentChange applied_changes = 2;
+}
+
+message ApplyAgentDiffResult {
+  oneof result {
+    ApplyAgentDiffSuccess success = 1;
+    ApplyAgentDiffError error = 2;
+  }
+}
+
+message ApplyAgentDiffSuccess {
+  repeated AppliedAgentChange applied_changes = 1;
+}
+
+message ApplyAgentDiffToolCall {
+  ApplyAgentDiffArgs args = 1;
+  ApplyAgentDiffResult result = 2;
+}

@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package agent.v1;
+
+enum BugfixVerdict {
+  BUGFIX_VERDICT_UNSPECIFIED = 0;
+  BUGFIX_VERDICT_FIXED = 1;
+  BUGFIX_VERDICT_FALSE_POSITIVE = 2;
+  BUGFIX_VERDICT_COULD_NOT_FIX = 3;
+  BUGFIX_VERDICT_RESOLVED_BY_OTHER_FIX = 4;
+}
+
+message BugfixResultItem {
+  string bug_id = 1;
+  string bug_title = 2;
+  BugfixVerdict verdict = 3;
+  string explanation = 4;
+  optional string severity = 5;
+}
+
+message ReportBugfixResultsArgs {
+  string summary = 1;
+  repeated BugfixResultItem results = 2;
+}
+
+message ReportBugfixResultsError {
+  string error = 1;
+}
+
+message ReportBugfixResultsResult {
+  oneof result {
+    ReportBugfixResultsSuccess success = 1;
+    ReportBugfixResultsError error = 2;
+  }
+}
+
+message ReportBugfixResultsSuccess {
+  repeated BugfixResultItem results = 1;
+}
+
+message ReportBugfixResultsToolCall {
+  ReportBugfixResultsArgs args = 1;
+  ReportBugfixResultsResult result = 2;
+}

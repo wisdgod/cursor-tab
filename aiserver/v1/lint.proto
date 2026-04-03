@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/utils.proto";
+
+enum LintDiscriminator {
+  LINT_DISCRIMINATOR_UNSPECIFIED = 0;
+  LINT_DISCRIMINATOR_SPECIFIC_RULES = 1;
+  LINT_DISCRIMINATOR_COMPILE_ERRORS = 2;
+  LINT_DISCRIMINATOR_CHANGE_BEHAVIOR = 3;
+  LINT_DISCRIMINATOR_RELEVANCE = 5;
+  LINT_DISCRIMINATOR_USER_AWARENESS = 6;
+  LINT_DISCRIMINATOR_CORRECTNESS = 7;
+  LINT_DISCRIMINATOR_CHUNKING = 8;
+  LINT_DISCRIMINATOR_TYPO = 9;
+  LINT_DISCRIMINATOR_CONFIDENCE = 10;
+  LINT_DISCRIMINATOR_DISMISSED_BUGS = 11;
+}
+
+enum LintGenerator {
+  LINT_GENERATOR_UNSPECIFIED = 0;
+  LINT_GENERATOR_NAIVE = 1;
+  LINT_GENERATOR_COMMENT_PIPELINE = 2;
+  LINT_GENERATOR_SIMPLE_BUG = 3;
+  LINT_GENERATOR_SIMPLE_LINT_RULES = 4;
+}
+
+message AiLintBug {
+  string relative_workspace_path = 1;
+  string uuid = 8;
+  string message = 2;
+  SimpleRange replace_range = 3;
+  string replace_text = 4;
+  string replace_initial_text = 5;
+  SimpleRange reevaluate_range = 6;
+  string reevaluate_initial_text = 7;
+  LintGenerator generator = 9;
+  repeated LintDiscriminatorResult discriminator_results = 10;
+  LogprobsLintPayload logprobs_payload = 11;
+}
+
+message AiLintInlineSuggestion {
+  string relative_workspace_path = 1;
+  string uuid = 8;
+  string message = 2;
+  int32 line_number = 3;
+  SimpleRange reevaluate_range = 4;
+  string reevaluate_initial_text = 5;
+}
+
+message AiLintOutOfFlowSuggestion {
+  string relative_workspace_path = 1;
+  string uuid = 8;
+  string message = 2;
+}
+
+message AiLintRule {
+  string text = 1;
+}
+
+message LintChunk {
+  string chunk_contents = 2;
+  int32 start_line_number = 3;
+  int32 num_remaining_lines = 4;
+}
+
+message LintChunkRequest {
+  string relative_file_path = 1;
+  LintChunk chunk = 2;
+  optional bool use_speculative_linter = 3;
+}
+
+message LintChunkResponse {
+  repeated TokenIndex chunk_tokens = 1;
+}
+
+message LintDiscriminatorResult {
+  LintDiscriminator discriminator = 1;
+  bool allow = 2;
+  string reasoning = 3;
+}
+
+message LintExplanationRequest {
+  string relative_file_path = 1;
+  LintChunk chunk = 2;
+  string line_selection = 3;
+  int32 token_start_index = 4;
+  int32 token_end_index = 5;
+  string likely_alternate_token = 6;
+  int32 line_chunk_index_zero_based = 7;
+}
+
+message LintExplanationResponse {
+  string explanation = 1;
+}
+
+message LintExplanationResponse2 {
+  string orig_line = 1;
+  string new_line = 2;
+}
+
+message LintFileRequest {
+  string relative_file_path = 1;
+  string file_contents = 2;
+}
+
+message LintFileResponse {
+  repeated TokenIndex tokens = 1;
+}
+
+message LintFimChunkRequest {
+  string relative_file_path = 1;
+  LintChunk prefix = 2;
+  LintChunk suffix = 3;
+  LintChunk middle = 4;
+}
+
+message LintFimChunkResponse {
+  repeated TokenIndex middle_chunk_tokens = 1;
+}
+
+message LogprobsLintPayload {
+  string chunk = 1;
+  string problematic_line = 2;
+  int32 start_col = 3;
+  int32 end_col = 4;
+  string most_likely_replace = 5;
+  int32 line_chunk_index_zero_based = 6;
+}
+
+message TokenIndex {
+  repeated TokensWithLogprobs tokens_with_logprobs = 1;
+  string actual_token = 2;
+}
+
+message TokensWithLogprobs {
+  string token = 1;
+  float log_probability = 2;
+}

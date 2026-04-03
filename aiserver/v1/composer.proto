@@ -1,0 +1,184 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/utils.proto";
+
+message ComposerCapabilityContext {
+  message GithubPRContext {
+    string title = 1;
+    string description = 2;
+    string comments = 3;
+    optional string ci_failures = 4;
+  }
+
+  message SlackIntegrationContext {
+    string thread = 1;
+    optional string channel_name = 2;
+    optional string channel_purpose = 3;
+    optional string channel_topic = 4;
+  }
+
+  oneof data {
+    SlackIntegrationContext slack_integration = 27;
+    GithubPRContext github_pr = 28;
+  }
+}
+
+message ComposerCapabilityRequest {
+  enum ComposerCapabilityType {
+    COMPOSER_CAPABILITY_TYPE_UNSPECIFIED = 0;
+    COMPOSER_CAPABILITY_TYPE_LOOP_ON_LINTS = 1;
+    COMPOSER_CAPABILITY_TYPE_LOOP_ON_TESTS = 2;
+    COMPOSER_CAPABILITY_TYPE_MEGA_PLANNER = 3;
+    COMPOSER_CAPABILITY_TYPE_LOOP_ON_COMMAND = 4;
+    COMPOSER_CAPABILITY_TYPE_TOOL_CALL = 5;
+    COMPOSER_CAPABILITY_TYPE_DIFF_REVIEW = 6;
+    COMPOSER_CAPABILITY_TYPE_CONTEXT_PICKING = 7;
+    COMPOSER_CAPABILITY_TYPE_EDIT_TRAIL = 8;
+    COMPOSER_CAPABILITY_TYPE_AUTO_CONTEXT = 9;
+    COMPOSER_CAPABILITY_TYPE_CONTEXT_PLANNER = 10;
+    COMPOSER_CAPABILITY_TYPE_DIFF_HISTORY = 11;
+    COMPOSER_CAPABILITY_TYPE_REMEMBER_THIS = 12;
+    COMPOSER_CAPABILITY_TYPE_DECOMPOSER = 13;
+    COMPOSER_CAPABILITY_TYPE_USES_CODEBASE = 14;
+    COMPOSER_CAPABILITY_TYPE_TOOL_FORMER = 15;
+    COMPOSER_CAPABILITY_TYPE_CURSOR_RULES = 16;
+    COMPOSER_CAPABILITY_TYPE_TOKEN_COUNTER = 17;
+    COMPOSER_CAPABILITY_TYPE_USAGE_DATA = 18;
+    COMPOSER_CAPABILITY_TYPE_CHIMES = 19;
+    COMPOSER_CAPABILITY_TYPE_CODE_DECAY_TRACKER = 20;
+    COMPOSER_CAPABILITY_TYPE_BACKGROUND_COMPOSER = 21;
+    COMPOSER_CAPABILITY_TYPE_SUMMARIZATION = 22;
+    COMPOSER_CAPABILITY_TYPE_AI_CODE_TRACKING = 23;
+    COMPOSER_CAPABILITY_TYPE_QUEUING = 24;
+    COMPOSER_CAPABILITY_TYPE_MEMORIES = 25;
+    COMPOSER_CAPABILITY_TYPE_RCP_LOGS = 26;
+    COMPOSER_CAPABILITY_TYPE_KNOWLEDGE_FETCH = 27;
+    COMPOSER_CAPABILITY_TYPE_SLACK_INTEGRATION = 28;
+    COMPOSER_CAPABILITY_TYPE_SUB_COMPOSER = 29;
+    COMPOSER_CAPABILITY_TYPE_THINKING = 30;
+    COMPOSER_CAPABILITY_TYPE_CONTEXT_WINDOW = 31;
+    COMPOSER_CAPABILITY_TYPE_ONLINE_METRICS = 32;
+    COMPOSER_CAPABILITY_TYPE_NOTIFICATIONS = 33;
+    COMPOSER_CAPABILITY_TYPE_SPEC = 34;
+    COMPOSER_CAPABILITY_TYPE_BROWSER_AGENT = 35;
+  }
+
+  enum ToolType {
+    TOOL_TYPE_UNSPECIFIED = 0;
+    TOOL_TYPE_ADD_FILE_TO_CONTEXT = 1;
+    TOOL_TYPE_ITERATE = 3;
+    TOOL_TYPE_REMOVE_FILE_FROM_CONTEXT = 4;
+    TOOL_TYPE_SEMANTIC_SEARCH_CODEBASE = 5;
+  }
+
+  message AutoContextCapability {
+    optional string custom_instructions = 1;
+    repeated string additional_files = 2;
+  }
+
+  message ContextPickingCapability {
+    optional string custom_instructions = 1;
+    repeated string potential_context_files = 2;
+    repeated CodeChunk potential_context_code_chunks = 3;
+    repeated string files_in_context = 4;
+  }
+
+  message ContextPlannerCapability {
+    optional string custom_instructions = 1;
+    repeated CodeChunk attached_code_chunks = 2;
+  }
+
+  message CursorRulesCapability {
+    optional string custom_instructions = 1;
+  }
+
+  message DecomposerCapability {
+    optional string custom_instructions = 1;
+  }
+
+  message DiffReviewCapability {
+    message SimpleFileDiff {
+      message Chunk {
+        repeated string old_lines = 1;
+        repeated string new_lines = 2;
+        LineRange old_range = 3;
+        LineRange new_range = 4;
+      }
+
+      string relative_workspace_path = 1;
+      repeated Chunk chunks = 3;
+    }
+
+    optional string custom_instructions = 1;
+    repeated SimpleFileDiff diffs = 2;
+  }
+
+  message EditTrailCapability {
+    optional string custom_instructions = 1;
+  }
+
+  message LoopOnCommandCapability {
+    string command = 1;
+    optional string custom_instructions = 2;
+    optional string output = 3;
+    optional int32 exit_code = 4;
+  }
+
+  message LoopOnLintsCapability {
+    repeated LinterErrors linter_errors = 1;
+    optional string custom_instructions = 2;
+  }
+
+  message LoopOnTestsCapability {
+    repeated string test_names = 1;
+    optional string custom_instructions = 2;
+  }
+
+  message MegaPlannerCapability {
+    optional string custom_instructions = 1;
+  }
+
+  message RememberThisCapability {
+    optional string custom_instructions = 1;
+    string memory = 2;
+  }
+
+  message SchemaProperty {
+    string type = 1;
+    optional string description = 2;
+  }
+
+  message ToolCallCapability {
+    optional string custom_instructions = 1;
+    repeated ToolSchema tool_schemas = 2;
+    repeated string relevant_files = 3;
+    repeated string files_in_context = 4;
+    repeated string semantic_search_files = 5;
+  }
+
+  message ToolSchema {
+    ToolType type = 1;
+    string name = 2;
+    map<string, aiserver.v1.ComposerCapabilityRequest.SchemaProperty> properties = 3;
+    repeated string required = 4;
+  }
+
+  ComposerCapabilityType type = 1;
+  oneof data {
+    LoopOnLintsCapability loop_on_lints = 2;
+    LoopOnTestsCapability loop_on_tests = 3;
+    MegaPlannerCapability mega_planner = 4;
+    LoopOnCommandCapability loop_on_command = 5;
+    ToolCallCapability tool_call = 6;
+    DiffReviewCapability diff_review = 7;
+    ContextPickingCapability context_picking = 8;
+    EditTrailCapability edit_trail = 9;
+    AutoContextCapability auto_context = 10;
+    ContextPlannerCapability context_planner = 11;
+    RememberThisCapability remember_this = 12;
+    DecomposerCapability decomposer = 13;
+    CursorRulesCapability cursor_rules = 14;
+  }
+}

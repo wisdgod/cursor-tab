@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message GenerateImageArgs {
+  string description = 1;
+  optional string file_path = 2;
+  repeated string reference_image_paths = 5;
+}
+
+message GenerateImageError {
+  string error = 1;
+}
+
+message GenerateImageRequestQuery {
+  GenerateImageArgs args = 1;
+  string tool_call_id = 2;
+}
+
+message GenerateImageRequestResponse {
+  message Approved {
+    string description = 1;
+  }
+
+  message Rejected {
+    string reason = 1;
+  }
+
+  oneof result {
+    Approved approved = 1;
+    Rejected rejected = 2;
+  }
+}
+
+message GenerateImageResult {
+  oneof result {
+    GenerateImageSuccess success = 1;
+    GenerateImageError error = 2;
+  }
+}
+
+message GenerateImageSuccess {
+  string file_path = 1;
+  string image_data = 2;
+}
+
+message GenerateImageToolCall {
+  GenerateImageArgs args = 1;
+  GenerateImageResult result = 2;
+}

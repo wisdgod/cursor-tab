@@ -1,0 +1,2183 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "agent/v1/ai_attribution_tool.proto";
+import "agent/v1/apply_agent_diff_tool.proto";
+import "agent/v1/background_shell_exec.proto";
+import "agent/v1/computer_use_tool.proto";
+import "agent/v1/generate_image_tool.proto";
+import "agent/v1/ls_exec.proto";
+import "agent/v1/record_screen_exec.proto";
+import "agent/v1/report_bugfix_results_tool.proto";
+import "agent/v1/sandbox.proto";
+import "agent/v1/shell_exec.proto";
+import "agent/v1/subagents.proto";
+import "aiserver/v1/repository.proto";
+import "aiserver/v1/utils.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+enum BuiltinTool {
+  BUILTIN_TOOL_UNSPECIFIED = 0;
+  BUILTIN_TOOL_SEARCH = 1;
+  BUILTIN_TOOL_READ_CHUNK = 2;
+  BUILTIN_TOOL_GOTODEF = 3;
+  BUILTIN_TOOL_EDIT = 4;
+  BUILTIN_TOOL_UNDO_EDIT = 5;
+  BUILTIN_TOOL_END = 6;
+  BUILTIN_TOOL_NEW_FILE = 7;
+  BUILTIN_TOOL_ADD_TEST = 8;
+  BUILTIN_TOOL_RUN_TEST = 9;
+  BUILTIN_TOOL_DELETE_TEST = 10;
+  BUILTIN_TOOL_SAVE_FILE = 11;
+  BUILTIN_TOOL_GET_TESTS = 12;
+  BUILTIN_TOOL_GET_SYMBOLS = 13;
+  BUILTIN_TOOL_SEMANTIC_SEARCH = 14;
+  BUILTIN_TOOL_GET_PROJECT_STRUCTURE = 15;
+  BUILTIN_TOOL_CREATE_RM_FILES = 16;
+  BUILTIN_TOOL_RUN_TERMINAL_COMMANDS = 17;
+  BUILTIN_TOOL_NEW_EDIT = 18;
+  BUILTIN_TOOL_READ_WITH_LINTER = 19;
+}
+
+enum ClientSideToolV2 {
+  CLIENT_SIDE_TOOL_V2_UNSPECIFIED = 0;
+  CLIENT_SIDE_TOOL_V2_READ_SEMSEARCH_FILES = 1;
+  CLIENT_SIDE_TOOL_V2_RIPGREP_SEARCH = 3;
+  CLIENT_SIDE_TOOL_V2_READ_FILE = 5;
+  CLIENT_SIDE_TOOL_V2_LIST_DIR = 6;
+  CLIENT_SIDE_TOOL_V2_EDIT_FILE = 7;
+  CLIENT_SIDE_TOOL_V2_FILE_SEARCH = 8;
+  CLIENT_SIDE_TOOL_V2_SEMANTIC_SEARCH_FULL = 9;
+  CLIENT_SIDE_TOOL_V2_DELETE_FILE = 11;
+  CLIENT_SIDE_TOOL_V2_REAPPLY = 12;
+  CLIENT_SIDE_TOOL_V2_RUN_TERMINAL_COMMAND_V2 = 15;
+  CLIENT_SIDE_TOOL_V2_FETCH_RULES = 16;
+  CLIENT_SIDE_TOOL_V2_WEB_SEARCH = 18;
+  CLIENT_SIDE_TOOL_V2_MCP = 19;
+  CLIENT_SIDE_TOOL_V2_SEARCH_SYMBOLS = 23;
+  CLIENT_SIDE_TOOL_V2_BACKGROUND_COMPOSER_FOLLOWUP = 24;
+  CLIENT_SIDE_TOOL_V2_KNOWLEDGE_BASE = 25;
+  CLIENT_SIDE_TOOL_V2_FETCH_PULL_REQUEST = 26;
+  CLIENT_SIDE_TOOL_V2_DEEP_SEARCH = 27;
+  CLIENT_SIDE_TOOL_V2_CREATE_DIAGRAM = 28;
+  CLIENT_SIDE_TOOL_V2_FIX_LINTS = 29;
+  CLIENT_SIDE_TOOL_V2_READ_LINTS = 30;
+  CLIENT_SIDE_TOOL_V2_GO_TO_DEFINITION = 31;
+  CLIENT_SIDE_TOOL_V2_TASK = 32;
+  CLIENT_SIDE_TOOL_V2_AWAIT_TASK = 33;
+  CLIENT_SIDE_TOOL_V2_TODO_READ = 34;
+  CLIENT_SIDE_TOOL_V2_TODO_WRITE = 35;
+  CLIENT_SIDE_TOOL_V2_EDIT_FILE_V2 = 38;
+  CLIENT_SIDE_TOOL_V2_LIST_DIR_V2 = 39;
+  CLIENT_SIDE_TOOL_V2_READ_FILE_V2 = 40;
+  CLIENT_SIDE_TOOL_V2_RIPGREP_RAW_SEARCH = 41;
+  CLIENT_SIDE_TOOL_V2_GLOB_FILE_SEARCH = 42;
+  CLIENT_SIDE_TOOL_V2_CREATE_PLAN = 43;
+  CLIENT_SIDE_TOOL_V2_LIST_MCP_RESOURCES = 44;
+  CLIENT_SIDE_TOOL_V2_READ_MCP_RESOURCE = 45;
+  CLIENT_SIDE_TOOL_V2_READ_PROJECT = 46;
+  CLIENT_SIDE_TOOL_V2_UPDATE_PROJECT = 47;
+  CLIENT_SIDE_TOOL_V2_TASK_V2 = 48;
+  CLIENT_SIDE_TOOL_V2_CALL_MCP_TOOL = 49;
+  CLIENT_SIDE_TOOL_V2_APPLY_AGENT_DIFF = 50;
+  CLIENT_SIDE_TOOL_V2_ASK_QUESTION = 51;
+  CLIENT_SIDE_TOOL_V2_SWITCH_MODE = 52;
+  CLIENT_SIDE_TOOL_V2_GENERATE_IMAGE = 53;
+  CLIENT_SIDE_TOOL_V2_COMPUTER_USE = 54;
+  CLIENT_SIDE_TOOL_V2_WRITE_SHELL_STDIN = 55;
+  CLIENT_SIDE_TOOL_V2_RECORD_SCREEN = 56;
+  CLIENT_SIDE_TOOL_V2_WEB_FETCH = 57;
+  CLIENT_SIDE_TOOL_V2_REPORT_BUGFIX_RESULTS = 58;
+  CLIENT_SIDE_TOOL_V2_AI_ATTRIBUTION = 59;
+  CLIENT_SIDE_TOOL_V2_MCP_AUTH = 60;
+  CLIENT_SIDE_TOOL_V2_REFLECT = 61;
+  CLIENT_SIDE_TOOL_V2_AWAIT = 62;
+  CLIENT_SIDE_TOOL_V2_GET_MCP_TOOLS = 63;
+}
+
+enum RunTerminalCommandEndedReason {
+  RUN_TERMINAL_COMMAND_ENDED_REASON_UNSPECIFIED = 0;
+  RUN_TERMINAL_COMMAND_ENDED_REASON_EXECUTION_COMPLETED = 1;
+  RUN_TERMINAL_COMMAND_ENDED_REASON_EXECUTION_ABORTED = 2;
+  RUN_TERMINAL_COMMAND_ENDED_REASON_EXECUTION_FAILED = 3;
+  RUN_TERMINAL_COMMAND_ENDED_REASON_ERROR_OCCURRED_CHECKING_REASON = 4;
+  RUN_TERMINAL_COMMAND_ENDED_REASON_IDLE_TIMEOUT = 5;
+}
+
+enum ShellType {
+  SHELL_TYPE_UNSPECIFIED = 0;
+  SHELL_TYPE_BASH = 1;
+  SHELL_TYPE_POWERSHELL = 2;
+}
+
+message AddTestParams {
+  string relative_workspace_path = 1;
+  string test_name = 2;
+  string test_code = 3;
+}
+
+message AddTestResult {
+  message Feedback {
+    string message = 1;
+    string severity = 2;
+    int32 start_line_number = 3;
+    int32 end_line_number = 4;
+    repeated RelatedInformation related_information = 5;
+  }
+
+  message RelatedInformation {
+    string message = 1;
+    int32 start_line_number = 2;
+    int32 end_line_number = 3;
+    string relative_workspace_path = 4;
+  }
+
+  repeated Feedback feedback = 1;
+}
+
+message AddUiStepParams {
+  message SearchResult {
+    string relative_workspace_path = 1;
+  }
+
+  message SearchResults {
+    repeated SearchResult search_results = 1;
+  }
+
+  string conversation_id = 1;
+  oneof step {
+    SearchResults search_results = 2;
+  }
+}
+
+message AddUiStepResult {
+}
+
+message ApplyAgentDiffParams {
+  string agent_id = 1;
+}
+
+message AskQuestionParams {
+  message Option {
+    string id = 1;
+    string label = 2;
+  }
+
+  message Question {
+    string id = 1;
+    string prompt = 2;
+    repeated Option options = 3;
+    bool allow_multiple = 4;
+  }
+
+  string title = 1;
+  repeated Question questions = 2;
+  bool run_async = 3;
+}
+
+message AskQuestionResult {
+  message Answer {
+    string question_id = 1;
+    repeated string selected_option_ids = 2;
+    optional string freeform_text = 3;
+  }
+
+  repeated Answer answers = 1;
+  bool is_async = 2;
+}
+
+message AskQuestionStream {
+  AskQuestionParams params = 1;
+}
+
+message AwaitTaskParams {
+  repeated string ids = 1;
+}
+
+message AwaitTaskResult {
+  message TaskResultItem {
+    string task_id = 1;
+    TaskResult.CompletedTaskResult result = 2;
+  }
+
+  repeated TaskResultItem task_results = 1;
+  repeated string missing_task_ids = 2;
+}
+
+message AwaitTaskStream {
+}
+
+message BackgroundComposerFollowupParams {
+  string proposed_followup = 1;
+  string bc_id = 2;
+}
+
+message BackgroundComposerFollowupResult {
+  string proposed_followup = 1;
+  bool is_sent = 2;
+}
+
+message BackgroundComposerFollowupStream {
+}
+
+message BuiltinToolCall {
+  BuiltinTool tool = 1;
+  oneof params {
+    SearchParams search_params = 2;
+    ReadChunkParams read_chunk_params = 3;
+    GotodefParams gotodef_params = 4;
+    EditParams edit_params = 5;
+    UndoEditParams undo_edit_params = 6;
+    EndParams end_params = 7;
+    NewFileParams new_file_params = 8;
+    AddTestParams add_test_params = 9;
+    RunTestParams run_test_params = 10;
+    DeleteTestParams delete_test_params = 11;
+    SaveFileParams save_file_params = 12;
+    GetTestsParams get_tests_params = 13;
+    GetSymbolsParams get_symbols_params = 14;
+    SemanticSearchParams semantic_search_params = 15;
+    GetProjectStructureParams get_project_structure_params = 16;
+    CreateRmFilesParams create_rm_files_params = 17;
+    RunTerminalCommandsParams run_terminal_commands_params = 18;
+    NewEditParams new_edit_params = 19;
+    ReadWithLinterParams read_with_linter_params = 20;
+    AddUiStepParams add_ui_step_params = 21;
+    ReadSemsearchFilesParams read_semsearch_files_params = 23;
+    DeleteFileParams delete_file_params = 26;
+  }
+  optional string tool_call_id = 22;
+}
+
+message BuiltinToolResult {
+  BuiltinTool tool = 1;
+  oneof result {
+    SearchResult search_result = 2;
+    ReadChunkResult read_chunk_result = 3;
+    GotodefResult gotodef_result = 4;
+    EditResult edit_result = 5;
+    UndoEditResult undo_edit_result = 6;
+    EndResult end_result = 7;
+    NewFileResult new_file_result = 8;
+    AddTestResult add_test_result = 9;
+    RunTestResult run_test_result = 10;
+    DeleteTestResult delete_test_result = 11;
+    SaveFileResult save_file_result = 12;
+    GetTestsResult get_tests_result = 13;
+    GetSymbolsResult get_symbols_result = 14;
+    SemanticSearchResult semantic_search_result = 15;
+    GetProjectStructureResult get_project_structure_result = 16;
+    CreateRmFilesResult create_rm_files_result = 17;
+    RunTerminalCommandsResult run_terminal_commands_result = 18;
+    NewEditResult new_edit_result = 19;
+    ReadWithLinterResult read_with_linter_result = 20;
+    AddUiStepResult add_ui_step_result = 21;
+    ReadSemsearchFilesResult read_semsearch_files_result = 22;
+    DeleteFileResult delete_file_result = 24;
+  }
+}
+
+message CallMcpToolParams {
+  string server = 1;
+  string tool_name = 2;
+  google.protobuf.Struct tool_args = 3;
+}
+
+message CallMcpToolResult {
+  string server = 1;
+  string tool_name = 2;
+  google.protobuf.Struct result = 3;
+}
+
+message CallMcpToolStream {
+}
+
+message ClientSideToolV2Call {
+  ClientSideToolV2 tool = 1;
+  oneof params {
+    ReadSemsearchFilesParams read_semsearch_files_params = 2;
+    RipgrepSearchParams ripgrep_search_params = 5;
+    ReadFileParams read_file_params = 8;
+    ListDirParams list_dir_params = 12;
+    EditFileParams edit_file_params = 13;
+    ToolCallFileSearchParams file_search_params = 16;
+    SemanticSearchFullParams semantic_search_full_params = 17;
+    DeleteFileParams delete_file_params = 19;
+    ReapplyParams reapply_params = 20;
+    RunTerminalCommandV2Params run_terminal_command_v2_params = 23;
+    FetchRulesParams fetch_rules_params = 24;
+    WebSearchParams web_search_params = 26;
+    MCPParams mcp_params = 27;
+    SearchSymbolsParams search_symbols_params = 31;
+    GotodefParams gotodef_params = 41;
+    BackgroundComposerFollowupParams background_composer_followup_params = 32;
+    KnowledgeBaseParams knowledge_base_params = 33;
+    FetchPullRequestParams fetch_pull_request_params = 34;
+    DeepSearchParams deep_search_params = 35;
+    CreateDiagramParams create_diagram_params = 36;
+    FixLintsParams fix_lints_params = 37;
+    ReadLintsParams read_lints_params = 38;
+    TaskParams task_params = 42;
+    AwaitTaskParams await_task_params = 43;
+    TodoReadParams todo_read_params = 44;
+    TodoWriteParams todo_write_params = 45;
+    EditFileV2Params edit_file_v2_params = 50;
+    ListDirV2Params list_dir_v2_params = 52;
+    ReadFileV2Params read_file_v2_params = 53;
+    RipgrepRawSearchParams ripgrep_raw_search_params = 54;
+    GlobFileSearchParams glob_file_search_params = 55;
+    CreatePlanParams create_plan_params = 56;
+    ListMcpResourcesParams list_mcp_resources_params = 57;
+    ReadMcpResourceParams read_mcp_resource_params = 58;
+    ReadProjectParams read_project_params = 59;
+    UpdateProjectParams update_project_params = 60;
+    TaskV2Params task_v2_params = 61;
+    CallMcpToolParams call_mcp_tool_params = 62;
+    ApplyAgentDiffParams apply_agent_diff_params = 63;
+    AskQuestionParams ask_question_params = 64;
+    SwitchModeParams switch_mode_params = 65;
+    ComputerUseParams computer_use_params = 66;
+    agent.v1.WriteShellStdinArgs write_shell_stdin_params = 67;
+    agent.v1.RecordScreenArgs record_screen_params = 68;
+    WebFetchParams web_fetch_params = 69;
+    ReportBugfixResultsParams report_bugfix_results_params = 70;
+    McpAuthParams mcp_auth_params = 71;
+    GetMcpToolsParams get_mcp_tools_params = 72;
+  }
+  string tool_call_id = 3;
+  optional double timeout_ms = 6;
+  string name = 9;
+  bool is_streaming = 14;
+  bool is_last_message = 15;
+  bool internal = 51;
+  string raw_args = 10;
+  optional uint32 tool_index = 48;
+  optional string model_call_id = 49;
+}
+
+message ClientSideToolV2Result {
+  ClientSideToolV2 tool = 1;
+  oneof result {
+    ReadSemsearchFilesResult read_semsearch_files_result = 2;
+    RipgrepSearchResult ripgrep_search_result = 4;
+    ReadFileResult read_file_result = 6;
+    ListDirResult list_dir_result = 9;
+    EditFileResult edit_file_result = 10;
+    ToolCallFileSearchResult file_search_result = 11;
+    SemanticSearchFullResult semantic_search_full_result = 18;
+    DeleteFileResult delete_file_result = 20;
+    ReapplyResult reapply_result = 21;
+    RunTerminalCommandV2Result run_terminal_command_v2_result = 24;
+    FetchRulesResult fetch_rules_result = 25;
+    WebSearchResult web_search_result = 27;
+    MCPResult mcp_result = 28;
+    SearchSymbolsResult search_symbols_result = 32;
+    BackgroundComposerFollowupResult background_composer_followup_result = 33;
+    KnowledgeBaseResult knowledge_base_result = 34;
+    FetchPullRequestResult fetch_pull_request_result = 36;
+    DeepSearchResult deep_search_result = 37;
+    CreateDiagramResult create_diagram_result = 38;
+    FixLintsResult fix_lints_result = 39;
+    ReadLintsResult read_lints_result = 40;
+    GotodefResult gotodef_result = 41;
+    TaskResult task_result = 42;
+    AwaitTaskResult await_task_result = 43;
+    TodoReadResult todo_read_result = 44;
+    TodoWriteResult todo_write_result = 45;
+    EditFileV2Result edit_file_v2_result = 51;
+    ListDirV2Result list_dir_v2_result = 52;
+    ReadFileV2Result read_file_v2_result = 53;
+    RipgrepRawSearchResult ripgrep_raw_search_result = 54;
+    GlobFileSearchResult glob_file_search_result = 55;
+    CreatePlanResult create_plan_result = 56;
+    ListMcpResourcesResult list_mcp_resources_result = 57;
+    ReadMcpResourceResult read_mcp_resource_result = 58;
+    ReadProjectResult read_project_result = 59;
+    UpdateProjectResult update_project_result = 60;
+    TaskV2Result task_v2_result = 61;
+    CallMcpToolResult call_mcp_tool_result = 62;
+    agent.v1.ApplyAgentDiffResult apply_agent_diff_result = 63;
+    AskQuestionResult ask_question_result = 64;
+    SwitchModeResult switch_mode_result = 65;
+    ComputerUseResult computer_use_result = 66;
+    agent.v1.GenerateImageResult generate_image_result = 67;
+    agent.v1.WriteShellStdinResult write_shell_stdin_result = 68;
+    agent.v1.RecordScreenResult record_screen_result = 69;
+    WebFetchResult web_fetch_result = 70;
+    ReportBugfixResultsResult report_bugfix_results_result = 71;
+    agent.v1.AiAttributionResult ai_attribution_result = 72;
+    McpAuthResult mcp_auth_result = 73;
+    GetMcpToolsResult get_mcp_tools_result = 74;
+  }
+  string tool_call_id = 35;
+  optional ToolResultError error = 8;
+  optional string model_call_id = 48;
+  optional uint32 tool_index = 49;
+  optional ToolResultAttachments attachments = 50;
+}
+
+message ComputerUseParams {
+  repeated agent.v1.ComputerUseAction actions = 1;
+}
+
+message ComputerUseResult {
+  oneof result {
+    agent.v1.ComputerUseSuccess success = 1;
+    agent.v1.ComputerUseError error = 2;
+  }
+}
+
+message ComputerUseStream {
+  ComputerUseParams params = 1;
+}
+
+message CreateDiagramParams {
+  string content = 1;
+}
+
+message CreateDiagramResult {
+  optional string error = 1;
+}
+
+message CreateDiagramStream {
+}
+
+message CreatePlanParams {
+  string plan = 1;
+  string title = 2;
+  string summary = 3;
+  repeated Step steps = 4;
+  string old_str = 5;
+  string new_str = 6;
+  string name = 7;
+  repeated TodoItem todos = 8;
+  string overview = 9;
+  bool is_spec = 10;
+  bool is_project = 11;
+  repeated PlanPhase phases = 12;
+}
+
+message CreatePlanResult {
+  message Accepted {
+    repeated TodoItem final_todos = 1;
+  }
+
+  message Modified {
+    string new_plan = 1;
+    repeated TodoItem final_todos = 2;
+  }
+
+  message Rejected {
+  }
+
+  oneof result {
+    Accepted accepted = 1;
+    Rejected rejected = 2;
+    Modified modified = 3;
+  }
+  string plan_uri = 4;
+}
+
+message CreatePlanStream {
+}
+
+message CreateRmFilesParams {
+  repeated string removed_file_paths = 1;
+  repeated string created_file_paths = 2;
+  repeated string created_directory_paths = 3;
+}
+
+message CreateRmFilesResult {
+  repeated string created_file_paths = 1;
+  repeated string removed_file_paths = 2;
+}
+
+message CustomToolCall {
+  string tool_id = 1;
+  string params = 2;
+}
+
+message CustomToolResult {
+  string tool_id = 1;
+  string result = 2;
+}
+
+message DeepSearchParams {
+  string query = 1;
+}
+
+message DeepSearchResult {
+  bool success = 1;
+  string result = 2;
+}
+
+message DeepSearchStream {
+}
+
+message DeleteFileParams {
+  string relative_workspace_path = 1;
+}
+
+message DeleteFileResult {
+  bool rejected = 1;
+  bool file_non_existent = 2;
+  bool file_deleted_successfully = 3;
+}
+
+message DeleteFileStream {
+  string relative_workspace_path = 1;
+}
+
+message DeleteTestParams {
+  string relative_workspace_path = 1;
+  optional string test_name = 2;
+}
+
+message DeleteTestResult {
+}
+
+message EditFileParams {
+  string relative_workspace_path = 1;
+  string language = 2;
+  bool blocking = 4;
+  string contents = 3;
+  optional string instructions = 5;
+  optional bool should_edit_file_fail_for_large_files = 12;
+  optional string old_string = 6;
+  optional string new_string = 7;
+  optional bool allow_multiple_matches = 8;
+  optional bool use_whitespace_insensitive_fallback = 10;
+  optional bool use_did_you_mean_fuzzy_match = 11;
+  optional bool gracefully_handle_recoverable_errors = 16;
+  repeated LineRange line_ranges = 9;
+  optional int32 notebook_cell_idx = 13;
+  optional bool is_new_cell = 14;
+  optional string cell_language = 15;
+  optional string edit_category = 17;
+  optional bool should_eagerly_process_lints = 18;
+}
+
+message EditFileResult {
+  message EditFileHumanReview {
+    bool is_edit_accepted = 1;
+    string text_result = 2;
+    bool stop_and_get_new_user_input = 3;
+  }
+
+  message FileDiff {
+    enum Editor {
+      EDITOR_UNSPECIFIED = 0;
+      EDITOR_AI = 1;
+      EDITOR_HUMAN = 2;
+    }
+
+    message ChunkDiff {
+      string diff_string = 1;
+      int32 old_start = 2;
+      int32 new_start = 3;
+      int32 old_lines = 4;
+      int32 new_lines = 5;
+      int32 lines_removed = 6;
+      int32 lines_added = 7;
+    }
+
+    repeated ChunkDiff chunks = 1;
+    Editor editor = 2;
+    bool hit_timeout = 3;
+  }
+
+  message HumanFeedback {
+    string selected_option = 1;
+    string feedback_text = 2;
+    bool submit_feedback_as_new_message = 3;
+    string bubble_id = 4;
+  }
+
+  message RecoverableError {
+    enum RecoverableErrorType {
+      RECOVERABLE_ERROR_TYPE_UNSPECIFIED = 0;
+      RECOVERABLE_ERROR_TYPE_SEARCH_STRING_NOT_FOUND = 1;
+      RECOVERABLE_ERROR_TYPE_AMBIGUOUS_SEARCH_STRING = 2;
+    }
+
+    RecoverableErrorType error_type = 1;
+    string model_message = 2;
+  }
+
+  FileDiff diff = 1;
+  bool is_applied = 2;
+  bool apply_failed = 3;
+  repeated LinterError linter_errors = 4;
+  optional bool rejected = 5;
+  optional int32 num_matches = 6;
+  optional bool whitespace_insensitive_fallback_found_match = 7;
+  optional bool no_match_found_in_line_ranges = 8;
+  optional RecoverableError recoverable_error = 11;
+  optional int32 num_lines_in_file = 9;
+  optional bool is_subagent_edit = 10;
+  optional bool diff_became_no_op_due_to_on_save_fixes = 12;
+  optional EditFileHumanReview human_review = 13;
+  optional HumanFeedback human_feedback = 14;
+  optional bool should_eagerly_process_lints = 15;
+  optional HumanReview human_review_v2 = 16;
+  optional bool were_all_new_linter_errors_resolved_by_this_edit = 17;
+}
+
+message EditFileStream {
+}
+
+message EditFileV2Params {
+  message StreamingEditCode {
+    string code = 1;
+  }
+
+  message StreamingEditText {
+    string text = 1;
+  }
+
+  string relative_workspace_path = 1;
+  optional string contents_after_edit = 2;
+  optional bool waiting_for_file_contents = 3;
+  oneof streaming_edit {
+    StreamingEditText text = 4;
+    StreamingEditCode code = 5;
+  }
+  bool should_send_back_linter_errors = 6;
+  optional EditFileResult.FileDiff diff = 7;
+  string result_for_model = 8;
+  optional string streaming_content = 9;
+  optional bool no_codeblock = 10;
+  optional bool cloud_agent_edit = 11;
+}
+
+message EditFileV2Result {
+  optional string contents_before_edit = 1;
+  optional string eol_sequence = 9;
+  optional string detected_language = 11;
+  bool file_was_created = 2;
+  optional EditFileResult.FileDiff diff = 3;
+  optional bool rejected = 4;
+  repeated LinterError linter_errors = 5;
+  bool sent_back_linter_errors = 6;
+  bool should_auto_fix_lints = 8;
+  optional HumanReview human_review_v2 = 7;
+  string result_for_model = 10;
+  optional string contents_after_edit = 12;
+  optional string before_content_id = 13;
+  string after_content_id = 14;
+}
+
+message EditFileV2Stream {
+}
+
+message EditParams {
+  enum FrontendEditType {
+    FRONTEND_EDIT_TYPE_UNSPECIFIED = 0;
+    FRONTEND_EDIT_TYPE_INLINE_DIFFS = 1;
+    FRONTEND_EDIT_TYPE_SIMPLE = 2;
+  }
+
+  string relative_workspace_path = 1;
+  optional int32 line_number = 2;
+  int32 replace_num_lines = 3;
+  repeated string new_lines = 4;
+  optional bool replace_whole_file = 7;
+  string edit_id = 5;
+  FrontendEditType frontend_edit_type = 6;
+  optional bool auto_fix_all_linter_errors_in_file = 8;
+}
+
+message EditResult {
+  message Feedback {
+    string message = 1;
+    string severity = 2;
+    int32 start_line_number = 3;
+    int32 end_line_number = 4;
+    repeated RelatedInformation related_information = 5;
+  }
+
+  message RelatedInformation {
+    string message = 1;
+    int32 start_line_number = 2;
+    int32 end_line_number = 3;
+    string relative_workspace_path = 4;
+  }
+
+  repeated string feedback = 1;
+  int32 context_start_line_number = 2;
+  repeated string context_lines = 3;
+  string file = 4;
+  int32 file_total_lines = 5;
+  repeated Feedback structured_feedback = 6;
+}
+
+message EndParams {
+}
+
+message EndResult {
+}
+
+message ErrorToolResult {
+  string error_message = 1;
+}
+
+message FetchPullRequestParams {
+  string pull_number_or_commit_hash = 1;
+  optional string repo = 2;
+  optional bool is_github = 3;
+}
+
+message FetchPullRequestResult {
+  string content = 1;
+  uint32 pr_number = 2;
+  string title = 3;
+  string body = 4;
+  string author = 5;
+  string date = 6;
+  string diff = 7;
+  optional string sha = 8;
+  optional string external_link = 9;
+  optional string url = 10;
+  repeated IssueComment comments = 11;
+  repeated string labels = 12;
+  repeated string assignees = 13;
+  optional bool is_issue = 14;
+  optional string state = 15;
+  optional bool prompt_connect_github = 16;
+}
+
+message FetchPullRequestStream {
+}
+
+message FetchRulesParams {
+  repeated string rule_names = 1;
+}
+
+message FetchRulesResult {
+  repeated CursorRule rules = 1;
+}
+
+message FetchRulesStream {
+  repeated string rule_names = 1;
+}
+
+message FixLintsParams {
+}
+
+message FixLintsResult {
+  message FileResult {
+    string file_path = 1;
+    EditFileResult.FileDiff diff = 2;
+    bool is_applied = 3;
+    bool apply_failed = 4;
+    optional string error = 5;
+    repeated LinterError linter_errors = 6;
+  }
+
+  repeated FileResult file_results = 1;
+}
+
+message FixLintsStream {
+}
+
+message GetMcpToolsParams {
+  optional string server = 1;
+  optional string tool_name = 2;
+  optional string pattern = 3;
+}
+
+message GetMcpToolsResult {
+  string content = 1;
+  optional string output_file_path = 2;
+}
+
+message GetProjectStructureParams {
+}
+
+message GetProjectStructureResult {
+  message File {
+    string relative_workspace_path = 1;
+    string outline = 2;
+  }
+
+  repeated File files = 1;
+  string root_workspace_path = 2;
+}
+
+message GetSymbolsParams {
+  message LineRange {
+    int32 start_line_number = 1;
+    int32 end_line_number_inclusive = 2;
+  }
+
+  string relative_workspace_path = 1;
+  optional LineRange line_range = 2;
+  bool include_children = 3;
+}
+
+message GetSymbolsResult {
+  repeated DocumentSymbol symbols = 1;
+}
+
+message GetTestsParams {
+  string relative_workspace_path = 1;
+}
+
+message GetTestsResult {
+  message Test {
+    string name = 1;
+    repeated string lines = 2;
+  }
+
+  repeated Test tests = 1;
+}
+
+message GlobFileSearchParams {
+  string target_directory = 1;
+  string glob_pattern = 2;
+}
+
+message GlobFileSearchResult {
+  message Directory {
+    string abs_path = 1;
+    repeated File files = 2;
+    int32 total_files = 3;
+    bool ripgrep_truncated = 4;
+  }
+
+  message File {
+    string rel_path = 1;
+  }
+
+  repeated Directory directories = 1;
+}
+
+message GlobFileSearchStream {
+}
+
+message GotodefDefinition {
+  string relative_workspace_path = 1;
+  optional string fully_qualified_name = 2;
+  optional string symbol_kind = 3;
+  int32 start_line = 4;
+  int32 end_line = 5;
+  repeated string code_context_lines = 6;
+}
+
+message GotodefParams {
+  string relative_workspace_path = 1;
+  string symbol = 2;
+  int32 start_line = 3;
+  int32 end_line = 4;
+}
+
+message GotodefResult {
+  repeated GotodefDefinition definitions = 1;
+}
+
+message GotodefStream {
+}
+
+message HumanReview {
+  string selected_option = 1;
+  string feedback_text = 2;
+  bool submit_feedback_as_new_message = 3;
+  string bubble_id = 4;
+}
+
+message IssueComment {
+  uint32 id = 1;
+  string body = 2;
+  optional string author = 3;
+  string created_at = 4;
+  string updated_at = 5;
+  optional string author_association = 6;
+}
+
+message Knowledge {
+  string knowledge = 1;
+  string title = 2;
+}
+
+message KnowledgeBaseParams {
+  string knowledge_to_store = 1;
+  string title = 2;
+  optional string existing_knowledge_id = 3;
+  optional string action = 4;
+}
+
+message KnowledgeBaseResult {
+  bool success = 1;
+  string confirmation_message = 2;
+  string id = 3;
+}
+
+message KnowledgeBaseStream {
+}
+
+message ListDirParams {
+  string directory_path = 1;
+}
+
+message ListDirResult {
+  message File {
+    string name = 1;
+    bool is_directory = 2;
+    optional int64 size = 3;
+    optional google.protobuf.Timestamp last_modified = 4;
+    optional int32 num_children = 5;
+    optional int32 num_lines = 6;
+  }
+
+  repeated File files = 1;
+  string directory_relative_workspace_path = 2;
+}
+
+message ListDirStream {
+}
+
+message ListDirV2Params {
+  string target_directory = 1;
+  repeated string ignore_globs = 2;
+  optional bool should_enrich_terminal_metadata = 3;
+}
+
+message ListDirV2Result {
+  message DirectoryTreeNode {
+    message File {
+      string name = 1;
+      optional agent.v1.TerminalMetadata terminal_metadata = 2;
+    }
+
+    string abs_path = 1;
+    repeated ListDirV2Result.DirectoryTreeNode children_dirs = 2;
+    repeated File children_files = 3;
+    bool children_were_processed = 4;
+    map<string, int32> full_subtree_extension_counts = 5;
+    int32 num_files = 6;
+  }
+
+  DirectoryTreeNode directory_tree_root = 1;
+}
+
+message ListDirV2Stream {
+}
+
+message ListMcpResourcesParams {
+  optional string server = 1;
+}
+
+message ListMcpResourcesResult {
+  message MCPResource {
+    string uri = 1;
+    optional string name = 2;
+    optional string description = 3;
+    optional string mime_type = 4;
+    string server = 5;
+    map<string, string> annotations = 6;
+  }
+
+  repeated MCPResource resources = 1;
+}
+
+message ListMcpResourcesStream {
+}
+
+message MatchRange {
+  int32 start = 1;
+  int32 end = 2;
+}
+
+message McpAuthParams {
+  string server_identifier = 1;
+}
+
+message McpAuthResult {
+  bool success = 1;
+  string message = 2;
+}
+
+message McpAuthStream {
+}
+
+message MCPParams {
+  message Tool {
+    string name = 1;
+    string description = 2;
+    string parameters = 3;
+    string server_name = 4;
+  }
+
+  repeated Tool tools = 1;
+  optional int64 file_output_threshold_bytes = 2;
+}
+
+message MCPResult {
+  string selected_tool = 1;
+  string result = 2;
+}
+
+message MCPStream {
+  repeated MCPParams.Tool tools = 1;
+}
+
+message MissingFile {
+  enum MissingReason {
+    MISSING_REASON_UNSPECIFIED = 0;
+    MISSING_REASON_TOO_LARGE = 1;
+    MISSING_REASON_NOT_FOUND = 2;
+  }
+
+  string relative_workspace_path = 1;
+  MissingReason missing_reason = 2;
+  optional int32 num_lines = 3;
+}
+
+message NewEditParams {
+  string relative_workspace_path = 1;
+  optional int32 start_line_number = 2;
+  optional int32 end_line_number = 3;
+  string text = 4;
+  string edit_id = 5;
+  bool first_edit = 6;
+}
+
+message NewEditResult {
+}
+
+message NewFileParams {
+  string relative_workspace_path = 1;
+}
+
+message NewFileResult {
+  string relative_workspace_path = 1;
+  int32 file_total_lines = 2;
+}
+
+message NudgeMessage {
+  string raw_message = 1;
+}
+
+message OutputLocation {
+  string file_path = 1;
+  int64 size_bytes = 2;
+  int64 line_count = 3;
+}
+
+message PlanPhase {
+  string name = 1;
+  repeated TodoItem todos = 2;
+}
+
+message PullRequestReference {
+  string sha = 1;
+  float score = 2;
+  optional string title = 3;
+  optional string summary = 4;
+  optional uint32 pr_number = 5;
+  optional string author = 6;
+  optional string date = 7;
+  repeated string changed_files = 8;
+}
+
+message Range {
+  int32 start_line = 1;
+  int32 start_character = 2;
+  int32 end_line = 3;
+  int32 end_character = 4;
+}
+
+message ReadChunkParams {
+  string relative_workspace_path = 1;
+  int32 start_line_number = 2;
+  optional int32 num_lines = 3;
+}
+
+message ReadChunkResult {
+  string relative_workspace_path = 1;
+  int32 start_line_number = 2;
+  repeated string lines = 3;
+  int32 total_num_lines = 4;
+  bool cropped = 5;
+}
+
+message ReadFileParams {
+  string relative_workspace_path = 1;
+  bool read_entire_file = 2;
+  optional int32 start_line_one_indexed = 3;
+  optional int32 end_line_one_indexed_inclusive = 4;
+  bool file_is_allowed_to_be_read_entirely = 5;
+  optional int32 max_lines = 6;
+  optional int32 max_chars = 7;
+  optional int32 min_lines = 8;
+}
+
+message ReadFileResult {
+  string contents = 1;
+  bool did_downgrade_to_line_range = 2;
+  bool did_shorten_line_range = 3;
+  bool did_set_default_line_range = 4;
+  optional string full_file_contents = 5;
+  optional string outline = 6;
+  optional int32 start_line_one_indexed = 7;
+  optional int32 end_line_one_indexed_inclusive = 8;
+  string relative_workspace_path = 9;
+  bool did_shorten_char_range = 10;
+  optional bool read_full_file = 11;
+  optional int32 total_lines = 12;
+  repeated CursorRule matching_cursor_rules = 13;
+  FileGit file_git_context = 14;
+}
+
+message ReadFileStream {
+}
+
+message ReadFileV2Params {
+  string target_file = 1;
+  optional int32 offset = 2;
+  optional int32 limit = 3;
+  int32 chars_limit = 4;
+  string effective_uri = 5;
+  optional bool enable_line_numbers = 6;
+}
+
+message ReadFileV2Result {
+  optional string contents = 1;
+  int32 num_characters_in_requested_range = 2;
+  optional bool offset_is_bigger_than_number_of_lines_in_file = 3;
+  optional int32 total_lines_in_file = 4;
+  repeated CursorRule matching_cursor_rules = 5;
+  repeated ImageProto images = 6;
+}
+
+message ReadFileV2Stream {
+  optional ReadFileV2Params params = 1;
+}
+
+message ReadLintsParams {
+  string path = 1;
+  repeated string paths = 2;
+}
+
+message ReadLintsResult {
+  string path = 1;
+  repeated LinterError linter_errors = 2;
+  repeated LinterErrors linter_errors_by_file = 3;
+}
+
+message ReadLintsStream {
+}
+
+message ReadMcpResourceParams {
+  string server = 1;
+  string uri = 2;
+  optional string download_path = 3;
+}
+
+message ReadMcpResourceResult {
+  string uri = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional string mime_type = 4;
+  oneof content {
+    string text = 5;
+    bytes blob = 6;
+  }
+  map<string, string> annotations = 7;
+}
+
+message ReadMcpResourceStream {
+}
+
+message ReadProjectParams {
+}
+
+message ReadProjectResult {
+  string plan = 1;
+}
+
+message ReadProjectStream {
+}
+
+message ReadSemsearchFilesParams {
+  RepositoryInfo repository_info = 1;
+  repeated CodeResult code_results = 2;
+  string query = 3;
+  repeated PullRequestReference pr_references = 4;
+  optional bool pr_search_on = 5;
+}
+
+message ReadSemsearchFilesResult {
+  repeated CodeResult code_results = 1;
+  repeated File all_files = 2;
+  repeated MissingFile missing_files = 3;
+  repeated Knowledge knowledge_results = 4;
+  repeated ToolPullRequestResult pr_results = 5;
+  optional string git_remote_url = 6;
+  optional bool pr_hydration_timed_out = 7;
+}
+
+message ReadSemsearchFilesStream {
+  int32 num_files = 1;
+}
+
+message ReadWithLinterParams {
+  string relative_workspace_path = 1;
+}
+
+message ReadWithLinterResult {
+  string contents = 1;
+  repeated Diagnostic diagnostics = 2;
+}
+
+message ReapplyParams {
+  string relative_workspace_path = 1;
+}
+
+message ReapplyResult {
+  EditFileResult.FileDiff diff = 1;
+  bool is_applied = 2;
+  bool apply_failed = 3;
+  repeated LinterError linter_errors = 4;
+  optional bool rejected = 5;
+}
+
+message ReapplyStream {
+}
+
+message ReportBugfixResultsParams {
+  string summary = 1;
+  repeated agent.v1.BugfixResultItem results = 2;
+}
+
+message ReportBugfixResultsResult {
+  oneof result {
+    agent.v1.ReportBugfixResultsSuccess success = 1;
+    agent.v1.ReportBugfixResultsError error = 2;
+  }
+}
+
+message ReportBugfixResultsStream {
+  ReportBugfixResultsParams params = 1;
+}
+
+message RipgrepRawSearchContentMatch {
+  int32 line_number = 1;
+  string content = 2;
+  bool content_truncated = 3;
+  bool is_context_line = 4;
+}
+
+message RipgrepRawSearchContentResult {
+  repeated RipgrepRawSearchFileMatch matches = 1;
+  int32 total_lines = 2;
+  int32 total_matched_lines = 3;
+  bool client_truncated = 4;
+  bool ripgrep_truncated = 5;
+  optional int32 head_limit_applied = 6;
+  optional int32 offset_applied = 7;
+}
+
+message RipgrepRawSearchCountResult {
+  repeated RipgrepRawSearchFileCount counts = 1;
+  int32 total_files = 2;
+  int32 total_matches = 3;
+  bool client_truncated = 4;
+  optional int32 head_limit_applied = 6;
+  optional int32 offset_applied = 7;
+  bool ripgrep_truncated = 5;
+}
+
+message RipgrepRawSearchError {
+  string error = 1;
+}
+
+message RipgrepRawSearchFileCount {
+  string file = 1;
+  int32 count = 2;
+  optional bool is_dirty = 3;
+  optional bool is_out_of_workspace = 4;
+  optional string absolute_path = 5;
+}
+
+message RipgrepRawSearchFileMatch {
+  string file = 1;
+  repeated RipgrepRawSearchContentMatch matches = 2;
+  optional bool is_dirty = 3;
+  optional bool is_out_of_workspace = 4;
+  optional string absolute_path = 5;
+}
+
+message RipgrepRawSearchFilesResult {
+  message FileEntry {
+    string file = 1;
+    bool is_dirty = 2;
+    bool is_out_of_workspace = 3;
+    optional string absolute_path = 4;
+  }
+
+  repeated string files = 1;
+  int32 total_files = 2;
+  bool client_truncated = 3;
+  bool ripgrep_truncated = 4;
+  repeated FileEntry files_with_meta = 5;
+  optional int32 head_limit_applied = 6;
+  optional int32 offset_applied = 7;
+}
+
+message RipgrepRawSearchParams {
+  string pattern = 1;
+  optional string path = 2;
+  optional string glob = 3;
+  optional string output_mode = 4;
+  optional int32 context_before = 5;
+  optional int32 context_after = 6;
+  optional int32 context = 7;
+  optional bool case_insensitive = 8;
+  optional string type = 9;
+  optional int32 head_limit = 10;
+  optional bool multiline = 11;
+  optional string sort = 12;
+  optional bool sort_ascending = 13;
+  repeated string ignore_globs = 14;
+  optional int32 offset = 15;
+}
+
+message RipgrepRawSearchResult {
+  oneof result {
+    RipgrepRawSearchSuccess success = 1;
+    RipgrepRawSearchError error = 2;
+  }
+}
+
+message RipgrepRawSearchStream {
+  string pattern = 1;
+}
+
+message RipgrepRawSearchSuccess {
+  string pattern = 1;
+  string path = 2;
+  string output_mode = 3;
+  map<string, aiserver.v1.RipgrepRawSearchUnionResult> workspace_results = 4;
+  optional RipgrepRawSearchUnionResult active_editor_result = 5;
+}
+
+message RipgrepRawSearchUnionResult {
+  oneof result {
+    RipgrepRawSearchCountResult count = 1;
+    RipgrepRawSearchFilesResult files = 2;
+    RipgrepRawSearchContentResult content = 3;
+  }
+}
+
+message RipgrepSearchParams {
+  message IPatternInfoProto {
+    message INotebookPatternInfoProto {
+      optional bool is_in_notebook_markdown_input = 1;
+      optional bool is_in_notebook_markdown_preview = 2;
+      optional bool is_in_notebook_cell_input = 3;
+      optional bool is_in_notebook_cell_output = 4;
+    }
+
+    string pattern = 1;
+    optional bool is_reg_exp = 2;
+    optional bool is_word_match = 3;
+    optional string word_separators = 4;
+    optional bool is_multiline = 5;
+    optional bool is_unicode = 6;
+    optional bool is_case_sensitive = 7;
+    INotebookPatternInfoProto notebook_info = 8;
+    optional bool pattern_was_escaped = 9;
+  }
+
+  message ITextQueryBuilderOptionsProto {
+    message ExcludePatternProto {
+      repeated ISearchPatternBuilderProto exclude_pattern = 1;
+    }
+
+    message ExtraFileResourcesProto {
+      repeated string extra_file_resources = 1;
+    }
+
+    message INotebookSearchConfigProto {
+      bool include_markup_input = 1;
+      bool include_markup_preview = 2;
+      bool include_code_input = 3;
+      bool include_output = 4;
+    }
+
+    message ISearchPathPatternBuilderProto {
+      optional string pattern = 1;
+      repeated string patterns = 2;
+    }
+
+    message ISearchPatternBuilderProto {
+      optional string uri = 1;
+      ISearchPathPatternBuilderProto pattern = 2;
+    }
+
+    message ITextSearchPreviewOptionsProto {
+      int32 match_lines = 1;
+      int32 chars_per_line = 2;
+    }
+
+    ITextSearchPreviewOptionsProto preview_options = 1;
+    optional string file_encoding = 2;
+    optional int32 surrounding_context = 3;
+    optional bool is_smart_case = 4;
+    INotebookSearchConfigProto notebook_search_config = 5;
+    ExcludePatternProto exclude_pattern = 6;
+    ISearchPathPatternBuilderProto include_pattern = 7;
+    optional bool expand_patterns = 8;
+    optional int32 max_results = 9;
+    optional int32 max_file_size = 10;
+    optional bool disregard_ignore_files = 11;
+    optional bool disregard_global_ignore_files = 12;
+    optional bool disregard_parent_ignore_files = 13;
+    optional bool disregard_exclude_settings = 14;
+    optional bool disregard_search_exclude_settings = 15;
+    optional bool ignore_symlinks = 16;
+    optional bool only_open_editors = 17;
+    optional bool only_file_scheme = 18;
+    optional string reason = 19;
+    ExtraFileResourcesProto extra_file_resources = 20;
+  }
+
+  ITextQueryBuilderOptionsProto options = 1;
+  IPatternInfoProto pattern_info = 2;
+}
+
+message RipgrepSearchResult {
+  RipgrepSearchResultInternal internal = 1;
+}
+
+message RipgrepSearchResultInternal {
+  enum SearchCompletionExitCode {
+    SEARCH_COMPLETION_EXIT_CODE_UNSPECIFIED = 0;
+    SEARCH_COMPLETION_EXIT_CODE_NORMAL = 1;
+    SEARCH_COMPLETION_EXIT_CODE_NEW_SEARCH_STARTED = 2;
+  }
+
+  enum TextSearchCompleteMessageType {
+    TEXT_SEARCH_COMPLETE_MESSAGE_TYPE_UNSPECIFIED = 0;
+    TEXT_SEARCH_COMPLETE_MESSAGE_TYPE_INFORMATION = 1;
+    TEXT_SEARCH_COMPLETE_MESSAGE_TYPE_WARNING = 2;
+  }
+
+  message ICachedSearchStats {
+    bool cache_was_resolved = 1;
+    int32 cache_lookup_time = 2;
+    int32 cache_filter_time = 3;
+    int32 cache_entry_count = 4;
+  }
+
+  message IFileMatch {
+    string resource = 1;
+    repeated ITextSearchResult results = 2;
+  }
+
+  message IFileSearchProviderStats {
+    int32 provider_time = 1;
+    int32 post_process_time = 2;
+  }
+
+  message IFileSearchStats {
+    enum FileSearchProviderType {
+      FILE_SEARCH_PROVIDER_TYPE_UNSPECIFIED = 0;
+      FILE_SEARCH_PROVIDER_TYPE_FILE_SEARCH_PROVIDER = 1;
+      FILE_SEARCH_PROVIDER_TYPE_SEARCH_PROCESS = 2;
+    }
+
+    bool from_cache = 1;
+    oneof detail_stats {
+      ISearchEngineStats search_engine_stats = 2;
+      ICachedSearchStats cached_search_stats = 3;
+      IFileSearchProviderStats file_search_provider_stats = 4;
+    }
+    int32 result_count = 5;
+    FileSearchProviderType type = 6;
+    optional int32 sorting_time = 7;
+  }
+
+  message ISearchEngineStats {
+    int32 file_walk_time = 1;
+    int32 directories_walked = 2;
+    int32 files_walked = 3;
+    int32 cmd_time = 4;
+    optional int32 cmd_result_count = 5;
+  }
+
+  message ISearchRange {
+    int32 start_line_number = 1;
+    int32 start_column = 2;
+    int32 end_line_number = 3;
+    int32 end_column = 4;
+  }
+
+  message ISearchRangeSetPairing {
+    ISearchRange source = 1;
+    ISearchRange preview = 2;
+  }
+
+  message ITextSearchCompleteMessage {
+    string text = 1;
+    TextSearchCompleteMessageType type = 2;
+    optional bool trusted = 3;
+  }
+
+  message ITextSearchContext {
+    optional string uri = 1;
+    string text = 2;
+    int32 line_number = 3;
+  }
+
+  message ITextSearchMatch {
+    optional string uri = 1;
+    repeated ISearchRangeSetPairing range_locations = 2;
+    string preview_text = 3;
+    optional int32 webview_index = 4;
+    optional string cell_fragment = 5;
+  }
+
+  message ITextSearchResult {
+    oneof result {
+      ITextSearchMatch match = 1;
+      ITextSearchContext context = 2;
+    }
+  }
+
+  message ITextSearchStats {
+    enum TextSearchProviderType {
+      TEXT_SEARCH_PROVIDER_TYPE_UNSPECIFIED = 0;
+      TEXT_SEARCH_PROVIDER_TYPE_TEXT_SEARCH_PROVIDER = 1;
+      TEXT_SEARCH_PROVIDER_TYPE_SEARCH_PROCESS = 2;
+      TEXT_SEARCH_PROVIDER_TYPE_AI_TEXT_SEARCH_PROVIDER = 3;
+    }
+
+    TextSearchProviderType type = 1;
+  }
+
+  repeated IFileMatch results = 1;
+  optional SearchCompletionExitCode exit = 2;
+  optional bool limit_hit = 3;
+  repeated ITextSearchCompleteMessage messages = 4;
+  oneof stats {
+    IFileSearchStats file_search_stats = 5;
+    ITextSearchStats text_search_stats = 6;
+  }
+}
+
+message RipgrepSearchStream {
+  string query = 1;
+}
+
+message RunTerminalCommandsParams {
+  repeated string commands = 1;
+  string commands_uuid = 2;
+}
+
+message RunTerminalCommandsResult {
+  repeated string outputs = 1;
+}
+
+message RunTerminalCommandV2Params {
+  message ExecutionOptions {
+    optional int32 timeout = 1;
+    optional bool skip_ai_check = 2;
+    optional int32 command_run_timeout_ms = 3;
+    optional int32 command_change_check_interval_ms = 4;
+    optional int32 ai_finish_check_max_attempts = 5;
+    optional int32 ai_finish_check_interval_ms = 6;
+    optional int32 delayer_interval_ms = 7;
+    optional bool ai_check_for_hangs = 8;
+  }
+
+  string command = 1;
+  optional string cwd = 2;
+  optional bool new_session = 3;
+  optional ExecutionOptions options = 4;
+  bool is_background = 5;
+  bool require_user_approval = 6;
+  optional ShellCommandParsingResult parsing_result = 7;
+  optional int32 idle_timeout_seconds = 8;
+  optional agent.v1.SandboxPolicy requested_sandbox_policy = 9;
+  optional int64 file_output_threshold_bytes = 10;
+  optional string command_description = 11;
+  optional agent.v1.CommandClassifierResult classifier_result = 12;
+}
+
+message RunTerminalCommandV2Result {
+  string output = 1;
+  int32 exit_code = 2;
+  optional bool rejected = 3;
+  bool popped_out_into_background = 4;
+  bool is_running_in_background = 5;
+  bool not_interrupted = 6;
+  string resulting_working_directory = 7;
+  bool did_user_change = 8;
+  RunTerminalCommandEndedReason ended_reason = 9;
+  optional int32 exit_code_v2 = 10;
+  optional string updated_command = 11;
+  string output_raw = 12;
+  optional HumanReview human_review_v2 = 13;
+  optional agent.v1.SandboxPolicy effective_sandbox_policy = 14;
+  optional int32 terminal_instance_id = 15;
+  optional OutputLocation output_location = 16;
+  optional string terminal_instance_path = 17;
+  optional uint32 background_shell_id = 18;
+}
+
+message RunTerminalCommandV2Stream {
+  string command = 1;
+  bool is_background = 2;
+  optional ShellCommandParsingResult parsing_result = 7;
+  optional int32 idle_timeout_seconds = 8;
+  optional agent.v1.SandboxPolicy requested_sandbox_policy = 9;
+}
+
+message RunTestParams {
+  string relative_workspace_path = 1;
+  optional string test_name = 2;
+}
+
+message RunTestResult {
+  string result = 1;
+}
+
+message SaveFileParams {
+  string relative_workspace_path = 1;
+}
+
+message SaveFileResult {
+}
+
+message ScratchpadResult {
+}
+
+message SearchParams {
+  string query = 1;
+  bool regex = 2;
+  string include_pattern = 3;
+  string exclude_pattern = 4;
+  bool filename_search = 5;
+}
+
+message SearchResult {
+  repeated SearchToolFileSearchResult file_results = 1;
+  int32 num_total_matches = 2;
+  int32 num_total_matched_files = 3;
+  bool num_total_may_be_incomplete = 4;
+  bool files_only = 5;
+}
+
+message SearchSymbolsParams {
+  string query = 1;
+}
+
+message SearchSymbolsResult {
+  message SymbolMatch {
+    string name = 1;
+    string uri = 2;
+    Range range = 3;
+    string secondary_text = 4;
+    repeated MatchRange label_matches = 5;
+    repeated MatchRange description_matches = 6;
+    double score = 7;
+  }
+
+  repeated SymbolMatch matches = 1;
+  optional bool rejected = 2;
+}
+
+message SearchSymbolsStream {
+  string query = 1;
+}
+
+message SearchToolFileSearchResult {
+  message Line {
+    int32 line_number = 1;
+    string text = 2;
+  }
+
+  string relative_workspace_path = 1;
+  int32 num_matches = 2;
+  repeated Line potentially_relevant_lines = 3;
+  bool cropped = 4;
+}
+
+message SemanticSearchArguments {
+  string query = 1;
+  repeated string target_directories = 2;
+  string explanation = 3;
+}
+
+message SemanticSearchFullParams {
+  RepositoryInfo repository_info = 1;
+  string query = 2;
+  optional string include_pattern = 3;
+  optional string exclude_pattern = 4;
+  int32 top_k = 5;
+  repeated PullRequestReference pr_references = 6;
+  optional bool pr_search_on = 7;
+  optional string explanation = 8;
+  repeated CodeResult code_results = 9;
+}
+
+message SemanticSearchFullResult {
+  repeated CodeResult code_results = 1;
+  repeated File all_files = 2;
+  repeated MissingFile missing_files = 3;
+  repeated Knowledge knowledge_results = 4;
+  repeated ToolPullRequestResult pr_results = 5;
+  optional string git_remote_url = 6;
+  optional bool pr_hydration_timed_out = 7;
+}
+
+message SemanticSearchFullStream {
+  int32 num_files = 1;
+}
+
+message SemanticSearchParams {
+  string query = 1;
+  optional string include_pattern = 2;
+  optional string exclude_pattern = 3;
+  int32 top_k = 4;
+  optional string index_id = 5;
+  bool grab_whole_file = 6;
+}
+
+message SemanticSearchResult {
+  message Item {
+    string relative_workspace_path = 1;
+    float score = 2;
+    string content = 3;
+    SimpleRange range = 4;
+    optional string original_content = 5;
+    repeated DetailedLine detailed_lines = 6;
+  }
+
+  repeated Item results = 1;
+  map<string, string> files = 2;
+}
+
+message ServerSideToolResult {
+}
+
+message ShellCommandParsingResult {
+  message ExecutableCommand {
+    string name = 1;
+    repeated ExecutableCommandArg args = 2;
+    string full_text = 3;
+  }
+
+  message ExecutableCommandArg {
+    string type = 1;
+    string value = 2;
+  }
+
+  bool parsing_failed = 1;
+  repeated ExecutableCommand executable_commands = 2;
+  bool has_redirects = 3;
+  bool has_command_substitution = 4;
+}
+
+message Step {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string instructions = 4;
+  repeated string prerequisites = 5;
+  string sub_composer_id = 6;
+}
+
+message StreamedBackPartialToolCall {
+  ClientSideToolV2 tool = 1;
+  string tool_call_id = 2;
+  string name = 3;
+  optional uint32 tool_index = 4;
+  optional string model_call_id = 5;
+}
+
+message StreamedBackToolCall {
+  ClientSideToolV2 tool = 1;
+  string tool_call_id = 2;
+  oneof params {
+    ReadSemsearchFilesStream read_semsearch_files_stream = 3;
+    RipgrepSearchStream ripgrep_search_stream = 5;
+    ReadFileStream read_file_stream = 7;
+    ListDirStream list_dir_stream = 12;
+    EditFileStream edit_file_stream = 13;
+    ToolCallFileSearchStream file_search_stream = 14;
+    SemanticSearchFullStream semantic_search_full_stream = 19;
+    DeleteFileStream delete_file_stream = 21;
+    ReapplyStream reapply_stream = 22;
+    RunTerminalCommandV2Stream run_terminal_command_v2_stream = 25;
+    FetchRulesStream fetch_rules_stream = 26;
+    WebSearchStream web_search_stream = 28;
+    MCPStream mcp_stream = 29;
+    SearchSymbolsStream search_symbols_stream = 33;
+    GotodefStream gotodef_stream = 41;
+    BackgroundComposerFollowupStream background_composer_followup_stream = 34;
+    KnowledgeBaseStream knowledge_base_stream = 35;
+    FetchPullRequestStream fetch_pull_request_stream = 36;
+    DeepSearchStream deep_search_stream = 37;
+    CreateDiagramStream create_diagram_stream = 38;
+    FixLintsStream fix_lints_stream = 39;
+    ReadLintsStream read_lints_stream = 40;
+    TaskStream task_stream = 42;
+    AwaitTaskStream await_task_stream = 43;
+    TodoReadStream todo_read_stream = 44;
+    TodoWriteStream todo_write_stream = 45;
+    EditFileV2Stream edit_file_v2_stream = 52;
+    ListDirV2Stream list_dir_v2_stream = 53;
+    ReadFileV2Stream read_file_v2_stream = 54;
+    RipgrepRawSearchStream ripgrep_raw_search_stream = 55;
+    GlobFileSearchStream glob_file_search_stream = 56;
+    CreatePlanStream create_plan_stream = 57;
+    ListMcpResourcesStream list_mcp_resources_stream = 58;
+    ReadMcpResourceStream read_mcp_resource_stream = 59;
+    ReadProjectStream read_project_stream = 60;
+    UpdateProjectStream update_project_stream = 61;
+    TaskV2Stream task_v2_stream = 62;
+    CallMcpToolStream call_mcp_tool_stream = 63;
+    AskQuestionStream ask_question_stream = 64;
+    SwitchModeStream switch_mode_stream = 65;
+    ComputerUseStream computer_use_stream = 66;
+    WriteShellStdinStream write_shell_stdin_stream = 67;
+    WebFetchStream web_fetch_stream = 68;
+    ReportBugfixResultsStream report_bugfix_results_stream = 69;
+    McpAuthStream mcp_auth_stream = 70;
+  }
+  string name = 8;
+  string raw_args = 9;
+  optional ToolResultError error = 10;
+  optional uint32 tool_index = 50;
+  optional string model_call_id = 51;
+}
+
+message StreamedBackToolCallV2 {
+  ClientSideToolV2 tool = 1;
+  string tool_call_id = 2;
+  oneof params {
+    ReadSemsearchFilesParams read_semsearch_files_params = 3;
+    RipgrepSearchParams ripgrep_search_params = 5;
+    ReadFileParams read_file_params = 9;
+    ListDirParams list_dir_params = 12;
+    EditFileParams edit_file_params = 13;
+    ToolCallFileSearchParams file_search_params = 16;
+    SemanticSearchFullParams semantic_search_full_params = 17;
+    DeleteFileParams delete_file_params = 19;
+    ReapplyParams reapply_params = 20;
+    RunTerminalCommandV2Params run_terminal_command_v2_params = 23;
+    FetchRulesParams fetch_rules_params = 24;
+    WebSearchParams web_search_params = 26;
+    MCPParams mcp_params = 27;
+    SearchSymbolsParams search_symbols_params = 31;
+    GotodefParams gotodef_params = 41;
+    BackgroundComposerFollowupParams background_composer_followup_params = 32;
+    KnowledgeBaseParams knowledge_base_params = 33;
+    FetchPullRequestParams fetch_pull_request_params = 34;
+    DeepSearchParams deep_search_params = 35;
+    CreateDiagramParams create_diagram_params = 36;
+    FixLintsParams fix_lints_params = 37;
+    ReadLintsParams read_lints_params = 38;
+    TaskParams task_params = 42;
+    AwaitTaskParams await_task_params = 43;
+    TodoReadParams todo_read_params = 44;
+    TodoWriteParams todo_write_params = 45;
+    EditFileV2Params edit_file_v2_params = 48;
+    ListDirV2Params list_dir_v2_params = 49;
+    ReadFileV2Params read_file_v2_params = 61;
+    RipgrepRawSearchParams ripgrep_raw_search_params = 62;
+    GlobFileSearchParams glob_file_search_params = 63;
+    CreatePlanParams create_plan_params = 64;
+    ListMcpResourcesParams list_mcp_resources_params = 65;
+    ReadMcpResourceParams read_mcp_resource_params = 66;
+    ReadProjectParams read_project_params = 67;
+    UpdateProjectParams update_project_params = 68;
+    TaskV2Params task_v2_params = 69;
+    CallMcpToolParams call_mcp_tool_params = 70;
+    ApplyAgentDiffParams apply_agent_diff_params = 71;
+    AskQuestionParams ask_question_params = 72;
+    SwitchModeParams switch_mode_params = 73;
+    ComputerUseParams computer_use_params = 74;
+    agent.v1.WriteShellStdinArgs write_shell_stdin_params = 75;
+    agent.v1.RecordScreenArgs record_screen_params = 76;
+    WebFetchParams web_fetch_params = 77;
+    ReportBugfixResultsParams report_bugfix_results_params = 78;
+    McpAuthParams mcp_auth_params = 79;
+    GetMcpToolsParams get_mcp_tools_params = 80;
+  }
+  string name = 8;
+  string raw_args = 10;
+  optional ToolResultError error = 11;
+  optional uint32 tool_index = 50;
+  optional string model_call_id = 51;
+}
+
+message SummarizeCodeParams {
+  repeated string target_files = 1;
+  string focus_query = 2;
+}
+
+message SummarizeCodeResult {
+  string summary = 1;
+}
+
+message SummarizeCodeStream {
+}
+
+message SwitchModeParams {
+  string from_mode_id = 1;
+  string to_mode_id = 2;
+  optional string explanation = 3;
+}
+
+message SwitchModeResult {
+  string from_mode_id = 1;
+  string to_mode_id = 2;
+  bool auto_approved = 3;
+  bool user_approved = 4;
+}
+
+message SwitchModeStream {
+  SwitchModeParams params = 1;
+}
+
+message TaskParams {
+  string task_description = 1;
+  string task_title = 4;
+  optional bool async = 2;
+  repeated string allowed_write_directories = 3;
+  optional string model_override = 5;
+  optional bool max_mode_override = 6;
+  optional bool default_expanded_while_running = 7;
+}
+
+message TaskResult {
+  message AsyncTaskResult {
+    string task_id = 1;
+    bool user_aborted = 2;
+    bool subagent_errored = 3;
+  }
+
+  message CompletedTaskResult {
+    string summary = 1;
+    repeated FixLintsResult.FileResult file_results = 2;
+    bool user_aborted = 3;
+    bool subagent_errored = 4;
+  }
+
+  oneof result {
+    CompletedTaskResult completed_task_result = 1;
+    AsyncTaskResult async_task_result = 2;
+  }
+}
+
+message TaskStream {
+}
+
+message TaskV2Params {
+  string description = 1;
+  string prompt = 2;
+  string subagent_type = 3;
+  optional string model = 4;
+  string name = 5;
+  agent.v1.TaskMode mode = 6;
+}
+
+message TaskV2Result {
+  optional string agent_id = 1;
+  bool is_background = 2;
+}
+
+message TaskV2Stream {
+}
+
+message TodoItem {
+  string content = 1;
+  string status = 2;
+  string id = 3;
+  repeated string dependencies = 4;
+}
+
+message TodoReadParams {
+  bool read = 1;
+}
+
+message TodoReadResult {
+  repeated TodoItem todos = 1;
+}
+
+message TodoReadStream {
+}
+
+message TodoWriteParams {
+  repeated TodoItem todos = 1;
+  bool merge = 2;
+}
+
+message TodoWriteResult {
+  bool success = 1;
+  repeated string ready_task_ids = 2;
+  bool needs_in_progress_todos = 3;
+  repeated TodoItem final_todos = 4;
+  repeated TodoItem initial_todos = 5;
+  bool was_merge = 6;
+}
+
+message TodoWriteStream {
+}
+
+message ToolCall {
+  oneof tool_call {
+    BuiltinToolCall builtin_tool_call = 1;
+    CustomToolCall custom_tool_call = 2;
+  }
+}
+
+message ToolCallFileSearchParams {
+  string query = 1;
+}
+
+message ToolCallFileSearchResult {
+  message File {
+    string uri = 1;
+  }
+
+  repeated File files = 1;
+  optional bool limit_hit = 2;
+  int32 num_results = 3;
+}
+
+message ToolCallFileSearchStream {
+  string query = 1;
+}
+
+message ToolPullRequestResult {
+  string sha = 1;
+  string full_pr_contents = 2;
+  float score = 3;
+  optional string title = 4;
+  optional string summary = 5;
+  optional uint32 pr_number = 6;
+  repeated string changed_files = 7;
+  optional string author = 8;
+  optional string date = 9;
+}
+
+message ToolResult {
+  oneof tool_result {
+    BuiltinToolResult builtin_tool_result = 1;
+    CustomToolResult custom_tool_result = 2;
+    ErrorToolResult error_tool_result = 3;
+  }
+}
+
+message ToolResultAttachments {
+  enum TodoReminderType {
+    TODO_REMINDER_TYPE_UNSPECIFIED = 0;
+    TODO_REMINDER_TYPE_EVERY_10_TURNS = 1;
+    TODO_REMINDER_TYPE_AFTER_EDIT = 2;
+  }
+
+  message DiscoveryBudgetReminder {
+    int32 discovery_rounds_remaining = 1;
+    optional string discovery_effort = 2;
+  }
+
+  repeated TodoItem original_todos = 1;
+  repeated TodoItem updated_todos = 2;
+  repeated NudgeMessage nudge_messages = 3;
+  bool should_show_todo_write_reminder = 4;
+  TodoReminderType todo_reminder_type = 5;
+  optional DiscoveryBudgetReminder discovery_budget_reminder = 6;
+}
+
+message ToolResultError {
+  message EditFileError {
+    int32 num_lines_in_file_before_edit = 1;
+  }
+
+  message SearchReplaceError {
+    int32 num_lines_in_file_before_edit = 1;
+  }
+
+  string client_visible_error_message = 1;
+  string model_visible_error_message = 2;
+  optional string actual_error_message_only_send_from_client_to_server_never_the_other_way_around_because_that_may_be_a_security_risk = 3;
+  oneof error_details {
+    EditFileError edit_file_error_details = 5;
+    SearchReplaceError search_replace_error_details = 6;
+  }
+}
+
+message UndoEditParams {
+}
+
+message UndoEditResult {
+  repeated string feedback = 1;
+  string relative_workspace_path = 4;
+  int32 context_start_line_number = 2;
+  repeated string context_lines = 3;
+  int32 context_total_num_lines = 5;
+  int32 file_total_lines = 6;
+}
+
+message UpdateProjectParams {
+  repeated UpdateProjectStringReplacement string_replacements = 1;
+  string summary = 2;
+}
+
+message UpdateProjectResult {
+  bool success = 1;
+  string updated_plan = 2;
+}
+
+message UpdateProjectStream {
+}
+
+message UpdateProjectStringReplacement {
+  string old_string = 1;
+  string new_string = 2;
+}
+
+message WebFetchParams {
+  string url = 1;
+}
+
+message WebFetchResult {
+  string url = 1;
+  optional string markdown = 2;
+  optional string error = 3;
+}
+
+message WebFetchStream {
+  WebFetchParams params = 1;
+}
+
+message WebSearchParams {
+  string search_term = 1;
+}
+
+message WebSearchResult {
+  message WebReference {
+    string title = 1;
+    string url = 2;
+    string chunk = 3;
+  }
+
+  repeated WebReference references = 1;
+  optional bool is_final = 2;
+  optional bool rejected = 3;
+}
+
+message WebSearchStream {
+  string search_term = 1;
+}
+
+message WriteShellStdinStream {
+  agent.v1.WriteShellStdinArgs params = 1;
+}

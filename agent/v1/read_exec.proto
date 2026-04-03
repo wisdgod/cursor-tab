@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message ReadArgs {
+  string path = 1;
+  string tool_call_id = 2;
+  optional int32 offset = 4;
+  optional uint32 limit = 5;
+  optional string encoding_hint = 6;
+}
+
+message ReadError {
+  string path = 1;
+  string error = 2;
+}
+
+message ReadFileNotFound {
+  string path = 1;
+}
+
+message ReadInvalidFile {
+  string path = 1;
+  string reason = 2;
+}
+
+message ReadPermissionDenied {
+  string path = 1;
+}
+
+message ReadRejected {
+  string path = 1;
+  string reason = 2;
+}
+
+message ReadResult {
+  oneof result {
+    ReadSuccess success = 1;
+    ReadError error = 2;
+    ReadRejected rejected = 3;
+    ReadFileNotFound file_not_found = 4;
+    ReadPermissionDenied permission_denied = 5;
+    ReadInvalidFile invalid_file = 6;
+  }
+}
+
+message ReadSuccess {
+  string path = 1;
+  oneof output {
+    string content = 2;
+    bytes data = 5;
+  }
+  int32 total_lines = 3;
+  int64 file_size = 4;
+  bool truncated = 6;
+  optional bytes output_blob_id = 7;
+  bool range_applied = 8;
+}

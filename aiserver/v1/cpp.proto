@@ -1,0 +1,1207 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/bugbot.proto";
+import "aiserver/v1/filesyncserver.proto";
+import "aiserver/v1/lsp_subgraph.proto";
+import "aiserver/v1/repository.proto";
+import "aiserver/v1/utils.proto";
+
+enum CppFate {
+  CPP_FATE_UNSPECIFIED = 0;
+  CPP_FATE_ACCEPT = 1;
+  CPP_FATE_REJECT = 2;
+  CPP_FATE_PARTIAL_ACCEPT = 3;
+}
+
+enum CppSource {
+  CPP_SOURCE_UNSPECIFIED = 0;
+  CPP_SOURCE_LINE_CHANGE = 1;
+  CPP_SOURCE_TYPING = 2;
+  CPP_SOURCE_OPTION_HOLD = 3;
+  CPP_SOURCE_LINTER_ERRORS = 4;
+  CPP_SOURCE_PARAMETER_HINTS = 5;
+  CPP_SOURCE_CURSOR_PREDICTION = 6;
+  CPP_SOURCE_MANUAL_TRIGGER = 7;
+  CPP_SOURCE_EDITOR_CHANGE = 8;
+  CPP_SOURCE_LSP_SUGGESTIONS = 9;
+}
+
+message AcceptCursorPredictionEvent {
+  CursorPrediction cursor_prediction = 1;
+  PointInTimeModel point_in_time_model = 2;
+}
+
+message AdditionalFile {
+  string relative_workspace_path = 1;
+  bool is_open = 2;
+  repeated string visible_range_content = 3;
+  optional double last_viewed_at = 4;
+  repeated int32 start_line_number_one_indexed = 5;
+  repeated LineRange visible_ranges = 6;
+}
+
+message AddTabRequestToEvalRequest {
+  string request_id = 1;
+  string expected_behavior = 2;
+}
+
+message AddTabRequestToEvalResponse {
+}
+
+message AiRequestEvent {
+  enum RequestType {
+    REQUEST_TYPE_UNSPECIFIED = 0;
+    REQUEST_TYPE_START = 1;
+    REQUEST_TYPE_END = 2;
+  }
+
+  enum Source {
+    SOURCE_UNSPECIFIED = 0;
+    SOURCE_CHAT = 1;
+    SOURCE_CMDK = 2;
+    SOURCE_APPLY = 3;
+    SOURCE_COMPOSER = 4;
+    SOURCE_TASK = 5;
+    SOURCE_CODE_INTERPRETER = 6;
+    SOURCE_INTERPRETER_EXECUTION = 7;
+    SOURCE_BUGBOT = 8;
+  }
+
+  RequestType request_type = 1;
+  string request_id = 2;
+  Source source = 3;
+}
+
+message AnythingQuickAccessItem {
+  message Resource {
+    optional PointInTimeModel model = 1;
+    optional IRange range = 2;
+    optional string uri = 3;
+  }
+
+  oneof item {
+    Resource resource = 1;
+    string separator = 2;
+    string section = 3;
+  }
+}
+
+message AnythingQuickAccessSelectionEvent {
+  string query = 1;
+  repeated AnythingQuickAccessItem items = 2;
+  repeated int32 selected_indices = 3;
+}
+
+message AvailableCppModelsRequest {
+}
+
+message AvailableCppModelsResponse {
+  repeated string models = 1;
+  optional string default_model = 2;
+}
+
+message BackgroundFilesEvent {
+  message BackgroundFile {
+    string relative_workspace_path = 1;
+    string contents = 2;
+    string hash = 3;
+    string full_path = 4;
+  }
+
+  repeated BackgroundFile files = 2;
+}
+
+message BeforeAiEditEvent {
+  oneof model {
+    PointInTimeModel point_in_time_model = 1;
+    string relative_workspace_path = 5;
+  }
+  string tool_call_id = 2;
+  optional string request_id = 3;
+  optional string tool_name = 4;
+}
+
+message BlockDiffPatch {
+  message Change {
+    string text = 1;
+    IRange range = 2;
+  }
+
+  message ModelWindow {
+    repeated string lines = 1;
+    int32 start_line_number = 2;
+    int32 end_line_number = 3;
+  }
+
+  ModelWindow start_model_window = 1;
+  repeated Change changes = 3;
+  string relative_path = 4;
+  string model_uuid = 7;
+  int32 start_from_change_index = 5;
+}
+
+message BugBotEvent {
+  enum BackgroundIntervalInterruptedReason {
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_UNSPECIFIED = 0;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_DISABLED = 1;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_TOO_RECENT = 2;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_UNVIEWED_BUG_REPORTS = 3;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_NOT_IN_GIT_REPO = 4;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_DEFAULT_BRANCH_IS_NOT_CURRENT_BRANCH = 5;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_NO_GIT_USER = 6;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_NO_LAST_COMMIT = 7;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_LAST_COMMIT_NOT_MADE_BY_USER = 8;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_LAST_COMMIT_TOO_OLD = 9;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_DIFF_TOO_LONG = 10;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_DIFF_TOO_SHORT = 11;
+    BACKGROUND_INTERVAL_INTERRUPTED_REASON_TELEMETRY_UNHEALTHY = 12;
+  }
+
+  message BackgroundIntervalEnded {
+    bool success = 1;
+  }
+
+  message BackgroundIntervalErrored {
+    string error_message = 1;
+  }
+
+  message BackgroundIntervalInterrupted {
+    BackgroundIntervalInterruptedReason reason = 1;
+  }
+
+  message BackgroundIntervalStarted {
+  }
+
+  message PressedAddToChat {
+    string bug_report_id = 1;
+  }
+
+  message PressedFixInComposer {
+    string bug_report_id = 1;
+  }
+
+  message PressedOpenInEditor {
+    BugLocation bug_location = 1;
+    string bug_report_id = 2;
+  }
+
+  message ReportsGenerated {
+    BugReports bug_reports = 1;
+  }
+
+  message Started {
+  }
+
+  message UserFeedback {
+    string bug_report_id = 1;
+    string feedback = 2;
+  }
+
+  message ViewedReport {
+    message ReportView {
+      string bug_report_id = 1;
+      double view_percentage = 2;
+      double text_percentage = 3;
+    }
+
+    int32 seconds_viewed = 1;
+    repeated ReportView report_views = 2;
+  }
+
+  string request_id = 1;
+  oneof event_type {
+    Started started = 2;
+    ReportsGenerated reports_generated = 3;
+    PressedFixInComposer pressed_fix_in_composer = 4;
+    PressedOpenInEditor pressed_open_in_editor = 5;
+    ViewedReport viewed_report = 6;
+    UserFeedback user_feedback = 7;
+    PressedAddToChat pressed_add_to_chat = 8;
+    BackgroundIntervalStarted background_interval_started = 9;
+    BackgroundIntervalEnded background_interval_ended = 10;
+    BackgroundIntervalInterrupted background_interval_interrupted = 11;
+    BackgroundIntervalErrored background_interval_errored = 12;
+  }
+}
+
+message BugBotLinterEvent {
+  message LintDismissed {
+    string bug_report_id = 1;
+  }
+
+  message LintGenerated {
+    BugReport bug_report = 1;
+  }
+
+  message NotShownBecauseHeuristic {
+    enum Heuristic {
+      HEURISTIC_UNSPECIFIED = 0;
+      HEURISTIC_LINT_OVERLAP = 1;
+      HEURISTIC_LINES_MISMATCH = 2;
+    }
+
+    Heuristic heuristic = 1;
+  }
+
+  message Started {
+  }
+
+  message UnviewedReport {
+    string bug_report_id = 1;
+  }
+
+  message UserFeedback {
+    string bug_report_id = 1;
+    string feedback = 2;
+  }
+
+  message ViewedReport {
+    string bug_report_id = 1;
+  }
+
+  string request_id = 1;
+  PointInTimeModel point_in_time_model = 2;
+  oneof event_type {
+    LintGenerated lint_generated = 3;
+    LintDismissed lint_dismissed = 4;
+    UserFeedback user_feedback = 5;
+    ViewedReport viewed_report = 6;
+    UnviewedReport unviewed_report = 7;
+    Started started = 8;
+    NotShownBecauseHeuristic not_shown_because_heuristic = 9;
+  }
+}
+
+message ChatEvent {
+  message EndOfAnyGeneration {
+  }
+
+  message EndOfUninterruptedGeneration {
+  }
+
+  message SubmitPrompt {
+    string prompt = 1;
+  }
+
+  string request_id = 1;
+  oneof event_type {
+    SubmitPrompt submit_prompt = 2;
+    EndOfAnyGeneration end_of_any_generation = 3;
+    EndOfUninterruptedGeneration end_of_uninterrupted_generation = 4;
+  }
+}
+
+message CmdKEvent {
+  message AcceptDiffs {
+  }
+
+  message AcceptPartialDiff {
+    IRange green_range = 1;
+    repeated string green_lines = 2;
+    repeated string red_lines = 3;
+  }
+
+  message AfterReject {
+  }
+
+  message EndOfGeneration {
+  }
+
+  message InterruptGeneration {
+  }
+
+  message RejectDiffs {
+    optional string actor_request_id = 1;
+    optional bool silent = 2;
+  }
+
+  message RejectPartialDiff {
+    IRange green_range = 1;
+    repeated string green_lines = 2;
+    repeated string red_lines = 3;
+  }
+
+  message SubmitPrompt {
+    IRange original_range = 1;
+    string original_text = 2;
+    string prompt = 3;
+  }
+
+  PointInTimeModel point_in_time_model = 1;
+  string request_id = 2;
+  optional string prompt_bar_id = 20;
+  oneof event_type {
+    SubmitPrompt submit_prompt = 3;
+    EndOfGeneration end_of_generation = 4;
+    InterruptGeneration interrupt_generation = 5;
+    AcceptDiffs accept_all = 6;
+    RejectDiffs reject_all = 7;
+    RejectPartialDiff reject_partial_diff = 8;
+    AcceptPartialDiff accept_partial_diff = 9;
+    AfterReject after_reject = 10;
+  }
+}
+
+message CppAcceptEvent {
+  CppSuggestion cpp_suggestion = 1;
+}
+
+message CppAcceptEventNew {
+  CurrentlyShownCppSuggestion cpp_suggestion = 1;
+  PointInTimeModel point_in_time_model = 7;
+}
+
+message CppAppendRequest {
+  bytes changes = 1;
+}
+
+message CppAppendResponse {
+  bool success = 1;
+}
+
+message CppChangeQuickActionEvent {
+  PointInTimeModel point_in_time_model = 1;
+  repeated CppQuickAction added = 2;
+  repeated CppQuickAction removed = 3;
+  repeated CppQuickAction actions = 4;
+}
+
+message CppConfigRequest {
+  optional bool is_nightly = 1;
+  string model = 2;
+  optional bool supports_cpt = 3;
+}
+
+message CppConfigResponse {
+  enum Heuristic {
+    HEURISTIC_UNSPECIFIED = 0;
+    HEURISTIC_LOTS_OF_ADDED_TEXT = 1;
+    HEURISTIC_DUPLICATING_LINE_AFTER_SUGGESTION = 2;
+    HEURISTIC_DUPLICATING_MULTIPLE_LINES_AFTER_SUGGESTION = 3;
+    HEURISTIC_REVERTING_USER_CHANGE = 4;
+    HEURISTIC_OUTPUT_EXTENDS_BEYOND_RANGE_AND_IS_REPEATED = 5;
+    HEURISTIC_SUGGESTING_RECENTLY_REJECTED_EDIT = 6;
+  }
+
+  message ImportPredictionConfig {
+    bool is_disabled_by_backend = 1;
+    bool should_turn_on_automatically = 2;
+    bool python_enabled = 3;
+  }
+
+  message MergeBehavior {
+    string type = 1;
+    optional int32 limit = 2;
+    optional int32 radius = 3;
+  }
+
+  message RecentlyRejectedEditThresholds {
+    int32 hard_reject_threshold = 1;
+    int32 soft_reject_threshold = 2;
+  }
+
+  message SuggestionHintConfig {
+    repeated string important_lsp_extensions = 1;
+    repeated string enabled_for_path_extensions = 2;
+  }
+
+  optional int32 above_radius = 1;
+  optional int32 below_radius = 2;
+  optional MergeBehavior merge_behavior = 4;
+  optional bool is_on = 5;
+  optional bool is_ghost_text = 6;
+  optional bool should_let_user_enable_cpp_even_if_not_pro = 7;
+  repeated Heuristic heuristics = 8;
+  repeated string exclude_recently_viewed_files_patterns = 9;
+  bool enable_rvf_tracking = 10;
+  int32 global_debounce_duration_millis = 11;
+  int32 client_debounce_duration_millis = 12;
+  string cpp_url = 13;
+  bool use_whitespace_diff_history = 14;
+  ImportPredictionConfig import_prediction_config = 15;
+  bool enable_filesync_debounce_skipping = 16;
+  float check_filesync_hash_percent = 17;
+  string geo_cpp_backend_url = 18;
+  optional RecentlyRejectedEditThresholds recently_rejected_edit_thresholds = 19;
+  bool is_fused_cursor_prediction_model = 20;
+  bool include_unchanged_lines = 21;
+  bool should_fetch_rvf_text = 22;
+  optional int32 max_number_of_cleared_suggestions_since_last_accept = 23;
+  optional SuggestionHintConfig suggestion_hint_config = 24;
+  bool allows_tab_chunks = 25;
+  optional int32 tab_context_refresh_debounce_ms = 26;
+  optional int32 tab_context_refresh_editor_change_debounce_ms = 27;
+}
+
+message CppContextItem {
+  string contents = 1;
+  optional string symbol = 2;
+  string relative_workspace_path = 3;
+  float score = 4;
+}
+
+message CppCopyEvent {
+  string clipboard_contents = 1;
+}
+
+message CppDebouncedCursorMovementEvent {
+  PointInTimeModel point_in_time_model = 1;
+  OneIndexedPosition cursor_position = 2;
+}
+
+message CppEditHistoryStatusRequest {
+}
+
+message CppEditHistoryStatusResponse {
+  bool on = 1;
+  bool only_if_explicit = 2;
+}
+
+message CppEditorChangedEvent {
+  PointInTimeModel point_in_time_model = 1;
+  OneIndexedPosition cursor_position = 2;
+  repeated IRange visible_ranges = 3;
+  string editor_id = 4;
+}
+
+message CppFileDiffHistory {
+  string file_name = 1;
+  repeated string diff_history = 2;
+  repeated double diff_history_timestamps = 3;
+}
+
+message CppHistoryAppendEvent {
+  oneof event {
+    ModelChange model_change = 1;
+    CppAcceptEvent accept_event = 2;
+    CppRejectEvent reject_event = 3;
+    CppManualTriggerEvent manual_trigger_event = 4;
+  }
+  optional string final_model_hash = 10;
+}
+
+message CppIntentInfo {
+  string source = 1;
+}
+
+message CppLinterErrorEvent {
+  PointInTimeModel point_in_time_model = 1;
+  repeated LinterError added_errors = 2;
+  repeated LinterError removed_errors = 3;
+  repeated LinterError errors = 4;
+}
+
+message CppManualTriggerEvent {
+  CursorPosition position = 2;
+}
+
+message CppManualTriggerEventNew {
+  int32 line_number_one_indexed = 1;
+  int32 column_number_one_indexed = 2;
+  PointInTimeModel point_in_time_model = 7;
+}
+
+message CppParameterHint {
+  string label = 1;
+  optional string documentation = 2;
+}
+
+message CppPartialAcceptEvent {
+  CurrentlyShownCppSuggestion cpp_suggestion = 1;
+  Edit edit = 2;
+  PointInTimeModel point_in_time_model = 3;
+}
+
+message CppQuickAction {
+  message Edit {
+    string text = 1;
+    IRange range = 2;
+  }
+
+  string title = 1;
+  repeated Edit edits = 2;
+  optional bool is_preferred = 3;
+  CppQuickActionCommand command = 4;
+}
+
+message CppQuickActionCommand {
+  string title = 1;
+  string id = 2;
+  repeated string arguments = 3;
+}
+
+message CppQuickActionFireEvent {
+  PointInTimeModel point_in_time_model = 1;
+  oneof action_identifier {
+    CppQuickActionCommand quick_action_command = 2;
+    CppQuickAction quick_action_event = 3;
+  }
+}
+
+message CppRejectEvent {
+  CppSuggestion cpp_suggestion = 1;
+}
+
+message CppRejectEventNew {
+  CurrentlyShownCppSuggestion cpp_suggestion = 1;
+  PointInTimeModel point_in_time_model = 7;
+}
+
+message CppSessionEvent {
+  oneof event {
+    CppAcceptEventNew accept_event = 2;
+    CppRejectEventNew reject_event = 3;
+    CppManualTriggerEventNew manual_trigger_event = 4;
+    CppStoppedTrackingModelEvent stopped_tracking_model_event = 6;
+    CppSuggestEvent suggest_event = 7;
+    CppLinterErrorEvent linter_error_event = 8;
+    CppDebouncedCursorMovementEvent debounced_cursor_movement_event = 9;
+    CppEditorChangedEvent editor_changed_event = 10;
+    CppCopyEvent copy_event = 11;
+    CppChangeQuickActionEvent quick_action_event = 13;
+    CppQuickActionFireEvent quick_action_fire_event = 14;
+    ModelOpenedEvent model_opened_event = 15;
+    CmdKEvent cmd_k_event = 17;
+    ChatEvent chat_event = 18;
+    AiRequestEvent ai_event = 19;
+    ScrollEvent scroll_event = 21;
+    EditorCloseEvent editor_close_event = 22;
+    TabCloseEvent tab_close_event = 23;
+    ModelAddedEvent model_added_event = 33;
+    CppPartialAcceptEvent partial_accept_event = 26;
+    AcceptCursorPredictionEvent accept_cursor_prediction_event = 27;
+    RejectCursorPredictionEvent reject_cursor_prediction_event = 28;
+    SuggestCursorPredictionEvent suggest_cursor_prediction_event = 29;
+    CppTriggerEvent cpp_trigger_event = 30;
+    FinishedCppGenerationEvent finished_cpp_generation_event = 31;
+    BugBotEvent bug_bot_event = 32;
+    BugBotLinterEvent bug_bot_linter_event = 34;
+    AnythingQuickAccessSelectionEvent anything_quick_access_selection_event = 35;
+    LspSuggestionEvent lsp_suggestion_event = 36;
+    NtpEvent ntp_event = 37;
+    RepoEvent repo_event = 38;
+    GitEvent git_event = 39;
+    ToolCallEvent tool_call_event = 40;
+    BeforeAiEditEvent before_ai_edit_event = 46;
+    SearchEvent search_event = 47;
+    TerminalEvent terminal_event = 48;
+    WorktreeEvent worktree_event = 49;
+    ReviewChangesOpenedEvent review_changes_opened_event = 50;
+    BackgroundFilesEvent background_files_event = 16;
+  }
+  double performance_now_timestamp = 5;
+  optional double performance_time_origin = 25;
+  optional int64 global_index = 41;
+  optional double performance_now_flush_time = 42;
+  optional int32 event_index = 43;
+  optional int32 flush_index = 44;
+  optional int32 global_index_v2 = 45;
+}
+
+message CppStoppedTrackingModelEvent {
+  enum StoppedTrackingModelReason {
+    STOPPED_TRACKING_MODEL_REASON_UNSPECIFIED = 0;
+    STOPPED_TRACKING_MODEL_REASON_FILE_TOO_BIG = 1;
+    STOPPED_TRACKING_MODEL_REASON_FILE_DISPOSED = 2;
+    STOPPED_TRACKING_MODEL_REASON_CHANGE_TOO_BIG = 3;
+  }
+
+  string model_uuid = 1;
+  string relative_path = 2;
+  StoppedTrackingModelReason reason = 3;
+}
+
+message CppSuggestEvent {
+  CurrentlyShownCppSuggestion cpp_suggestion = 1;
+  PointInTimeModel point_in_time_model = 2;
+  RecoverableCppData recoverable_cpp_data = 3;
+}
+
+message CppSuggestion {
+  string suggestion_text = 1;
+  IRange range = 2;
+  bool seen = 5;
+  SelectionWithOrientation editor_selection_before_peek = 6;
+  optional string binding_id = 7;
+}
+
+message CppTimelineEvent {
+  message Change {
+    enum Status {
+      STATUS_UNSPECIFIED = 0;
+      STATUS_CORRECT = 1;
+      STATUS_UNVALIDATED = 2;
+      STATUS_INCORRECT = 3;
+    }
+
+    string model_uuid = 1;
+    int32 change_index = 2;
+    ModelChange change = 3;
+    Status status = 4;
+  }
+
+  double timestamp = 1;
+  oneof v {
+    CppSessionEvent event = 2;
+    Change change = 3;
+  }
+}
+
+message CppTriggerEvent {
+  string generation_uuid = 1;
+  int32 model_version = 2;
+  OneIndexedPosition cursor_position = 3;
+  PointInTimeModel point_in_time_model = 4;
+  CppSource source = 5;
+}
+
+message CptFileDiffHistory {
+  string file_name = 1;
+  repeated EditPatch edit_patches = 2;
+}
+
+message CurrentlyShownCppSuggestion {
+  int32 suggestion_id = 1;
+  string suggestion_text = 2;
+  int32 model_version_when_the_change_is_first_indicated_to_the_user_but_not_shown_in_the_model = 3;
+  optional IRange range_of_suggestion_in_current_model = 4;
+  string original_text = 5;
+  optional string binding_id = 6;
+}
+
+message CursorPrediction {
+  enum CursorPredictionSource {
+    CURSOR_PREDICTION_SOURCE_UNSPECIFIED = 0;
+    CURSOR_PREDICTION_SOURCE_ALWAYS_ON = 1;
+    CURSOR_PREDICTION_SOURCE_ACCEPT = 2;
+    CURSOR_PREDICTION_SOURCE_UNDO = 3;
+    CURSOR_PREDICTION_SOURCE_EDITOR_CHANGE = 4;
+  }
+
+  string request_id = 1;
+  int32 prediction_id = 2;
+  int32 line_number = 3;
+  CursorPredictionSource source = 4;
+  optional string binding_id = 5;
+}
+
+message CursorSelection {
+  int32 selection_start_line_number = 1;
+  int32 selection_start_column = 2;
+  int32 position_line_number = 3;
+  int32 position_column = 4;
+}
+
+message Edit {
+  string text = 1;
+  IRange range = 2;
+}
+
+message EditHistoryAppendChangesRequest {
+  enum PrivacyModeStatus {
+    PRIVACY_MODE_STATUS_UNSPECIFIED = 0;
+    PRIVACY_MODE_STATUS_PRIVACY_ENABLED = 1;
+    PRIVACY_MODE_STATUS_IMPLICIT_NO_PRIVACY = 2;
+    PRIVACY_MODE_STATUS_EXPLICIT_NO_PRIVACY = 3;
+  }
+
+  string session_id = 1;
+  string model_uuid = 2;
+  optional string starting_model_value = 3;
+  optional int32 starting_model_version = 10;
+  string relative_path = 5;
+  string uri = 14;
+  string client_version = 6;
+  optional string client_commit = 8;
+  repeated ModelChange changes = 4;
+  repeated CppSessionEvent session_events = 9;
+  bool model_changes_may_be_out_of_order = 11;
+  PrivacyModeStatus privacy_mode_status = 12;
+  repeated CppHistoryAppendEvent events = 7;
+  float time_origin = 13;
+}
+
+message EditHistoryAppendChangesResponse {
+  bool success = 1;
+}
+
+message EditorCloseEvent {
+  string editor_id = 1;
+}
+
+message EditPatch {
+  string relative_path = 1;
+  uint32 line_number = 2;
+  repeated string deleted_lines = 3;
+  repeated string inserted_lines = 4;
+}
+
+message FinishedCppGenerationEvent {
+  PointInTimeModel point_in_time_model = 1;
+  RecoverableCppData recoverable_cpp_data = 2;
+}
+
+message GetCppEditClassificationRequest {
+  StreamCppRequest cpp_request = 1;
+  repeated SuggestedEdit suggested_edits = 25;
+  bool marker_touches_green = 26;
+  string current_file_contents_for_linter_errors = 27;
+}
+
+message GetCppEditClassificationResponse {
+  message LogProbs {
+    repeated string tokens = 1;
+    repeated double token_logprobs = 2;
+  }
+
+  message ScoredEdit {
+    SuggestedEdit edit = 1;
+    LogProbs log_probs = 2;
+  }
+
+  repeated ScoredEdit scored_edits = 1;
+  ScoredEdit noop_edit = 2;
+  optional bool should_noop = 3;
+  ScoredEdit generation_edit = 4;
+}
+
+message GitEvent {
+  enum OperationType {
+    OPERATION_TYPE_UNSPECIFIED = 0;
+    OPERATION_TYPE_COMMIT = 1;
+    OPERATION_TYPE_CHECKOUT = 2;
+    OPERATION_TYPE_PULL = 3;
+    OPERATION_TYPE_FETCH = 4;
+    OPERATION_TYPE_MERGE = 5;
+    OPERATION_TYPE_REBASE = 6;
+    OPERATION_TYPE_STASH = 7;
+    OPERATION_TYPE_BRANCH = 8;
+    OPERATION_TYPE_TAG = 9;
+  }
+
+  OperationType operation_type = 1;
+  string repository_path = 2;
+  bool operation_success = 3;
+  optional string branch_name = 4;
+  optional string error_message = 5;
+  optional bool is_default_branch = 6;
+  optional string default_branch_name = 7;
+  optional string commit_hash = 8;
+  optional string previous_commit_hash = 9;
+  optional string remote_url = 10;
+}
+
+message IRange {
+  int32 start_line_number = 1;
+  int32 start_column = 2;
+  int32 end_line_number = 3;
+  int32 end_column = 4;
+}
+
+message LspSuggestedItems {
+  repeated LspSuggestion suggestions = 1;
+}
+
+message LspSuggestion {
+  string label = 1;
+}
+
+message LspSuggestionEvent {
+  repeated string suggestions = 1;
+  optional string request_id = 2;
+  optional string editor_id = 3;
+  PointInTimeModel point_in_time_model = 4;
+}
+
+message MarkCppRequest {
+  enum CppResponseTypes {
+    CPP_RESPONSE_TYPES_UNSPECIFIED = 0;
+    CPP_RESPONSE_TYPES_GOOD = 1;
+    CPP_RESPONSE_TYPES_BAD = 2;
+    CPP_RESPONSE_TYPES_BAD_CONTEXT = 3;
+    CPP_RESPONSE_TYPES_BAD_REASONING = 4;
+    CPP_RESPONSE_TYPES_BAD_STUPID_MISTAKE = 5;
+    CPP_RESPONSE_TYPES_BAD_FORMATTING = 6;
+    CPP_RESPONSE_TYPES_BAD_RANGE = 7;
+    CPP_RESPONSE_TYPES_GOOD_PREDICTION = 8;
+    CPP_RESPONSE_TYPES_BAD_FALSE_POSITIVE_TRIGGER = 9;
+    CPP_RESPONSE_TYPES_BAD_FALSE_NEGATIVE_TRIGGER = 10;
+  }
+
+  message RangeTransformation {
+    int32 start_line_number = 1;
+    int32 end_line_number = 2;
+  }
+
+  string request_id = 1;
+  string session_id = 2;
+  CppResponseTypes response_type = 3;
+  optional string desired_completion = 4;
+  RangeTransformation range_transformation = 5;
+  string model_code_name = 10;
+  string model_openai_name = 11;
+  double current_performance_now_time = 12;
+  double session_performance_origin_time = 13;
+}
+
+message MarkCppResponse {
+}
+
+message MaybeDefinedPointInTimeModel {
+  optional string model_uuid = 1;
+  int32 model_version = 2;
+  string relative_path = 3;
+  string model_id = 4;
+}
+
+message ModelAddedEvent {
+  MaybeDefinedPointInTimeModel point_in_time_model = 1;
+  string full_uri = 2;
+  string model_id = 3;
+  string uri_scheme = 4;
+  bool is_too_large_for_syncing = 5;
+  bool is_too_large_for_tokenization = 6;
+  bool is_too_large_for_heap_operation = 7;
+}
+
+message ModelChange {
+  string text = 1;
+  IRange range = 2;
+  optional string final_model_hash = 3;
+  optional int32 model_version_immediately_after_this_change = 4;
+  optional double performance_now_timestamp = 5;
+  optional bool is_undoing = 7;
+  optional bool is_redoing = 8;
+  bool model_is_attached_to_editor = 9;
+  bool model_is_attached_to_the_active_editor = 10;
+  repeated CursorSelection cursor_selections = 11;
+  int32 model_version_at_metadata_retrieval_time = 12;
+  optional int64 global_index = 13;
+  optional double performance_now_flush_time = 14;
+  optional int32 change_index = 15;
+  optional int32 flush_index = 16;
+  optional int32 global_index_v2 = 17;
+}
+
+message ModelOpenedEvent {
+  PointInTimeModel point_in_time_model = 1;
+  MaybeDefinedPointInTimeModel maybe_defined_point_in_time_model = 2;
+}
+
+message ModelWithHistory {
+  repeated ModelChange changes = 1;
+  string model_uuid = 2;
+  StartingModel starting_model = 3;
+  int32 num_correct_changes = 4;
+  int32 num_unvalidated_changes = 5;
+  int32 num_incorrect_changes = 6;
+  repeated ModelChange before_start_model_changes = 7;
+  optional double starting_performance_now_timestamp = 8;
+}
+
+message NtpEvent {
+  double originate_timestamp = 1;
+  double receive_timestamp = 2;
+  double transmit_timestamp = 3;
+  double destination_timestamp = 4;
+}
+
+message OneIndexedPosition {
+  int32 line_number_one_indexed = 1;
+  int32 column_one_indexed = 2;
+}
+
+message PointInTimeModel {
+  string model_uuid = 1;
+  int32 model_version = 2;
+  string relative_path = 3;
+  string model_id = 4;
+}
+
+message RecordCppFateRequest {
+  string request_id = 1;
+  float performance_now_time = 2;
+  CppFate fate = 3;
+  string extension = 4;
+}
+
+message RecordCppFateResponse {
+}
+
+message RecoverableCppData {
+  string request_id = 1;
+  string suggestion_text = 2;
+  IRange suggestion_range = 3;
+  OneIndexedPosition position = 4;
+}
+
+message RefreshTabContextRequest {
+  CurrentFileInfo current_file = 1;
+  optional string model_name = 2;
+  optional LinterErrors linter_errors = 3;
+  repeated CppFileDiffHistory file_diff_histories = 4;
+  repeated AdditionalFile additional_files = 5;
+  optional double client_time = 6;
+  double time_since_request_start = 7;
+  double time_at_request_send = 8;
+  optional bool is_debug = 9;
+  optional string workspace_id = 10;
+  optional bool supports_cpt = 11;
+  optional bool supports_crlf_cpt = 12;
+  RepositoryInfo repository_info = 13;
+}
+
+message RefreshTabContextResponse {
+  repeated CodeResult code_results = 1;
+}
+
+message RejectCursorPredictionEvent {
+  CursorPrediction cursor_prediction = 1;
+  PointInTimeModel point_in_time_model = 2;
+}
+
+message RepoEvent {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    TYPE_SYNCED = 1;
+    TYPE_LOADING = 2;
+    TYPE_INDEXING_SETUP = 3;
+    TYPE_INDEXING_INIT_FROM_SIMILAR_CODEBASE = 4;
+    TYPE_PAUSED = 5;
+    TYPE_INDEXING = 6;
+    TYPE_ERROR = 7;
+    TYPE_NOT_AUTO_INDEXING = 8;
+    TYPE_NOT_INDEXED = 9;
+  }
+
+  string repo_owner = 1;
+  string repo_name = 2;
+  Type event_type = 3;
+}
+
+message ReviewChangesOpenedEvent {
+  string composer_id = 1;
+  optional string best_of_n_group_id = 2;
+}
+
+message ScrollEvent {
+  PointInTimeModel point_in_time_model = 1;
+  repeated IRange visible_ranges = 2;
+  string editor_id = 3;
+}
+
+message SearchEvent {
+  string query = 1;
+  int32 result_count = 2;
+  int32 file_count = 3;
+  bool is_regex = 4;
+  bool is_case_sensitive = 5;
+  bool is_whole_word = 6;
+  optional string files_to_include = 7;
+  optional string files_to_exclude = 8;
+  int32 duration_ms = 9;
+  repeated SearchResultFile results = 10;
+}
+
+message SearchMatch {
+  int32 line_number = 1;
+  int32 column = 2;
+  string match_text = 3;
+}
+
+message SearchResultFile {
+  string file_path = 1;
+  int32 match_count = 2;
+  repeated SearchMatch matches = 3;
+}
+
+message ShouldTurnOnCppOnboardingRequest {
+}
+
+message ShouldTurnOnCppOnboardingResponse {
+  bool should_turn_on_cpp_onboarding = 1;
+}
+
+message StartingModel {
+  string relative_path = 1;
+  string starting_contents = 2;
+  optional int32 starting_model_version = 3;
+  repeated ModelChange before_start_model_changes = 4;
+  string client_version = 5;
+  optional string client_commit = 6;
+  string model_uuid = 7;
+  string session_id = 8;
+  string uri = 9;
+}
+
+message StreamCppRequest {
+  enum ControlToken {
+    CONTROL_TOKEN_UNSPECIFIED = 0;
+    CONTROL_TOKEN_QUIET = 1;
+    CONTROL_TOKEN_LOUD = 2;
+    CONTROL_TOKEN_OP = 3;
+  }
+
+  CurrentFileInfo current_file = 1;
+  repeated string diff_history = 2;
+  optional string model_name = 3;
+  optional LinterErrors linter_errors = 4;
+  repeated CppContextItem context_items = 13;
+  repeated string diff_history_keys = 5;
+  optional bool give_debug_output = 6;
+  repeated CppFileDiffHistory file_diff_histories = 7;
+  repeated CppFileDiffHistory merged_diff_histories = 8;
+  repeated BlockDiffPatch block_diff_patches = 9;
+  optional bool is_nightly = 10;
+  optional bool is_debug = 11;
+  optional bool immediately_ack = 12;
+  optional bool enable_more_context = 17;
+  repeated CppParameterHint parameter_hints = 14;
+  repeated LspSubgraphFullContext lsp_contexts = 15;
+  optional CppIntentInfo cpp_intent_info = 16;
+  optional string workspace_id = 18;
+  repeated AdditionalFile additional_files = 19;
+  optional ControlToken control_token = 20;
+  optional double client_time = 21;
+  repeated FilesyncUpdateWithModelVersion filesync_updates = 22;
+  double time_since_request_start = 23;
+  double time_at_request_send = 24;
+  optional double client_timezone_offset = 25;
+  optional LspSuggestedItems lsp_suggested_items = 26;
+  optional bool supports_cpt = 27;
+  optional bool supports_crlf_cpt = 28;
+  repeated CodeResult code_results = 29;
+}
+
+message StreamCppResponse {
+  message CursorPredictionTarget {
+    string relative_path = 1;
+    int32 line_number_one_indexed = 2;
+    string expected_content = 3;
+    bool should_retrigger_cpp = 4;
+  }
+
+  message ModelInfo {
+    bool is_fused_cursor_prediction_model = 1;
+    bool is_multidiff_model = 2;
+  }
+
+  string text = 1;
+  optional int32 suggestion_start_line = 2;
+  optional int32 suggestion_confidence = 3;
+  optional bool done_stream = 4;
+  optional string debug_model_output = 5;
+  optional string debug_model_input = 6;
+  optional string debug_stream_time = 7;
+  optional string debug_total_time = 8;
+  optional string debug_ttft_time = 9;
+  optional string debug_server_timing = 10;
+  optional LineRange range_to_replace = 11;
+  optional CursorPredictionTarget cursor_prediction_target = 12;
+  optional bool done_edit = 13;
+  optional ModelInfo model_info = 14;
+  optional bool begin_edit = 15;
+  optional bool should_remove_leading_eol = 16;
+  optional string binding_id = 17;
+}
+
+message StreamHoldCppRequest {
+  CurrentFileInfo current_file = 1;
+  optional LinterErrors linter_errors = 4;
+  repeated CppContextItem context_items = 13;
+  repeated CppFileDiffHistory file_diff_histories = 7;
+  repeated CppFileDiffHistory merged_diff_histories = 8;
+  repeated BlockDiffPatch block_diff_patches = 9;
+  ModelDetails model_details = 10;
+}
+
+message StreamHoldCppResponse {
+  string text = 1;
+}
+
+message SuggestCursorPredictionEvent {
+  CursorPrediction cursor_prediction = 1;
+  PointInTimeModel point_in_time_model = 2;
+}
+
+message SuggestedEdit {
+  SimpleRange edit_range = 1;
+  string text = 2;
+}
+
+message TabCloseEvent {
+  MaybeDefinedPointInTimeModel point_in_time_model = 1;
+}
+
+message TerminalEvent {
+  message CommandFinish {
+    PointInTimeModel point_in_time_model = 1;
+    optional int32 exit_code = 2;
+  }
+
+  message CommandStart {
+    PointInTimeModel point_in_time_model = 1;
+    optional string cwd = 2;
+  }
+
+  message Create {
+    bool is_remote = 1;
+  }
+
+  message Exit {
+    optional int32 exit_code = 1;
+  }
+
+  string uri = 1;
+  oneof event {
+    Create create = 2;
+    Exit exit = 3;
+    CommandStart command_start = 4;
+    CommandFinish command_finish = 5;
+  }
+}
+
+message ToolCallEvent {
+  string tool_call_id = 1;
+  string request_id = 2;
+  string tool_name = 3;
+}
+
+message WorktreeEvent {
+  enum EventType {
+    EVENT_TYPE_UNSPECIFIED = 0;
+    EVENT_TYPE_APPLY_TO_MAIN = 1;
+    EVENT_TYPE_UNDO_APPLY = 2;
+    EVENT_TYPE_VIEW_SUBCOMPOSER = 3;
+  }
+
+  message BackgroundAgentComposerMapping {
+    string bc_id = 1;
+    string composer_id = 2;
+  }
+
+  message WorktreeComposerMapping {
+    string worktree_path = 1;
+    string composer_id = 2;
+  }
+
+  EventType event_type = 1;
+  optional string model_name = 2;
+  optional string best_of_n_group_id = 3;
+  repeated string all_worktree_paths = 4;
+  optional string applied_worktree_path = 5;
+  repeated WorktreeComposerMapping worktree_composer_mappings = 6;
+  repeated BackgroundAgentComposerMapping background_agent_composer_mappings = 7;
+  optional string applied_composer_id = 8;
+  optional string viewed_composer_id = 9;
+}
+
+service CppService {
+  rpc MarkCppForEval (MarkCppRequest) returns (MarkCppResponse);
+  rpc StreamHoldCpp (StreamHoldCppRequest) returns (stream StreamHoldCppResponse);
+  rpc AvailableModels (AvailableCppModelsRequest) returns (AvailableCppModelsResponse);
+  rpc RecordCppFate (RecordCppFateRequest) returns (RecordCppFateResponse);
+  rpc AddTabRequestToEval (AddTabRequestToEvalRequest) returns (AddTabRequestToEvalResponse);
+}

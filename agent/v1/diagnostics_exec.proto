@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/utils.proto";
+
+enum DiagnosticSeverity {
+  DIAGNOSTIC_SEVERITY_UNSPECIFIED = 0;
+  DIAGNOSTIC_SEVERITY_ERROR = 1;
+  DIAGNOSTIC_SEVERITY_WARNING = 2;
+  DIAGNOSTIC_SEVERITY_INFORMATION = 3;
+  DIAGNOSTIC_SEVERITY_HINT = 4;
+}
+
+message Diagnostic {
+  DiagnosticSeverity severity = 1;
+  Range range = 2;
+  string message = 3;
+  string source = 4;
+  string code = 5;
+  bool is_stale = 6;
+}
+
+message DiagnosticsArgs {
+  string path = 1;
+  string tool_call_id = 2;
+}
+
+message DiagnosticsError {
+  string path = 1;
+  string error = 2;
+}
+
+message DiagnosticsFileNotFound {
+  string path = 1;
+}
+
+message DiagnosticsPermissionDenied {
+  string path = 1;
+}
+
+message DiagnosticsRejected {
+  string path = 1;
+  string reason = 2;
+}
+
+message DiagnosticsResult {
+  oneof result {
+    DiagnosticsSuccess success = 1;
+    DiagnosticsError error = 2;
+    DiagnosticsRejected rejected = 3;
+    DiagnosticsFileNotFound file_not_found = 4;
+    DiagnosticsPermissionDenied permission_denied = 5;
+  }
+}
+
+message DiagnosticsSuccess {
+  string path = 1;
+  repeated Diagnostic diagnostics = 2;
+  int32 total_diagnostics = 3;
+}

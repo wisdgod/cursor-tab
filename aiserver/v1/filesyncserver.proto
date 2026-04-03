@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/utils.proto";
+import "google/protobuf/timestamp.proto";
+
+enum FSSyncErrorType {
+  FS_SYNC_ERROR_TYPE_UNSPECIFIED = 0;
+  FS_SYNC_ERROR_TYPE_NON_EXISTANT = 1;
+  FS_SYNC_ERROR_TYPE_HASH_MISMATCH = 2;
+}
+
+enum FSUploadErrorType {
+  FS_UPLOAD_ERROR_TYPE_UNSPECIFIED = 0;
+  FS_UPLOAD_ERROR_TYPE_NON_EXISTANT = 1;
+  FS_UPLOAD_ERROR_TYPE_HASH_MISMATCH = 2;
+}
+
+message FileRequest {
+  string relative_workspace_path = 1;
+  optional int32 requested_version = 2;
+  optional string sha256_hash = 3;
+  bool required = 4;
+  optional google.protobuf.Timestamp earliest_time = 5;
+}
+
+message FileRetrieved {
+  string relative_workspace_path = 1;
+  string contents = 2;
+  int32 model_version = 3;
+  google.protobuf.Timestamp last_modified = 4;
+}
+
+message FilesyncUpdateWithModelVersion {
+  int32 model_version = 1;
+  string relative_workspace_path = 2;
+  repeated SingleUpdateRequest updates = 3;
+  int32 expected_file_length = 4;
+}
+
+message FSConfigRequest {
+}
+
+message FSConfigResponse {
+  float check_filesync_hash_percent = 1;
+  optional int32 rate_limiter_breaker_reset_time_ms = 2;
+  optional int32 rate_limiter_rps = 3;
+  optional int32 rate_limiter_burst_capacity = 4;
+  optional int32 max_recent_updates_stored = 5;
+  optional int32 max_model_version_cache_size = 6;
+  optional int32 max_file_size_to_sync_bytes = 7;
+  optional int32 sync_retry_max_attempts = 8;
+  optional int32 sync_retry_initial_delay_ms = 9;
+  optional int32 sync_retry_time_multiplier = 10;
+  optional int32 file_sync_status_max_cache_size = 11;
+  optional int32 successive_syncs_required_for_reliance = 12;
+  optional int32 extra_successful_syncs_needed_after_errors = 13;
+  optional int32 big_change_stripping_threshold_bytes = 14;
+  optional int32 last_n_updates_to_send = 15;
+  optional int32 file_sync_status_ttl_ms = 16;
+  optional int32 sync_debounce_ms = 17;
+  optional int32 sync_update_threshold = 18;
+}
+
+message FSGetFileContentsRequest {
+  string uuid = 1;
+  string auth_id = 2;
+  string relative_workspace_path = 3;
+  int32 model_version = 4;
+  repeated FilesyncUpdateWithModelVersion filesync_updates = 5;
+  optional string sha256_hash = 6;
+  optional google.protobuf.Timestamp earliest_time = 7;
+}
+
+message FSGetFileContentsResponse {
+  string contents = 1;
+  optional string sha256_hash = 2;
+}
+
+message FSGetMultiFileContentsRequest {
+  string auth_id = 1;
+  repeated FilesyncUpdateWithModelVersion filesync_updates = 2;
+  repeated FileRequest file_requests = 3;
+  bool get_all_recent_files = 4;
+}
+
+message FSGetMultiFileContentsResponse {
+  repeated FileRetrieved files = 1;
+}
+
+message FSInternalHealthCheckRequest {
+  optional bool from_server = 1;
+}
+
+message FSInternalHealthCheckResponse {
+  bool success = 1;
+}
+
+message FSIsEnabledForUserRequest {
+  string uuid = 1;
+}
+
+message FSIsEnabledForUserResponse {
+  bool enabled = 1;
+}
+
+message FSSyncFileRequest {
+  string uuid = 1;
+  string relative_workspace_path = 2;
+  int32 model_version = 3;
+  repeated FilesyncUpdateWithModelVersion filesync_updates = 4;
+  string sha256_hash = 5;
+}
+
+message FSSyncFileResponse {
+  FSSyncErrorType error = 1;
+}
+
+message FSUploadFileRequest {
+  string uuid = 1;
+  string relative_workspace_path = 2;
+  string contents = 3;
+  int32 model_version = 4;
+  optional string sha256_hash = 5;
+}
+
+message FSUploadFileResponse {
+  FSUploadErrorType error = 1;
+}
+
+message SingleUpdateRequest {
+  int32 start_position = 1;
+  int32 end_position = 2;
+  int32 change_length = 3;
+  string replaced_string = 4;
+  SimpleRange range = 5;
+}

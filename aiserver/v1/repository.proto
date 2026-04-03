@@ -1,0 +1,976 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/symbolic_context.proto";
+import "aiserver/v1/utils.proto";
+
+enum ChunkingStrategy {
+  CHUNKING_STRATEGY_UNSPECIFIED = 0;
+  CHUNKING_STRATEGY_DEFAULT = 1;
+}
+
+enum DatabaseProvider {
+  DATABASE_PROVIDER_UNSPECIFIED = 0;
+  DATABASE_PROVIDER_AURORA = 1;
+  DATABASE_PROVIDER_PLANETSCALE = 2;
+}
+
+enum PathKeyHashType {
+  PATH_KEY_HASH_TYPE_UNSPECIFIED = 0;
+  PATH_KEY_HASH_TYPE_SHA256 = 1;
+}
+
+enum RechunkerChoice {
+  RECHUNKER_CHOICE_UNSPECIFIED = 0;
+  RECHUNKER_CHOICE_IDENTITY = 1;
+  RECHUNKER_CHOICE_600_TOKS = 2;
+  RECHUNKER_CHOICE_2400_TOKS = 3;
+  RECHUNKER_CHOICE_4000_TOKS = 4;
+}
+
+enum RerankerAlgorithm {
+  RERANKER_ALGORITHM_UNSPECIFIED = 0;
+  RERANKER_ALGORITHM_LULEA = 1;
+  RERANKER_ALGORITHM_UMEA = 2;
+  RERANKER_ALGORITHM_NONE = 3;
+  RERANKER_ALGORITHM_LLAMA = 4;
+  RERANKER_ALGORITHM_STARCODER_V1 = 5;
+  RERANKER_ALGORITHM_GPT_3_5_LOGPROBS = 6;
+  RERANKER_ALGORITHM_LULEA_HAIKU = 7;
+  RERANKER_ALGORITHM_COHERE = 8;
+  RERANKER_ALGORITHM_VOYAGE = 9;
+  RERANKER_ALGORITHM_VOYAGE_EMBEDS = 10;
+  RERANKER_ALGORITHM_IDENTITY = 11;
+  RERANKER_ALGORITHM_ADA_EMBEDS = 12;
+}
+
+enum SimilarityMetricType {
+  SIMILARITY_METRIC_TYPE_UNSPECIFIED = 0;
+  SIMILARITY_METRIC_TYPE_SIMHASH = 1;
+}
+
+message AdminRemoveRepositoryRequest {
+  int32 codebase_id = 1;
+}
+
+message AdminRemoveRepositoryResponse {
+}
+
+message BatchRepositoryStatusRequest {
+  repeated RepositoryStatusRequest requests = 1;
+}
+
+message BatchRepositoryStatusResponse {
+  repeated RepositoryStatusResponse responses = 1;
+}
+
+message ClientRepositoryInfo {
+  double orthogonal_transform_seed = 1;
+}
+
+message CodeResult {
+  CodeBlock code_block = 1;
+  float score = 2;
+}
+
+message CodeResultWithClassificationInfo {
+  message LineNumberClassification {
+    DetailedLine detailed_line = 1;
+    string query_computed_for = 2;
+    repeated string matched_strings = 3;
+    SimpleRange highlight_range = 4;
+  }
+
+  CodeResult code_result = 1;
+  optional LineNumberClassification line_number_classification = 2;
+}
+
+message EnsureIndexCreatedRequest {
+  RepositoryInfo repository = 1;
+}
+
+message EnsureIndexCreatedResponse {
+}
+
+message FastRepoInitHandshakeRequest {
+  RepositoryInfo repository = 1;
+  string root_hash = 2;
+  string potential_legacy_repo_name = 3;
+}
+
+message FastRepoInitHandshakeResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_UP_TO_DATE = 1;
+    STATUS_OUT_OF_SYNC = 2;
+    STATUS_FAILURE = 3;
+    STATUS_EMPTY = 4;
+  }
+
+  Status status = 1;
+  string repo_name = 2;
+}
+
+message FastRepoInitHandshakeV2Request {
+  RepositoryInfo repository = 1;
+  string root_hash = 2;
+  SimilarityMetricType similarity_metric_type = 3;
+  repeated float similarity_metric = 4;
+  string path_key_hash = 5;
+  PathKeyHashType path_key_hash_type = 6;
+  bool do_copy = 7;
+  string path_key = 8;
+  LocalCodebaseFileInfo local_codebase_root_info = 9;
+  bool return_after_background_copy_started = 10;
+}
+
+message FastRepoInitHandshakeV2Response {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_FAILURE = 1;
+    STATUS_SUCCESS = 2;
+  }
+
+  Status status = 1;
+  repeated RepositoryCodebaseInfo codebases = 2;
+}
+
+message FastRepoSyncCompleteRequest {
+  repeated RepositoryCodebaseSyncStatus codebases = 1;
+}
+
+message FastRepoSyncCompleteResponse {
+}
+
+message FastUpdateFileRequest {
+  enum UpdateType {
+    UPDATE_TYPE_UNSPECIFIED = 0;
+    UPDATE_TYPE_ADD = 1;
+    UPDATE_TYPE_DELETE = 2;
+    UPDATE_TYPE_MODIFY = 3;
+  }
+
+  message LocalFile {
+    File file = 1;
+    string hash = 2;
+    string unencrypted_relative_workspace_path = 3;
+  }
+
+  RepositoryInfo repository = 1;
+  oneof partial_path {
+    PartialPathItem directory = 2;
+    LocalFile local_file = 3;
+  }
+  repeated PartialPathItem ancestor_spline = 4;
+  UpdateType update_type = 5;
+}
+
+message FastUpdateFileResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_EXPECTED_FAILURE = 3;
+  }
+
+  Status status = 1;
+}
+
+message FastUpdateFileV2Request {
+  enum UpdateType {
+    UPDATE_TYPE_UNSPECIFIED = 0;
+    UPDATE_TYPE_ADD = 1;
+    UPDATE_TYPE_DELETE = 2;
+    UPDATE_TYPE_MODIFY = 3;
+    UPDATE_TYPE_BATCH = 4;
+  }
+
+  message FileUpdate {
+    oneof partial_path {
+      PartialPathItem directory = 1;
+      LocalFile local_file = 2;
+    }
+    repeated PartialPathItem ancestor_spline = 3;
+    UpdateType update_type = 4;
+  }
+
+  message LocalFile {
+    File file = 1;
+    string hash = 2;
+    string unencrypted_relative_workspace_path = 3;
+  }
+
+  ClientRepositoryInfo client_repository_info = 1;
+  string codebase_id = 2;
+  oneof partial_path {
+    PartialPathItem directory = 3;
+    LocalFile local_file = 4;
+  }
+  repeated PartialPathItem ancestor_spline = 5;
+  UpdateType update_type = 6;
+  repeated FileUpdate file_updates = 7;
+}
+
+message FastUpdateFileV2Response {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_EXPECTED_FAILURE = 3;
+  }
+
+  Status status = 1;
+}
+
+message FileResult {
+  File file = 1;
+  float score = 2;
+}
+
+message FinishUpdateRepoRequest {
+  RepositoryInfo repository = 1;
+}
+
+message FinishUpdateRepoResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+  }
+
+  Status status = 1;
+}
+
+message FinishUploadRepoRequest {
+  RepositoryInfo repository = 1;
+}
+
+message FinishUploadRepoResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+  }
+
+  Status status = 1;
+}
+
+message GetAvailableChunkingStrategiesRequest {
+  RepositoryInfo repository = 1;
+}
+
+message GetAvailableChunkingStrategiesResponse {
+  repeated ChunkingStrategy chunking_strategies = 1;
+}
+
+message GetCopyStatusRequest {
+  string codebase_id = 1;
+  string copy_task_handle = 2;
+}
+
+message GetCopyStatusResponse {
+  enum CompletedStatus {
+    COMPLETED_STATUS_UNSPECIFIED = 0;
+    COMPLETED_STATUS_UP_TO_DATE = 1;
+    COMPLETED_STATUS_OUT_OF_SYNC = 2;
+    COMPLETED_STATUS_FAILURE = 3;
+  }
+
+  enum Phase {
+    PHASE_UNSPECIFIED = 0;
+    PHASE_INITIALIZING = 1;
+    PHASE_COPYING = 2;
+    PHASE_COMPLETED = 3;
+    PHASE_CREATING_SEARCH_FILTERS = 4;
+    PHASE_COPYING_SEARCH_STATE = 5;
+    PHASE_COPYING_TREE_STATE = 6;
+    PHASE_SYNCING_COPY = 7;
+  }
+
+  Phase phase = 1;
+  float percent_done = 2;
+  string error_message = 3;
+  optional CompletedStatus completed_status = 4;
+}
+
+message GetEmbeddingsRequest {
+  repeated string texts = 1;
+}
+
+message GetEmbeddingsResponse {
+  message Embedding {
+    repeated float embedding = 1;
+  }
+
+  repeated Embedding embeddings = 2;
+}
+
+message GetHighLevelFolderDescriptionRequest {
+  message Readme {
+    string relative_workspace_path = 1;
+    string contents = 2;
+  }
+
+  repeated Readme readmes = 1;
+  repeated string top_level_relative_workspace_paths = 2;
+  string workspace_root_path = 4;
+}
+
+message GetHighLevelFolderDescriptionResponse {
+  string description = 1;
+}
+
+message GetLineNumberClassificationsRequest {
+  string query = 1;
+  repeated CodeResult code_results = 2;
+}
+
+message GetLineNumberClassificationsResponse {
+  CodeResultWithClassificationInfo classified_result = 1;
+}
+
+message GetNumFilesToSendRequest {
+  RepositoryInfo repository = 1;
+}
+
+message GetNumFilesToSendResponse {
+  int32 num_files = 1;
+}
+
+message GetPRIndexingStatusRequest {
+  RepositoryInfo repository = 1;
+}
+
+message GetPRIndexingStatusResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_EMPTY = 1;
+    STATUS_SYNCING = 2;
+    STATUS_SYNCED = 3;
+    STATUS_PARTIAL = 4;
+  }
+
+  Status status = 1;
+  float sync_percentage = 2;
+  optional string last_indexed_commit = 3;
+  optional uint32 last_indexed_generation = 4;
+  optional uint32 total_commits = 5;
+  optional float indexing_rate = 6;
+  optional int64 last_updated_timestamp = 7;
+  optional uint32 index_version = 8;
+}
+
+message GetUploadLimitsRequest {
+  optional RepositoryInfo repository = 1;
+}
+
+message GetUploadLimitsResponse {
+  int32 soft_limit = 1;
+  int32 hard_limit = 2;
+}
+
+message IndexedFile {
+  string path = 1;
+  repeated string diff = 2;
+}
+
+message IndexedPullRequest {
+  uint32 pr_number = 1;
+  string sha = 2;
+  string message = 3;
+  repeated IndexedFile changed_files = 4;
+  uint32 generation = 5;
+  string commit_secret = 6;
+  int64 unix_timestamp = 7;
+  optional string title = 8;
+  optional string author = 9;
+}
+
+message IsLoggedInRequest {
+}
+
+message IsLoggedInResponse {
+  bool logged_in = 1;
+}
+
+message LocalCodebaseFileInfo {
+  string encrypted_relative_path = 1;
+  string hash = 2;
+  repeated LocalCodebaseFileInfo children = 3;
+  optional string separator = 4;
+}
+
+message LoginRequest {
+}
+
+message LoginResponse {
+  string login_url = 1;
+}
+
+message LogoutRequest {
+}
+
+message LogoutResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_NOT_LOGGED_IN = 3;
+  }
+
+  Status status = 1;
+}
+
+message NodeResult {
+  IndexFileData.NodeData node = 1;
+  File file = 2;
+  float score = 3;
+}
+
+message PartialPathItem {
+  string relative_workspace_path = 1;
+  string hash_of_node = 2;
+}
+
+message PollLoginRequest {
+}
+
+message PollLoginResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_LOGGED_IN = 1;
+    STATUS_FAILURE = 2;
+    STATUS_CHECKING = 3;
+  }
+
+  Status status = 1;
+}
+
+message PRDiffChunkPointer {
+  string file_path = 1;
+  int32 start_line_number_zero_indexed = 2;
+  int32 end_line_number_zero_indexed_exclusive = 3;
+}
+
+message QueryOnlyRepoAccess {
+  string owner_auth_id = 1;
+  string access_token = 2;
+  string user_repo_owner = 3;
+  string user_repo_name = 4;
+}
+
+message QueryOnlyRepositoryInfo {
+  RepositoryInfo repository = 1;
+  QueryOnlyRepoAccess query_only_repo_access = 2;
+}
+
+message ReflectionResult {
+  ReflectionData reflection = 1;
+  float score = 2;
+}
+
+message RemoveRepoHistoryRequest {
+  RepositoryInfo repository = 1;
+}
+
+message RemoveRepoHistoryResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_NOT_FOUND = 1;
+    STATUS_NOT_AUTHORIZED = 2;
+    STATUS_PARTIAL_SUCCESS = 3;
+    STATUS_SUCCESS = 4;
+  }
+
+  Status status = 1;
+}
+
+message RemoveRepositoryRequest {
+  RepositoryInfo repository = 1;
+}
+
+message RemoveRepositoryResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_NOT_FOUND = 1;
+    STATUS_NOT_AUTHORIZED = 2;
+    STATUS_STARTED = 3;
+    STATUS_SUCCESS = 4;
+  }
+
+  Status status = 1;
+}
+
+message RepoHistoryInfo {
+  string history_id = 1;
+  optional string branch_name = 2;
+  optional string last_indexed_commit = 3;
+  optional uint32 last_indexed_commit_generation = 4;
+  optional bytes sync_bitmap = 5;
+}
+
+message RepoHistoryInitHandshakeRequest {
+  RepositoryInfo repository = 1;
+  string origin = 2;
+  optional string test_origin_commit = 3;
+  optional string test_origin_commit_secret = 4;
+  optional bool send_copy_candidates = 5;
+}
+
+message RepoHistoryInitHandshakeResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_FAILURE = 1;
+    STATUS_SUCCESS = 2;
+    STATUS_TEST_CANDIDATES = 3;
+    STATUS_NO_INDEXING = 4;
+  }
+
+  Status status = 1;
+  repeated RepoHistoryInfo histories = 2;
+  optional string copy_candidate_nonce = 3;
+  repeated string copy_candidates = 4;
+  optional string error_message = 5;
+}
+
+message RepoHistorySyncCompleteRequest {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_TOTAL_FAILURE = 3;
+    STATUS_INTERRUPTED = 4;
+  }
+
+  message SyncedHistory {
+    string history_id = 1;
+    Status status = 2;
+    optional string last_indexed_commit = 3;
+    optional string last_indexed_commit_secret = 4;
+    optional uint32 last_indexed_commit_generation = 5;
+  }
+
+  repeated SyncedHistory synced_histories = 1;
+}
+
+message RepoHistorySyncCompleteResponse {
+}
+
+message RepoHistorySyncOneRequest {
+  string history_id = 1;
+  repeated IndexedPullRequest pull_requests = 2;
+  repeated uint32 ignore_commits = 3;
+}
+
+message RepoHistorySyncOneResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_PARTIAL_SUCCESS = 3;
+    STATUS_NOT_INDEXING = 4;
+  }
+
+  Status status = 1;
+}
+
+message RepositoriesRequest {
+}
+
+message RepositoriesResponse {
+  repeated RepositoryInfo repositories = 1;
+}
+
+message RepositoryCodebaseInfo {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_UP_TO_DATE = 1;
+    STATUS_OUT_OF_SYNC = 2;
+    STATUS_EMPTY = 3;
+    STATUS_EMPTY_WITH_COPY_AVAILABLE = 4;
+    STATUS_COPY_IN_PROGRESS = 5;
+  }
+
+  string codebase_id = 1;
+  Status status = 2;
+  QueryOnlyRepositoryInfo query_only_similar_repo = 3;
+  string copy_task_handle = 4;
+}
+
+message RepositoryCodebaseSyncStatus {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+  }
+
+  string codebase_id = 1;
+  Status status = 2;
+  SimilarityMetricType similarity_metric_type = 3;
+  repeated float similarity_metric = 4;
+  string path_key_hash = 5;
+  PathKeyHashType path_key_hash_type = 6;
+  int32 failed_upload_count = 7;
+  int32 failed_delete_count = 8;
+  int32 total_upload_count = 9;
+  int32 total_delete_count = 10;
+  int32 failed_subtree_count = 11;
+  int32 total_subtree_count = 12;
+  bool hit_iteration_limit = 13;
+}
+
+message RepositoryInfo {
+  string relative_workspace_path = 1;
+  repeated string remote_urls = 2;
+  repeated string remote_names = 3;
+  string repo_name = 4;
+  string repo_owner = 5;
+  bool is_tracked = 6;
+  bool is_local = 7;
+  optional int32 num_files = 8;
+  optional double orthogonal_transform_seed = 9;
+  optional EmbeddingModel preferred_embedding_model = 10;
+  string workspace_uri = 11;
+  optional DatabaseProvider preferred_db_provider = 12;
+}
+
+message RepositoryStatusRequest {
+  RepositoryInfo repository = 1;
+}
+
+message RepositoryStatusResponse {
+  message AuthTokenNotAuthorized {
+  }
+
+  message AuthTokenNotFound {
+  }
+
+  message EmptyMessage {
+  }
+
+  message NotFound {
+  }
+
+  message NotSubscribed {
+  }
+
+  message Synced {
+    string branch = 1;
+    string commit = 2;
+  }
+
+  message Syncing {
+    string branch = 1;
+    string old_commit = 2;
+    string new_commit = 3;
+    float progress = 4;
+  }
+
+  message TooBig {
+    int32 max_size = 1;
+  }
+
+  message Uploading {
+    float progress = 1;
+  }
+
+  oneof status {
+    NotFound not_found = 1;
+    Uploading uploading = 2;
+    Syncing syncing = 3;
+    Synced synced = 4;
+    NotSubscribed not_subscribed = 5;
+    TooBig too_big = 6;
+    AuthTokenNotFound auth_token_not_found = 7;
+    AuthTokenNotAuthorized auth_token_not_authorized = 8;
+    EmptyMessage error_uploading = 10;
+    EmptyMessage error_syncing = 11;
+  }
+  optional bool is_owner = 9;
+}
+
+message SearchPRHistoryRequest {
+  RepositoryInfo repository = 1;
+  string query = 2;
+  int32 top_k = 3;
+}
+
+message SearchPRHistoryResponse {
+  message PRSearchResult {
+    string commit_hash = 1;
+    float score = 2;
+    repeated PRDiffChunkPointer diff_chunks = 3;
+    optional string title = 4;
+    optional string summary = 5;
+    optional uint32 pr_number = 6;
+    optional string author = 7;
+    optional string date = 8;
+    repeated string changed_files = 9;
+  }
+
+  repeated PRSearchResult results = 1;
+  optional uint32 git_height = 2;
+}
+
+message SearchRepositoryDeepContextRequest {
+  string query = 1;
+  int32 top_k = 2;
+  int32 top_reflections_k = 3;
+  repeated string index_ids = 4;
+  bool use_model_on_files = 5;
+  bool use_reflections = 6;
+}
+
+message SearchRepositoryDeepContextResponse {
+  repeated NodeResult top_nodes = 1;
+  repeated ReflectionResult reflections = 2;
+  string index_id = 3;
+}
+
+message SearchRepositoryRequest {
+  string query = 1;
+  RepositoryInfo repository = 2;
+  int32 top_k = 3;
+  ModelDetails model_details = 4;
+  bool rerank = 5;
+  optional bool context_cache_request = 6;
+  optional string glob_filter = 7;
+  optional string not_glob_filter = 8;
+  optional int32 race_n_requests = 9;
+  QueryOnlyRepoAccess query_only_repo_access = 10;
+}
+
+message SearchRepositoryResponse {
+  repeated CodeResult code_results = 1;
+}
+
+message SemSearchRequest {
+  SearchRepositoryRequest request = 1;
+}
+
+message SemSearchResponse {
+  message SemSearchMetadata {
+    optional string query_embedding_model = 1;
+    optional int32 server_side_latency_ms = 2;
+    optional int32 embed_latency_ms = 3;
+    optional int32 knn_latency_ms = 4;
+  }
+
+  SearchRepositoryResponse response = 1;
+  optional SemSearchMetadata metadata = 2;
+  repeated CodeResultWithClassificationInfo code_results = 3;
+}
+
+message StartUpdateRepoRequest {
+  RepositoryInfo repository = 1;
+}
+
+message StartUpdateRepoResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_NOT_FOUND = 3;
+    STATUS_ALREADY_SYNCING = 4;
+  }
+
+  Status status = 1;
+}
+
+message StartUploadRepoRequest {
+  RepositoryInfo repository = 1;
+}
+
+message StartUploadRepoResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_ALREADY_EXISTS = 3;
+  }
+
+  Status status = 1;
+  repeated string seen_files = 2;
+}
+
+message SubscribeRepositoryRequest {
+  RepositoryInfo repository = 1;
+}
+
+message SubscribeRepositoryResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_NOT_FOUND = 1;
+    STATUS_NOT_AUTHORIZED = 2;
+    STATUS_ALREADY_SUBSCRIBED = 3;
+    STATUS_SUCCESS = 4;
+  }
+
+  Status status = 1;
+}
+
+message SyncMerkleSubtreeRequest {
+  RepositoryInfo repository = 1;
+  PartialPathItem local_partial_path = 2;
+}
+
+message SyncMerkleSubtreeResponse {
+  message Mismatch {
+    repeated PartialPathItem children = 1;
+  }
+
+  oneof result {
+    bool match = 1;
+    Mismatch mismatch = 2;
+  }
+}
+
+message SyncMerkleSubtreeV2Request {
+  ClientRepositoryInfo client_repository_info = 1;
+  string codebase_id = 2;
+  PartialPathItem local_partial_path = 3;
+  repeated PartialPathItem local_partial_paths = 4;
+}
+
+message SyncMerkleSubtreeV2Response {
+  message Mismatch {
+    repeated PartialPathItem children = 1;
+  }
+
+  message PartialPathResult {
+    oneof result {
+      bool match = 1;
+      Mismatch mismatch = 2;
+      bool response_size_limit_exceeded = 3;
+    }
+  }
+
+  oneof result {
+    bool match = 1;
+    Mismatch mismatch = 2;
+  }
+  repeated PartialPathResult results = 3;
+}
+
+message SyncRepositoryRequest {
+  int32 codebase_id = 1;
+}
+
+message SyncRepositoryResponse {
+}
+
+message UnsubscribeRepositoryRequest {
+  RepositoryInfo repository = 1;
+}
+
+message UnsubscribeRepositoryResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_NOT_FOUND = 1;
+    STATUS_NOT_SUBSCRIBED = 2;
+    STATUS_SUCCESS = 3;
+  }
+
+  Status status = 1;
+}
+
+message UpdateFileRequest {
+  RepositoryInfo repository = 1;
+  File added_file = 2;
+  optional string deleted_file_path = 3;
+  string commit_sha = 4;
+  string queue_id = 5;
+}
+
+message UpdateFileResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_EXPECTED_FAILURE = 3;
+    STATUS_QUEUE_BACKED_UP = 4;
+  }
+
+  Status status = 1;
+}
+
+message UpgradeScopeRequest {
+  repeated string scopes = 2;
+}
+
+message UpgradeScopeResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+  }
+
+  Status status = 1;
+}
+
+message UploadFileRequest {
+  RepositoryInfo repository = 1;
+  File file = 2;
+  string commit_sha = 3;
+  string queue_id = 4;
+}
+
+message UploadFileResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_EXPECTED_FAILURE = 3;
+    STATUS_QUEUE_BACKED_UP = 4;
+  }
+
+  Status status = 1;
+}
+
+message UploadRepositoryRequest {
+  RepositoryInfo repository = 1;
+}
+
+message UploadRepositoryResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_AUTH_TOKEN_BAD_PERMISSIONS = 3;
+    STATUS_ALREADY_EXISTS = 4;
+  }
+
+  Status status = 1;
+}
+
+service GitIndexService {
+  rpc RepoHistoryInitHandshake (RepoHistoryInitHandshakeRequest) returns (RepoHistoryInitHandshakeResponse);
+  rpc RepoHistorySyncOne (RepoHistorySyncOneRequest) returns (RepoHistorySyncOneResponse);
+  rpc RepoHistorySyncComplete (RepoHistorySyncCompleteRequest) returns (RepoHistorySyncCompleteResponse);
+  rpc RemoveRepoHistory (RemoveRepoHistoryRequest) returns (RemoveRepoHistoryResponse);
+  rpc SearchPRHistory (SearchPRHistoryRequest) returns (SearchPRHistoryResponse);
+  rpc GetPRIndexingStatus (GetPRIndexingStatusRequest) returns (GetPRIndexingStatusResponse);
+}
+
+service RepositoryService {
+  rpc FastRepoInitHandshake (FastRepoInitHandshakeRequest) returns (FastRepoInitHandshakeResponse);
+  rpc SyncMerkleSubtree (SyncMerkleSubtreeRequest) returns (SyncMerkleSubtreeResponse);
+  rpc FastUpdateFile (FastUpdateFileRequest) returns (FastUpdateFileResponse);
+  rpc SearchRepositoryV2 (SearchRepositoryRequest) returns (SearchRepositoryResponse);
+  rpc RemoveRepositoryV2 (RemoveRepositoryRequest) returns (RemoveRepositoryResponse);
+  rpc FastRepoInitHandshakeV2 (FastRepoInitHandshakeV2Request) returns (FastRepoInitHandshakeV2Response);
+  rpc SyncMerkleSubtreeV2 (SyncMerkleSubtreeV2Request) returns (SyncMerkleSubtreeV2Response);
+  rpc FastUpdateFileV2 (FastUpdateFileV2Request) returns (FastUpdateFileV2Response);
+  rpc FastRepoSyncComplete (FastRepoSyncCompleteRequest) returns (FastRepoSyncCompleteResponse);
+  rpc SemSearchFast (SemSearchRequest) returns (stream SemSearchResponse);
+  rpc SemSearch (SemSearchRequest) returns (stream SemSearchResponse);
+  rpc EnsureIndexCreated (EnsureIndexCreatedRequest) returns (EnsureIndexCreatedResponse);
+  rpc GetHighLevelFolderDescription (GetHighLevelFolderDescriptionRequest) returns (GetHighLevelFolderDescriptionResponse);
+  rpc GetEmbeddings (GetEmbeddingsRequest) returns (GetEmbeddingsResponse);
+  rpc GetUploadLimits (GetUploadLimitsRequest) returns (GetUploadLimitsResponse);
+  rpc GetNumFilesToSend (GetNumFilesToSendRequest) returns (GetNumFilesToSendResponse);
+  rpc GetAvailableChunkingStrategies (GetAvailableChunkingStrategiesRequest) returns (GetAvailableChunkingStrategiesResponse);
+  rpc GetLineNumberClassifications (GetLineNumberClassificationsRequest) returns (stream GetLineNumberClassificationsResponse);
+  rpc GetCopyStatus (GetCopyStatusRequest) returns (GetCopyStatusResponse);
+}

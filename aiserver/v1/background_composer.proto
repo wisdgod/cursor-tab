@@ -1,0 +1,2195 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "agent/v1/agent.proto";
+import "agent/v1/agent_skills.proto";
+import "agent/v1/selected_context.proto";
+import "aiserver/v1/aiserver.proto";
+import "aiserver/v1/chat.proto";
+import "aiserver/v1/dashboard.proto";
+import "aiserver/v1/repository.proto";
+import "aiserver/v1/tools.proto";
+import "aiserver/v1/utils.proto";
+import "anyrun/v1/pod.proto";
+import "anyrun/v1/pod_event.proto";
+import "anyrun/v1/snapshot.proto";
+import "google/protobuf/empty.proto";
+import "internapi/v1/blob.proto";
+
+enum AutoCreatePrSetting {
+  AUTO_CREATE_PR_SETTING_UNSPECIFIED = 0;
+  AUTO_CREATE_PR_SETTING_ALWAYS = 1;
+  AUTO_CREATE_PR_SETTING_SINGLE = 2;
+  AUTO_CREATE_PR_SETTING_NEVER = 3;
+}
+
+enum BackgroundComposerQuickActionExecutionMode {
+  BACKGROUND_COMPOSER_QUICK_ACTION_EXECUTION_MODE_UNSPECIFIED = 0;
+  BACKGROUND_COMPOSER_QUICK_ACTION_EXECUTION_MODE_SUBAGENT = 1;
+  BACKGROUND_COMPOSER_QUICK_ACTION_EXECUTION_MODE_PARENT_AGENT = 2;
+}
+
+enum BackgroundComposerQuickActionSubagentTemplateOperation {
+  BACKGROUND_COMPOSER_QUICK_ACTION_SUBAGENT_TEMPLATE_OPERATION_UNSPECIFIED = 0;
+  BACKGROUND_COMPOSER_QUICK_ACTION_SUBAGENT_TEMPLATE_OPERATION_CREATE = 1;
+  BACKGROUND_COMPOSER_QUICK_ACTION_SUBAGENT_TEMPLATE_OPERATION_UPDATE = 2;
+  BACKGROUND_COMPOSER_QUICK_ACTION_SUBAGENT_TEMPLATE_OPERATION_DELETE = 3;
+}
+
+enum BackgroundComposerQuickActionSubagentTemplateScope {
+  BACKGROUND_COMPOSER_QUICK_ACTION_SUBAGENT_TEMPLATE_SCOPE_UNSPECIFIED = 0;
+  BACKGROUND_COMPOSER_QUICK_ACTION_SUBAGENT_TEMPLATE_SCOPE_BUILTIN = 1;
+  BACKGROUND_COMPOSER_QUICK_ACTION_SUBAGENT_TEMPLATE_SCOPE_USER = 2;
+  BACKGROUND_COMPOSER_QUICK_ACTION_SUBAGENT_TEMPLATE_SCOPE_TEAM = 3;
+}
+
+enum BackgroundComposerSource {
+  BACKGROUND_COMPOSER_SOURCE_UNSPECIFIED = 0;
+  BACKGROUND_COMPOSER_SOURCE_EDITOR = 1;
+  BACKGROUND_COMPOSER_SOURCE_SLACK = 2;
+  BACKGROUND_COMPOSER_SOURCE_WEBSITE = 3;
+  BACKGROUND_COMPOSER_SOURCE_LINEAR = 4;
+  BACKGROUND_COMPOSER_SOURCE_IOS_APP = 5;
+  BACKGROUND_COMPOSER_SOURCE_API = 6;
+  BACKGROUND_COMPOSER_SOURCE_GITHUB = 7;
+  BACKGROUND_COMPOSER_SOURCE_CLI = 8;
+  BACKGROUND_COMPOSER_SOURCE_GITHUB_CI_AUTOFIX = 9;
+  BACKGROUND_COMPOSER_SOURCE_GITLAB = 10;
+  BACKGROUND_COMPOSER_SOURCE_ENVIRONMENT_SETUP_WEB = 11;
+  BACKGROUND_COMPOSER_SOURCE_GRIND_WEB = 12;
+  BACKGROUND_COMPOSER_SOURCE_BUGBOT_AUTOFIX = 13;
+  BACKGROUND_COMPOSER_SOURCE_AUTOMATIONS = 14;
+  BACKGROUND_COMPOSER_SOURCE_GRAPHITE_CHAT_WEB = 15;
+  BACKGROUND_COMPOSER_SOURCE_GLASS = 16;
+  BACKGROUND_COMPOSER_SOURCE_GRAPHITE_FULL_SELF_DRIVING = 17;
+}
+
+enum BackgroundComposerStatus {
+  BACKGROUND_COMPOSER_STATUS_UNSPECIFIED = 0;
+  BACKGROUND_COMPOSER_STATUS_RUNNING = 1;
+  BACKGROUND_COMPOSER_STATUS_FINISHED = 2;
+  BACKGROUND_COMPOSER_STATUS_ERROR = 3;
+  BACKGROUND_COMPOSER_STATUS_CREATING = 4;
+  BACKGROUND_COMPOSER_STATUS_EXPIRED = 5;
+}
+
+enum CloudAgentWorkflowStatus {
+  CLOUD_AGENT_WORKFLOW_STATUS_UNSPECIFIED = 0;
+  CLOUD_AGENT_WORKFLOW_STATUS_RUNNING = 1;
+  CLOUD_AGENT_WORKFLOW_STATUS_IDLE = 2;
+  CLOUD_AGENT_WORKFLOW_STATUS_ERROR = 3;
+  CLOUD_AGENT_WORKFLOW_STATUS_ARCHIVED = 4;
+  CLOUD_AGENT_WORKFLOW_STATUS_EXPIRED = 5;
+  CLOUD_AGENT_WORKFLOW_STATUS_NOT_YET_STARTED = 6;
+}
+
+enum EnsembleStatus {
+  ENSEMBLE_STATUS_UNSPECIFIED = 0;
+  ENSEMBLE_STATUS_PARENT = 1;
+  ENSEMBLE_STATUS_CHILD = 2;
+}
+
+enum EnvironmentType {
+  ENVIRONMENT_TYPE_UNSPECIFIED = 0;
+  ENVIRONMENT_TYPE_PERSONAL = 1;
+  ENVIRONMENT_TYPE_TEAM = 2;
+}
+
+enum GithubAccessErrorType {
+  GITHUB_ACCESS_ERROR_TYPE_UNSPECIFIED = 0;
+  GITHUB_ACCESS_ERROR_TYPE_NONE = 1;
+  GITHUB_ACCESS_ERROR_TYPE_NO_AUTH_TOKEN = 2;
+  GITHUB_ACCESS_ERROR_TYPE_APP_NOT_INSTALLED = 3;
+  GITHUB_ACCESS_ERROR_TYPE_USER_NO_ACCESS = 4;
+  GITHUB_ACCESS_ERROR_TYPE_APP_INSUFFICIENT_PERMS = 5;
+  GITHUB_ACCESS_ERROR_TYPE_PUBLIC_REPO = 6;
+}
+
+enum NextTurnSystemReminderKind {
+  NEXT_TURN_SYSTEM_REMINDER_KIND_UNSPECIFIED = 0;
+  NEXT_TURN_SYSTEM_REMINDER_KIND_PR_TITLE_EDITED = 1;
+  NEXT_TURN_SYSTEM_REMINDER_KIND_PR_DESCRIPTION_EDITED = 2;
+}
+
+enum OwnerType {
+  OWNER_TYPE_UNSPECIFIED = 0;
+  OWNER_TYPE_USER = 1;
+  OWNER_TYPE_SERVICE_ACCOUNT = 2;
+}
+
+enum PlanFollowupType {
+  PLAN_FOLLOWUP_TYPE_UNSPECIFIED = 0;
+  PLAN_FOLLOWUP_TYPE_PLAN = 1;
+  PLAN_FOLLOWUP_TYPE_EXECUTE = 2;
+}
+
+enum PRDeploymentState {
+  PR_DEPLOYMENT_STATE_UNSPECIFIED = 0;
+  PR_DEPLOYMENT_STATE_UNKNOWN = 1;
+  PR_DEPLOYMENT_STATE_PENDING = 2;
+  PR_DEPLOYMENT_STATE_QUEUED = 3;
+  PR_DEPLOYMENT_STATE_IN_PROGRESS = 4;
+  PR_DEPLOYMENT_STATE_SUCCESS = 5;
+  PR_DEPLOYMENT_STATE_FAILURE = 6;
+  PR_DEPLOYMENT_STATE_ERROR = 7;
+  PR_DEPLOYMENT_STATE_INACTIVE = 8;
+  PR_DEPLOYMENT_STATE_WAITING = 9;
+  PR_DEPLOYMENT_STATE_ACTIVE = 10;
+  PR_DEPLOYMENT_STATE_ABANDONED = 11;
+  PR_DEPLOYMENT_STATE_DESTROYED = 12;
+  PR_DEPLOYMENT_STATE_BLOCKED = 13;
+  PR_DEPLOYMENT_STATE_CANCELED = 14;
+}
+
+enum PRDeploymentStatusState {
+  PR_DEPLOYMENT_STATUS_STATE_UNSPECIFIED = 0;
+  PR_DEPLOYMENT_STATUS_STATE_UNKNOWN = 1;
+  PR_DEPLOYMENT_STATUS_STATE_PENDING = 2;
+  PR_DEPLOYMENT_STATUS_STATE_QUEUED = 3;
+  PR_DEPLOYMENT_STATUS_STATE_IN_PROGRESS = 4;
+  PR_DEPLOYMENT_STATUS_STATE_SUCCESS = 5;
+  PR_DEPLOYMENT_STATUS_STATE_FAILURE = 6;
+  PR_DEPLOYMENT_STATUS_STATE_ERROR = 7;
+  PR_DEPLOYMENT_STATUS_STATE_INACTIVE = 8;
+  PR_DEPLOYMENT_STATUS_STATE_WAITING = 9;
+  PR_DEPLOYMENT_STATUS_STATE_BLOCKED = 10;
+  PR_DEPLOYMENT_STATUS_STATE_CANCELED = 11;
+}
+
+enum PrivateWorkerStatusFilter {
+  PRIVATE_WORKER_STATUS_FILTER_UNSPECIFIED = 0;
+  PRIVATE_WORKER_STATUS_FILTER_ALL = 1;
+  PRIVATE_WORKER_STATUS_FILTER_IN_USE = 2;
+  PRIVATE_WORKER_STATUS_FILTER_IDLE = 3;
+}
+
+enum PRStatus {
+  PR_STATUS_UNSPECIFIED = 0;
+  PR_STATUS_OPEN = 1;
+  PR_STATUS_DRAFT = 2;
+  PR_STATUS_MERGED = 3;
+  PR_STATUS_CLOSED = 4;
+}
+
+enum PushPlatform {
+  PUSH_PLATFORM_UNSPECIFIED = 0;
+  PUSH_PLATFORM_IOS = 1;
+  PUSH_PLATFORM_ANDROID = 2;
+  PUSH_PLATFORM_WEB = 3;
+}
+
+enum StartingMessageType {
+  STARTING_MESSAGE_TYPE_UNSPECIFIED = 0;
+  STARTING_MESSAGE_TYPE_USER_MESSAGE = 1;
+  STARTING_MESSAGE_TYPE_PLAN_START = 2;
+  STARTING_MESSAGE_TYPE_PLAN_EXECUTE = 3;
+}
+
+message AddAsyncFollowupBackgroundComposerRequest {
+  string bc_id = 1;
+  string followup = 2;
+  string rich_followup = 4;
+  bool synchronous = 3;
+  ConversationMessage followup_message = 5;
+  optional ModelDetails model_details = 6;
+  optional agent.v1.RequestedModel requested_model = 15;
+  optional BackgroundComposerSource followup_source = 7;
+  optional bool continue_rebase = 8;
+  optional PlanFollowupType plan_followup_type = 9;
+  optional agent.v1.ConversationAction followup_conversation_action = 10;
+  optional string followup_id = 11;
+  optional int64 time_budget_ms = 12;
+  optional int64 time_budget_seconds = 13;
+  optional string followup_system_reminder = 14;
+}
+
+message AddAsyncFollowupBackgroundComposerResponse {
+}
+
+message AddPullRequestReviewCommentRequest {
+  string pr_url = 1;
+  string path = 2;
+  string body = 3;
+  int32 line = 4;
+  optional int32 start_line = 5;
+  optional string diff_side = 6;
+  optional string commit_oid = 7;
+}
+
+message AddPullRequestReviewCommentResponse {
+  optional PRReviewThread thread = 1;
+}
+
+message ArchiveBackgroundComposerRequest {
+  string bc_id = 1;
+  bool unarchive = 2;
+  bool only_notify_runner = 3;
+  BackgroundComposerSource source = 4;
+  optional bool close_pull_request = 5;
+}
+
+message ArchiveBackgroundComposerResponse {
+}
+
+message AttachBackgroundComposerLogsRequest {
+  string bc_id = 1;
+  optional string last_event_id = 2;
+  optional uint32 worker_index = 3;
+}
+
+message AttachBackgroundComposerLogsResponse {
+  message Event {
+    string event_id = 1;
+    anyrun.v1.PodEvent event = 2;
+  }
+
+  Event event = 1;
+  anyrun.v1.PodStatus updated_status = 2;
+  ErrorDetails start_error = 3;
+}
+
+message AttachBackgroundComposerPodRequest {
+  string pod_id = 1;
+  optional string last_event_id = 2;
+}
+
+message AttachBackgroundComposerPodResponse {
+  message Event {
+    string event_id = 1;
+    anyrun.v1.PodEvent event = 2;
+  }
+
+  Event event = 1;
+  anyrun.v1.PodStatus updated_status = 2;
+}
+
+message AttachBackgroundComposerRequest {
+  string bc_id = 1;
+  optional int32 starting_index = 2;
+}
+
+message AttachBackgroundComposerResponse {
+  HeadlessAgenticComposerResponse headless_agentic_composer_response = 1;
+  HeadlessAgenticComposerPrompt prompt = 2;
+  string starting_commit = 4;
+  string base_branch = 5;
+  BackgroundComposerStatus status_update = 6;
+  GitDiff diff_since_start = 3;
+}
+
+message BackgroundComposer {
+  string bc_id = 1;
+  double created_at_ms = 2;
+  double updated_at_ms = 20;
+  string workspace_root_path = 3;
+  bool is_owned_by_different_team_member = 4;
+  string name = 5;
+  string branch_name = 6;
+  bool has_started_vm = 7;
+  string repo_url = 8;
+  bool is_archived = 9;
+  string n_id = 10;
+  bool is_killed = 11;
+  BackgroundComposerStatus status = 12;
+  bool is_unread = 13;
+  BackgroundComposerSource source = 14;
+  string github_issue_id = 24;
+  string slack_channel_id = 15;
+  string slack_message_timestamp = 16;
+  string slack_team_id = 17;
+  string linear_issue_id = 18;
+  string linear_org_id = 19;
+  string prompt_group_id = 21;
+  string pr_url = 22;
+  bool is_pr_merged = 23;
+  optional int32 lines_added = 25;
+  optional int32 lines_removed = 26;
+  optional int32 files_changed = 27;
+  optional ModelDetails model_details = 28;
+  string triggered_principal_type = 29;
+  string triggered_principal_id = 30;
+  string visibility = 31;
+  EnsembleStatus ensemble_status = 32;
+  optional string workflow_id = 33;
+  optional string agent_session_id = 34;
+  optional string kickoff_message_id = 35;
+  optional string grind_phase = 36;
+  optional int32 commit_count = 37;
+  optional string latest_commit_sha = 38;
+  optional string latest_commit_message = 39;
+  optional double last_message_activity_at_ms = 40;
+  optional string owning_service_account = 41;
+  optional string owning_service_account_name = 42;
+  optional PRStatus pr_status = 43;
+  repeated int32 participant_user_ids = 45;
+}
+
+message BackgroundComposerArtifact {
+  string absolute_path = 1;
+  int64 size_bytes = 2;
+  int64 updated_at_unix_ms = 3;
+}
+
+message BackgroundComposerCachedDetailsProto {
+  string diff_changes_hash = 1;
+  GetDiffResponse detailed_diff = 2;
+  DetailedBackgroundComposer bc = 3;
+}
+
+message BackgroundComposerCommit {
+  string sha = 1;
+  string message = 2;
+  string author_name = 3;
+  string author_email = 4;
+  string timestamp = 5;
+}
+
+message BackgroundComposerFollowupContent {
+  string text = 1;
+  string rich_text = 2;
+}
+
+message BackgroundComposerFullDiff {
+  string path = 1;
+  string original_content = 2;
+  string modified_content = 3;
+  optional string submodule_path = 4;
+  GitDiff git_diff = 5;
+  string full_path = 6;
+  string base_ref = 7;
+}
+
+message BackgroundComposerParticipant {
+  int32 user_id = 1;
+  optional string display_name = 2;
+  optional string email = 3;
+  optional string profile_picture_url = 4;
+}
+
+message BackgroundComposerPr {
+  string branch_name = 1;
+  string base_branch = 2;
+  optional string scm_repo_node_id = 3;
+  optional int32 pull_number = 4;
+  optional PRStatus pr_status = 5;
+  optional string pr_url = 6;
+  optional string scm_provider = 7;
+}
+
+message BackgroundComposerQuickActionSettings {
+  repeated BackgroundComposerQuickActionSubagentSlot quick_action_subagent_slots = 1;
+  bool quick_action_subagent_slots_explicitly_set = 2;
+  optional uint32 quick_action_subagent_catalog_version = 3;
+  repeated BackgroundComposerQuickActionSubagentTemplate quick_action_subagent_templates = 4;
+  repeated BackgroundComposerQuickActionSubagentTemplateMutation quick_action_subagent_template_mutations = 5;
+}
+
+message BackgroundComposerQuickActionSubagentSlot {
+  string id = 1;
+  string label = 2;
+  string template_id = 3;
+  string subagent_type = 4;
+  bool enabled = 5;
+  int32 order = 6;
+  BackgroundComposerQuickActionExecutionMode execution_mode = 7;
+}
+
+message BackgroundComposerQuickActionSubagentTemplate {
+  string template_id = 1;
+  string label = 2;
+  string description = 3;
+  string subagent_type = 4;
+  optional string prompt = 5;
+  BackgroundComposerQuickActionSubagentTemplateScope scope = 6;
+  bool can_edit = 7;
+  bool can_delete = 8;
+  optional string icon_name = 9;
+}
+
+message BackgroundComposerQuickActionSubagentTemplateMutation {
+  BackgroundComposerQuickActionSubagentTemplateOperation operation = 1;
+  BackgroundComposerQuickActionSubagentTemplate template = 2;
+}
+
+message BackgroundComposerSharedArtifact {
+  string artifact_id = 1;
+  string source_bc_id = 2;
+  string source_absolute_path = 3;
+  string public_url = 4;
+  string title = 5;
+  string content_type = 6;
+  string share_source = 7;
+  optional int64 revoked_at_ms = 8;
+  int64 created_at_ms = 9;
+  int64 updated_at_ms = 10;
+}
+
+message BackgroundComposerSnapshotStatusByBcId {
+  string bc_id = 1;
+  optional string snapshot_id = 2;
+  optional ChangeBackgroundComposerSnapshotVisibilityRequest.Visibility visibility = 3;
+  optional double created_at_ms = 4;
+}
+
+message BackgroundComposerSnapshotSummary {
+  string snapshot_id = 1;
+  ChangeBackgroundComposerSnapshotVisibilityRequest.Visibility visibility = 2;
+  double created_at_ms = 3;
+}
+
+message BackgroundComposerUserEgressPolicy {
+  repeated string allowlist = 1;
+}
+
+message BatchRefreshPullRequestStatusRequest {
+  repeated string bc_ids = 1;
+}
+
+message BatchRefreshPullRequestStatusResponse {
+  map<string, aiserver.v1.GetDetailedPullRequestStatusResponse> results = 1;
+  repeated string failed_bc_ids = 2;
+}
+
+message ChangeBackgroundComposerSnapshotVisibilityRequest {
+  enum Visibility {
+    VISIBILITY_UNSPECIFIED = 0;
+    VISIBILITY_USER = 1;
+    VISIBILITY_REPO_READ_WRITE = 2;
+    VISIBILITY_PUBLIC = 4;
+    VISIBILITY_TEAM = 5;
+  }
+
+  string snapshot_id = 1;
+  Visibility visibility = 2;
+  string repo_url = 3;
+}
+
+message ChangeBackgroundComposerSnapshotVisibilityResponse {
+}
+
+message CheckPullRequestMergeabilityRequest {
+  string pr_url = 1;
+}
+
+message CheckPullRequestMergeabilityResponse {
+  bool can_merge = 1;
+  string error = 2;
+  optional string mergeable_state = 3;
+}
+
+message CloudAgentErrorDetails {
+  string error_message = 1;
+  string error_code = 2;
+}
+
+message CloudAgentState {
+  agent.v1.ConversationStateStructure conversation_state = 1;
+  uint32 num_prior_interaction_updates = 2;
+  bytes pr_body = 3;
+  bytes summary = 4;
+  bytes branch_name = 5;
+  bytes pr_url = 6;
+  bytes agent_name = 8;
+  string last_interaction_update_offset_key = 7;
+  optional string starting_commit = 9;
+  optional string base_branch = 10;
+  bytes config = 11;
+  optional string local_state_branch = 12;
+  bytes original_prompt_blob_id = 13;
+  bytes repository_info_blob_id = 14;
+  bytes original_conversation_action_blob_id = 15;
+  bytes video_annotations_blob_id = 16;
+  optional string last_user_turn_commit = 17;
+  optional BackgroundComposerSource last_followup_source = 18;
+  optional bool continue_rebase = 19;
+  repeated string turn_start_todo_ids = 20;
+  optional int64 original_request_start_unix_ms = 21;
+  optional bool initial_turn_latency_reported = 22;
+  optional string agent_session_id = 23;
+  optional string kickoff_message_id = 24;
+  optional GrindModeConfig grind_mode_config = 25;
+  repeated BackgroundComposerCommit commits = 26;
+  optional int32 commit_count = 27;
+  optional CloudAgentErrorDetails user_facing_error_details = 28;
+  optional BackgroundComposerSource initial_source = 29;
+  uint32 num_completed_turns = 30;
+  optional SynthesisSubagentConfig synthesis_subagent_config = 31;
+  bytes start_request_blob_id = 32;
+  bytes commit_reminder_state_blob_id = 33;
+  bytes grind_mode_tracking_state_blob_id = 34;
+  bytes workflow_control_state_blob_id = 35;
+  repeated WorkerCreation worker_creations = 36;
+  optional bool is_time_limit_expired = 37;
+  bytes resolved_egress_policy_blob_id = 38;
+  optional OptimizedDiffState optimized_diff = 39;
+  bytes pending_pr_blob_id = 40;
+  optional bool is_pod_finalized = 41;
+  bytes next_turn_system_reminders_blob_id = 42;
+  bytes cloud_plugin_manifest_blob_id = 43;
+}
+
+message CloudAgentStatePersistedMetadata {
+  enum PersistedMetadataVersion {
+    PERSISTED_METADATA_VERSION_UNSPECIFIED = 0;
+    PERSISTED_METADATA_VERSION_1 = 1;
+  }
+
+  bytes cloud_agent_state_blob_id = 1;
+  string offset_key = 2;
+  double timestamp_ms = 3;
+  CloudAgentWorkflowStatus workflow_status = 4;
+  PersistedMetadataVersion version = 5;
+}
+
+message CloudAgentWorkflowControlState {
+  repeated QueuedFollowup pending_followups = 1;
+  int32 followup_completion_count = 2;
+  bool running_desired = 3;
+  bool can_run_loop = 4;
+  repeated QueuedMakePRRequest pending_make_pr_requests = 5;
+  repeated QueuedOpenPRRequest pending_open_pr_requests = 6;
+  repeated string immediate_followup_ids = 7;
+  int64 last_updated_ms = 8;
+  repeated string completed_followup_ids = 9;
+  repeated agent.v1.ConversationAction skipped_input_actions = 10;
+  repeated CompletedMakePRRequest completed_make_pr_requests = 11;
+  repeated CompletedOpenPRRequest completed_open_pr_requests = 12;
+}
+
+message CommitBackgroundComposerRequest {
+  string bc_id = 1;
+  string commit_message = 2;
+}
+
+message CommitBackgroundComposerResponse {
+  string commit_hash = 1;
+}
+
+message CompletedMakePRRequest {
+  string request_id = 1;
+  int64 completed_at_ms = 2;
+  optional MakePRBackgroundComposerResponse response = 3;
+  optional string error_message = 4;
+  optional string error_code = 5;
+}
+
+message CompletedOpenPRRequest {
+  string request_id = 1;
+  int64 completed_at_ms = 2;
+  optional OpenPRBackgroundComposerResponse response = 3;
+  optional string error_message = 4;
+  optional string error_code = 5;
+}
+
+message ConversationStreamMessage {
+  oneof message {
+    agent.v1.InteractionUpdate interaction_update = 1;
+    bytes cloud_agent_state_blob_id = 2;
+    CloudAgentWorkflowStatus workflow_status = 3;
+    bytes interaction_update_blob_id = 4;
+    TransientError transient_error = 5;
+    WorkerLifecycleEvent worker_lifecycle_event = 6;
+  }
+}
+
+message ConvertPullRequestFromDraftRequest {
+  string bc_id = 1;
+}
+
+message ConvertPullRequestFromDraftResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message CreateAgentShareRequest {
+  string bc_id = 1;
+}
+
+message CreateAgentShareResponse {
+  string share_id = 1;
+  string share_url = 2;
+}
+
+message CreateBackgroundComposerPodRequest {
+  DevcontainerStartingPoint devcontainer_starting_point = 1;
+  bool include_secrets = 2;
+  optional string force_cluster = 3;
+  optional string force_machine_template = 4;
+  optional string client_ip = 32;
+  bool optimistic_prewarming = 5;
+}
+
+message CreateBackgroundComposerPodResponse {
+  string pod_id = 1;
+  string workspace_root_path = 2;
+}
+
+message CreateBackgroundComposerPodSnapshotRequest {
+  string pod_id = 1;
+  ChangeBackgroundComposerSnapshotVisibilityRequest.Visibility visibility = 2;
+  optional string bc_id = 3;
+}
+
+message CreateBackgroundComposerPodSnapshotResponse {
+  string snapshot_id = 1;
+}
+
+message DeletePendingFollowupRequest {
+  string bc_id = 1;
+  string followup_id = 2;
+}
+
+message DeletePendingFollowupResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message DeletePersonalEnvironmentJsonRequest {
+  int64 id = 1;
+}
+
+message DeletePersonalEnvironmentJsonResponse {
+}
+
+message DeletePushNotificationTokenRequest {
+  string device_id = 1;
+  PushPlatform platform = 2;
+}
+
+message DeletePushNotificationTokenResponse {
+}
+
+message DeleteTeamEnvironmentRequest {
+  int64 id = 1;
+}
+
+message DeleteTeamEnvironmentResponse {
+}
+
+message DetailedBackgroundComposer {
+  BackgroundComposer composer = 1;
+  string starting_commit = 2;
+  string base_branch = 3;
+  HeadlessAgenticComposerPrompt prompt = 4;
+  BackgroundComposerStatus status = 5;
+  GitDiff diff_since_start = 6;
+  ErrorDetails start_error = 7;
+  ModelDetails model_details = 8;
+  bool unread = 9;
+  optional string summary = 10;
+  repeated EnvironmentPort environment_ports = 11;
+  optional bool auto_create_pr = 12;
+  optional bool open_as_cursor_github_app = 13;
+  optional bool skip_reviewer_request = 14;
+  optional string local_state_branch = 15;
+  optional ErrorDetails permanent_error = 16;
+  repeated VideoAnnotationEntry video_annotations = 18;
+  optional bool auto_branch = 19;
+  repeated BackgroundComposerPr prs = 20;
+  repeated VmProvisionedSkill vm_provisioned_skills = 21;
+  optional agent.v1.ConversationAction original_conversation_action = 22;
+}
+
+message DevcontainerStartingPoint {
+  string url = 1;
+  string ref = 2;
+  repeated string user_extensions = 4;
+  string cursor_server_commit = 5;
+  string environment_json_override = 6;
+  GitDiff git_diff_to_apply = 8;
+  bool dont_allow_reading_environment_json_from_database = 9;
+  bool skip_build_caches = 10;
+}
+
+message DisablePullRequestAutoMergeRequest {
+  string pr_url = 1;
+}
+
+message DisablePullRequestAutoMergeResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message EnablePullRequestAutoMergeRequest {
+  string pr_url = 1;
+  optional string merge_method = 2;
+}
+
+message EnablePullRequestAutoMergeResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message EnvironmentPort {
+  string name = 1;
+  int32 port = 2;
+}
+
+message FetchBackgroundComposerRequest {
+  string bc_id = 1;
+  int32 start_index = 2;
+  optional int32 limit = 3;
+}
+
+message FetchBackgroundComposerResponse {
+  repeated HeadlessAgenticComposerResponse responses = 1;
+  int32 total_responses = 2;
+}
+
+message GetAgentSharePreviewRequest {
+  string share_id = 1;
+  optional bool include_preview_image = 2;
+}
+
+message GetAgentSharePreviewResponse {
+  string share_id = 1;
+  string bc_id = 2;
+  optional string name = 3;
+  optional string summary = 4;
+  optional string status = 5;
+  optional string error_message = 6;
+  optional string repo_url = 7;
+  optional string branch_name = 8;
+  optional string artifact_image_url = 9;
+  optional bytes preview_image_png = 10;
+}
+
+message GetBackgroundComposerArtifactBytesRequest {
+  string bc_id = 1;
+  string absolute_path = 2;
+}
+
+message GetBackgroundComposerArtifactBytesResponse {
+  bytes content = 1;
+  string content_type = 2;
+}
+
+message GetBackgroundComposerArtifactRequest {
+  string bc_id = 1;
+  string absolute_path = 2;
+}
+
+message GetBackgroundComposerArtifactResponse {
+  string url = 1;
+  string expires_at = 2;
+}
+
+message GetBackgroundComposerChangesHashRequest {
+  string bc_id = 1;
+  optional string branch_name = 2;
+}
+
+message GetBackgroundComposerChangesHashResponse {
+  string hash = 1;
+}
+
+message GetBackgroundComposerConversationRequest {
+  string bc_id = 1;
+}
+
+message GetBackgroundComposerConversationResponse {
+  repeated ConversationMessage conversation = 1;
+}
+
+message GetBackgroundComposerDiffDetailsRequest {
+  string bc_id = 1;
+  optional string branch_name = 2;
+}
+
+message GetBackgroundComposerDiffDetailsResponse {
+  string branch_name = 1;
+  string base_branch = 2;
+  repeated BackgroundComposerFullDiff diffs = 3;
+  repeated GitDiff git_diffs = 4;
+}
+
+message GetBackgroundComposerInfoRequest {
+  string bc_id = 1;
+  bool include_diff = 2;
+  bool do_not_throw_if_setup_not_finished = 3;
+}
+
+message GetBackgroundComposerInfoResponse {
+  DetailedBackgroundComposer composer = 1;
+}
+
+message GetBackgroundComposerNameRequest {
+  string bc_id = 1;
+}
+
+message GetBackgroundComposerNameResponse {
+  string name = 1;
+}
+
+message GetBackgroundComposerPromptRequest {
+  string bc_id = 1;
+}
+
+message GetBackgroundComposerPromptResponse {
+  ConversationMessage prompt = 1;
+}
+
+message GetBackgroundComposerPullRequestRequest {
+  string bc_id = 1;
+}
+
+message GetBackgroundComposerPullRequestResponse {
+  string pr_url = 1;
+}
+
+message GetBackgroundComposerRepositoryInfoRequest {
+  string bc_id = 1;
+}
+
+message GetBackgroundComposerRepositoryInfoResponse {
+  RepositoryInfo repository_info = 1;
+  optional string path_encryption_key = 2;
+  QueryOnlyRepoAccess query_only_repo_access = 3;
+}
+
+message GetBackgroundComposerSnapshotInfoRequest {
+  string snapshot_id = 1;
+}
+
+message GetBackgroundComposerSnapshotInfoResponse {
+  string snapshot_id = 1;
+  ChangeBackgroundComposerSnapshotVisibilityRequest.Visibility visibility = 2;
+  string repo_url = 3;
+  double created_at_ms = 4;
+}
+
+message GetBackgroundComposerSnapshotStateRequest {
+  string snapshot_id = 1;
+}
+
+message GetBackgroundComposerSnapshotStateResponse {
+  string snapshot_id = 1;
+  anyrun.v1.SnapshotState state = 2;
+  optional string error_message = 3;
+}
+
+message GetBackgroundComposerStatusRequest {
+  string bc_id = 1;
+}
+
+message GetBackgroundComposerStatusResponse {
+  BackgroundComposerStatus status = 1;
+  bool is_unread = 2;
+}
+
+message GetBackgroundComposerUserSettingsRequest {
+}
+
+message GetBackgroundComposerUserSettingsResponse {
+  optional string model_name = 1;
+  optional bool slack_notifications_for_web_enabled = 2;
+  optional bool ci_failure_followup_enabled = 3;
+  optional bool browser_use_enabled = 4;
+  optional AutoCreatePrSetting auto_create_pr_setting = 5;
+  optional PrReviewOpenDestinationMode pr_review_open_destination = 6;
+  optional GithubArtifactPostingMode github_artifact_posting = 7;
+  optional CloudAgentEgressProtectionMode egress_protection_mode = 8;
+  optional BackgroundComposerUserEgressPolicy egress_policy = 9;
+  optional string branch_prefix = 10;
+  optional BackgroundComposerQuickActionSettings quick_action_settings = 11;
+  optional bool allow_private_workers = 12;
+}
+
+message GetBackgroundComposerVmUsageRequest {
+  string bc_id = 1;
+}
+
+message GetBackgroundComposerVmUsageResponse {
+  int64 total_duration_ms = 1;
+}
+
+message GetBlobForAgentKVRequest {
+  string bc_id = 1;
+  bytes blob_id = 2;
+}
+
+message GetBlobForAgentKVResponse {
+  bytes blob_data = 1;
+}
+
+message GetCloudAgentDebugDetailsRequest {
+  string bc_id = 1;
+  optional bytes agent_blob_id = 2;
+  optional bytes blob_id = 3;
+}
+
+message GetCloudAgentDebugDetailsResponse {
+  bytes cloud_agent_state_blob_id = 1;
+  CloudAgentState cloud_agent_state = 2;
+  repeated StreamConversationResponse stream_messages = 3;
+  repeated PreFetchedBlob pre_fetched_blobs = 4;
+}
+
+message GetCursorServerUrlRequest {
+  string bc_id = 1;
+  string commit = 2;
+  optional string connection_token = 3;
+}
+
+message GetCursorServerUrlResponse {
+  message Header {
+    string key = 1;
+    string value = 2;
+  }
+
+  string host = 1;
+  int32 port = 2;
+  string connection_token = 3;
+  repeated Header headers = 4;
+}
+
+message GetDetailedPullRequestStatusRequest {
+  string pr_url = 1;
+  optional int32 cache_expiration_seconds = 2;
+}
+
+message GetDetailedPullRequestStatusResponse {
+  bool is_merged = 1;
+  bool is_closed = 2;
+  string mergeable_state = 3;
+  string state = 4;
+  bool is_draft = 5;
+  string title = 6;
+  string base_branch = 7;
+  int32 behind_by = 8;
+  bool can_update_branch = 9;
+  optional PRCheckStatus check_status = 10;
+  optional string review_decision = 11;
+  bool is_auto_merge_enabled = 12;
+  optional string head_sha = 13;
+  optional string base_sha = 14;
+  bool viewer_can_enable_auto_merge = 15;
+  repeated PRDeploymentPreview deployment_previews = 16;
+}
+
+message GetEnvironmentJsonCandidatesRequest {
+  string repo_url = 1;
+  string ref = 2;
+}
+
+message GetEnvironmentJsonCandidatesResponse {
+  optional string repo_environment_json = 1;
+  optional string personal_environment_json = 2;
+  optional string team_environment_json = 3;
+}
+
+message GetGithubAccessTokenForReposRequest {
+  repeated string mandatory_repo_urls = 1;
+  repeated string optional_repo_urls = 2;
+  optional bool skip_cache = 3;
+}
+
+message GetGithubAccessTokenForReposResponse {
+  message Status {
+    string repo_url = 1;
+    bool has_access = 2;
+    optional string error = 3;
+  }
+
+  optional bool has_access = 1;
+  optional string error = 2;
+  repeated Status repo_url_statuses = 3;
+  GithubAccessErrorType error_type = 4;
+  optional string github_redirect_url = 5;
+}
+
+message GetLatestAgentConversationStateRequest {
+  string bc_id = 1;
+}
+
+message GetLatestAgentConversationStateResponse {
+  LatestAgentConversationState latest_conversation_state = 1;
+  repeated PreFetchedBlob pre_fetched_blobs = 2;
+}
+
+message GetMachineRequest {
+  string bc_id = 1;
+}
+
+message GetMachineResponse {
+  MachineReference machine = 1;
+}
+
+message GetOptimizedDiffDetailsRequest {
+  string bc_id = 1;
+  bool exclude_before_after_diffs = 2;
+  bool committed_only = 3;
+  optional string branch_name = 4;
+}
+
+message GetOptimizedDiffDetailsResponse {
+  message SubmoduleDiff {
+    string relative_path = 1;
+    GitDiff diff = 2;
+    bool errored = 3;
+  }
+
+  GitDiff diff = 1;
+  repeated SubmoduleDiff submodule_diffs = 2;
+}
+
+message GetPersonalEnvironmentJsonRequest {
+  string repo_url = 1;
+}
+
+message GetPersonalEnvironmentJsonResponse {
+  string environment_json = 1;
+  string repo_url = 2;
+}
+
+message GetPrivateWorkerRequest {
+  string worker_id = 1;
+}
+
+message GetPrivateWorkerResponse {
+  PrivateWorker worker = 1;
+}
+
+message GetPrivateWorkersSummaryRequest {
+}
+
+message GetPrivateWorkersSummaryResponse {
+  optional UserWorkerSummary user_summary = 1;
+  optional TeamWorkerSummary team_summary = 2;
+}
+
+message GetPublicBackgroundComposerArtifactRequest {
+  string artifact_id = 1;
+}
+
+message GetPublicBackgroundComposerArtifactResponse {
+  string url = 1;
+  string content_type = 2;
+  optional string title = 3;
+}
+
+message GetPullRequestCommitsRequest {
+  string pr_url = 1;
+  optional string after_cursor = 2;
+}
+
+message GetPullRequestCommitsResponse {
+  repeated PRCommit commits = 1;
+  bool has_next_page = 2;
+  optional string end_cursor = 3;
+}
+
+message GetPullRequestDiscussionsRequest {
+  string pr_url = 1;
+}
+
+message GetPullRequestDiscussionsResponse {
+  repeated PRReviewThread threads = 1;
+  repeated PRTopLevelComment top_level_comments = 2;
+  optional PRCheckStatus check_status = 3;
+}
+
+message GetPullRequestMergeStatusRequest {
+  string pr_url = 1;
+  optional bool include_behind_count = 2;
+}
+
+message GetPullRequestMergeStatusResponse {
+  bool is_merged = 1;
+  bool is_closed = 2;
+  string mergeable_state = 3;
+  string state = 4;
+  bool is_draft = 5;
+  string title = 6;
+  string base_branch = 7;
+  int32 behind_by = 8;
+  bool can_update_branch = 9;
+  bool is_auto_merge_enabled = 10;
+  bool viewer_can_enable_auto_merge = 11;
+}
+
+message GetRepositoryBranchesRequest {
+  string repo_url = 1;
+  optional int32 page = 2;
+  optional string query = 3;
+  optional bool only_user_branches = 4;
+}
+
+message GetRepositoryBranchesResponse {
+  message Branch {
+    string name = 1;
+    bool is_default = 2;
+  }
+
+  repeated Branch branches = 1;
+  bool has_more = 2;
+  int32 page = 3;
+  bool is_empty_repo = 4;
+  string bootstrap_branch = 5;
+}
+
+message GetTurnSummaryBackgroundComposerRequest {
+  string bc_id = 1;
+  optional BackgroundComposerSource source_type = 2;
+}
+
+message GetTurnSummaryBackgroundComposerResponse {
+  string summary = 1;
+}
+
+message GrindModeConfig {
+  enum Phase {
+    PHASE_UNSPECIFIED = 0;
+    PHASE_PLANNING = 1;
+    PHASE_EXECUTING = 2;
+    PHASE_CONTROLLER = 3;
+  }
+
+  int64 time_budget_ms = 1;
+  optional int64 start_time_unix_ms = 2;
+  Phase phase = 3;
+  optional bool auto_proceed_after_planning = 4;
+  optional int64 time_budget_seconds = 5;
+  optional bool grind_prompt_calibrate_effort = 6;
+}
+
+message GrindModeTrackingState {
+  int32 no_tool_turn_streak = 1;
+  optional string pending_done_token = 2;
+  bool final_summary_requested = 3;
+  optional int64 start_time_unix_ms = 4;
+}
+
+message HeadlessAgenticComposerConfig {
+  string chat_model_name = 2;
+  ModelDetails chat_model_details = 5;
+  bool auto_commit = 4;
+  bool is_background = 6;
+  optional bool auto_create_pr = 7;
+  optional BackgroundComposerSource background_agent_source = 8;
+  optional bool open_as_cursor_github_app = 9;
+  optional bool skip_reviewer_request = 10;
+  optional bool enable_cloud_testing = 11;
+  optional bool enable_setup_vm_environment_tool = 12;
+  repeated ModelDetails additional_model_details = 13;
+  optional bool should_synthesize = 14;
+  optional bool show_onboarding_setup_note_for_manual_testing = 15;
+}
+
+message HeadlessAgenticComposerPrompt {
+  message FileAttachment {
+    string name = 1;
+    string contents = 2;
+  }
+
+  message FileSelection {
+    string relative_workspace_path = 1;
+  }
+
+  ConversationMessage base_conversation_message = 5;
+  string text = 1;
+  string rich_text = 6;
+  repeated FileSelection file_selections = 2;
+  repeated FileAttachment file_attachments = 3;
+  repeated ImageProto images = 4;
+  repeated ConversationMessage conversation_history = 7;
+  repeated string documentation_identifiers = 8;
+  optional bool use_web = 9;
+  repeated ComposerExternalLink external_links = 10;
+  repeated internapi.v1.BlobDataPerMessage blob_data_per_message = 11;
+}
+
+message HeadlessAgenticComposerRepositoryInfo {
+  RepositoryInfo repository_info = 1;
+  string path_encryption_key = 2;
+  bool repository_info_should_query_staging = 3;
+  bool repository_info_should_query_prod = 4;
+  string repo_query_auth_token = 5;
+  bool should_sync_index = 6;
+  QueryOnlyRepoAccess query_only_repo_access = 7;
+}
+
+message HeadlessAgenticComposerResponse {
+  message Error {
+    string message = 1;
+    ErrorDetails error_details = 2;
+  }
+
+  message FinalToolResult {
+    string tool_call_id = 1;
+    ClientSideToolV2Result result = 2;
+  }
+
+  message Status {
+    enum StatusType {
+      STATUS_TYPE_UNSPECIFIED = 0;
+      STATUS_TYPE_INDEX_SYNC = 1;
+      STATUS_TYPE_GENERIC = 2;
+    }
+
+    StatusType type = 1;
+    string message = 2;
+    bool is_complete = 3;
+  }
+
+  message UserMessage {
+    string text = 1;
+    string rich_text = 2;
+  }
+
+  string text = 1;
+  optional ClientSideToolV2Call tool_call = 2;
+  optional FinalToolResult final_tool_result = 3;
+  optional StreamedBackToolCall streamed_back_tool_call = 6;
+  UserMessage user_message = 4;
+  bool is_message_done = 5;
+  optional Error error = 7;
+  ConversationMessage human_message = 8;
+  optional ConversationMessage.Thinking thinking = 9;
+  optional int32 thinking_duration_ms = 10;
+  optional ConversationMessage.ThinkingStyle thinking_style = 12;
+  optional Status status = 11;
+}
+
+message LatestAgentConversationState {
+  agent.v1.ConversationStateStructure conversation_state = 1;
+  uint32 num_prior_interaction_updates = 2;
+}
+
+message ListBackgroundComposerArtifactsRequest {
+  string bc_id = 1;
+}
+
+message ListBackgroundComposerArtifactsResponse {
+  repeated BackgroundComposerArtifact artifacts = 1;
+}
+
+message ListBackgroundComposerSnapshotsByBcIdRequest {
+  string bc_id = 1;
+  optional bool use_primary = 2;
+  optional uint32 limit = 3;
+}
+
+message ListBackgroundComposerSnapshotsByBcIdResponse {
+  repeated BackgroundComposerSnapshotSummary snapshots = 1;
+}
+
+message ListBackgroundComposerSnapshotStatusesByBcIdsRequest {
+  repeated string bc_ids = 1;
+  optional bool use_primary = 2;
+}
+
+message ListBackgroundComposerSnapshotStatusesByBcIdsResponse {
+  repeated BackgroundComposerSnapshotStatusByBcId snapshot_statuses = 1;
+}
+
+message ListBackgroundComposersRequest {
+  int32 n = 1;
+  bool include_team_wide = 2;
+  optional string bc_id = 3;
+  optional string preferred_repo_url = 4;
+  repeated string additional_repo_urls = 5;
+  bool include_status = 6;
+  repeated BackgroundComposerSource include_sources = 7;
+  optional OwnerFilter owner_filter = 8;
+  optional double last_message_activity_at_ms_offset = 9;
+  optional bool include_archived = 10;
+  optional bool should_include_collaborators = 11;
+}
+
+message ListBackgroundComposersResponse {
+  repeated BackgroundComposer composers = 1;
+  bool did_load_status = 2;
+  bool has_more = 3;
+  optional double next_page_offset = 4;
+  repeated BackgroundComposerParticipant participants = 5;
+}
+
+message ListDetailedBackgroundComposersRequest {
+  bool include_team_wide = 1;
+  optional string bc_id = 2;
+  optional int32 n = 3;
+  bool include_diff = 4;
+  optional string cursor = 5;
+  repeated string bc_ids = 6;
+  optional OwnerFilter owner_filter = 7;
+  optional string repo_url_prefix = 8;
+  optional string pr_url = 9;
+  optional bool include_archived = 10;
+}
+
+message ListDetailedBackgroundComposersResponse {
+  repeated DetailedBackgroundComposer composers = 1;
+  repeated BackgroundComposerParticipant participants = 2;
+}
+
+message ListGrindModeComposersRequest {
+  int32 limit = 1;
+}
+
+message ListGrindModeComposersResponse {
+  repeated BackgroundComposer composers = 1;
+}
+
+message ListPendingFollowupsRequest {
+  string bc_id = 1;
+}
+
+message ListPendingFollowupsResponse {
+  repeated PendingFollowup pending_followups = 1;
+}
+
+message ListPersonalEnvironmentsRequest {
+  optional int32 limit = 1;
+}
+
+message ListPersonalEnvironmentsResponse {
+  repeated PersonalEnvironment environments = 1;
+}
+
+message ListPrivateWorkersRequest {
+  PrivateWorkerStatusFilter status_filter = 1;
+  int32 page_size = 2;
+  optional string page_token = 3;
+}
+
+message ListPrivateWorkersResponse {
+  repeated PrivateWorker workers = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message ListReposWithLocalEnvironmentRequest {
+}
+
+message ListReposWithLocalEnvironmentResponse {
+  repeated RepoWithLocalEnvironment repos = 1;
+}
+
+message ListSharedBackgroundComposerArtifactsRequest {
+  string bc_id = 1;
+}
+
+message ListSharedBackgroundComposerArtifactsResponse {
+  repeated BackgroundComposerSharedArtifact artifacts = 1;
+}
+
+message ListTeamEnvironmentsRequest {
+  optional int32 limit = 1;
+}
+
+message ListTeamEnvironmentsResponse {
+  repeated TeamEnvironment environments = 1;
+}
+
+message MachineReference {
+  oneof reference {
+    PodReference pod = 1;
+    WorkerReference worker = 2;
+  }
+}
+
+message MakePRBackgroundComposerRequest {
+  string bc_id = 1;
+  optional string workflow_id = 2;
+  optional string branch_name = 3;
+}
+
+message MakePRBackgroundComposerResponse {
+  string pr_url = 1;
+  string branch_name = 2;
+  bool has_commits = 3;
+  optional string owner = 4;
+  optional string repo = 5;
+}
+
+message MarkBackgroundComposerReadRequest {
+  string bc_id = 1;
+}
+
+message MarkBackgroundComposerReadResponse {
+}
+
+message MarkBackgroundComposerUnreadRequest {
+  string bc_id = 1;
+}
+
+message MarkBackgroundComposerUnreadResponse {
+}
+
+message MarkFollowupEditingRequest {
+  string bc_id = 1;
+  string followup_id = 2;
+}
+
+message MarkFollowupEditingResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message MergePullRequestRequest {
+  string pr_url = 1;
+  optional string merge_method = 2;
+}
+
+message MergePullRequestResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message NextTurnSystemReminderEntry {
+  NextTurnSystemReminderKind kind = 1;
+  string reminder = 2;
+}
+
+message NextTurnSystemRemindersWrapper {
+  repeated NextTurnSystemReminderEntry reminders = 1;
+}
+
+message NotifyBackgroundComposerShownRequest {
+  string bc_id = 1;
+}
+
+message NotifyBackgroundComposerShownResponse {
+}
+
+message OpenPRBackgroundComposerRequest {
+  string bc_id = 1;
+  optional string title = 2;
+  optional string body = 3;
+  optional string base_branch = 4;
+  optional bool draft = 5;
+  optional bool open_as_cursor_github_app = 6;
+  optional bool skip_reviewer_request = 7;
+  bytes agent_state_blob_id = 8;
+  optional string workflow_id = 9;
+  optional string branch_name = 10;
+}
+
+message OpenPRBackgroundComposerResponse {
+  string pr_url = 1;
+  int32 pr_number = 2;
+  string branch_name = 3;
+  string base_branch = 4;
+  bool success = 5;
+  optional string error = 6;
+}
+
+message OptimizedDiffState {
+  oneof state {
+    google.protobuf.Empty pending = 1;
+    bytes diff_blob_id = 2;
+  }
+}
+
+message OwnerFilter {
+  repeated OwnerIdentifier owners = 1;
+}
+
+message OwnerIdentifier {
+  string id = 1;
+  OwnerType owner_type = 2;
+}
+
+message PauseBackgroundComposerRequest {
+  string bc_id = 1;
+  BackgroundComposerSource source = 3;
+}
+
+message PauseBackgroundComposerResponse {
+}
+
+message PendingFollowup {
+  string followup_id = 1;
+  string text = 2;
+  string rich_text = 3;
+  int64 created_at_ms = 4;
+  BackgroundComposerSource source = 5;
+  repeated agent.v1.SelectedCursorCommand cursor_commands = 6;
+  bool cursor_commands_explicitly_set = 7;
+  repeated agent.v1.SelectedPastChat past_chats = 8;
+  bool past_chats_explicitly_set = 9;
+  optional agent.v1.ConversationAction conversation_action = 10;
+  repeated internapi.v1.BlobData blob_data = 11;
+}
+
+message PendingPullRequestData {
+  string title = 1;
+  string body = 2;
+  string branch_name = 3;
+  optional string base_branch = 4;
+}
+
+message PersonalEnvironment {
+  string repo_url = 1;
+  string environment_json = 2;
+  int64 created_at_ms = 3;
+  int64 updated_at_ms = 4;
+  int64 id = 5;
+}
+
+message PodReference {
+  string pod_id = 1;
+  string tenant_id = 2;
+  string network_token = 3;
+  string cluster = 4;
+  optional string exec_daemon_auth_token = 5;
+}
+
+message PRCheck {
+  string name = 1;
+  string status = 2;
+  optional string details_url = 3;
+  optional string summary = 4;
+}
+
+message PRCheckStatus {
+  string overall_state = 1;
+  int32 success_count = 2;
+  int32 failure_count = 3;
+  int32 pending_count = 4;
+  int32 neutral_count = 5;
+  int32 skipped_count = 6;
+  int32 total_count = 7;
+  repeated PRCheck checks = 8;
+}
+
+message PRCommit {
+  string sha = 1;
+  string message = 2;
+  string committed_date = 3;
+  int32 additions = 4;
+  int32 deletions = 5;
+  optional int32 changed_files = 6;
+  PRCommitUser author = 7;
+  PRCommitUser committer = 8;
+}
+
+message PRCommitUser {
+  optional string name = 1;
+  optional string email = 2;
+  optional string avatar_url = 3;
+}
+
+message PRDeploymentPreview {
+  string environment = 1;
+  PRDeploymentState state = 2;
+  PRDeploymentPreviewStatus latest_status = 3;
+}
+
+message PRDeploymentPreviewStatus {
+  string environment_url = 1;
+  string log_url = 2;
+  PRDeploymentStatusState state = 3;
+}
+
+message PreFetchedBlob {
+  bytes id = 1;
+  bytes value = 2;
+}
+
+message PreWarmPodRequest {
+  StartBackgroundComposerFromSnapshotRequest start_request = 1;
+}
+
+message PreWarmPodResponse {
+}
+
+message PrivateWorker {
+  string worker_id = 1;
+  string repo_owner = 2;
+  string repo_name = 3;
+  string workspace_root_path = 4;
+  double connected_at_ms = 5;
+  int32 user_id = 6;
+  optional int32 team_id = 7;
+  optional string service_account_id = 8;
+  bool is_in_use = 9;
+  optional string active_bc_id = 10;
+  repeated PrivateWorkerLabel labels = 11;
+  optional string repo_url = 12;
+  optional string display_name = 13;
+}
+
+message PrivateWorkerLabel {
+  string key = 1;
+  string value = 2;
+}
+
+message PRReviewComment {
+  string id = 1;
+  string author_login = 2;
+  string avatar_url = 3;
+  string body = 4;
+  string created_at = 5;
+  optional string diff_hunk = 6;
+}
+
+message PRReviewThread {
+  string id = 1;
+  string path = 2;
+  optional int32 line = 3;
+  optional int32 start_line = 4;
+  optional int32 original_line = 5;
+  optional int32 original_start_line = 6;
+  string diff_side = 7;
+  bool is_resolved = 8;
+  bool is_outdated = 9;
+  repeated PRReviewComment comments = 10;
+}
+
+message PRTopLevelComment {
+  string id = 1;
+  string author_login = 2;
+  string avatar_url = 3;
+  string body = 4;
+  string created_at = 5;
+}
+
+message PublishEnvironmentRequest {
+  int64 id = 1;
+  EnvironmentType environment_type = 2;
+}
+
+message PublishEnvironmentResponse {
+  bool success = 1;
+  string pr_url = 2;
+  string branch_name = 3;
+  optional string error = 4;
+}
+
+message PublishPersonalEnvironmentRequest {
+  int64 id = 1;
+}
+
+message PublishPersonalEnvironmentResponse {
+  bool success = 1;
+  string pr_url = 2;
+  string branch_name = 3;
+  optional string error = 4;
+}
+
+message QueuedFollowup {
+  string followup_id = 1;
+  int64 created_at_ms = 2;
+  BackgroundComposerSource source = 3;
+  bool is_simulated = 4;
+  bool synchronous = 5;
+  repeated agent.v1.SelectedCursorCommand cursor_commands = 6;
+  bool cursor_commands_explicitly_set = 7;
+  optional agent.v1.ConversationAction conversation_action = 8;
+  repeated internapi.v1.BlobData blob_data = 9;
+  optional ModelDetails model_details = 10;
+  optional int64 editing_started_at_ms = 11;
+}
+
+message QueuedMakePRRequest {
+  string request_id = 1;
+  int64 created_at_ms = 2;
+  bytes request_blob_id = 3;
+}
+
+message QueuedOpenPRRequest {
+  string request_id = 1;
+  int64 created_at_ms = 2;
+  bytes request_blob_id = 3;
+}
+
+message ReadBinaryFileRequest {
+  string bc_id = 1;
+  string path = 2;
+}
+
+message ReadBinaryFileResponse {
+  bytes content = 1;
+}
+
+message RefreshGithubAccessTokenInBackgroundComposerRequest {
+  string bc_id = 1;
+}
+
+message RefreshGithubAccessTokenInBackgroundComposerResponse {
+}
+
+message RegisterPushNotificationTokenRequest {
+  string token = 1;
+  PushPlatform platform = 2;
+  string device_id = 3;
+}
+
+message RegisterPushNotificationTokenResponse {
+}
+
+message RenameBackgroundComposerRequest {
+  string bc_id = 1;
+  string new_name = 2;
+}
+
+message RenameBackgroundComposerResponse {
+  string name = 1;
+}
+
+message ReorderPendingFollowupRequest {
+  string bc_id = 1;
+  string followup_id = 2;
+  string target_followup_id = 3;
+  bool insert_after = 4;
+}
+
+message ReorderPendingFollowupResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message ReplyToReviewThreadRequest {
+  string pr_url = 1;
+  string thread_id = 2;
+  string body = 3;
+}
+
+message ReplyToReviewThreadResponse {
+  optional PRReviewThread thread = 1;
+}
+
+message RepoWithLocalEnvironment {
+  string repo_url = 1;
+  bool file_exists = 2;
+  int64 last_seen_at_ms = 3;
+}
+
+message ResolveReviewThreadRequest {
+  string pr_url = 1;
+  string thread_id = 2;
+}
+
+message ResolveReviewThreadResponse {
+  bool success = 1;
+}
+
+message ResumeBackgroundComposerRequest {
+  string bc_id = 1;
+}
+
+message ResumeBackgroundComposerResponse {
+}
+
+message SetPersonalEnvironmentJsonRequest {
+  string environment_json = 1;
+  string repo_url = 2;
+}
+
+message SetPersonalEnvironmentJsonResponse {
+}
+
+message SetTeamEnvironmentJsonRequest {
+  string environment_json = 1;
+  string repo_url = 2;
+  string scm_repo_node_id = 3;
+  optional string git_enterprise_uuid = 4;
+  bool delete_personal_environment = 5;
+}
+
+message SetTeamEnvironmentJsonResponse {
+}
+
+message ShareBackgroundComposerArtifactRequest {
+  string bc_id = 1;
+  string absolute_path = 2;
+  optional string title = 3;
+}
+
+message ShareBackgroundComposerArtifactResponse {
+  BackgroundComposerSharedArtifact artifact = 1;
+}
+
+message SnapshotAndSaveEnvironmentRequest {
+  enum Target {
+    TARGET_UNSPECIFIED = 0;
+    TARGET_PERSONAL = 1;
+    TARGET_TEAM = 2;
+  }
+
+  Target target = 1;
+  string bc_id = 2;
+  string repo_url = 3;
+  optional string install_command = 4;
+  optional string existing_snapshot_id = 5;
+  optional string scm_repo_node_id = 6;
+  optional string git_enterprise_uuid = 7;
+}
+
+message SnapshotAndSaveEnvironmentResponse {
+  string snapshot_id = 1;
+}
+
+message StartBackgroundComposerFromSnapshotRequest {
+  message File {
+    string relative_workspace_path = 1;
+    string contents = 2;
+  }
+
+  message WebhookConfig {
+    string url = 1;
+    optional string secret = 2;
+  }
+
+  string snapshot_name_or_id = 1;
+  DevcontainerStartingPoint devcontainer_starting_point = 11;
+  string prompt = 2;
+  string rich_prompt = 17;
+  repeated File files = 3;
+  ModelDetails model_details = 4;
+  repeated ModelDetails additional_model_details = 16;
+  repeated agent.v1.RequestedModel requested_models = 58;
+  HeadlessAgenticComposerRepositoryInfo repository_info = 5;
+  string snapshot_workspace_root_path = 6;
+  string start_for_auth_id_on_team = 8;
+  bool auto_branch = 9;
+  bool return_immediately = 10;
+  optional string force_vm_backend = 12;
+  optional string force_cluster = 15;
+  optional string force_machine_template = 29;
+  repeated ImageProto images = 13;
+  optional string repo_url = 14;
+  repeated ConversationMessage conversation_history = 18;
+  optional BackgroundComposerSource source = 23;
+  repeated string documentation_identifiers = 19;
+  optional bool use_web = 20;
+  repeated ComposerExternalLink external_links = 21;
+  string bc_id = 22;
+  optional string slack_channel_id = 24;
+  optional string slack_message_timestamp = 25;
+  optional string slack_team_id = 27;
+  optional string linear_issue_id = 28;
+  optional string github_issue_id = 40;
+  optional bool add_initial_message_to_responses = 26;
+  optional string linear_org_id = 30;
+  optional string linear_issue_identifier = 33;
+  optional string base_branch = 31;
+  optional string custom_branch_name = 38;
+  optional string client_ip = 32;
+  optional string prompt_group_id = 34;
+  optional bool should_synthesize = 53;
+  optional string pod_id = 35;
+  optional bool wait_on_branch_name = 36;
+  optional bool auto_create_pr = 37;
+  optional WebhookConfig webhook_config = 39;
+  optional StartingMessageType starting_message_type = 41;
+  optional bool open_as_cursor_github_app = 42;
+  optional bool skip_reviewer_request = 43;
+  optional agent.v1.ConversationAction conversation_action = 44;
+  optional bool test_mode_enabled = 45;
+  optional bool skip_user_install_commands_and_cloud_testing = 60;
+  optional string agent_session_id = 46;
+  optional agent.v1.ConversationStateStructure conversation_state = 47;
+  repeated PreFetchedBlob pre_fetched_blobs = 48;
+  optional string kickoff_message_id = 49;
+  optional string name = 50;
+  optional bool enable_setup_vm_environment_tool = 51;
+  optional GrindModeConfig grind_mode_config = 52;
+  optional string automation_id = 73;
+  optional bool use_private_worker = 55;
+  repeated PrivateWorkerLabel labels = 59;
+  optional bool force_non_chargeable = 56;
+  optional string pr_url = 57;
+  optional CloudAgentEffortMode effort_mode = 75;
+  optional bool auto_proceed_after_planning = 76;
+  optional int64 time_budget_seconds = 77;
+  optional int64 time_budget_ms = 78;
+  optional bool init_empty_repo = 79;
+  repeated agent.v1.AgentSkill skills = 80;
+  optional string cloud_plugin_manifest_json = 81;
+  optional string cloud_plugin_snapshot_token = 82;
+  optional bool internal_multi_repo_experiment = 83;
+}
+
+message StartBackgroundComposerFromSnapshotResponse {
+  BackgroundComposer composer = 1;
+  optional bool was_swapped_to_default = 2;
+}
+
+message StartGithubStreamingForFollowupRequest {
+  string bc_id = 1;
+}
+
+message StartGithubStreamingForFollowupResponse {
+}
+
+message StartLinearStreamingForFollowupRequest {
+  string bc_id = 1;
+}
+
+message StartLinearStreamingForFollowupResponse {
+}
+
+message StartSlackStreamingForFollowupRequest {
+  string bc_id = 1;
+}
+
+message StartSlackStreamingForFollowupResponse {
+}
+
+message StreamBackgroundComposerArtifactRequest {
+  string bc_id = 1;
+  string absolute_path = 2;
+}
+
+message StreamBackgroundComposerArtifactResponse {
+  bytes content_chunk = 1;
+  string content_type = 2;
+  int64 total_size = 3;
+}
+
+message StreamConversationRequest {
+  string bc_id = 1;
+  optional string offset_key = 2;
+  optional bool filter_heavy_step_data = 3;
+  bool should_send_prefetched_blobs_first = 4;
+  repeated bytes pre_fetched_blob_ids = 5;
+  optional bool prefetch_only_last_step_per_turn = 6;
+  optional bool send_stream_signal_after_prefetch = 7;
+  optional uint32 max_blobs_after_prefetch = 8;
+}
+
+message StreamConversationResponse {
+  enum StreamSignal {
+    STREAM_SIGNAL_UNSPECIFIED = 0;
+    STREAM_SIGNAL_END_OF_INITIAL_STATE_PREFETCH = 1;
+  }
+
+  message CloudAgentStateWithIdAndOffset {
+    string offset_key = 1;
+    bytes blob_id = 2;
+    CloudAgentState cloud_agent_state = 3;
+    repeated PreFetchedBlob pre_fetched_blobs = 4;
+    repeated agent.v1.UserDisplayInfo user_display_infos = 5;
+  }
+
+  message DevBannerMessage {
+    string text = 1;
+  }
+
+  message InitialState {
+    bytes blob_id = 1;
+    CloudAgentState cloud_agent_state = 2;
+    repeated PreFetchedBlob pre_fetched_blobs = 4;
+    CloudAgentWorkflowStatus workflow_status = 5;
+    repeated agent.v1.UserDisplayInfo user_display_infos = 6;
+  }
+
+  message InteractionUpdateWithOffset {
+    string offset_key = 1;
+    agent.v1.InteractionUpdate interaction_update = 2;
+    repeated agent.v1.UserDisplayInfo user_display_infos = 3;
+  }
+
+  message PrefetchedBlobs {
+    repeated PreFetchedBlob pre_fetched_blobs = 1;
+  }
+
+  message TransientErrorWithOffset {
+    string offset_key = 1;
+    TransientError transient_error = 2;
+  }
+
+  message WorkerLifecycleEventWithOffset {
+    string offset_key = 1;
+    WorkerLifecycleEvent worker_lifecycle_event = 2;
+  }
+
+  message WorkflowStatusWithOffset {
+    string offset_key = 1;
+    CloudAgentWorkflowStatus workflow_status = 2;
+  }
+
+  oneof message {
+    InitialState initial_state = 3;
+    InteractionUpdateWithOffset interaction_update_with_offset = 4;
+    CloudAgentStateWithIdAndOffset cloud_agent_state_with_id_and_offset = 5;
+    WorkflowStatusWithOffset workflow_status_with_offset = 6;
+    PrefetchedBlobs prefetched_blobs = 7;
+    StreamSignal stream_signal = 8;
+    TransientErrorWithOffset transient_error_with_offset = 9;
+    DevBannerMessage dev_banner_message = 10;
+    WorkerLifecycleEventWithOffset worker_lifecycle_event_with_offset = 11;
+  }
+}
+
+message SubmitPendingFollowupNowRequest {
+  string bc_id = 1;
+  string followup_id = 2;
+}
+
+message SubmitPendingFollowupNowResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message SynthesisSubagentConfig {
+  repeated string additional_model_names = 1;
+  bytes original_user_prompt_blob_id = 2;
+}
+
+message TeamEnvironment {
+  int64 id = 1;
+  int32 team_id = 2;
+  string repo_url = 3;
+  string environment_json = 4;
+  int32 created_by_user_id = 5;
+  int64 created_at_ms = 6;
+  int64 updated_at_ms = 7;
+  string scm_repo_node_id = 8;
+  optional string git_enterprise_uuid = 9;
+}
+
+message TeamWorkerSummary {
+  int32 total_connected = 1;
+  int32 in_use = 2;
+}
+
+message TransientError {
+  string error_message = 1;
+}
+
+message UnshareBackgroundComposerArtifactRequest {
+  string artifact_id = 1;
+}
+
+message UnshareBackgroundComposerArtifactResponse {
+  optional BackgroundComposerSharedArtifact artifact = 1;
+}
+
+message UpdateBackgroundComposerEnvironmentRequest {
+  string bc_id = 1;
+  bool replace = 2;
+}
+
+message UpdateBackgroundComposerEnvironmentResponse {
+  uint32 applied = 1;
+  uint32 removed = 2;
+}
+
+message UpdateBackgroundComposerUserSettingsRequest {
+  optional string model_name = 1;
+  optional bool slack_notifications_for_web_enabled = 2;
+  optional bool ci_failure_followup_enabled = 3;
+  optional bool browser_use_enabled = 4;
+  optional AutoCreatePrSetting auto_create_pr_setting = 5;
+  optional PrReviewOpenDestinationMode pr_review_open_destination = 6;
+  optional GithubArtifactPostingMode github_artifact_posting = 7;
+  optional CloudAgentEgressProtectionMode egress_protection_mode = 8;
+  optional BackgroundComposerUserEgressPolicy egress_policy = 9;
+  optional string branch_prefix = 10;
+  optional BackgroundComposerQuickActionSettings quick_action_settings = 11;
+  optional bool allow_private_workers = 12;
+  optional string bc_id = 13;
+}
+
+message UpdateBackgroundComposerUserSettingsResponse {
+}
+
+message UpdatePendingFollowupRequest {
+  string bc_id = 1;
+  string followup_id = 2;
+  ConversationMessage updated_message = 3;
+}
+
+message UpdatePendingFollowupResponse {
+  bool success = 1;
+  string error_message = 2;
+}
+
+message UpdatePullRequestBranchRequest {
+  string pr_url = 1;
+}
+
+message UpdatePullRequestBranchResponse {
+  bool success = 1;
+  string error = 2;
+  optional string new_head_sha = 3;
+}
+
+message UserWorkerSummary {
+  int32 total_connected = 1;
+  int32 in_use = 2;
+  int32 team_workers_in_use_by_user = 3;
+}
+
+message VerifyBackgroundComposerAccessRequest {
+  string bc_id = 1;
+  string access_type = 2;
+}
+
+message VerifyBackgroundComposerAccessResponse {
+  bool has_access = 1;
+}
+
+message VideoAnnotation {
+  repeated VideoChapter labeled_chapters = 1;
+  VideoTimestamp thumbnail_timestamp = 2;
+  optional double trim_start_seconds = 3;
+  optional double trim_end_seconds = 4;
+}
+
+message VideoAnnotationEntry {
+  string artifact_path = 1;
+  VideoAnnotation annotation = 2;
+}
+
+message VideoAnnotationsWrapper {
+  repeated VideoAnnotationEntry entries = 1;
+}
+
+message VideoChapter {
+  VideoTimestamp start_time = 1;
+  string label = 3;
+  bool should_hide = 4;
+}
+
+message VideoTimestamp {
+  int32 minutes = 1;
+  double seconds = 2;
+}
+
+message VmProvisionedSkill {
+  string skill_id = 1;
+  string description = 2;
+}
+
+message WarmCursorServerDownloadRequest {
+  string bc_id = 1;
+  string commit = 2;
+}
+
+message WarmCursorServerDownloadResponse {
+  bool already_downloaded = 1;
+}
+
+message WatchBackgroundComposerSnapshotStateRequest {
+  string snapshot_id = 1;
+}
+
+message WatchBackgroundComposerSnapshotStateResponse {
+  string snapshot_id = 1;
+  anyrun.v1.SnapshotState state = 2;
+  optional string error_message = 3;
+}
+
+message WorkerCreation {
+  uint32 worker_index = 1;
+  int64 created_at_unix_ms = 2;
+  uint32 num_completed_turns = 3;
+}
+
+message WorkerLifecycleEvent {
+  uint32 worker_index = 1;
+  oneof event {
+    google.protobuf.Empty creating = 2;
+  }
+}
+
+message WorkerReference {
+  string worker_id = 1;
+  string workspace_root_path = 2;
+}

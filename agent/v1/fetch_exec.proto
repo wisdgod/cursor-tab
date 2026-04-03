@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message FetchArgs {
+  string url = 1;
+  string tool_call_id = 2;
+}
+
+message FetchError {
+  string url = 1;
+  string error = 2;
+}
+
+message FetchResult {
+  oneof result {
+    FetchSuccess success = 1;
+    FetchError error = 2;
+  }
+}
+
+message FetchSuccess {
+  string url = 1;
+  string content = 2;
+  int32 status_code = 3;
+  string content_type = 4;
+}

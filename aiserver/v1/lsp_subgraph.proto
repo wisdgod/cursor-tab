@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message LspSubgraphContextItem {
+  optional string uri = 1;
+  string type = 2;
+  string content = 3;
+  optional LspSubgraphRange range = 4;
+}
+
+message LspSubgraphFullContext {
+  string uri = 1;
+  string symbol_name = 2;
+  repeated LspSubgraphPosition positions = 3;
+  repeated LspSubgraphContextItem context_items = 4;
+  float score = 5;
+}
+
+message LspSubgraphPosition {
+  int32 line = 1;
+  int32 character = 2;
+}
+
+message LspSubgraphRange {
+  int32 start_line = 1;
+  int32 start_character = 2;
+  int32 end_line = 3;
+  int32 end_character = 4;
+}

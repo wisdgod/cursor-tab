@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message GlobToolArgs {
+  optional string target_directory = 1;
+  string glob_pattern = 2;
+}
+
+message GlobToolCall {
+  GlobToolArgs args = 1;
+  GlobToolResult result = 2;
+}
+
+message GlobToolError {
+  string error = 1;
+}
+
+message GlobToolResult {
+  oneof result {
+    GlobToolSuccess success = 1;
+    GlobToolError error = 2;
+  }
+}
+
+message GlobToolSuccess {
+  string pattern = 1;
+  string path = 2;
+  repeated string files = 3;
+  int32 total_files = 4;
+  bool client_truncated = 5;
+  bool ripgrep_truncated = 6;
+}

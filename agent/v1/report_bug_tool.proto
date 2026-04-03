@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message ReportBugArgs {
+  string title = 1;
+  string file = 2;
+  int32 start_line = 3;
+  int32 end_line = 4;
+  string description = 5;
+  string severity = 6;
+  string category = 7;
+  string rationale = 8;
+}
+
+message ReportBugError {
+  string error_message = 1;
+}
+
+message ReportBugResult {
+  oneof result {
+    ReportBugSuccess success = 1;
+    ReportBugError error = 2;
+  }
+}
+
+message ReportBugSuccess {
+  string output = 1;
+}
+
+message ReportBugToolCall {
+  ReportBugArgs args = 1;
+  ReportBugResult result = 2;
+}

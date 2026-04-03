@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message InterfaceAgentClientState {
+  string interface_relative_workspace_path = 3;
+  repeated string interface_lines = 4;
+  optional string test_relative_workspace_path = 5;
+  repeated string test_lines = 10;
+  optional string implementation_relative_workspace_path = 6;
+  repeated string implementation_lines = 7;
+  string language = 8;
+  string testing_framework = 9;
+}
+
+message InterfaceAgentStatus {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_WAITING = 1;
+    STATUS_RUNNING = 2;
+    STATUS_SUCCESS = 3;
+    STATUS_FAILURE = 4;
+  }
+
+  Status validate_configuration = 1;
+  Status stub_new_function = 2;
+  Status verify_spec = 3;
+  Status write_test_plan = 15;
+  Status write_tests = 4;
+  Status write_implementation = 5;
+  Status implement_new_function = 6;
+  Status run_tests = 7;
+  string validate_configuration_message = 8;
+  string stub_new_function_message = 9;
+  string verify_spec_message = 10;
+  string write_test_plan_message = 16;
+  string write_tests_message = 11;
+  string write_implementation_message = 12;
+  string implement_new_function_message = 13;
+  string run_tests_message = 14;
+}

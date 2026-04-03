@@ -1,0 +1,168 @@
+syntax = "proto3";
+
+package anyrun.v1;
+
+import "google/protobuf/empty.proto";
+
+enum ClonePurpose {
+  CLONE_PURPOSE_UNSPECIFIED = 0;
+  CLONE_PURPOSE_DOCKER_BUILD = 1;
+  CLONE_PURPOSE_WORKSPACE_SETUP = 2;
+}
+
+message BuildStatusLine {
+  uint32 stream_id = 1;
+  string timestamp = 2;
+  string content = 3;
+}
+
+message BuildStepStarted {
+  uint32 stream_id = 1;
+  uint32 step = 2;
+  uint32 total_steps = 3;
+  string command = 4;
+}
+
+message CloneCompleted {
+  ClonePurpose purpose = 1;
+}
+
+message CloneStarted {
+  ClonePurpose purpose = 1;
+}
+
+message FeatureExitCode {
+  string feature_id = 1;
+  int64 exit_code = 2;
+}
+
+message FeatureOutput {
+  string feature_id = 1;
+  string output = 2;
+}
+
+message HydrationProgress {
+  uint64 transferred = 1;
+  uint64 total = 2;
+}
+
+message ImagePullCompleted {
+  string image_name = 1;
+  string pull_id = 2;
+}
+
+message ImagePullLayerUpdate {
+  string image_name = 1;
+  string pull_id = 2;
+  string layer_id = 3;
+  oneof status {
+    bool pulling_fs_layer = 4;
+    bool waiting = 5;
+    bool verifying_checksum = 6;
+    bool download_complete = 7;
+    bool pull_complete = 8;
+    ProgressDetail downloading = 9;
+    ProgressDetail extracting = 10;
+    string other = 11;
+  }
+}
+
+message ImagePullStarted {
+  string image_name = 1;
+  string pull_id = 2;
+}
+
+message ImagePullStatusUpdate {
+  string image_name = 1;
+  string pull_id = 2;
+  string status = 3;
+}
+
+message InstallCommand {
+  string name = 1;
+  string command = 2;
+  optional string user = 3;
+  bool is_system = 4;
+  bool failure_tolerant = 5;
+}
+
+message InternalBuildMessage {
+  uint32 stream_id = 1;
+  string content = 2;
+}
+
+message PodErrorEvent {
+  string error_message = 1;
+}
+
+message PodEvent {
+  uint64 creation_timestamp = 49;
+  oneof payload {
+    PodErrorEvent error = 26;
+    string debug_event = 1;
+    google.protobuf.Empty hydration_started = 43;
+    HydrationProgress hydration_progress = 44;
+    google.protobuf.Empty hydration_completed = 45;
+    google.protobuf.Empty clone_started = 31;
+    google.protobuf.Empty clone_completed = 32;
+    CloneStarted clone_started_v2 = 51;
+    CloneCompleted clone_completed_v2 = 52;
+    google.protobuf.Empty checkout_started = 33;
+    google.protobuf.Empty checkout_completed = 34;
+    string build_started = 2;
+    string build_status_message = 3;
+    BuildStepStarted build_step_started = 27;
+    BuildStatusLine build_status_line = 28;
+    InternalBuildMessage internal_build_message = 29;
+    int32 build_exit_code = 30;
+    string prepare_stdout = 14;
+    string prepare_stderr = 15;
+    int64 prepare_exit_code = 16;
+    InstallCommand install_command = 50;
+    string install_stdout = 17;
+    string install_stderr = 18;
+    int64 install_exit_code = 19;
+    string verify_stdout = 46;
+    string verify_stderr = 47;
+    int64 verify_exit_code = 48;
+    string start_stdout = 6;
+    string start_stderr = 7;
+    int64 start_exit_code = 8;
+    FeatureOutput extension_install_stdout = 20;
+    FeatureOutput extension_install_stderr = 21;
+    FeatureExitCode extension_install_exit_code = 22;
+    google.protobuf.Empty snapshot_started = 35;
+    google.protobuf.Empty snapshot_completed = 36;
+    google.protobuf.Empty creation_completed = 9;
+    string post_start_stdout = 10;
+    string post_start_stderr = 11;
+    int64 post_start_exit_code = 12;
+    FeatureOutput extension_start_stdout = 23;
+    FeatureOutput extension_start_stderr = 24;
+    FeatureExitCode extension_start_exit_code = 25;
+    google.protobuf.Empty startup_completed = 13;
+    ImagePullStarted image_pull_started = 37;
+    ImagePullLayerUpdate image_pull_layer_update = 38;
+    ImagePullStatusUpdate image_pull_status_update = 39;
+    ImagePullCompleted image_pull_completed = 40;
+    PodIdentity blocked_repo_state = 41;
+    google.protobuf.Empty acquired_repo_state = 42;
+    google.protobuf.Empty private_worker_ready = 53;
+    WaitingForWorkerStatus waiting_for_worker = 54;
+  }
+}
+
+message PodIdentity {
+  string tenant_id = 1;
+  string pod_id = 2;
+}
+
+message ProgressDetail {
+  uint64 current = 1;
+  uint64 total = 2;
+}
+
+message WaitingForWorkerStatus {
+  int32 retry_count = 1;
+  int32 max_retries = 2;
+}

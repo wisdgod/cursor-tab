@@ -1,0 +1,185 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "google/protobuf/empty.proto";
+
+enum UsageEventKind {
+  USAGE_EVENT_KIND_UNSPECIFIED = 0;
+  USAGE_EVENT_KIND_USAGE_BASED = 1;
+  USAGE_EVENT_KIND_USER_API_KEY = 2;
+  USAGE_EVENT_KIND_INCLUDED_IN_PRO = 3;
+  USAGE_EVENT_KIND_INCLUDED_IN_BUSINESS = 4;
+  USAGE_EVENT_KIND_ERRORED_NOT_CHARGED = 5;
+  USAGE_EVENT_KIND_ABORTED_NOT_CHARGED = 6;
+  USAGE_EVENT_KIND_CUSTOM_SUBSCRIPTION = 7;
+  USAGE_EVENT_KIND_INCLUDED_IN_PRO_PLUS = 8;
+  USAGE_EVENT_KIND_INCLUDED_IN_ULTRA = 9;
+  USAGE_EVENT_KIND_FREE_CREDIT = 10;
+}
+
+message TokenUsage {
+  int32 input_tokens = 1;
+  int32 output_tokens = 2;
+  int32 cache_write_tokens = 3;
+  int32 cache_read_tokens = 4;
+  float total_cents = 5;
+  optional int32 discount_percent_off = 6;
+  optional int32 enterprise_usage_discount_percent = 7;
+}
+
+message UsageEvent {
+  int64 timestamp = 1;
+  UsageEventDetails details = 2;
+  optional string subscription_product_id = 3;
+  optional string usage_price_id = 4;
+  bool is_slow = 5;
+  string status = 6;
+  optional string owning_user = 7;
+  optional string owning_team = 8;
+  optional float price_cents = 9;
+  optional string team_membership_type = 10;
+}
+
+message UsageEventDetails {
+  message AiReviewAcceptedComment {
+  }
+
+  message BugBot {
+    string model_intent = 1;
+    TokenUsage token_usage = 2;
+    bool is_token_based_call = 3;
+    bool max_mode = 4;
+    oneof discount {
+      google.protobuf.Empty no_discount = 5;
+      google.protobuf.Empty free = 6;
+    }
+    string billing_mode = 7;
+  }
+
+  message BugFinderTriggerV1 {
+    bool in_background_subsidized = 1;
+    int32 cost_cents = 2;
+    bool is_fast = 3;
+  }
+
+  message Chat {
+    string model_intent = 1;
+    optional int32 override_num_requests_counted = 2;
+    optional bool is_token_based_call = 3;
+    optional TokenUsage token_usage = 4;
+    optional bool max_mode = 5;
+  }
+
+  message CmdK {
+    string model_intent = 1;
+    optional int32 override_num_requests_counted = 2;
+    optional bool is_token_based_call = 3;
+    optional TokenUsage token_usage = 4;
+    optional bool max_mode = 5;
+  }
+
+  message Composer {
+    string model_intent = 1;
+    optional int32 override_num_requests_counted = 2;
+    optional bool is_headless = 3;
+    optional bool is_token_based_call = 4;
+    optional TokenUsage token_usage = 5;
+    optional bool max_mode = 6;
+  }
+
+  message ContextChat {
+    string model_intent = 1;
+    optional int32 override_num_requests_counted = 2;
+    optional bool is_token_based_call = 3;
+    optional TokenUsage token_usage = 4;
+    optional bool max_mode = 5;
+  }
+
+  message FastApply {
+    bool is_optimistic = 1;
+    bool willing_to_pay_extra_for_speed = 2;
+  }
+
+  message InterpreterChat {
+    string model_intent = 1;
+    optional int32 override_num_requests_counted = 2;
+    optional bool is_token_based_call = 3;
+    optional TokenUsage token_usage = 4;
+    optional bool max_mode = 5;
+  }
+
+  message PromptHook {
+    string model_intent = 1;
+    optional TokenUsage token_usage = 2;
+    optional bool max_mode = 3;
+    optional bool is_token_based_call = 4;
+  }
+
+  message SlashEdit {
+    string model_intent = 1;
+    optional bool max_mode = 2;
+  }
+
+  message TerminalCmdK {
+    string model_intent = 1;
+    optional int32 override_num_requests_counted = 2;
+    optional bool is_token_based_call = 3;
+    optional TokenUsage token_usage = 4;
+    optional bool max_mode = 5;
+  }
+
+  message ToolCallComposer {
+    string model_intent = 1;
+    optional int32 override_num_requests_counted = 2;
+    optional bool is_headless = 3;
+    optional bool is_token_based_call = 4;
+    optional TokenUsage token_usage = 5;
+    optional bool max_mode = 6;
+  }
+
+  message WarmComposer {
+    string model_intent = 1;
+    optional bool max_mode = 2;
+  }
+
+  oneof feature {
+    Chat chat = 1;
+    ContextChat context_chat = 2;
+    CmdK cmd_k = 3;
+    TerminalCmdK terminal_cmd_k = 4;
+    AiReviewAcceptedComment ai_review_accepted_comment = 5;
+    InterpreterChat interpreter_chat = 6;
+    SlashEdit slash_edit = 7;
+    Composer composer = 8;
+    FastApply fast_apply = 9;
+    WarmComposer warm_composer = 10;
+    BugFinderTriggerV1 bug_finder_trigger_v1 = 11;
+    ToolCallComposer tool_call_composer = 12;
+    BugBot bug_bot = 14;
+    PromptHook prompt_hook = 15;
+  }
+  optional int32 override_num_requests_counted = 13;
+  optional int32 override_num_requests_counted_millis = 16;
+}
+
+message UsageEventDisplay {
+  int64 timestamp = 1;
+  string model = 2;
+  UsageEventKind kind = 3;
+  optional string custom_subscription_name = 4;
+  bool max_mode = 5;
+  float requests_costs = 6;
+  optional string usage_based_costs = 7;
+  optional bool is_token_based_call = 8;
+  optional TokenUsage token_usage = 9;
+  optional string owning_user = 10;
+  optional string owning_team = 11;
+  optional string user_email = 12;
+  optional float cursor_token_fee = 13;
+  optional bool is_chargeable = 14;
+  optional string service_account_name = 15;
+  optional string service_account_id = 16;
+  optional bool is_headless = 17;
+  optional float charged_cents = 18;
+}

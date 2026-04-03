@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message AgentSkill {
+  string full_path = 1;
+  string content = 2;
+  string description = 3;
+  optional string parse_error = 4;
+  repeated string environments = 5;
+  repeated string disabled_environments = 6;
+  optional string git_remote_origin = 7;
+  bool disable_model_invocation = 8;
+  optional string plugin = 9;
+  optional string marketplace = 10;
+  optional string plugin_id = 11;
+  optional string marketplace_id = 12;
+}
+
+message AgentSkillMetadata {
+  string full_path = 1;
+  string description = 2;
+  optional string parse_error = 3;
+  repeated string environments = 4;
+  repeated string disabled_environments = 5;
+  optional string git_remote_origin = 6;
+  bool disable_model_invocation = 7;
+  optional string plugin = 8;
+  optional string marketplace = 9;
+  optional string plugin_id = 10;
+  optional string marketplace_id = 11;
+}

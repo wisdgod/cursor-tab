@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/utils.proto";
+
+message WebFetchArgs {
+  string url = 1;
+  string tool_call_id = 2;
+}
+
+message WebFetchError {
+  string url = 1;
+  string error = 2;
+}
+
+message WebFetchRejected {
+  string reason = 1;
+}
+
+message WebFetchRequestQuery {
+  WebFetchArgs args = 1;
+  bool skip_approval = 2;
+}
+
+message WebFetchRequestResponse {
+  message Approved {
+  }
+
+  message Rejected {
+    string reason = 1;
+  }
+
+  oneof result {
+    Approved approved = 1;
+    Rejected rejected = 2;
+  }
+}
+
+message WebFetchResult {
+  oneof result {
+    WebFetchSuccess success = 1;
+    WebFetchError error = 2;
+    WebFetchRejected rejected = 3;
+  }
+}
+
+message WebFetchSuccess {
+  string url = 1;
+  string markdown = 2;
+  optional OutputLocation output_location = 3;
+}
+
+message WebFetchToolCall {
+  WebFetchArgs args = 1;
+  WebFetchResult result = 2;
+}

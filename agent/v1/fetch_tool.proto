@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/fetch_exec.proto";
+
+message FetchToolCall {
+  FetchArgs args = 1;
+  FetchResult result = 2;
+}

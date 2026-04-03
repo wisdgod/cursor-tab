@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message DeleteArgs {
+  string path = 1;
+  string tool_call_id = 2;
+}
+
+message DeleteError {
+  string path = 1;
+  string error = 2;
+}
+
+message DeleteFileBusy {
+  string path = 1;
+}
+
+message DeleteFileNotFound {
+  string path = 1;
+}
+
+message DeleteNotFile {
+  string path = 1;
+  string actual_type = 2;
+}
+
+message DeletePermissionDenied {
+  string path = 1;
+  string client_visible_error = 2;
+  bool is_readonly = 3;
+}
+
+message DeleteRejected {
+  string path = 1;
+  string reason = 2;
+}
+
+message DeleteResult {
+  oneof result {
+    DeleteSuccess success = 1;
+    DeleteFileNotFound file_not_found = 2;
+    DeleteNotFile not_file = 3;
+    DeletePermissionDenied permission_denied = 4;
+    DeleteFileBusy file_busy = 5;
+    DeleteRejected rejected = 6;
+    DeleteError error = 7;
+  }
+}
+
+message DeleteSuccess {
+  string path = 1;
+  string deleted_file = 2;
+  int64 file_size = 3;
+  string prev_content = 4;
+}

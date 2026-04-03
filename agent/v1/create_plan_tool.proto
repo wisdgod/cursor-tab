@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/todo_tool.proto";
+
+message CreatePlanArgs {
+  string plan = 1;
+  repeated TodoItem todos = 2;
+  string overview = 3;
+  string name = 4;
+  bool is_project = 5;
+  repeated Phase phases = 6;
+}
+
+message CreatePlanError {
+  string error = 1;
+}
+
+message CreatePlanRequestQuery {
+  CreatePlanArgs args = 1;
+  string tool_call_id = 2;
+}
+
+message CreatePlanRequestResponse {
+  CreatePlanResult result = 1;
+}
+
+message CreatePlanResult {
+  oneof result {
+    CreatePlanSuccess success = 1;
+    CreatePlanError error = 2;
+  }
+  string plan_uri = 3;
+}
+
+message CreatePlanSuccess {
+}
+
+message CreatePlanToolCall {
+  CreatePlanArgs args = 1;
+  CreatePlanResult result = 2;
+}
+
+message Phase {
+  string name = 1;
+  repeated TodoItem todos = 2;
+}

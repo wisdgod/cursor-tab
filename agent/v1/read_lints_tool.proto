@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/diagnostics_exec.proto";
+import "agent/v1/utils.proto";
+
+message DiagnosticItem {
+  DiagnosticSeverity severity = 1;
+  DiagnosticRange range = 2;
+  string message = 3;
+  string source = 4;
+  string code = 5;
+  bool is_stale = 6;
+}
+
+message DiagnosticRange {
+  Position start = 1;
+  Position end = 2;
+}
+
+message FileDiagnostics {
+  string path = 1;
+  repeated DiagnosticItem diagnostics = 2;
+  int32 diagnostics_count = 3;
+}
+
+message ReadLintsToolArgs {
+  repeated string paths = 1;
+}
+
+message ReadLintsToolCall {
+  ReadLintsToolArgs args = 1;
+  ReadLintsToolResult result = 2;
+}
+
+message ReadLintsToolError {
+  string error_message = 1;
+}
+
+message ReadLintsToolResult {
+  oneof result {
+    ReadLintsToolSuccess success = 1;
+    ReadLintsToolError error = 2;
+  }
+}
+
+message ReadLintsToolSuccess {
+  repeated FileDiagnostics file_diagnostics = 1;
+  int32 total_files = 2;
+  int32 total_diagnostics = 3;
+}

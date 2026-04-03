@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message McpAuthArgs {
+  string server_identifier = 1;
+  string tool_call_id = 2;
+}
+
+message McpAuthError {
+  string error = 1;
+}
+
+message McpAuthRejected {
+  string reason = 1;
+}
+
+message McpAuthRequestQuery {
+  McpAuthArgs args = 1;
+}
+
+message McpAuthRequestResponse {
+  message Approved {
+  }
+
+  message Rejected {
+    string reason = 1;
+  }
+
+  oneof result {
+    Approved approved = 1;
+    Rejected rejected = 2;
+  }
+}
+
+message McpAuthResult {
+  oneof result {
+    McpAuthSuccess success = 1;
+    McpAuthError error = 2;
+    McpAuthRejected rejected = 3;
+  }
+}
+
+message McpAuthSuccess {
+  string server_identifier = 1;
+}
+
+message McpAuthToolCall {
+  McpAuthArgs args = 1;
+  McpAuthResult result = 2;
+}

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message ReflectArgs {
+  string unexpected_action_outcomes = 1;
+  string relevant_instructions = 2;
+  string scenario_analysis = 3;
+  string critical_synthesis = 4;
+  string next_steps = 5;
+  string tool_call_id = 6;
+}
+
+message ReflectError {
+  string error = 1;
+}
+
+message ReflectResult {
+  oneof result {
+    ReflectSuccess success = 1;
+    ReflectError error = 2;
+  }
+}
+
+message ReflectSuccess {
+}
+
+message ReflectToolCall {
+  ReflectArgs args = 1;
+  ReflectResult result = 2;
+}

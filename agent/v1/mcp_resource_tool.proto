@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/mcp_exec.proto";
+
+message ListMcpResourcesToolCall {
+  ListMcpResourcesExecArgs args = 1;
+  ListMcpResourcesExecResult result = 2;
+}
+
+message ReadMcpResourceToolCall {
+  ReadMcpResourceExecArgs args = 1;
+  ReadMcpResourceExecResult result = 2;
+}

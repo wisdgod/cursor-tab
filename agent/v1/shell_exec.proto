@@ -1,0 +1,214 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/sandbox.proto";
+import "agent/v1/utils.proto";
+
+enum ForceBackgroundShellStatus {
+  FORCE_BACKGROUND_SHELL_STATUS_UNSPECIFIED = 0;
+  FORCE_BACKGROUND_SHELL_STATUS_ACCEPTED = 1;
+  FORCE_BACKGROUND_SHELL_STATUS_NOT_FOUND = 2;
+}
+
+enum ShellAbortReason {
+  SHELL_ABORT_REASON_UNSPECIFIED = 0;
+  SHELL_ABORT_REASON_USER_ABORT = 1;
+  SHELL_ABORT_REASON_TIMEOUT = 2;
+}
+
+enum ShellBackgroundReason {
+  SHELL_BACKGROUND_REASON_UNSPECIFIED = 0;
+  SHELL_BACKGROUND_REASON_TIMEOUT = 1;
+  SHELL_BACKGROUND_REASON_USER_REQUEST = 2;
+}
+
+enum TimeoutBehavior {
+  TIMEOUT_BEHAVIOR_UNSPECIFIED = 0;
+  TIMEOUT_BEHAVIOR_CANCEL = 1;
+  TIMEOUT_BEHAVIOR_BACKGROUND = 2;
+}
+
+message CommandClassifierResult {
+  enum SuggestedSandboxMode {
+    SUGGESTED_SANDBOX_MODE_UNSPECIFIED = 0;
+    SUGGESTED_SANDBOX_MODE_SANDBOX = 1;
+    SUGGESTED_SANDBOX_MODE_NO_SANDBOX = 2;
+    SUGGESTED_SANDBOX_MODE_UNDETERMINED = 3;
+  }
+
+  message ClassifiedCommand {
+    string name = 1;
+    repeated string arguments = 2;
+  }
+
+  repeated ClassifiedCommand commands = 1;
+  SuggestedSandboxMode suggested_sandbox_mode = 2;
+  bool classification_failed = 3;
+}
+
+message ForceBackgroundShellArgs {
+  string tool_call_id = 1;
+}
+
+message ForceBackgroundShellResult {
+  ForceBackgroundShellStatus status = 1;
+}
+
+message ShellArgs {
+  string command = 1;
+  string working_directory = 2;
+  int32 timeout = 3;
+  string tool_call_id = 4;
+  repeated string simple_commands = 5;
+  bool has_input_redirect = 6;
+  bool has_output_redirect = 7;
+  ShellCommandParsingResult parsing_result = 8;
+  optional SandboxPolicy requested_sandbox_policy = 9;
+  optional uint64 file_output_threshold_bytes = 10;
+  bool is_background = 11;
+  bool skip_approval = 12;
+  TimeoutBehavior timeout_behavior = 13;
+  optional int32 hard_timeout = 14;
+  optional string description = 15;
+  optional CommandClassifierResult classifier_result = 16;
+  bool close_stdin = 17;
+}
+
+message ShellCommandParsingResult {
+  message ExecutableCommand {
+    string name = 1;
+    repeated ExecutableCommandArg args = 2;
+    string full_text = 3;
+  }
+
+  message ExecutableCommandArg {
+    string type = 1;
+    string value = 2;
+  }
+
+  bool parsing_failed = 1;
+  repeated ExecutableCommand executable_commands = 2;
+  bool has_redirects = 3;
+  bool has_command_substitution = 4;
+}
+
+message ShellFailure {
+  string command = 1;
+  string working_directory = 2;
+  int32 exit_code = 3;
+  string signal = 4;
+  string stdout = 5;
+  string stderr = 6;
+  int32 execution_time = 7;
+  optional OutputLocation output_location = 8;
+  optional string interleaved_output = 9;
+  optional ShellAbortReason abort_reason = 10;
+  bool aborted = 11;
+  optional int32 local_execution_time_ms = 12;
+}
+
+message ShellPartialResult {
+  string stdout_delta = 1;
+  string stderr_delta = 2;
+}
+
+message ShellPermissionDenied {
+  string command = 1;
+  string working_directory = 2;
+  string error = 3;
+  bool is_readonly = 4;
+}
+
+message ShellRejected {
+  string command = 1;
+  string working_directory = 2;
+  string reason = 3;
+  bool is_readonly = 4;
+}
+
+message ShellResult {
+  oneof result {
+    ShellSuccess success = 1;
+    ShellFailure failure = 2;
+    ShellTimeout timeout = 3;
+    ShellRejected rejected = 4;
+    ShellSpawnError spawn_error = 5;
+    ShellPermissionDenied permission_denied = 7;
+  }
+  optional SandboxPolicy sandbox_policy = 101;
+  optional bool is_background = 102;
+  optional string terminals_folder = 103;
+  optional uint32 pid = 104;
+}
+
+message ShellSpawnError {
+  string command = 1;
+  string working_directory = 2;
+  string error = 3;
+}
+
+message ShellStream {
+  oneof event {
+    ShellStreamStdout stdout = 1;
+    ShellStreamStderr stderr = 2;
+    ShellStreamExit exit = 3;
+    ShellStreamStart start = 4;
+    ShellRejected rejected = 5;
+    ShellPermissionDenied permission_denied = 6;
+    ShellStreamBackgrounded backgrounded = 7;
+  }
+}
+
+message ShellStreamBackgrounded {
+  uint32 shell_id = 1;
+  string command = 2;
+  string working_directory = 3;
+  optional uint32 pid = 4;
+  optional int32 ms_to_wait = 5;
+  optional ShellBackgroundReason reason = 6;
+}
+
+message ShellStreamExit {
+  uint32 code = 1;
+  string cwd = 2;
+  optional OutputLocation output_location = 3;
+  bool aborted = 4;
+  optional ShellAbortReason abort_reason = 5;
+  optional int32 local_execution_time_ms = 6;
+}
+
+message ShellStreamStart {
+  optional SandboxPolicy sandbox_policy = 1;
+}
+
+message ShellStreamStderr {
+  string data = 1;
+}
+
+message ShellStreamStdout {
+  string data = 1;
+}
+
+message ShellSuccess {
+  string command = 1;
+  string working_directory = 2;
+  int32 exit_code = 3;
+  string signal = 4;
+  string stdout = 5;
+  string stderr = 6;
+  int32 execution_time = 7;
+  optional OutputLocation output_location = 8;
+  optional uint32 shell_id = 9;
+  optional string interleaved_output = 10;
+  optional uint32 pid = 11;
+  optional int32 ms_to_wait = 12;
+  optional int32 local_execution_time_ms = 13;
+  optional ShellBackgroundReason background_reason = 14;
+}
+
+message ShellTimeout {
+  string command = 1;
+  string working_directory = 2;
+  int32 timeout_ms = 3;
+}

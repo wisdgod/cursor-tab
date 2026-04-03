@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message BidiAppendRequest {
+  string data = 1;
+  BidiRequestId request_id = 2;
+  int64 append_seqno = 3;
+}
+
+message BidiAppendResponse {
+}
+
+message BidiPollRequest {
+  BidiRequestId request_id = 1;
+  optional bool start_request = 2;
+}
+
+message BidiPollResponse {
+  int64 seqno = 1;
+  string data = 2;
+  optional bool eof = 3;
+}
+
+message BidiRequestId {
+  string request_id = 1;
+}

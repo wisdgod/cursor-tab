@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/sandbox.proto";
+
+message LsArgs {
+  string path = 1;
+  repeated string ignore = 2;
+  string tool_call_id = 3;
+  optional SandboxPolicy sandbox_policy = 4;
+  optional uint32 timeout_ms = 5;
+}
+
+message LsDirectoryTreeNode {
+  message File {
+    string name = 1;
+    optional TerminalMetadata terminal_metadata = 2;
+  }
+
+  string abs_path = 1;
+  repeated LsDirectoryTreeNode children_dirs = 2;
+  repeated File children_files = 3;
+  bool children_were_processed = 4;
+  map<string, int32> full_subtree_extension_counts = 5;
+  int32 num_files = 6;
+}
+
+message LsError {
+  string path = 1;
+  string error = 2;
+}
+
+message LsRejected {
+  string path = 1;
+  string reason = 2;
+}
+
+message LsResult {
+  oneof result {
+    LsSuccess success = 1;
+    LsError error = 2;
+    LsRejected rejected = 3;
+    LsTimeout timeout = 4;
+  }
+}
+
+message LsSuccess {
+  LsDirectoryTreeNode directory_tree_root = 1;
+}
+
+message LsTimeout {
+  LsDirectoryTreeNode directory_tree_root = 1;
+}
+
+message TerminalMetadata {
+  message Command {
+    string command = 1;
+    optional int32 exit_code = 2;
+    optional int64 timestamp_ms = 3;
+    optional int64 duration_ms = 4;
+  }
+
+  optional string cwd = 1;
+  repeated Command last_commands = 2;
+  optional int64 last_modified_ms = 3;
+  optional Command current_command = 4;
+}

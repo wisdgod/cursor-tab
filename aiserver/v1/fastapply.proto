@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/chat.proto";
+import "aiserver/v1/utils.proto";
+
+enum EditFate {
+  EDIT_FATE_UNSPECIFIED = 0;
+  EDIT_FATE_ACCEPTED = 1;
+  EDIT_FATE_REJECTED = 2;
+  EDIT_FATE_PARTIALLY_ACCEPTED = 3;
+}
+
+enum FastApplySource {
+  FAST_APPLY_SOURCE_UNSPECIFIED = 0;
+  FAST_APPLY_SOURCE_COMPOSER = 1;
+  FAST_APPLY_SOURCE_CLICKED_APPLY = 2;
+  FAST_APPLY_SOURCE_CACHED_APPLY = 3;
+  FAST_APPLY_SOURCE_COMPOSER_AGENT = 4;
+}
+
+message ReportEditFateRequest {
+  string request_id = 1;
+  optional EditFate fate = 2;
+  optional int32 num_accepted_partial_diffs = 3;
+  optional int32 num_rejected_partial_diffs = 4;
+}
+
+message ReportEditFateResponse {
+}
+
+message WarmApplyRequest {
+  CurrentFileInfo current_file = 2;
+  repeated ConversationMessage conversation = 3;
+  ExplicitContext explicit_context = 4;
+  FastApplySource source = 5;
+  bool willing_to_pay_extra_for_speed = 6;
+}
+
+message WarmApplyResponse {
+}

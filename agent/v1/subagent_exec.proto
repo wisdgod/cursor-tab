@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/agent.proto";
+import "agent/v1/subagents.proto";
+
+enum ForceBackgroundSubagentStatus {
+  FORCE_BACKGROUND_SUBAGENT_STATUS_UNSPECIFIED = 0;
+  FORCE_BACKGROUND_SUBAGENT_STATUS_ACCEPTED = 1;
+  FORCE_BACKGROUND_SUBAGENT_STATUS_NOT_FOUND = 2;
+}
+
+message ClientContinuationConfig {
+  int32 idle_threshold = 1;
+  int32 max_loops = 2;
+  string nudge_message = 3;
+  string escape_message_template = 4;
+  bool collect_background_children = 5;
+  string children_completed_message_template = 6;
+}
+
+message ForceBackgroundSubagentArgs {
+  string tool_call_id = 1;
+}
+
+message ForceBackgroundSubagentResult {
+  ForceBackgroundSubagentStatus status = 1;
+}
+
+message SubagentArgs {
+  string tool_call_id = 1;
+  string subagent_type = 2;
+  string model_id = 3;
+  string prompt = 4;
+  bool readonly = 5;
+  optional string resume_agent_id = 6;
+  optional bool run_in_background = 7;
+  ClientContinuationConfig continuation_config = 8;
+  optional string parent_conversation_id = 9;
+  oneof credentials {
+    ApiKeyCredentials api_key_credentials = 10;
+    AzureCredentials azure_credentials = 11;
+    BedrockCredentials bedrock_credentials = 12;
+  }
+  optional bool interrupt = 13;
+  TaskMode mode = 14;
+  optional string fork_agent_id = 15;
+}
+
+message SubagentError {
+  optional string agent_id = 1;
+  string error = 2;
+}
+
+message SubagentResult {
+  oneof result {
+    SubagentSuccess success = 1;
+    SubagentError error = 2;
+  }
+}
+
+message SubagentSuccess {
+  string agent_id = 1;
+  optional string final_message = 2;
+  int32 tool_call_count = 3;
+  SubagentBackgroundReason background_reason = 4;
+  optional string transcript_path = 5;
+}

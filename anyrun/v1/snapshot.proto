@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package anyrun.v1;
+
+import "anyrun/v1/common.proto";
+import "anyrun/v1/persisted_dev_container.proto";
+
+enum SnapshotState {
+  SNAPSHOT_STATE_UNSPECIFIED = 0;
+  SNAPSHOT_STATE_CREATING = 1;
+  SNAPSHOT_STATE_READY = 2;
+  SNAPSHOT_STATE_FAILED = 3;
+}
+
+message Snapshot {
+  string snapshot_id = 1;
+  uint32 resource_version = 2;
+  string name = 3;
+  map<string, string> labels = 4;
+  uint64 creation_timestamp = 5;
+  optional uint64 deletion_timestamp = 6;
+  optional uint64 deletion_duration_ms = 12;
+  optional uint64 archive_timestamp = 14;
+  optional uint64 archive_duration_ms = 15;
+  string tenant_id = 7;
+  string pod_id = 8;
+  optional PersistedDevContainerConfig pod_config = 13;
+  SnapshotState state = 9;
+  ImageMetadata image_metadata = 10;
+  BlobStorageFormat blob_storage_format = 11;
+  optional string node_machine_type = 16;
+  optional ResourceRequests resource_requests = 17;
+  optional ResourceLimits resource_limits = 18;
+}
+
+message SnapshotCollection {
+  repeated Snapshot items = 1;
+  optional string next_cursor = 2;
+}
+
+message SnapshotFileChunk {
+  uint64 blob_begin = 1;
+  uint64 blob_end = 2;
+  uint64 file_begin = 3;
+  uint64 file_end = 4;
+  string hash = 5;
+}
+
+message SnapshotVmSnapshotV1Metadata {
+  repeated SnapshotFileChunk rootfs_file_chunks = 1;
+  uint64 rootfs_file_size = 2;
+  SnapshotFileChunk memory_file_chunk = 3;
+  SnapshotFileChunk state_file_chunk = 4;
+  SnapshotFileChunk kernel_file_chunk = 5;
+  IsoDevContainerMetadata dev_container_metadata = 6;
+}

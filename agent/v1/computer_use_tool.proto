@@ -1,0 +1,126 @@
+syntax = "proto3";
+
+package agent.v1;
+
+enum MouseButton {
+  MOUSE_BUTTON_UNSPECIFIED = 0;
+  MOUSE_BUTTON_LEFT = 1;
+  MOUSE_BUTTON_RIGHT = 2;
+  MOUSE_BUTTON_MIDDLE = 3;
+  MOUSE_BUTTON_BACK = 4;
+  MOUSE_BUTTON_FORWARD = 5;
+}
+
+enum ScrollDirection {
+  SCROLL_DIRECTION_UNSPECIFIED = 0;
+  SCROLL_DIRECTION_UP = 1;
+  SCROLL_DIRECTION_DOWN = 2;
+  SCROLL_DIRECTION_LEFT = 3;
+  SCROLL_DIRECTION_RIGHT = 4;
+}
+
+message ClickAction {
+  optional Coordinate coordinate = 1;
+  MouseButton button = 2;
+  int32 count = 3;
+  optional string modifier_keys = 4;
+}
+
+message ComputerUseAction {
+  oneof action {
+    MouseMoveAction mouse_move = 1;
+    ClickAction click = 2;
+    MouseDownAction mouse_down = 3;
+    MouseUpAction mouse_up = 4;
+    DragAction drag = 5;
+    ScrollAction scroll = 6;
+    TypeAction type = 7;
+    KeyAction key = 8;
+    WaitAction wait = 9;
+    ScreenshotAction screenshot = 10;
+    CursorPositionAction cursor_position = 11;
+  }
+}
+
+message ComputerUseArgs {
+  string tool_call_id = 1;
+  repeated ComputerUseAction actions = 2;
+}
+
+message ComputerUseError {
+  string error = 1;
+  int32 action_count = 2;
+  int32 duration_ms = 3;
+  optional string log = 4;
+  optional string screenshot = 5;
+  optional string screenshot_path = 6;
+}
+
+message ComputerUseResult {
+  oneof result {
+    ComputerUseSuccess success = 1;
+    ComputerUseError error = 2;
+  }
+}
+
+message ComputerUseSuccess {
+  int32 action_count = 1;
+  int32 duration_ms = 2;
+  optional string screenshot = 3;
+  optional string log = 4;
+  optional string screenshot_path = 5;
+  optional Coordinate cursor_position = 6;
+}
+
+message ComputerUseToolCall {
+  ComputerUseArgs args = 1;
+  ComputerUseResult result = 2;
+}
+
+message Coordinate {
+  int32 x = 1;
+  int32 y = 2;
+}
+
+message CursorPositionAction {
+}
+
+message DragAction {
+  repeated Coordinate path = 1;
+  MouseButton button = 2;
+}
+
+message KeyAction {
+  string key = 1;
+  optional int32 hold_duration_ms = 2;
+}
+
+message MouseDownAction {
+  MouseButton button = 1;
+}
+
+message MouseMoveAction {
+  Coordinate coordinate = 1;
+}
+
+message MouseUpAction {
+  MouseButton button = 1;
+}
+
+message ScreenshotAction {
+}
+
+message ScrollAction {
+  optional Coordinate coordinate = 1;
+  ScrollDirection direction = 2;
+  int32 amount = 3;
+  optional string modifier_keys = 4;
+}
+
+message TypeAction {
+  string text = 1;
+}
+
+message WaitAction {
+  int32 duration_ms = 1;
+}

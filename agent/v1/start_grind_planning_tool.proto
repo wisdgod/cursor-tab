@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message StartGrindPlanningArgs {
+  optional string explanation = 1;
+  string tool_call_id = 2;
+}
+
+message StartGrindPlanningError {
+  string error = 1;
+}
+
+message StartGrindPlanningResult {
+  oneof result {
+    StartGrindPlanningSuccess success = 1;
+    StartGrindPlanningError error = 2;
+  }
+}
+
+message StartGrindPlanningSuccess {
+}
+
+message StartGrindPlanningToolCall {
+  StartGrindPlanningArgs args = 1;
+  StartGrindPlanningResult result = 2;
+}

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message SetupVmEnvironmentArgs {
+  string install_command = 2;
+  string start_command = 3;
+}
+
+message SetupVmEnvironmentResult {
+  oneof result {
+    SetupVmEnvironmentSuccess success = 1;
+  }
+}
+
+message SetupVmEnvironmentSuccess {
+}
+
+message SetupVmEnvironmentToolCall {
+  SetupVmEnvironmentArgs args = 1;
+  SetupVmEnvironmentResult result = 2;
+}
