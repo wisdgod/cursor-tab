@@ -98,6 +98,8 @@ message SelectedAgenticGitAction {
     SelectedAgenticGitActionCommitParams create_pr_with_changes_params = 8;
     SelectedAgenticGitActionFixMergeConflictsParams fix_merge_conflicts_params = 4;
     SelectedAgenticGitActionBabysitPrInCloudParams babysit_pr_in_cloud_params = 11;
+    SelectedAgenticGitActionCommitParams create_branch_and_commit_params = 12;
+    SelectedAgenticGitActionCommitParams create_branch_commit_and_push_params = 13;
   }
   optional SelectedGitBranchContext branch_context = 5;
   optional string path_to_template_file = 9;
