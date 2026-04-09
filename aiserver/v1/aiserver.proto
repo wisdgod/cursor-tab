@@ -260,6 +260,7 @@ message AvailableModelsResponse {
       optional RoutedModelViewToNamedViewToggle routed_model_view_to_named_view_toggle = 2;
       optional RoutedModelViewToNamedViewButton routed_model_view_to_named_view_button = 3;
       optional bool hide_search_bar = 4;
+      optional bool hide_routed_model_view = 5;
     }
 
     RoutedModelViewConfig routed_model_view_config = 1;
