@@ -6,6 +6,7 @@ import "agent/v1/agent.proto";
 import "agent/v1/exec.proto";
 import "agent/v1/kv.proto";
 import "agent/v1/mcp.proto";
+import "aiserver/v1/bidi.proto";
 
 message AgentClientMessage {
   oneof message {
@@ -176,6 +177,9 @@ message PrewarmRequest {
   optional string harness = 13;
   repeated RequestedModel selected_subagent_models = 14;
   repeated ModelDetails selected_subagent_model_details = 15;
+  optional string conversation_group_id = 16;
+  repeated PreFetchedBlob pre_fetched_blobs = 17;
+  optional bool client_supports_inline_images = 18;
 }
 
 message UploadConversationBlobsRequest {
@@ -186,4 +190,19 @@ message UploadConversationBlobsRequest {
 }
 
 message UploadConversationBlobsResponse {
+}
+
+service AgentService {
+  rpc Run (stream AgentClientMessage) returns (stream AgentServerMessage);
+  rpc RunSSE (aiserver.v1.BidiRequestId) returns (stream AgentServerMessage);
+  rpc RunPoll (aiserver.v1.BidiPollRequest) returns (stream aiserver.v1.BidiPollResponse);
+  rpc NameAgent (NameAgentRequest) returns (NameAgentResponse);
+  rpc CreateTranscriptOverview (CreateTranscriptOverviewRequest) returns (CreateTranscriptOverviewResponse);
+  rpc GetUsableModels (GetUsableModelsRequest) returns (GetUsableModelsResponse);
+  rpc GetDefaultModelForCli (GetDefaultModelForCliRequest) returns (GetDefaultModelForCliResponse);
+  rpc GetAllowedModelIntents (GetAllowedModelIntentsRequest) returns (GetAllowedModelIntentsResponse);
+  rpc UploadConversationBlobs (UploadConversationBlobsRequest) returns (UploadConversationBlobsResponse);
+  rpc NotifyConversationClone (NotifyConversationCloneRequest) returns (NotifyConversationCloneResponse);
+  rpc GetNewChatNudgeLegacyModelPicker (GetNewChatNudgeLegacyModelPickerRequest) returns (GetNewChatNudgeLegacyModelPickerResponse);
+  rpc GetNewChatNudgeParameterizedModelPicker (GetNewChatNudgeParameterizedModelPickerRequest) returns (GetNewChatNudgeParameterizedModelPickerResponse);
 }

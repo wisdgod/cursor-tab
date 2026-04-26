@@ -1,0 +1,159 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+enum SubAgent {
+  SUB_AGENT_UNSPECIFIED = 0;
+  SUB_AGENT_TERMINAL_AGENT = 1;
+  SUB_AGENT_WEB_AGENT = 2;
+  SUB_AGENT_PROGRAMMER_AGENT = 3;
+}
+
+message AskOracleRequest {
+  string answer = 1;
+}
+
+message AskOracleResponse {
+  string question = 1;
+  SubAgent original_sub_agent = 2;
+}
+
+message AskUserRequest {
+  string answer = 1;
+}
+
+message AskUserResponse {
+  string question = 1;
+}
+
+message AutopilotActionRequest {
+  oneof type {
+    TerminalCommandRequest terminal_command = 1;
+    WebSearchRequest web_search = 2;
+    AskUserRequest ask_user = 3;
+    AskOracleRequest ask_oracle = 4;
+    FileEditRequest file_edit = 5;
+    OpenFileRequest open_file = 6;
+  }
+}
+
+message AutopilotActionResponse {
+  oneof response {
+    TerminalCommandResponse terminal_command = 1;
+    WebSearchResponse web_search = 2;
+    AskUserResponse ask_user = 3;
+    AskOracleResponse ask_oracle = 4;
+    FileEditResponse file_edit = 5;
+    OpenFileResponse open_file = 6;
+  }
+}
+
+message AutopilotContinue {
+}
+
+message AutopilotDone {
+}
+
+message AutopilotDoneSubAgent {
+  string response = 1;
+}
+
+message AutopilotError {
+  string error = 1;
+}
+
+message AutopilotFile {
+  string absolute_path = 1;
+  string content = 2;
+}
+
+message AutopilotPause {
+}
+
+message AutopilotPaused {
+  string response = 1;
+}
+
+message AutopilotRequest {
+  string request_id = 1;
+  string working_directory = 7;
+  repeated string current_directory_files = 8;
+  repeated AutopilotFile related_files = 9;
+  oneof request {
+    AutopilotActionRequest action = 4;
+    AutopilotStart start = 5;
+    AutopilotPause pause = 11;
+    AutopilotDone done = 6;
+    AutopilotContinue continue = 12;
+    AutopilotError error = 10;
+  }
+}
+
+message AutopilotResponse {
+  oneof response {
+    AutopilotActionResponse action = 1;
+    AutopilotDone done = 2;
+    AutopilotStreamThought stream_thought = 3;
+    AutopilotStartSubAgent start_sub_agent = 4;
+    AutopilotDoneSubAgent done_sub_agent = 5;
+    RawResponse raw_response = 10;
+    AutopilotPaused paused = 11;
+  }
+}
+
+message AutopilotStart {
+  string task = 1;
+}
+
+message AutopilotStartSubAgent {
+  string task = 1;
+  SubAgent sub_agent = 2;
+}
+
+message AutopilotStreamThought {
+  string thought = 1;
+}
+
+message FileEditRequest {
+  string diff = 1;
+}
+
+message FileEditResponse {
+  string absolute_path = 1;
+  string query = 2;
+}
+
+message OpenFileRequest {
+  string content = 2;
+  string absolute_path = 1;
+}
+
+message OpenFileResponse {
+  string absolute_path = 1;
+}
+
+message RawResponse {
+  string response = 1;
+}
+
+message TerminalCommandRequest {
+  string response = 1;
+}
+
+message TerminalCommandResponse {
+  string command = 1;
+  optional double timeout = 2;
+  optional bool is_run_server = 3;
+}
+
+message WebSearchRequest {
+  string query = 1;
+}
+
+message WebSearchResponse {
+  string answer = 1;
+}
+
+service AutopilotService {
+  rpc StreamAutopilot (AutopilotRequest) returns (stream AutopilotResponse);
+}

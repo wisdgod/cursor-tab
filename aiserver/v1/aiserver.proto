@@ -172,6 +172,18 @@ message AvailableModelsResponse {
     DEGRADATION_STATUS_DISABLED = 2;
   }
 
+  enum ModelVendorId {
+    MODEL_VENDOR_ID_UNSPECIFIED = 0;
+    MODEL_VENDOR_ID_ANTHROPIC = 1;
+    MODEL_VENDOR_ID_OPENAI = 2;
+    MODEL_VENDOR_ID_GOOGLE = 3;
+    MODEL_VENDOR_ID_XAI = 4;
+    MODEL_VENDOR_ID_MOONSHOT = 5;
+    MODEL_VENDOR_ID_CURSOR = 6;
+    MODEL_VENDOR_ID_NVIDIA = 7;
+    MODEL_VENDOR_ID_ZAI = 8;
+  }
+
   message AvailableModel {
     string name = 1;
     bool default_on = 2;
@@ -212,6 +224,8 @@ message AvailableModelsResponse {
     optional int32 named_model_section_index = 38;
     optional string tagline = 39;
     optional bool visible_in_routed_model_view = 40;
+    optional string vendor_name = 41;
+    optional ModelVendor vendor = 42;
   }
 
   message ConfirmationDialogue {
@@ -278,6 +292,11 @@ message AvailableModelsResponse {
     optional string tagline = 7;
     optional string variant_string_representation = 9;
     optional ConfirmationDialogue confirmation_dialogue = 10;
+  }
+
+  message ModelVendor {
+    ModelVendorId id = 1;
+    string display_name = 2;
   }
 
   message TooltipData {
@@ -1278,10 +1297,16 @@ message GetDefaultModelNudgeDataRequest {
 }
 
 message GetDefaultModelNudgeDataResponse {
+  message InitialModel {
+    string model_id = 1;
+    repeated agent.v1.RequestedModel.ModelParameterValue parameters = 2;
+  }
+
   string nudge_date = 1;
   bool should_default_switch_on_new_chat = 2;
   repeated string models_with_no_default_switch = 3;
   string conversion_model_override = 4;
+  InitialModel initial_model = 5;
 }
 
 message GetDefaultModelRequest {
@@ -1703,12 +1728,20 @@ message LogUserLintReplyResponse {
 
 message ModelParameterDefinition {
   message BooleanParameterDefinition {
+    message BooleanParameterValue {
+      string value = 1;
+      optional string display_name = 2;
+      optional bool increases_model_cost = 3;
+    }
+
+    repeated BooleanParameterValue values = 1;
   }
 
   message EnumParameterDefinition {
     message EnumParameterValue {
       string value = 1;
       optional string display_name = 2;
+      optional bool increases_model_cost = 3;
     }
 
     repeated EnumParameterValue values = 1;
@@ -1931,6 +1964,22 @@ message RecordIdeBugReactionRequest {
 
 message RecordIdeBugReactionResponse {
   bool success = 1;
+}
+
+message ReportAgentFeedbackRequest {
+  enum Sentiment {
+    SENTIMENT_UNSPECIFIED = 0;
+    SENTIMENT_UP = 1;
+    SENTIMENT_DOWN = 2;
+  }
+
+  string request_id = 1;
+  Sentiment sentiment = 2;
+  repeated string categories = 3;
+  optional string comment = 4;
+}
+
+message ReportAgentFeedbackResponse {
 }
 
 message ReportAiCodeChangeMetricsRequest {
@@ -3311,6 +3360,7 @@ service AiService {
   rpc AiProject (AiProjectRequest) returns (stream AiProjectResponse);
   rpc ToCamelCase (ToCamelCaseRequest) returns (ToCamelCaseResponse);
   rpc ReportGenerationFeedback (ReportGenerationFeedbackRequest) returns (ReportGenerationFeedbackResponse);
+  rpc ReportAgentFeedback (ReportAgentFeedbackRequest) returns (ReportAgentFeedbackResponse);
   rpc GetThoughtAnnotation (GetThoughtAnnotationRequest) returns (GetThoughtAnnotationResponse);
   rpc StreamWebCmdKV1 (StreamWebCmdKV1Request) returns (stream StreamWebCmdKV1Response);
   rpc StreamNextCursorPrediction (StreamNextCursorPredictionRequest) returns (stream StreamNextCursorPredictionResponse);

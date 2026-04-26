@@ -1,0 +1,201 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+enum SCMCiStatus {
+  SCM_CI_STATUS_UNSPECIFIED = 0;
+  SCM_CI_STATUS_UNKNOWN = 1;
+  SCM_CI_STATUS_SUCCESS = 2;
+  SCM_CI_STATUS_FAILURE = 3;
+  SCM_CI_STATUS_PENDING = 4;
+}
+
+enum SCMMergeability {
+  SCM_MERGEABILITY_UNSPECIFIED = 0;
+  SCM_MERGEABILITY_UNKNOWN = 1;
+  SCM_MERGEABILITY_MERGEABLE = 2;
+  SCM_MERGEABILITY_CONFLICTING = 3;
+}
+
+enum SCMMergeMethod {
+  SCM_MERGE_METHOD_UNSPECIFIED = 0;
+  SCM_MERGE_METHOD_MERGE = 1;
+  SCM_MERGE_METHOD_SQUASH = 2;
+  SCM_MERGE_METHOD_REBASE = 3;
+}
+
+enum SCMPullRequestDiffFileStatus {
+  SCM_PULL_REQUEST_DIFF_FILE_STATUS_UNSPECIFIED = 0;
+  SCM_PULL_REQUEST_DIFF_FILE_STATUS_ADDED = 1;
+  SCM_PULL_REQUEST_DIFF_FILE_STATUS_DELETED = 2;
+  SCM_PULL_REQUEST_DIFF_FILE_STATUS_MODIFIED = 3;
+  SCM_PULL_REQUEST_DIFF_FILE_STATUS_RENAMED = 4;
+}
+
+enum SCMPullRequestState {
+  SCM_PULL_REQUEST_STATE_UNSPECIFIED = 0;
+  SCM_PULL_REQUEST_STATE_OPEN = 1;
+  SCM_PULL_REQUEST_STATE_CLOSED = 2;
+  SCM_PULL_REQUEST_STATE_MERGED = 3;
+}
+
+message BatchGetPullRequestsRequest {
+  repeated string pr_urls = 1;
+  bool skip_cache = 2;
+}
+
+message BatchGetPullRequestsResponse {
+  map<string, aiserver.v1.SCMPullRequest> pull_requests = 1;
+  repeated string failed_pr_urls = 2;
+}
+
+message GetBranchComparisonRequest {
+  string repo_url = 1;
+  string branch_name = 2;
+  optional string base_branch = 3;
+}
+
+message GetBranchComparisonResponse {
+  repeated SCMPullRequestDiffFile files = 1;
+  string base_sha = 2;
+  string head_sha = 3;
+  string base_branch = 4;
+}
+
+message GetPullRequestChecksRequest {
+  string pr_url = 1;
+  bool skip_cache = 2;
+}
+
+message GetPullRequestChecksResponse {
+  optional PRCheckStatus check_status = 1;
+}
+
+message GetPullRequestDiffRequest {
+  string pr_url = 1;
+}
+
+message GetPullRequestDiffResponse {
+  repeated SCMPullRequestDiffFile files = 1;
+  string base_sha = 2;
+  string head_sha = 3;
+  optional string base_ref_name = 4;
+  optional string head_ref_name = 5;
+}
+
+message GetPullRequestRequest {
+  string pr_url = 1;
+  bool skip_cache = 2;
+}
+
+message GetPullRequestResponse {
+  SCMPullRequest pull_request = 1;
+}
+
+message PRCheck {
+  string name = 1;
+  string status = 2;
+  optional string details_url = 3;
+  optional string summary = 4;
+  optional string started_at = 5;
+  optional string completed_at = 6;
+  optional string provider = 7;
+  optional string provider_check_id = 8;
+  bool can_rerun = 9;
+  optional string rerun_disabled_reason = 10;
+}
+
+message PRCheckStatus {
+  string overall_state = 1;
+  int32 success_count = 2;
+  int32 failure_count = 3;
+  int32 pending_count = 4;
+  int32 neutral_count = 5;
+  int32 skipped_count = 6;
+  int32 total_count = 7;
+  repeated PRCheck checks = 8;
+}
+
+message SCMDisablePullRequestAutoMergeRequest {
+  string pr_url = 1;
+}
+
+message SCMDisablePullRequestAutoMergeResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message SCMEnablePullRequestAutoMergeRequest {
+  string pr_url = 1;
+  SCMMergeMethod merge_method = 2;
+}
+
+message SCMEnablePullRequestAutoMergeResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message SCMMakePullRequestReadyRequest {
+  string pr_url = 1;
+}
+
+message SCMMakePullRequestReadyResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message SCMMergePullRequestRequest {
+  string pr_url = 1;
+  SCMMergeMethod merge_method = 2;
+}
+
+message SCMMergePullRequestResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message SCMPullRequest {
+  string id = 1;
+  string pr_url = 2;
+  int32 number = 3;
+  string title = 4;
+  SCMPullRequestState state = 5;
+  bool is_merged = 6;
+  bool is_draft = 7;
+  string repository = 8;
+  optional string head_ref_name = 9;
+  optional string base_ref_name = 10;
+  SCMMergeability mergeable = 11;
+  string merge_state_status = 12;
+  optional string review_decision = 13;
+  SCMCiStatus ci_status = 14;
+  optional string author_login = 15;
+  optional string created_at = 16;
+  optional string updated_at = 17;
+  optional string merged_at = 18;
+  optional string closed_at = 19;
+  bool is_auto_merge_enabled = 20;
+  bool viewer_can_enable_auto_merge = 21;
+}
+
+message SCMPullRequestDiffFile {
+  string filename = 1;
+  optional string previous_filename = 2;
+  SCMPullRequestDiffFileStatus status = 3;
+  optional string original_contents = 4;
+  optional string modified_contents = 5;
+  optional string patch = 6;
+  optional bool is_generated = 7;
+}
+
+service SCMService {
+  rpc GetPullRequest (GetPullRequestRequest) returns (GetPullRequestResponse);
+  rpc BatchGetPullRequests (BatchGetPullRequestsRequest) returns (BatchGetPullRequestsResponse);
+  rpc GetPullRequestDiff (GetPullRequestDiffRequest) returns (GetPullRequestDiffResponse);
+  rpc GetPullRequestChecks (GetPullRequestChecksRequest) returns (GetPullRequestChecksResponse);
+  rpc GetBranchComparison (GetBranchComparisonRequest) returns (GetBranchComparisonResponse);
+  rpc MergePullRequest (SCMMergePullRequestRequest) returns (SCMMergePullRequestResponse);
+  rpc MakePullRequestReady (SCMMakePullRequestReadyRequest) returns (SCMMakePullRequestReadyResponse);
+  rpc EnablePullRequestAutoMerge (SCMEnablePullRequestAutoMergeRequest) returns (SCMEnablePullRequestAutoMergeResponse);
+  rpc DisablePullRequestAutoMerge (SCMDisablePullRequestAutoMergeRequest) returns (SCMDisablePullRequestAutoMergeResponse);
+}

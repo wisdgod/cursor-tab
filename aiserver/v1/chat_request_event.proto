@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/telemetry.proto";
+import "google/protobuf/timestamp.proto";
+
+enum ChatRequestEventType {
+  CHAT_REQUEST_EVENT_TYPE_UNSPECIFIED = 0;
+  CHAT_REQUEST_EVENT_TYPE_REQUEST_START = 1;
+  CHAT_REQUEST_EVENT_TYPE_MODEL_PROVIDER_REQUEST_START = 2;
+  CHAT_REQUEST_EVENT_TYPE_START_STREAMING = 3;
+  CHAT_REQUEST_EVENT_TYPE_END_STREAMING = 4;
+  CHAT_REQUEST_EVENT_TYPE_TOOL_CALL_START = 5;
+  CHAT_REQUEST_EVENT_TYPE_TOOL_CALL_END = 6;
+  CHAT_REQUEST_EVENT_TYPE_REQUEST_END = 7;
+  CHAT_REQUEST_EVENT_TYPE_TOOL_CALL_STREAM_FINISHED = 8;
+  CHAT_REQUEST_EVENT_TYPE_PARALLEL_TOOL_CALL_START = 9;
+  CHAT_REQUEST_EVENT_TYPE_PARALLEL_TOOL_CALL_END = 10;
+  CHAT_REQUEST_EVENT_TYPE_STREAM_STATE_CHANGE = 11;
+}
+
+message ChatRequestTelemetryEventV2 {
+  google.protobuf.Timestamp server_timestamp = 1;
+  string chat_id = 2;
+  ChatRequestEventType event_type = 3;
+  optional bool is_first_model_response = 4;
+  bool is_last_response = 5;
+  optional string tool_call_type = 6;
+  optional string tool_call_id = 7;
+  optional int32 output_tokens = 8;
+  optional int64 elapsed_ms = 9;
+  optional int32 sequence_number = 10;
+  map<string, string> metadata = 11;
+  optional string actual_model_name = 12;
+  optional string mode = 13;
+  optional string dsv3_deployment_id = 14;
+  optional string requested_model = 15;
+  optional int32 output_chars = 16;
+  optional bool is_new_agent_loop = 17;
+  optional int32 input_tokens = 18;
+  optional int32 cached_read_tokens = 19;
+  optional string parallel_tool_call_id = 20;
+  optional string region = 21;
+  optional string user_location = 22;
+  optional bool is_dev = 23;
+}
+
+message SubmitChatRequestEventsV2Request {
+  string session_id = 1;
+  repeated ChatRequestTelemetryEventV2 events = 2;
+  string client_version = 3;
+  string client_commit = 4;
+  map<string, string> platform_tags = 5;
+  optional string window_type = 6;
+}
+
+message SubmitChatRequestEventsV2Response {
+  bool success = 1;
+  optional string error_message = 2;
+  int32 events_processed = 3;
+}
+
+service ChatRequestEventService {
+  rpc SubmitChatRequestEvents (SubmitChatRequestEventsRequest) returns (SubmitChatRequestEventsResponse);
+}
+
+service ChatRequestEventV2Service {
+  rpc SubmitChatRequestEventsV2 (SubmitChatRequestEventsV2Request) returns (SubmitChatRequestEventsV2Response);
+}

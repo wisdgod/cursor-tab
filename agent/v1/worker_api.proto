@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "google/protobuf/empty.proto";
+
+enum PrivateWorkerStatus {
+  PRIVATE_WORKER_STATUS_UNSPECIFIED = 0;
+  PRIVATE_WORKER_STATUS_DISCONNECTED = 1;
+  PRIVATE_WORKER_STATUS_READY = 2;
+  PRIVATE_WORKER_STATUS_CLAIMED = 3;
+}
+
+message GetWorkerIdResponse {
+  string worker_id = 1;
+}
+
+message WatchStatusResponse {
+  string worker_id = 1;
+  PrivateWorkerStatus status = 2;
+  bool connected = 3;
+  bool claimed = 4;
+}
+
+service PrivateWorkerApiService {
+  rpc GetWorkerId (google.protobuf.Empty) returns (GetWorkerIdResponse);
+  rpc WatchStatus (google.protobuf.Empty) returns (stream WatchStatusResponse);
+}

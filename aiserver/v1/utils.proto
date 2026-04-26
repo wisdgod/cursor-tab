@@ -252,6 +252,7 @@ message CustomErrorDetails {
   repeated ErrorButton buttons = 8;
   map<string, string> additional_info = 7;
   repeated PlanChoice plan_choices = 9;
+  optional ErrorAnalyticsMetadata analytics_metadata = 10;
 }
 
 message DashboardAction {
@@ -368,6 +369,10 @@ message EnvironmentInfo {
   optional string local_timezone = 11;
 }
 
+message ErrorAnalyticsMetadata {
+  optional string action_required = 1;
+}
+
 message ErrorButton {
   string label = 1;
   oneof action {
@@ -399,24 +404,16 @@ message ErrorDetails {
     ERROR_AUTH_TOKEN_EXPIRED = 12;
     ERROR_OPENAI = 13;
     ERROR_OPENAI_RATE_LIMIT_EXCEEDED = 14;
-    ERROR_OPENAI_ACCOUNT_LIMIT_EXCEEDED = 15;
-    ERROR_TASK_UUID_NOT_FOUND = 16;
-    ERROR_TASK_NO_PERMISSIONS = 17;
     ERROR_AGENT_REQUIRES_LOGIN = 18;
-    ERROR_AGENT_ENGINE_NOT_FOUND = 19;
     ERROR_MAX_TOKENS = 20;
     ERROR_USER_ABORTED_REQUEST = 21;
     ERROR_GENERIC_RATE_LIMIT_EXCEEDED = 22;
     ERROR_PRO_USER_ONLY = 23;
-    ERROR_API_KEY_NOT_SUPPORTED = 24;
     ERROR_TIMEOUT = 25;
-    ERROR_SLASH_EDIT_FILE_TOO_LONG = 26;
-    ERROR_FILE_UNSUPPORTED = 27;
     ERROR_GPT_4_VISION_PREVIEW_RATE_LIMIT = 28;
     ERROR_CUSTOM_MESSAGE = 29;
     ERROR_OUTDATED_CLIENT = 30;
     ERROR_CLAUDE_IMAGE_TOO_LARGE = 31;
-    ERROR_GITGRAPH_NOT_FOUND = 32;
     ERROR_FILE_NOT_FOUND = 33;
     ERROR_API_KEY_RATE_LIMIT = 34;
     ERROR_DEBOUNCED = 35;

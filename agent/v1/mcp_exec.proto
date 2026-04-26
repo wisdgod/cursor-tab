@@ -73,7 +73,13 @@ message McpResult {
     McpRejected rejected = 3;
     McpPermissionDenied permission_denied = 4;
     McpToolNotFound tool_not_found = 5;
+    McpServerNotFound server_not_found = 6;
   }
+}
+
+message McpServerNotFound {
+  string name = 1;
+  repeated string available_servers = 2;
 }
 
 message McpStateError {

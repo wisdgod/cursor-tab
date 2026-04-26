@@ -9,6 +9,7 @@ import "aiserver/v1/aiserver.proto";
 import "aiserver/v1/chat.proto";
 import "aiserver/v1/dashboard.proto";
 import "aiserver/v1/repository.proto";
+import "aiserver/v1/scm.proto";
 import "aiserver/v1/tools.proto";
 import "aiserver/v1/utils.proto";
 import "anyrun/v1/pod.proto";
@@ -63,6 +64,8 @@ enum BackgroundComposerSource {
   BACKGROUND_COMPOSER_SOURCE_GRAPHITE_CHAT_WEB = 15;
   BACKGROUND_COMPOSER_SOURCE_GLASS = 16;
   BACKGROUND_COMPOSER_SOURCE_GRAPHITE_FULL_SELF_DRIVING = 17;
+  BACKGROUND_COMPOSER_SOURCE_TEAMS = 18;
+  BACKGROUND_COMPOSER_SOURCE_LOCAL = 19;
 }
 
 enum BackgroundComposerStatus {
@@ -72,6 +75,15 @@ enum BackgroundComposerStatus {
   BACKGROUND_COMPOSER_STATUS_ERROR = 3;
   BACKGROUND_COMPOSER_STATUS_CREATING = 4;
   BACKGROUND_COMPOSER_STATUS_EXPIRED = 5;
+}
+
+enum CloudAgentTimingEventType {
+  CLOUD_AGENT_TIMING_EVENT_TYPE_UNSPECIFIED = 0;
+  CLOUD_AGENT_TIMING_EVENT_TYPE_REQUEST_RECEIVED = 1;
+  CLOUD_AGENT_TIMING_EVENT_TYPE_PREWARMED_POD_RECEIVED = 2;
+  CLOUD_AGENT_TIMING_EVENT_TYPE_POD_REQUESTED = 3;
+  CLOUD_AGENT_TIMING_EVENT_TYPE_POD_READY = 4;
+  CLOUD_AGENT_TIMING_EVENT_TYPE_FIRST_TOKEN = 5;
 }
 
 enum CloudAgentWorkflowStatus {
@@ -96,6 +108,20 @@ enum EnvironmentType {
   ENVIRONMENT_TYPE_TEAM = 2;
 }
 
+enum EnvironmentVersionSourceKind {
+  ENVIRONMENT_VERSION_SOURCE_KIND_UNSPECIFIED = 0;
+  ENVIRONMENT_VERSION_SOURCE_KIND_REPO_FILE = 1;
+  ENVIRONMENT_VERSION_SOURCE_KIND_DATABASE_USER = 2;
+  ENVIRONMENT_VERSION_SOURCE_KIND_DATABASE_TEAM = 3;
+  ENVIRONMENT_VERSION_SOURCE_KIND_REQUEST_OVERRIDE = 4;
+}
+
+enum EnvironmentWriteSource {
+  ENVIRONMENT_WRITE_SOURCE_UNSPECIFIED = 0;
+  ENVIRONMENT_WRITE_SOURCE_DASHBOARD = 1;
+  ENVIRONMENT_WRITE_SOURCE_SETUP_FLOW = 2;
+}
+
 enum GithubAccessErrorType {
   GITHUB_ACCESS_ERROR_TYPE_UNSPECIFIED = 0;
   GITHUB_ACCESS_ERROR_TYPE_NONE = 1;
@@ -106,10 +132,17 @@ enum GithubAccessErrorType {
   GITHUB_ACCESS_ERROR_TYPE_PUBLIC_REPO = 6;
 }
 
+enum LogicalEnvironmentScope {
+  LOGICAL_ENVIRONMENT_SCOPE_UNSPECIFIED = 0;
+  LOGICAL_ENVIRONMENT_SCOPE_PERSONAL = 1;
+  LOGICAL_ENVIRONMENT_SCOPE_TEAM = 2;
+}
+
 enum NextTurnSystemReminderKind {
   NEXT_TURN_SYSTEM_REMINDER_KIND_UNSPECIFIED = 0;
   NEXT_TURN_SYSTEM_REMINDER_KIND_PR_TITLE_EDITED = 1;
   NEXT_TURN_SYSTEM_REMINDER_KIND_PR_DESCRIPTION_EDITED = 2;
+  NEXT_TURN_SYSTEM_REMINDER_KIND_ASYNC_USER_INSTALL_SCRIPT_RUNNING = 3;
 }
 
 enum OwnerType {
@@ -155,6 +188,13 @@ enum PRDeploymentStatusState {
   PR_DEPLOYMENT_STATUS_STATE_WAITING = 9;
   PR_DEPLOYMENT_STATUS_STATE_BLOCKED = 10;
   PR_DEPLOYMENT_STATUS_STATE_CANCELED = 11;
+}
+
+enum PrivateWorkerListScope {
+  PRIVATE_WORKER_LIST_SCOPE_UNSPECIFIED = 0;
+  PRIVATE_WORKER_LIST_SCOPE_ALL = 1;
+  PRIVATE_WORKER_LIST_SCOPE_TEAM_POOL = 2;
+  PRIVATE_WORKER_LIST_SCOPE_PERSONAL = 3;
 }
 
 enum PrivateWorkerStatusFilter {
@@ -205,6 +245,7 @@ message AddAsyncFollowupBackgroundComposerRequest {
 }
 
 message AddAsyncFollowupBackgroundComposerResponse {
+  string run_id = 1;
 }
 
 message AddPullRequestReviewCommentRequest {
@@ -230,6 +271,17 @@ message ArchiveBackgroundComposerRequest {
 }
 
 message ArchiveBackgroundComposerResponse {
+  bool closed_pull_request = 1;
+}
+
+message AttachAgentStartupTraceRequest {
+  string bc_id = 1;
+  optional string last_event_id = 2;
+}
+
+message AttachAgentStartupTraceResponse {
+  string event_id = 1;
+  anyrun.v1.PodEvent event = 2;
 }
 
 message AttachBackgroundComposerLogsRequest {
@@ -322,6 +374,9 @@ message BackgroundComposer {
   optional string owning_service_account = 41;
   optional string owning_service_account_name = 42;
   optional PRStatus pr_status = 43;
+  optional ExternalSourceMetadata external_source_metadata = 57;
+  optional string worker_id = 58;
+  optional agent.v1.RequestedModel requested_model = 59;
   repeated int32 participant_user_ids = 45;
 }
 
@@ -542,6 +597,12 @@ message CloudAgentStatePersistedMetadata {
   PersistedMetadataVersion version = 5;
 }
 
+message CloudAgentTimingEvent {
+  double timestamp_ms = 1;
+  CloudAgentTimingEventType event = 2;
+  optional uint32 turn_number = 3;
+}
+
 message CloudAgentWorkflowControlState {
   repeated QueuedFollowup pending_followups = 1;
   int32 followup_completion_count = 2;
@@ -635,6 +696,13 @@ message CreateBackgroundComposerPodSnapshotResponse {
   string snapshot_id = 1;
 }
 
+message DeleteBackgroundComposerRequest {
+  string bc_id = 1;
+}
+
+message DeleteBackgroundComposerResponse {
+}
+
 message DeletePendingFollowupRequest {
   string bc_id = 1;
   string followup_id = 2;
@@ -689,6 +757,12 @@ message DetailedBackgroundComposer {
   repeated BackgroundComposerPr prs = 20;
   repeated VmProvisionedSkill vm_provisioned_skills = 21;
   optional agent.v1.ConversationAction original_conversation_action = 22;
+  optional EnvironmentRepoConfig repo_config = 23;
+  optional string environment_name = 24;
+  optional bool use_private_worker = 25;
+  repeated PrivateWorkerLabel labels = 26;
+  optional EnvironmentVersionSummary used_environment_version = 27;
+  optional agent.v1.RequestedModel requested_model = 28;
 }
 
 message DevcontainerStartingPoint {
@@ -700,6 +774,10 @@ message DevcontainerStartingPoint {
   GitDiff git_diff_to_apply = 8;
   bool dont_allow_reading_environment_json_from_database = 9;
   bool skip_build_caches = 10;
+  optional EnvironmentRepoConfig repo_config = 11;
+  optional string environment_name = 12;
+  optional int64 environment_id = 13;
+  repeated RepoStartingRef starting_refs = 14;
 }
 
 message DisablePullRequestAutoMergeRequest {
@@ -721,9 +799,43 @@ message EnablePullRequestAutoMergeResponse {
   string error = 2;
 }
 
+message EnvironmentJsonFileLocation {
+  string repo_url = 1;
+  string path = 2;
+}
+
 message EnvironmentPort {
   string name = 1;
   int32 port = 2;
+}
+
+message EnvironmentRepoConfig {
+  repeated EnvironmentRepoEntry repos = 1;
+  optional EnvironmentJsonFileLocation environment_json_location = 2;
+}
+
+message EnvironmentRepoEntry {
+  string repo_url = 1;
+  string scm_repo_node_id = 2;
+  optional string git_enterprise_uuid = 3;
+}
+
+message EnvironmentVersionSummary {
+  string public_id = 1;
+  EnvironmentVersionSourceKind source_kind = 2;
+  optional string commit_hash = 3;
+  optional string environment_public_id = 4;
+  optional RepoConfigSummary repo_config = 5;
+  int64 created_at_ms = 6;
+  optional string environment_json = 7;
+  optional string environment_name = 8;
+}
+
+message ExternalSourceMetadata {
+  optional SlackSourceMetadata slack = 1;
+  optional LinearSourceMetadata linear = 2;
+  optional GithubSourceMetadata github = 3;
+  optional GitlabSourceMetadata gitlab = 4;
 }
 
 message FetchBackgroundComposerRequest {
@@ -804,6 +916,14 @@ message GetBackgroundComposerDiffDetailsResponse {
   repeated GitDiff git_diffs = 4;
 }
 
+message GetBackgroundComposerEnvironmentVersionRequest {
+  string bc_id = 1;
+}
+
+message GetBackgroundComposerEnvironmentVersionResponse {
+  repeated EnvironmentVersionSummary environment_version_history = 1;
+}
+
 message GetBackgroundComposerInfoRequest {
   string bc_id = 1;
   bool include_diff = 2;
@@ -876,6 +996,14 @@ message GetBackgroundComposerStatusRequest {
 message GetBackgroundComposerStatusResponse {
   BackgroundComposerStatus status = 1;
   bool is_unread = 2;
+}
+
+message GetBackgroundComposerTimingsRequest {
+  string bc_id = 1;
+}
+
+message GetBackgroundComposerTimingsResponse {
+  repeated CloudAgentTimingEvent events = 1;
 }
 
 message GetBackgroundComposerUserSettingsRequest {
@@ -966,6 +1094,8 @@ message GetDetailedPullRequestStatusResponse {
   optional string base_sha = 14;
   bool viewer_can_enable_auto_merge = 15;
   repeated PRDeploymentPreview deployment_previews = 16;
+  optional int32 additions = 17;
+  optional int32 deletions = 18;
 }
 
 message GetEnvironmentJsonCandidatesRequest {
@@ -1057,6 +1187,7 @@ message GetPrivateWorkersSummaryRequest {
 message GetPrivateWorkersSummaryResponse {
   optional UserWorkerSummary user_summary = 1;
   optional TeamWorkerSummary team_summary = 2;
+  optional TeamWorkerLimitSummary team_limit_summary = 3;
 }
 
 message GetPublicBackgroundComposerArtifactRequest {
@@ -1109,6 +1240,17 @@ message GetPullRequestMergeStatusResponse {
   bool viewer_can_enable_auto_merge = 11;
 }
 
+message GetPullRequestTimelineEventsRequest {
+  string pr_url = 1;
+  optional int32 page = 2;
+}
+
+message GetPullRequestTimelineEventsResponse {
+  repeated PRTimelineEvent events = 1;
+  bool has_next_page = 2;
+  optional int32 next_page = 3;
+}
+
 message GetRepositoryBranchesRequest {
   string repo_url = 1;
   optional int32 page = 2;
@@ -1136,6 +1278,20 @@ message GetTurnSummaryBackgroundComposerRequest {
 
 message GetTurnSummaryBackgroundComposerResponse {
   string summary = 1;
+}
+
+message GithubSourceMetadata {
+  optional string issue_id = 1;
+  optional int32 pr_number = 2;
+  optional string pr_title = 3;
+  optional string issue_title = 4;
+  optional string issue_url = 5;
+}
+
+message GitlabSourceMetadata {
+  optional int32 mr_iid = 1;
+  optional string mr_title = 2;
+  optional string mr_web_url = 3;
 }
 
 message GrindModeConfig {
@@ -1175,6 +1331,7 @@ message HeadlessAgenticComposerConfig {
   repeated ModelDetails additional_model_details = 13;
   optional bool should_synthesize = 14;
   optional bool show_onboarding_setup_note_for_manual_testing = 15;
+  optional agent.v1.RequestedModel requested_model = 16;
 }
 
 message HeadlessAgenticComposerPrompt {
@@ -1257,6 +1414,13 @@ message LatestAgentConversationState {
   uint32 num_prior_interaction_updates = 2;
 }
 
+message LinearSourceMetadata {
+  optional string issue_id = 1;
+  optional string org_id = 2;
+  optional string issue_identifier = 3;
+  optional string issue_title = 4;
+}
+
 message ListBackgroundComposerArtifactsRequest {
   string bc_id = 1;
 }
@@ -1296,6 +1460,7 @@ message ListBackgroundComposersRequest {
   optional double last_message_activity_at_ms_offset = 9;
   optional bool include_archived = 10;
   optional bool should_include_collaborators = 11;
+  optional int32 team_id = 12;
 }
 
 message ListBackgroundComposersResponse {
@@ -1322,6 +1487,14 @@ message ListDetailedBackgroundComposersRequest {
 message ListDetailedBackgroundComposersResponse {
   repeated DetailedBackgroundComposer composers = 1;
   repeated BackgroundComposerParticipant participants = 2;
+}
+
+message ListEnvironmentsRequest {
+  optional int32 limit = 1;
+}
+
+message ListEnvironmentsResponse {
+  repeated LogicalEnvironment environments = 1;
 }
 
 message ListGrindModeComposersRequest {
@@ -1352,6 +1525,7 @@ message ListPrivateWorkersRequest {
   PrivateWorkerStatusFilter status_filter = 1;
   int32 page_size = 2;
   optional string page_token = 3;
+  PrivateWorkerListScope list_scope = 4;
 }
 
 message ListPrivateWorkersResponse {
@@ -1381,6 +1555,18 @@ message ListTeamEnvironmentsRequest {
 
 message ListTeamEnvironmentsResponse {
   repeated TeamEnvironment environments = 1;
+}
+
+message LogicalEnvironment {
+  int64 id = 1;
+  string public_id = 2;
+  string name = 3;
+  LogicalEnvironmentScope scope = 4;
+  optional int32 owning_team = 5;
+  optional int32 owning_user = 6;
+  optional EnvironmentRepoConfig repo_config = 7;
+  int64 created_at_ms = 8;
+  int64 updated_at_ms = 9;
 }
 
 message MachineReference {
@@ -1495,6 +1681,7 @@ message OwnerIdentifier {
 message PauseBackgroundComposerRequest {
   string bc_id = 1;
   BackgroundComposerSource source = 3;
+  optional string run_id = 4;
 }
 
 message PauseBackgroundComposerResponse {
@@ -1535,24 +1722,7 @@ message PodReference {
   string network_token = 3;
   string cluster = 4;
   optional string exec_daemon_auth_token = 5;
-}
-
-message PRCheck {
-  string name = 1;
-  string status = 2;
-  optional string details_url = 3;
-  optional string summary = 4;
-}
-
-message PRCheckStatus {
-  string overall_state = 1;
-  int32 success_count = 2;
-  int32 failure_count = 3;
-  int32 pending_count = 4;
-  int32 neutral_count = 5;
-  int32 skipped_count = 6;
-  int32 total_count = 7;
-  repeated PRCheck checks = 8;
+  optional string pty_auth_token = 6;
 }
 
 message PRCommit {
@@ -1624,6 +1794,8 @@ message PRReviewComment {
   string body = 4;
   string created_at = 5;
   optional string diff_hunk = 6;
+  optional string body_html = 7;
+  optional string author_name = 8;
 }
 
 message PRReviewThread {
@@ -1637,6 +1809,22 @@ message PRReviewThread {
   bool is_resolved = 8;
   bool is_outdated = 9;
   repeated PRReviewComment comments = 10;
+  optional string pull_request_review_id = 11;
+}
+
+message PRTimelineActor {
+  string login = 1;
+  optional string avatar_url = 2;
+  optional string name = 3;
+}
+
+message PRTimelineEvent {
+  string id = 1;
+  string event_type = 2;
+  string created_at = 3;
+  optional PRTimelineActor actor = 4;
+  optional string label = 5;
+  optional string body = 6;
 }
 
 message PRTopLevelComment {
@@ -1645,6 +1833,8 @@ message PRTopLevelComment {
   string avatar_url = 3;
   string body = 4;
   string created_at = 5;
+  optional string body_html = 6;
+  optional string author_name = 7;
 }
 
 message PublishEnvironmentRequest {
@@ -1682,6 +1872,8 @@ message QueuedFollowup {
   repeated internapi.v1.BlobData blob_data = 9;
   optional ModelDetails model_details = 10;
   optional int64 editing_started_at_ms = 11;
+  optional string run_id = 12;
+  optional agent.v1.RequestedModel requested_model = 13;
 }
 
 message QueuedMakePRRequest {
@@ -1752,6 +1944,16 @@ message ReplyToReviewThreadResponse {
   optional PRReviewThread thread = 1;
 }
 
+message RepoConfigSummary {
+  repeated string repo_urls = 1;
+  optional string environment_json_path = 2;
+}
+
+message RepoStartingRef {
+  string repo_url = 1;
+  string ref = 2;
+}
+
 message RepoWithLocalEnvironment {
   string repo_url = 1;
   bool file_exists = 2;
@@ -1777,6 +1979,10 @@ message ResumeBackgroundComposerResponse {
 message SetPersonalEnvironmentJsonRequest {
   string environment_json = 1;
   string repo_url = 2;
+  EnvironmentWriteSource write_source = 3;
+  optional string source_bc_id = 4;
+  optional string environment_name = 5;
+  optional EnvironmentRepoConfig repo_config = 6;
 }
 
 message SetPersonalEnvironmentJsonResponse {
@@ -1788,6 +1994,10 @@ message SetTeamEnvironmentJsonRequest {
   string scm_repo_node_id = 3;
   optional string git_enterprise_uuid = 4;
   bool delete_personal_environment = 5;
+  EnvironmentWriteSource write_source = 6;
+  optional string source_bc_id = 7;
+  optional string environment_name = 8;
+  optional EnvironmentRepoConfig repo_config = 9;
 }
 
 message SetTeamEnvironmentJsonResponse {
@@ -1801,6 +2011,14 @@ message ShareBackgroundComposerArtifactRequest {
 
 message ShareBackgroundComposerArtifactResponse {
   BackgroundComposerSharedArtifact artifact = 1;
+}
+
+message SlackSourceMetadata {
+  optional string channel_id = 1;
+  optional string channel_name = 2;
+  optional string team_id = 3;
+  optional string message_timestamp = 4;
+  optional string message_permalink = 5;
 }
 
 message SnapshotAndSaveEnvironmentRequest {
@@ -1817,6 +2035,8 @@ message SnapshotAndSaveEnvironmentRequest {
   optional string existing_snapshot_id = 5;
   optional string scm_repo_node_id = 6;
   optional string git_enterprise_uuid = 7;
+  optional string environment_name = 8;
+  optional EnvironmentRepoConfig repo_config = 9;
 }
 
 message SnapshotAndSaveEnvironmentResponse {
@@ -1866,6 +2086,7 @@ message StartBackgroundComposerFromSnapshotRequest {
   optional bool add_initial_message_to_responses = 26;
   optional string linear_org_id = 30;
   optional string linear_issue_identifier = 33;
+  optional ExternalSourceMetadata external_source_metadata = 94;
   optional string base_branch = 31;
   optional string custom_branch_name = 38;
   optional string client_ip = 32;
@@ -1902,11 +2123,13 @@ message StartBackgroundComposerFromSnapshotRequest {
   optional string cloud_plugin_manifest_json = 81;
   optional string cloud_plugin_snapshot_token = 82;
   optional bool internal_multi_repo_experiment = 83;
+  optional string mcp_config_json = 95;
 }
 
 message StartBackgroundComposerFromSnapshotResponse {
   BackgroundComposer composer = 1;
   optional bool was_swapped_to_default = 2;
+  optional string initial_run_id = 3;
 }
 
 message StartGithubStreamingForFollowupRequest {
@@ -1950,6 +2173,7 @@ message StreamConversationRequest {
   optional bool prefetch_only_last_step_per_turn = 6;
   optional bool send_stream_signal_after_prefetch = 7;
   optional uint32 max_blobs_after_prefetch = 8;
+  optional bool allow_streaming_when_terminal_status = 9;
 }
 
 message StreamConversationResponse {
@@ -2043,6 +2267,11 @@ message TeamEnvironment {
   optional string git_enterprise_uuid = 9;
 }
 
+message TeamWorkerLimitSummary {
+  int32 total_connected = 1;
+  int32 max_workers = 2;
+}
+
 message TeamWorkerSummary {
   int32 total_connected = 1;
   int32 in_use = 2;
@@ -2050,6 +2279,15 @@ message TeamWorkerSummary {
 
 message TransientError {
   string error_message = 1;
+}
+
+message UnresolveReviewThreadRequest {
+  string pr_url = 1;
+  string thread_id = 2;
+}
+
+message UnresolveReviewThreadResponse {
+  bool success = 1;
 }
 
 message UnshareBackgroundComposerArtifactRequest {
@@ -2192,4 +2430,121 @@ message WorkerLifecycleEvent {
 message WorkerReference {
   string worker_id = 1;
   string workspace_root_path = 2;
+}
+
+service BackgroundComposerService {
+  rpc ListBackgroundComposers (ListBackgroundComposersRequest) returns (ListBackgroundComposersResponse);
+  rpc AttachBackgroundComposer (AttachBackgroundComposerRequest) returns (stream AttachBackgroundComposerResponse);
+  rpc StreamConversation (StreamConversationRequest) returns (stream StreamConversationResponse);
+  rpc GetLatestAgentConversationState (GetLatestAgentConversationStateRequest) returns (GetLatestAgentConversationStateResponse);
+  rpc GetBlobForAgentKV (GetBlobForAgentKVRequest) returns (GetBlobForAgentKVResponse);
+  rpc AttachBackgroundComposerLogs (AttachBackgroundComposerLogsRequest) returns (stream AttachBackgroundComposerLogsResponse);
+  rpc AttachAgentStartupTrace (AttachAgentStartupTraceRequest) returns (stream AttachAgentStartupTraceResponse);
+  rpc StartBackgroundComposerFromSnapshot (StartBackgroundComposerFromSnapshotRequest) returns (StartBackgroundComposerFromSnapshotResponse);
+  rpc MakePRBackgroundComposer (MakePRBackgroundComposerRequest) returns (MakePRBackgroundComposerResponse);
+  rpc OpenPRBackgroundComposer (OpenPRBackgroundComposerRequest) returns (OpenPRBackgroundComposerResponse);
+  rpc GetBackgroundComposerStatus (GetBackgroundComposerStatusRequest) returns (GetBackgroundComposerStatusResponse);
+  rpc AddAsyncFollowupBackgroundComposer (AddAsyncFollowupBackgroundComposerRequest) returns (AddAsyncFollowupBackgroundComposerResponse);
+  rpc ListPendingFollowups (ListPendingFollowupsRequest) returns (ListPendingFollowupsResponse);
+  rpc UpdatePendingFollowup (UpdatePendingFollowupRequest) returns (UpdatePendingFollowupResponse);
+  rpc DeletePendingFollowup (DeletePendingFollowupRequest) returns (DeletePendingFollowupResponse);
+  rpc ReorderPendingFollowup (ReorderPendingFollowupRequest) returns (ReorderPendingFollowupResponse);
+  rpc SubmitPendingFollowupNow (SubmitPendingFollowupNowRequest) returns (SubmitPendingFollowupNowResponse);
+  rpc MarkFollowupEditing (MarkFollowupEditingRequest) returns (MarkFollowupEditingResponse);
+  rpc GetCursorServerUrl (GetCursorServerUrlRequest) returns (GetCursorServerUrlResponse);
+  rpc WarmCursorServerDownload (WarmCursorServerDownloadRequest) returns (WarmCursorServerDownloadResponse);
+  rpc PreWarmPod (PreWarmPodRequest) returns (PreWarmPodResponse);
+  rpc PauseBackgroundComposer (PauseBackgroundComposerRequest) returns (PauseBackgroundComposerResponse);
+  rpc ResumeBackgroundComposer (ResumeBackgroundComposerRequest) returns (ResumeBackgroundComposerResponse);
+  rpc ArchiveBackgroundComposer (ArchiveBackgroundComposerRequest) returns (ArchiveBackgroundComposerResponse);
+  rpc DeleteBackgroundComposer (DeleteBackgroundComposerRequest) returns (DeleteBackgroundComposerResponse);
+  rpc GetBackgroundComposerInfo (GetBackgroundComposerInfoRequest) returns (GetBackgroundComposerInfoResponse);
+  rpc GetBackgroundComposerEnvironmentVersion (GetBackgroundComposerEnvironmentVersionRequest) returns (GetBackgroundComposerEnvironmentVersionResponse);
+  rpc GetBackgroundComposerTimings (GetBackgroundComposerTimingsRequest) returns (GetBackgroundComposerTimingsResponse);
+  rpc GetBackgroundComposerRepositoryInfo (GetBackgroundComposerRepositoryInfoRequest) returns (GetBackgroundComposerRepositoryInfoResponse);
+  rpc GetMachine (GetMachineRequest) returns (GetMachineResponse);
+  rpc ListDetailedBackgroundComposers (ListDetailedBackgroundComposersRequest) returns (ListDetailedBackgroundComposersResponse);
+  rpc GetGithubAccessTokenForRepos (GetGithubAccessTokenForReposRequest) returns (GetGithubAccessTokenForReposResponse);
+  rpc GetBackgroundComposerDiffDetails (GetBackgroundComposerDiffDetailsRequest) returns (GetBackgroundComposerDiffDetailsResponse);
+  rpc GetOptimizedDiffDetails (GetOptimizedDiffDetailsRequest) returns (GetOptimizedDiffDetailsResponse);
+  rpc GetBackgroundComposerChangesHash (GetBackgroundComposerChangesHashRequest) returns (GetBackgroundComposerChangesHashResponse);
+  rpc GetBackgroundComposerPullRequest (GetBackgroundComposerPullRequestRequest) returns (GetBackgroundComposerPullRequestResponse);
+  rpc RefreshGithubAccessTokenInBackgroundComposer (RefreshGithubAccessTokenInBackgroundComposerRequest) returns (RefreshGithubAccessTokenInBackgroundComposerResponse);
+  rpc CreateBackgroundComposerPod (CreateBackgroundComposerPodRequest) returns (CreateBackgroundComposerPodResponse);
+  rpc AttachBackgroundComposerPod (AttachBackgroundComposerPodRequest) returns (stream AttachBackgroundComposerPodResponse);
+  rpc CreateBackgroundComposerPodSnapshot (CreateBackgroundComposerPodSnapshotRequest) returns (CreateBackgroundComposerPodSnapshotResponse);
+  rpc ChangeBackgroundComposerSnapshotVisibility (ChangeBackgroundComposerSnapshotVisibilityRequest) returns (ChangeBackgroundComposerSnapshotVisibilityResponse);
+  rpc GetBackgroundComposerSnapshotInfo (GetBackgroundComposerSnapshotInfoRequest) returns (GetBackgroundComposerSnapshotInfoResponse);
+  rpc ListBackgroundComposerSnapshotsByBcId (ListBackgroundComposerSnapshotsByBcIdRequest) returns (ListBackgroundComposerSnapshotsByBcIdResponse);
+  rpc ListBackgroundComposerSnapshotStatusesByBcIds (ListBackgroundComposerSnapshotStatusesByBcIdsRequest) returns (ListBackgroundComposerSnapshotStatusesByBcIdsResponse);
+  rpc GetBackgroundComposerSnapshotState (GetBackgroundComposerSnapshotStateRequest) returns (GetBackgroundComposerSnapshotStateResponse);
+  rpc WatchBackgroundComposerSnapshotState (WatchBackgroundComposerSnapshotStateRequest) returns (stream WatchBackgroundComposerSnapshotStateResponse);
+  rpc GetBackgroundComposerConversation (GetBackgroundComposerConversationRequest) returns (GetBackgroundComposerConversationResponse);
+  rpc RenameBackgroundComposer (RenameBackgroundComposerRequest) returns (RenameBackgroundComposerResponse);
+  rpc CommitBackgroundComposer (CommitBackgroundComposerRequest) returns (CommitBackgroundComposerResponse);
+  rpc SetPersonalEnvironmentJson (SetPersonalEnvironmentJsonRequest) returns (SetPersonalEnvironmentJsonResponse);
+  rpc GetPersonalEnvironmentJson (GetPersonalEnvironmentJsonRequest) returns (GetPersonalEnvironmentJsonResponse);
+  rpc GetEnvironmentJsonCandidates (GetEnvironmentJsonCandidatesRequest) returns (GetEnvironmentJsonCandidatesResponse);
+  rpc ListPersonalEnvironments (ListPersonalEnvironmentsRequest) returns (ListPersonalEnvironmentsResponse);
+  rpc DeletePersonalEnvironmentJson (DeletePersonalEnvironmentJsonRequest) returns (DeletePersonalEnvironmentJsonResponse);
+  rpc PublishEnvironment (PublishEnvironmentRequest) returns (PublishEnvironmentResponse);
+  rpc PublishPersonalEnvironment (PublishPersonalEnvironmentRequest) returns (PublishPersonalEnvironmentResponse);
+  rpc ListTeamEnvironments (ListTeamEnvironmentsRequest) returns (ListTeamEnvironmentsResponse);
+  rpc DeleteTeamEnvironment (DeleteTeamEnvironmentRequest) returns (DeleteTeamEnvironmentResponse);
+  rpc SetTeamEnvironmentJson (SetTeamEnvironmentJsonRequest) returns (SetTeamEnvironmentJsonResponse);
+  rpc ListEnvironments (ListEnvironmentsRequest) returns (ListEnvironmentsResponse);
+  rpc SnapshotAndSaveEnvironment (SnapshotAndSaveEnvironmentRequest) returns (SnapshotAndSaveEnvironmentResponse);
+  rpc ListReposWithLocalEnvironment (ListReposWithLocalEnvironmentRequest) returns (ListReposWithLocalEnvironmentResponse);
+  rpc MarkBackgroundComposerRead (MarkBackgroundComposerReadRequest) returns (MarkBackgroundComposerReadResponse);
+  rpc MarkBackgroundComposerUnread (MarkBackgroundComposerUnreadRequest) returns (MarkBackgroundComposerUnreadResponse);
+  rpc NotifyBackgroundComposerShown (NotifyBackgroundComposerShownRequest) returns (NotifyBackgroundComposerShownResponse);
+  rpc FetchBackgroundComposer (FetchBackgroundComposerRequest) returns (FetchBackgroundComposerResponse);
+  rpc GetTurnSummaryBackgroundComposer (GetTurnSummaryBackgroundComposerRequest) returns (GetTurnSummaryBackgroundComposerResponse);
+  rpc GetBackgroundComposerName (GetBackgroundComposerNameRequest) returns (GetBackgroundComposerNameResponse);
+  rpc GetBackgroundComposerPrompt (GetBackgroundComposerPromptRequest) returns (GetBackgroundComposerPromptResponse);
+  rpc ReadBinaryFile (ReadBinaryFileRequest) returns (ReadBinaryFileResponse);
+  rpc ListBackgroundComposerArtifacts (ListBackgroundComposerArtifactsRequest) returns (ListBackgroundComposerArtifactsResponse);
+  rpc GetBackgroundComposerArtifact (GetBackgroundComposerArtifactRequest) returns (GetBackgroundComposerArtifactResponse);
+  rpc GetBackgroundComposerArtifactBytes (GetBackgroundComposerArtifactBytesRequest) returns (GetBackgroundComposerArtifactBytesResponse);
+  rpc StreamBackgroundComposerArtifact (StreamBackgroundComposerArtifactRequest) returns (stream StreamBackgroundComposerArtifactResponse);
+  rpc ListSharedBackgroundComposerArtifacts (ListSharedBackgroundComposerArtifactsRequest) returns (ListSharedBackgroundComposerArtifactsResponse);
+  rpc ShareBackgroundComposerArtifact (ShareBackgroundComposerArtifactRequest) returns (ShareBackgroundComposerArtifactResponse);
+  rpc UnshareBackgroundComposerArtifact (UnshareBackgroundComposerArtifactRequest) returns (UnshareBackgroundComposerArtifactResponse);
+  rpc GetPublicBackgroundComposerArtifact (GetPublicBackgroundComposerArtifactRequest) returns (GetPublicBackgroundComposerArtifactResponse);
+  rpc UpdateBackgroundComposerUserSettings (UpdateBackgroundComposerUserSettingsRequest) returns (UpdateBackgroundComposerUserSettingsResponse);
+  rpc GetBackgroundComposerUserSettings (GetBackgroundComposerUserSettingsRequest) returns (GetBackgroundComposerUserSettingsResponse);
+  rpc UpdateBackgroundComposerEnvironment (UpdateBackgroundComposerEnvironmentRequest) returns (UpdateBackgroundComposerEnvironmentResponse);
+  rpc GetRepositoryBranches (GetRepositoryBranchesRequest) returns (GetRepositoryBranchesResponse);
+  rpc GetPullRequestMergeStatus (GetPullRequestMergeStatusRequest) returns (GetPullRequestMergeStatusResponse);
+  rpc GetDetailedPullRequestStatus (GetDetailedPullRequestStatusRequest) returns (GetDetailedPullRequestStatusResponse);
+  rpc CheckPullRequestMergeability (CheckPullRequestMergeabilityRequest) returns (CheckPullRequestMergeabilityResponse);
+  rpc GetPullRequestDiscussions (GetPullRequestDiscussionsRequest) returns (GetPullRequestDiscussionsResponse);
+  rpc GetPullRequestCommits (GetPullRequestCommitsRequest) returns (GetPullRequestCommitsResponse);
+  rpc GetPullRequestTimelineEvents (GetPullRequestTimelineEventsRequest) returns (GetPullRequestTimelineEventsResponse);
+  rpc ReplyToReviewThread (ReplyToReviewThreadRequest) returns (ReplyToReviewThreadResponse);
+  rpc ResolveReviewThread (ResolveReviewThreadRequest) returns (ResolveReviewThreadResponse);
+  rpc UnresolveReviewThread (UnresolveReviewThreadRequest) returns (UnresolveReviewThreadResponse);
+  rpc AddPullRequestReviewComment (AddPullRequestReviewCommentRequest) returns (AddPullRequestReviewCommentResponse);
+  rpc MergePullRequest (MergePullRequestRequest) returns (MergePullRequestResponse);
+  rpc EnablePullRequestAutoMerge (EnablePullRequestAutoMergeRequest) returns (EnablePullRequestAutoMergeResponse);
+  rpc DisablePullRequestAutoMerge (DisablePullRequestAutoMergeRequest) returns (DisablePullRequestAutoMergeResponse);
+  rpc ConvertPullRequestFromDraft (ConvertPullRequestFromDraftRequest) returns (ConvertPullRequestFromDraftResponse);
+  rpc UpdatePullRequestBranch (UpdatePullRequestBranchRequest) returns (UpdatePullRequestBranchResponse);
+  rpc RegisterPushNotificationToken (RegisterPushNotificationTokenRequest) returns (RegisterPushNotificationTokenResponse);
+  rpc DeletePushNotificationToken (DeletePushNotificationTokenRequest) returns (DeletePushNotificationTokenResponse);
+  rpc VerifyBackgroundComposerAccess (VerifyBackgroundComposerAccessRequest) returns (VerifyBackgroundComposerAccessResponse);
+  rpc StartSlackStreamingForFollowup (StartSlackStreamingForFollowupRequest) returns (StartSlackStreamingForFollowupResponse);
+  rpc StartGithubStreamingForFollowup (StartGithubStreamingForFollowupRequest) returns (StartGithubStreamingForFollowupResponse);
+  rpc StartLinearStreamingForFollowup (StartLinearStreamingForFollowupRequest) returns (StartLinearStreamingForFollowupResponse);
+  rpc GetGithubInstallations (GetGithubInstallationsRequest) returns (GetGithubInstallationsResponse);
+  rpc FetchAllInstallationRepos (FetchAllInstallationReposRequest) returns (FetchAllInstallationReposResponse);
+  rpc GetBackgroundComposerVmUsage (GetBackgroundComposerVmUsageRequest) returns (GetBackgroundComposerVmUsageResponse);
+  rpc ListGrindModeComposers (ListGrindModeComposersRequest) returns (ListGrindModeComposersResponse);
+  rpc GetCloudAgentDebugDetails (GetCloudAgentDebugDetailsRequest) returns (GetCloudAgentDebugDetailsResponse);
+  rpc CreateAgentShare (CreateAgentShareRequest) returns (CreateAgentShareResponse);
+  rpc GetAgentSharePreview (GetAgentSharePreviewRequest) returns (GetAgentSharePreviewResponse);
+  rpc ListPrivateWorkers (ListPrivateWorkersRequest) returns (ListPrivateWorkersResponse);
+  rpc GetPrivateWorkersSummary (GetPrivateWorkersSummaryRequest) returns (GetPrivateWorkersSummaryResponse);
+  rpc GetPrivateWorker (GetPrivateWorkerRequest) returns (GetPrivateWorkerResponse);
+  rpc BatchRefreshPullRequestStatus (BatchRefreshPullRequestStatusRequest) returns (BatchRefreshPullRequestStatusResponse);
 }

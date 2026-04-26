@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+enum PlanType {
+  PLAN_TYPE_UNSPECIFIED = 0;
+  PLAN_TYPE_FREE = 1;
+  PLAN_TYPE_FREE_TRIAL = 2;
+  PLAN_TYPE_PRO = 3;
+  PLAN_TYPE_PRO_STUDENT = 4;
+  PLAN_TYPE_PRO_PLUS = 5;
+  PLAN_TYPE_ULTRA = 6;
+  PLAN_TYPE_TEAM = 7;
+  PLAN_TYPE_ENTERPRISE = 8;
+}
+
+enum ScenarioType {
+  SCENARIO_TYPE_UNSPECIFIED = 0;
+  SCENARIO_TYPE_PLAN_LIMIT = 1;
+  SCENARIO_TYPE_TIER_1_LIMIT = 2;
+  SCENARIO_TYPE_TIER_2_LIMIT = 3;
+  SCENARIO_TYPE_TIER_3_LIMIT = 4;
+  SCENARIO_TYPE_ON_DEMAND_LIMIT = 5;
+  SCENARIO_TYPE_TEAM_ON_DEMAND_LIMIT = 6;
+  SCENARIO_TYPE_MONTHLY_LIMIT = 7;
+  SCENARIO_TYPE_POOLED_LIMIT = 8;
+}
+
+message AddSyntheticUsageRequest {
+  int32 user_id = 1;
+  string model = 2;
+  int32 input_tokens = 3;
+  int32 output_tokens = 4;
+  int32 cache_read_tokens = 5;
+  int32 cache_write_tokens = 6;
+  optional int64 revenue_milli_cents = 7;
+}
+
+message AddSyntheticUsageResponse {
+  bool success = 1;
+  string usage_uuid = 2;
+  string message = 3;
+}
+
+message ClearSimulationRequest {
+  int32 user_id = 1;
+}
+
+message ClearSimulationResponse {
+  bool success = 1;
+}
+
+message GetAllSimulationsRequest {
+}
+
+message GetAllSimulationsResponse {
+  repeated SimulationWithUser simulations = 1;
+}
+
+message GetSimulationRequest {
+  int32 user_id = 1;
+}
+
+message GetSimulationResponse {
+  SimulationData simulation = 1;
+}
+
+message ScenarioConfig {
+  PlanType plan = 1;
+  ScenarioType scenario = 2;
+  optional bool can_edit_limit = 3;
+}
+
+message SetSimulationRequest {
+  int32 user_id = 1;
+  ScenarioConfig config = 2;
+}
+
+message SetSimulationResponse {
+  bool success = 1;
+}
+
+message SimulationData {
+  PlanType plan = 1;
+  ScenarioType scenario = 2;
+  optional bool can_edit_limit = 3;
+  bool is_from_anybot = 4;
+}
+
+message SimulationWithUser {
+  int32 user_id = 1;
+  optional string auth_id = 2;
+  optional string first_name = 3;
+  optional string last_name = 4;
+  optional string email = 5;
+  SimulationData simulation = 6;
+}
+
+service UsageSimulationService {
+  rpc GetSimulation (GetSimulationRequest) returns (GetSimulationResponse);
+  rpc SetSimulation (SetSimulationRequest) returns (SetSimulationResponse);
+  rpc ClearSimulation (ClearSimulationRequest) returns (ClearSimulationResponse);
+  rpc GetAllSimulations (GetAllSimulationsRequest) returns (GetAllSimulationsResponse);
+  rpc AddSyntheticUsage (AddSyntheticUsageRequest) returns (AddSyntheticUsageResponse);
+}

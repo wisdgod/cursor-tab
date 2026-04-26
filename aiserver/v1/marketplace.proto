@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message CreateMarketplaceExtensionPublisherRequest {
+  string openvsx_url = 1;
+  string publisher_domain = 2;
+}
+
+message CreateMarketplaceExtensionPublisherResponse {
+  bool success = 1;
+  string message = 2;
+  string publisher_id = 3;
+}
+
+service MarketplaceService {
+  rpc CreateMarketplaceExtensionPublisher (CreateMarketplaceExtensionPublisherRequest) returns (CreateMarketplaceExtensionPublisherResponse);
+}

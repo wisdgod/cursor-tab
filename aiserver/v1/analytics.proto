@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "google/protobuf/struct.proto";
+
+enum ClientLogLevel {
+  CLIENT_LOG_LEVEL_UNSPECIFIED = 0;
+  CLIENT_LOG_LEVEL_INFO = 1;
+  CLIENT_LOG_LEVEL_DEBUG = 2;
+  CLIENT_LOG_LEVEL_WARN = 3;
+  CLIENT_LOG_LEVEL_ERROR = 4;
+}
+
+enum ClientOS {
+  CLIENT_OS_UNSPECIFIED = 0;
+  CLIENT_OS_WINDOWS = 1;
+  CLIENT_OS_MACOS = 2;
+  CLIENT_OS_LINUX = 3;
+}
+
+message AnalyticsContext {
+  optional ClientInfo client = 1;
+}
+
+message AnalyticsEvent {
+  string event_name = 1;
+  map<string, aiserver.v1.EventData> event_data = 2;
+  int64 timestamp = 3;
+}
+
+message BatchEvent {
+  string event = 1;
+  google.protobuf.Struct properties = 2;
+  int64 timestamp = 3;
+  optional string user_id = 4;
+  optional string anonymous_id = 5;
+  optional string message_id = 6;
+  optional AnalyticsContext context = 7;
+}
+
+message BatchRequest {
+  repeated BatchEvent events = 1;
+}
+
+message BatchResponse {
+}
+
+message BootstrapStatsigRequest {
+  optional bool ignore_dev_status = 1;
+  optional ClientOS operating_system = 2;
+}
+
+message BootstrapStatsigResponse {
+  string config = 1;
+  uint64 generated_at_ms = 2;
+}
+
+message ClientInfo {
+  optional string os = 1;
+  optional string arch = 2;
+  optional string os_version = 3;
+  optional string version = 4;
+  optional string layout = 5;
+}
+
+message ClientLogEntry {
+  ClientLogLevel level = 1;
+  string message = 2;
+  map<string, string> metadata = 3;
+  int64 timestamp = 4;
+  optional string error_message = 5;
+  optional string error_stack = 6;
+  string key = 7;
+}
+
+message DownloadIssueTracesRequest {
+  string token = 1;
+  int32 limit = 2;
+}
+
+message DownloadIssueTracesResponse {
+  bytes data = 1;
+  int32 total_traces = 2;
+  int64 total_bytes = 3;
+}
+
+message EventData {
+  oneof data {
+    string string_value = 1;
+    int64 int_value = 2;
+    bool bool_value = 3;
+    double double_value = 4;
+  }
+}
+
+message IngestConversationRequest {
+  string conversation_id = 1;
+  string transcript = 2;
+  optional string transcript_json = 3;
+  optional string mode = 4;
+  optional string model = 5;
+  int64 last_updated_at = 6;
+}
+
+message IngestConversationResponse {
+  bool success = 1;
+  optional string summary = 2;
+  optional string detailed_summary = 3;
+  optional string error_message = 4;
+}
+
+message SubmitLogsRequest {
+  repeated ClientLogEntry logs = 1;
+}
+
+message SubmitLogsResponse {
+  bool success = 1;
+  optional string error_message = 2;
+  uint32 logs_processed = 3;
+  uint32 logs_dropped = 4;
+}
+
+message TrackEventsRequest {
+  repeated AnalyticsEvent events = 1;
+}
+
+message TrackEventsResponse {
+}
+
+message UploadIssueTraceRequest {
+  string token = 1;
+  string payload = 2;
+  string payload_hash = 3;
+}
+
+message UploadIssueTraceResponse {
+  string event_id = 1;
+  int64 size = 2;
+}
+
+service AnalyticsService {
+  rpc TrackEvents (TrackEventsRequest) returns (TrackEventsResponse);
+  rpc Batch (BatchRequest) returns (BatchResponse);
+  rpc BootstrapStatsig (BootstrapStatsigRequest) returns (BootstrapStatsigResponse);
+  rpc SubmitLogs (SubmitLogsRequest) returns (SubmitLogsResponse);
+  rpc IngestConversation (IngestConversationRequest) returns (IngestConversationResponse);
+  rpc UploadIssueTrace (UploadIssueTraceRequest) returns (UploadIssueTraceResponse);
+  rpc DownloadIssueTraces (DownloadIssueTracesRequest) returns (DownloadIssueTracesResponse);
+}

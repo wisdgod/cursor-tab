@@ -40,6 +40,8 @@ message CommandClassifierResult {
   message ClassifiedCommand {
     string name = 1;
     repeated string arguments = 2;
+    optional string suggested_allowlist_entry = 3;
+    repeated string subcommand_tokens = 4;
   }
 
   repeated ClassifiedCommand commands = 1;

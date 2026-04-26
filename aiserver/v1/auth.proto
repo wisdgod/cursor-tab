@@ -1,0 +1,207 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message CheckSessionTokenRequest {
+  string session_token = 1;
+  User user = 2;
+}
+
+message CheckSessionTokenResponse {
+  bool valid = 1;
+}
+
+message CreateMobileSessionRequest {
+}
+
+message CreateMobileSessionResponse {
+  string session_token = 1;
+  string auth_id = 2;
+}
+
+message CustomerIdRequest {
+  string email = 1;
+}
+
+message CustomerIdResponse {
+  optional string customer_id = 1;
+}
+
+message DownloadUpdateRequest {
+  string machine_id = 1;
+  string application_name = 2;
+  string version = 3;
+  optional string platform = 4;
+}
+
+message DownloadUpdateResponse {
+  bool can_download = 1;
+}
+
+message EmailValidRequest {
+  string email = 1;
+}
+
+message EmailValidResponse {
+  bool valid = 1;
+}
+
+message GetEmailRequest {
+}
+
+message GetEmailResponse {
+  enum SignUpType {
+    SIGN_UP_TYPE_UNSPECIFIED = 0;
+    SIGN_UP_TYPE_AUTH_0 = 1;
+    SIGN_UP_TYPE_GITHUB = 2;
+    SIGN_UP_TYPE_GOOGLE = 3;
+    SIGN_UP_TYPE_WORKOS = 4;
+  }
+
+  string email = 1;
+  SignUpType sign_up_type = 2;
+}
+
+message GetSessionTokenRequest {
+  enum Destination {
+    DESTINATION_UNSPECIFIED = 0;
+    DESTINATION_PORTAL = 1;
+    DESTINATION_AISERVER = 2;
+    DESTINATION_AUTH_PROXY = 3;
+  }
+
+  User user = 1;
+  Destination destination = 2;
+  optional string stub = 3;
+  optional string code = 4;
+  optional string code_verifier = 5;
+  optional string redirect_uri = 6;
+}
+
+message GetSessionTokenResponse {
+  string session_token = 1;
+  optional string id = 2;
+  bool should_show_trial = 3;
+  bool enable_trial_for_deep_control = 4;
+  bool was_auto_enrolled = 5;
+}
+
+message GetUserMetaRequest {
+}
+
+message GetUserMetaResponse {
+  string email = 1;
+  GetEmailResponse.SignUpType sign_up_type = 2;
+  int64 user_id = 3;
+  optional string workos_id = 4;
+}
+
+message JwtPublicKey {
+  string kid = 1;
+  string public_key = 2;
+}
+
+message ListActiveSessionsRequest {
+}
+
+message ListActiveSessionsResponse {
+  repeated Session sessions = 1;
+}
+
+message ListJwtPublicKeysRequest {
+}
+
+message ListJwtPublicKeysResponse {
+  repeated JwtPublicKey keys = 1;
+}
+
+message MarkPrivacyRequest {
+  optional bool current_privacy_mode = 2;
+  optional bool onboarding_privacy_mode = 3;
+  bool is_using_current_and_onboarding_format = 4;
+  optional string onboarding_data_privacy_version = 5;
+  optional double time_elapsed_since_onboarding = 6;
+  optional bool first_after_waiting_period = 7;
+  optional bool configured_privacy_mode_for_settings = 8;
+  bool privacy = 1;
+}
+
+message MarkPrivacyResponse {
+}
+
+message RevokeSessionRequest {
+  string session_id = 1;
+  Session.SessionType type = 2;
+}
+
+message RevokeSessionResponse {
+  bool success = 1;
+}
+
+message Session {
+  enum SessionType {
+    SESSION_TYPE_UNSPECIFIED = 0;
+    SESSION_TYPE_WEB = 1;
+    SESSION_TYPE_CLIENT = 2;
+    SESSION_TYPE_BUGBOT = 3;
+    SESSION_TYPE_BACKGROUND_AGENT = 4;
+    SESSION_TYPE_SUPPORT_IMPERSONATION = 5;
+    SESSION_TYPE_API_KEY_TOKEN = 6;
+    SESSION_TYPE_TRAINING = 7;
+    SESSION_TYPE_EXEC_DAEMON = 8;
+    SESSION_TYPE_GRAPHITE = 9;
+    SESSION_TYPE_MOBILE = 10;
+  }
+
+  string session_id = 1;
+  SessionType type = 2;
+  string created_at = 3;
+  string expires_at = 4;
+}
+
+message SetPrivacyModeRequest {
+  bool privacy_mode_enabled = 1;
+  string machine_identifier = 2;
+  bool new_onboarding_done = 3;
+  bool new_change_management_done = 4;
+  bool eligible_for_snippet_learning = 5;
+  optional int64 timestamp_of_onboarding = 6;
+  optional int64 timestamp_of_change_management = 7;
+}
+
+message SetPrivacyModeResponse {
+}
+
+message SwitchCmdKFractionRequest {
+  bool use_turbo = 1;
+}
+
+message SwitchCmdKFractionResponse {
+}
+
+message User {
+  string id = 2;
+  optional string email = 3;
+  optional bool email_verified = 4;
+  optional string first_name = 5;
+  optional string last_name = 6;
+  optional string created_at = 7;
+  optional string updated_at = 8;
+}
+
+service AuthService {
+  rpc GetEmail (GetEmailRequest) returns (GetEmailResponse);
+  rpc GetUserMeta (GetUserMetaRequest) returns (GetUserMetaResponse);
+  rpc EmailValid (EmailValidRequest) returns (EmailValidResponse);
+  rpc DownloadUpdate (DownloadUpdateRequest) returns (DownloadUpdateResponse);
+  rpc MarkPrivacy (MarkPrivacyRequest) returns (MarkPrivacyResponse);
+  rpc SwitchCmdKFraction (SwitchCmdKFractionRequest) returns (SwitchCmdKFractionResponse);
+  rpc GetCustomerId (CustomerIdRequest) returns (CustomerIdResponse);
+  rpc SetPrivacyMode (SetPrivacyModeRequest) returns (SetPrivacyModeResponse);
+  rpc GetSessionToken (GetSessionTokenRequest) returns (GetSessionTokenResponse);
+  rpc CheckSessionToken (CheckSessionTokenRequest) returns (CheckSessionTokenResponse);
+  rpc CreateMobileSession (CreateMobileSessionRequest) returns (CreateMobileSessionResponse);
+  rpc ListActiveSessions (ListActiveSessionsRequest) returns (ListActiveSessionsResponse);
+  rpc RevokeSession (RevokeSessionRequest) returns (RevokeSessionResponse);
+  rpc ListJwtPublicKeys (ListJwtPublicKeysRequest) returns (ListJwtPublicKeysResponse);
+}

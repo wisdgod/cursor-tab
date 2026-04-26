@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message CommunicateUpdateArgs {
+  optional string current_step = 1;
+  optional string final_summary = 3;
+  optional string completed_subtitle = 4;
+}
+
+message CommunicateUpdateError {
+  string error = 1;
+}
+
+message CommunicateUpdateResult {
+  oneof result {
+    CommunicateUpdateSuccess success = 1;
+    CommunicateUpdateError error = 2;
+  }
+}
+
+message CommunicateUpdateSuccess {
+  string current_step = 1;
+  uint32 message_index = 3;
+}
+
+message CommunicateUpdateToolCall {
+  CommunicateUpdateArgs args = 1;
+  CommunicateUpdateResult result = 2;
+}

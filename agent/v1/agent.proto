@@ -7,9 +7,11 @@ import "agent/v1/apply_agent_diff_tool.proto";
 import "agent/v1/ask_question_tool.proto";
 import "agent/v1/await_tool.proto";
 import "agent/v1/blame_by_file_path_tool.proto";
+import "agent/v1/communicate_update_tool.proto";
 import "agent/v1/computer_use_tool.proto";
 import "agent/v1/create_plan_tool.proto";
 import "agent/v1/delete_tool.proto";
+import "agent/v1/edit_pr_labels_tool.proto";
 import "agent/v1/edit_tool.proto";
 import "agent/v1/fetch_tool.proto";
 import "agent/v1/generate_image_tool.proto";
@@ -26,11 +28,13 @@ import "agent/v1/read_lints_tool.proto";
 import "agent/v1/read_tool.proto";
 import "agent/v1/record_screen_tool.proto";
 import "agent/v1/reflect_tool.proto";
+import "agent/v1/replace_env_tool.proto";
 import "agent/v1/report_bug_tool.proto";
 import "agent/v1/report_bugfix_results_tool.proto";
 import "agent/v1/request_context_exec.proto";
 import "agent/v1/selected_context.proto";
 import "agent/v1/semsearch_tool.proto";
+import "agent/v1/send_final_summary_tool.proto";
 import "agent/v1/setup_vm_environment_tool.proto";
 import "agent/v1/shell_exec.proto";
 import "agent/v1/shell_tool.proto";
@@ -39,6 +43,7 @@ import "agent/v1/start_grind_planning_tool.proto";
 import "agent/v1/subagents.proto";
 import "agent/v1/switch_mode_tool.proto";
 import "agent/v1/todo_tool.proto";
+import "agent/v1/update_pr_code_tour_tool.proto";
 import "agent/v1/web_fetch_tool.proto";
 import "agent/v1/web_search_tool.proto";
 import "agent/v1/write_shell_stdin_tool.proto";
@@ -52,6 +57,7 @@ enum AgentMode {
   AGENT_MODE_DEBUG = 4;
   AGENT_MODE_TRIAGE = 5;
   AGENT_MODE_PROJECT = 6;
+  AGENT_MODE_MULTITASK = 7;
 }
 
 enum BackgroundTaskKind {
@@ -81,6 +87,9 @@ enum SimulatedMsgReason {
   SIMULATED_MSG_REASON_USER_INTERRUPTED_SUBAGENT = 10;
   SIMULATED_MSG_REASON_USER_QUEUED_TO_SUBAGENT = 11;
   SIMULATED_MSG_REASON_BABYSIT_PR_IN_CLOUD = 12;
+  SIMULATED_MSG_REASON_CI_PANEL_INVESTIGATE_FAILURE = 13;
+  SIMULATED_MSG_REASON_MULTITASK = 14;
+  SIMULATED_MSG_REASON_BUILD_IN_PARALLEL = 15;
 }
 
 enum SubagentBackgroundReason {
@@ -112,6 +121,7 @@ message AgentConversationTurnStructure {
   bytes user_message = 1;
   repeated bytes steps = 2;
   optional string request_id = 3;
+  optional string encrypted_model = 4;
 }
 
 message AgentRunRequest {
@@ -130,6 +140,10 @@ message AgentRunRequest {
   optional string harness = 13;
   repeated RequestedModel selected_subagent_models = 14;
   repeated ModelDetails selected_subagent_model_details = 15;
+  optional string conversation_group_id = 16;
+  repeated PreFetchedBlob pre_fetched_blobs = 17;
+  optional string dev_raw_model_slug = 18;
+  optional bool client_supports_inline_images = 19;
 }
 
 message ApiKeyCredentials {
@@ -177,6 +191,7 @@ message BackgroundTaskCompletion {
   string title = 4;
   optional string detail = 5;
   optional string output_path = 6;
+  optional string thread_id = 7;
 }
 
 message BackgroundTaskCompletionAction {
@@ -196,6 +211,17 @@ message CancelAction {
 
 message CancelSubagentAction {
   string subagent_id = 1;
+}
+
+message CommunicateUpdateHistoryEntry {
+  string step = 1;
+  uint32 message_index = 3;
+}
+
+message CommunicateUpdateTurnState {
+  repeated CommunicateUpdateHistoryEntry history = 1;
+  optional string final_summary = 2;
+  optional string completed_subtitle = 3;
 }
 
 message ConversationAction {
@@ -233,10 +259,13 @@ message ConversationState {
   map<string, agent.v1.FileState> file_states = 10;
   repeated ConversationSummaryArchive summary_archives = 11;
   map<string, agent.v1.PlanRegistryEntry> plans = 12;
+  repeated CommunicateUpdateHistoryEntry communicate_update_history = 13;
+  optional string communicate_update_final_summary = 14;
+  optional string communicate_update_completed_subtitle = 15;
+  map<string, agent.v1.CommunicateUpdateTurnState> communicate_update_states_by_parent_tool_call_id = 16;
 }
 
 message ConversationStateStructure {
-  repeated bytes turns_old = 2;
   repeated bytes root_prompt_messages_json = 1;
   repeated bytes turns = 8;
   repeated bytes todos = 3;
@@ -258,6 +287,13 @@ message ConversationStateStructure {
   map<string, agent.v1.PlanRegistryEntry> plans = 20;
   repeated TrackedGitRepo tracked_git_repo_branches = 21;
   optional string agent_type = 22;
+  repeated CommunicateUpdateHistoryEntry communicate_update_history = 23;
+  map<string, string> subagent_threads = 24;
+  optional string communicate_update_final_summary = 25;
+  optional string communicate_update_completed_subtitle = 28;
+  map<string, agent.v1.CommunicateUpdateTurnState> communicate_update_states_by_parent_tool_call_id = 29;
+  optional uint64 conversation_started_timestamp_ms = 26;
+  optional string conversation_started_time_zone = 27;
 }
 
 message ConversationStep {
@@ -314,6 +350,10 @@ message ExecutePlanInfo {
   string plan_title = 2;
 }
 
+message FeedbackRequestUpdate {
+  string request_id = 1;
+}
+
 message FileState {
   optional string content = 1;
   optional string initial_content = 2;
@@ -339,6 +379,7 @@ message InteractionQuery {
     PrManagementRequestQuery pr_management_request_query = 10;
     McpAuthRequestQuery mcp_auth_request_query = 11;
     GenerateImageRequestQuery generate_image_request_query = 12;
+    ReplaceEnvArgs replace_env_args = 13;
   }
 }
 
@@ -354,6 +395,7 @@ message InteractionResponse {
     PrManagementResult pr_management_result = 10;
     McpAuthRequestResponse mcp_auth_request_response = 11;
     GenerateImageRequestResponse generate_image_request_response = 12;
+    ReplaceEnvResult replace_env_result = 13;
   }
 }
 
@@ -379,6 +421,7 @@ message InteractionUpdate {
     PromptSuggestionUpdate prompt_suggestion = 18;
     PostRequestPromptUpdate post_request_prompt = 19;
     ActiveBranchChange active_branch_change = 20;
+    FeedbackRequestUpdate feedback_request = 21;
   }
 }
 
@@ -463,6 +506,11 @@ message PreCompactRequestQuery {
 
 message PreCompactRequestResponse {
   optional string user_message = 1;
+}
+
+message PreFetchedBlob {
+  bytes id = 1;
+  bytes value = 2;
 }
 
 message PreparedTaskSubagent {
@@ -701,6 +749,7 @@ message TaskArgs {
   optional string agent_id = 6;
   repeated string attachments = 7;
   TaskMode mode = 8;
+  repeated string responding_to_message_ids = 9;
 }
 
 message TaskError {
@@ -811,6 +860,11 @@ message ToolCall {
     GetMcpToolsToolCall get_mcp_tools_tool_call = 44;
     ReportBugToolCall report_bug_tool_call = 45;
     SetActiveBranchToolCall set_active_branch_tool_call = 46;
+    CommunicateUpdateToolCall communicate_update_tool_call = 48;
+    SendFinalSummaryToolCall send_final_summary_tool_call = 49;
+    UpdatePrCodeTourToolCall update_pr_code_tour_tool_call = 50;
+    ReplaceEnvToolCall replace_env_tool_call = 51;
+    EditPrLabelsToolCall edit_pr_labels_tool_call = 52;
   }
 }
 
@@ -907,6 +961,10 @@ message UserMessage {
   optional TriggeringUserInfo triggering_user_info = 13;
   optional ExecutePlanInfo execute_plan_info = 14;
   optional SimulatedMessageMetadata simulated_message_metadata = 15;
+  optional string prompt_reference_id = 16;
+  optional string thread_id = 17;
+  optional bytes text_blob_id = 18;
+  optional bytes rich_text_blob_id = 19;
 }
 
 message UserMessageAction {

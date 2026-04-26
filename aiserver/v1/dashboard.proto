@@ -6,6 +6,7 @@ import "aiserver/v1/chat.proto";
 import "aiserver/v1/mcp.proto";
 import "aiserver/v1/privacy_mode.proto";
 import "aiserver/v1/usage.proto";
+import "aiserver/v1/utils.proto";
 import "google/protobuf/struct.proto";
 
 enum AdminNotificationRequestType {
@@ -46,6 +47,13 @@ enum BugbotBackfillStatus {
   BUGBOT_BACKFILL_STATUS_RUNNING = 1;
   BUGBOT_BACKFILL_STATUS_COMPLETED = 2;
   BUGBOT_BACKFILL_STATUS_FAILED = 3;
+}
+
+enum BugbotMode {
+  BUGBOT_MODE_UNSPECIFIED = 0;
+  BUGBOT_MODE_DEFAULT = 1;
+  BUGBOT_MODE_HIGH = 2;
+  BUGBOT_MODE_AUTO = 3;
 }
 
 enum BugbotUsageTier {
@@ -97,6 +105,7 @@ enum GlobalCommandSurface {
   GLOBAL_COMMAND_SURFACE_UNSPECIFIED = 0;
   GLOBAL_COMMAND_SURFACE_CLASSIC = 1;
   GLOBAL_COMMAND_SURFACE_GLASS = 2;
+  GLOBAL_COMMAND_SURFACE_CLI = 3;
 }
 
 enum GroupMemberChangeType {
@@ -145,6 +154,27 @@ enum LinearRunOption {
   LINEAR_RUN_OPTION_MANUALLY = 3;
 }
 
+enum McpOAuthRefreshLockBeginOutcome {
+  MCP_O_AUTH_REFRESH_LOCK_BEGIN_OUTCOME_UNSPECIFIED = 0;
+  MCP_O_AUTH_REFRESH_LOCK_BEGIN_OUTCOME_SKIPPED = 1;
+  MCP_O_AUTH_REFRESH_LOCK_BEGIN_OUTCOME_WOULD_ACQUIRE = 2;
+  MCP_O_AUTH_REFRESH_LOCK_BEGIN_OUTCOME_WOULD_WAIT = 3;
+  MCP_O_AUTH_REFRESH_LOCK_BEGIN_OUTCOME_REDIS_ERROR = 4;
+}
+
+enum McpOAuthRefreshLockExecutorKind {
+  MCP_O_AUTH_REFRESH_LOCK_EXECUTOR_KIND_UNSPECIFIED = 0;
+  MCP_O_AUTH_REFRESH_LOCK_EXECUTOR_KIND_LOCAL_IDE = 1;
+  MCP_O_AUTH_REFRESH_LOCK_EXECUTOR_KIND_REMOTE_EXTENSION_HOST = 2;
+}
+
+enum McpOAuthRefreshLockReleaseReason {
+  MCP_O_AUTH_REFRESH_LOCK_RELEASE_REASON_UNSPECIFIED = 0;
+  MCP_O_AUTH_REFRESH_LOCK_RELEASE_REASON_COMPLETE = 1;
+  MCP_O_AUTH_REFRESH_LOCK_RELEASE_REASON_ERROR = 2;
+  MCP_O_AUTH_REFRESH_LOCK_RELEASE_REASON_ABANDONED = 3;
+}
+
 enum NetworkingMode {
   NETWORKING_MODE_UNSPECIFIED = 0;
   NETWORKING_MODE_USER_CONTROLLED = 1;
@@ -172,6 +202,12 @@ enum PrReviewOpenDestinationMode {
   PR_REVIEW_OPEN_DESTINATION_MODE_UNSPECIFIED = 0;
   PR_REVIEW_OPEN_DESTINATION_MODE_GITHUB = 1;
   PR_REVIEW_OPEN_DESTINATION_MODE_GRAPHITE = 2;
+}
+
+enum PublicArtifactSharingMode {
+  PUBLIC_ARTIFACT_SHARING_MODE_UNSPECIFIED = 0;
+  PUBLIC_ARTIFACT_SHARING_MODE_ALLOWED = 1;
+  PUBLIC_ARTIFACT_SHARING_MODE_DISABLED = 2;
 }
 
 enum SandboxingMode {
@@ -231,6 +267,12 @@ enum TeamMarketplacePluginInstallMode {
   TEAM_MARKETPLACE_PLUGIN_INSTALL_MODE_OPTIONAL = 0;
   TEAM_MARKETPLACE_PLUGIN_INSTALL_MODE_DEFAULT = 1;
   TEAM_MARKETPLACE_PLUGIN_INSTALL_MODE_REQUIRED = 2;
+}
+
+enum TeamMemberBillingTier {
+  TEAM_MEMBER_BILLING_TIER_UNSPECIFIED = 0;
+  TEAM_MEMBER_BILLING_TIER_TIER_1000 = 1;
+  TEAM_MEMBER_BILLING_TIER_TIER_2000 = 2;
 }
 
 enum TeamRole {
@@ -294,6 +336,7 @@ message ActiveCreditGrant {
   optional string source = 9;
   optional string campaign_name = 10;
   bool show_in_client = 11;
+  repeated string allowed_client_types = 12;
 }
 
 message ActiveUsers {
@@ -349,6 +392,16 @@ message AddMcpServersFromPluginRequest {
 
 message AddMcpServersFromPluginResponse {
   repeated int64 added_server_ids = 1;
+}
+
+message AddOrganizationGroupMembersRequest {
+  string organization_id = 1;
+  int64 group_id = 2;
+  repeated int32 user_ids = 3;
+}
+
+message AddOrganizationGroupMembersResponse {
+  int32 added_count = 1;
 }
 
 message AddRepoPatternRequest {
@@ -518,6 +571,8 @@ message BackgroundAgentSettings {
   optional bool enable_automations = 14;
   optional bool allow_vm_sharing = 15;
   optional bool allow_private_workers = 16;
+  optional PublicArtifactSharingMode public_artifact_sharing = 17;
+  optional bool ci_failure_followup_enabled = 18;
 }
 
 message BatchGetPluginMcpConfigRequest {
@@ -564,6 +619,11 @@ message BugbotManualRepositoryRule {
   string updated_at = 8;
   string repo_owner = 9;
   repeated string scoped_paths = 10;
+}
+
+message BugbotModePrompt {
+  string content = 1;
+  int32 sort_order = 2;
 }
 
 message BugBotPRAnalytics {
@@ -724,6 +784,14 @@ message CheckUserApiKeyAccessResponse {
   bool has_access = 1;
 }
 
+message ClaimUserProfileHandleRequest {
+  string handle = 1;
+}
+
+message ClaimUserProfileHandleResponse {
+  UserProfile profile = 1;
+}
+
 message ClientActionRequest {
   string action = 1;
   map<string, string> args = 2;
@@ -732,6 +800,7 @@ message ClientActionRequest {
 message ClientActionResponse {
   bool success = 1;
   optional string error_message = 2;
+  optional string info_message = 3;
 }
 
 message ClientVisibleCreditGrant {
@@ -748,7 +817,7 @@ message CliSettings {
 
 message CloudAgentPluginSnapshot {
   EffectivePlugin effective_plugin = 1;
-  string resolved_commit_sha = 2;
+  optional string git_ref = 3;
 }
 
 message CommandDeeplinkControls {
@@ -940,6 +1009,15 @@ message CreateOrganizationApiKeyResponse {
   string api_key_id = 2;
 }
 
+message CreateOrganizationGroupRequest {
+  string organization_id = 1;
+  string name = 2;
+}
+
+message CreateOrganizationGroupResponse {
+  OrganizationGroup group = 1;
+}
+
 message CreatePluginRequest {
   int64 publisher_id = 1;
   string name = 2;
@@ -969,20 +1047,6 @@ message CreateProtectedGitScopeRequest {
 
 message CreateProtectedGitScopeResponse {
   ProtectedGitScope scope = 1;
-}
-
-message CreatePublisherRequest {
-  string name = 1;
-  string display_name = 2;
-  optional string description = 3;
-  optional int32 owner_team_id = 4;
-  optional string logo_url = 5;
-  optional string website_url = 6;
-  optional string support_url = 7;
-}
-
-message CreatePublisherResponse {
-  Publisher publisher = 1;
 }
 
 message CreateSlackRepoRoutingRuleRequest {
@@ -1107,6 +1171,9 @@ message CreateUsageAlertsRequest {
   optional string threshold_type = 10;
   repeated int32 threshold_bps = 11;
   optional int32 resource_threshold_cents = 12;
+  optional string resource_threshold_id = 13;
+  optional string resource_threshold_level = 14;
+  repeated string notification_channels = 15;
 }
 
 message CreateUsageAlertsResponse {
@@ -1245,6 +1312,14 @@ message DeleteMcpOAuthTokenRequest {
 message DeleteMcpOAuthTokenResponse {
 }
 
+message DeleteOrganizationGroupRequest {
+  string organization_id = 1;
+  int64 group_id = 2;
+}
+
+message DeleteOrganizationGroupResponse {
+}
+
 message DeleteProtectedGitScopeRequest {
   int32 team_id = 1;
   int64 scope_id = 2;
@@ -1372,6 +1447,7 @@ message EffectivePlugin {
   bool is_enabled = 4;
   optional string pinned_git_ref = 6;
   google.protobuf.Struct configured_variables = 7;
+  bool has_team_configured_variables = 8;
 }
 
 message EnableOnDemandSpendRequest {
@@ -1592,6 +1668,14 @@ message GetBugbotManualRepositoryRulesResponse {
   repeated BugbotManualRepositoryRule rules = 1;
 }
 
+message GetBugbotModeRequest {
+}
+
+message GetBugbotModeResponse {
+  BugbotMode mode = 1;
+  repeated BugbotModePrompt prompts = 2;
+}
+
 message GetBugBotPRAnalyticsRequest {
   optional string github_repo_node_id = 1;
   optional string status = 2;
@@ -1666,6 +1750,10 @@ message GetBugbotUserSettingsResponse {
   bool enable_vm_run = 7;
   bool fail_github_action_on_bugbot_findings = 8;
   repeated string bugbot_autofix_severity_filter = 9;
+  optional bool installation_default_enable_draft = 10;
+  optional bool installation_default_is_pr_summary_enabled = 11;
+  BugbotAutofixMode installation_default_bugbot_autofix_mode = 12;
+  repeated string installation_default_bugbot_autofix_severity_filter = 13;
 }
 
 message GetCliDownloadUrlRequest {
@@ -1721,6 +1809,7 @@ message GetCreditGrantsBalanceResponse {
 }
 
 message GetCurrentBillingCycleRequest {
+  optional int32 team_id = 1;
 }
 
 message GetCurrentBillingCycleResponse {
@@ -1729,6 +1818,7 @@ message GetCurrentBillingCycleResponse {
 }
 
 message GetCurrentPeriodUsageRequest {
+  optional int32 team_id = 1;
 }
 
 message GetCurrentPeriodUsageResponse {
@@ -1853,6 +1943,8 @@ message GetFilteredUsageEventsRequest {
   optional int32 page = 6;
   optional int32 page_size = 7;
   optional string service_account_id = 8;
+  optional string cloud_agent_id = 9;
+  optional string automation_id = 10;
 }
 
 message GetFilteredUsageEventsResponse {
@@ -2128,7 +2220,17 @@ message GetMeResponse {
   optional string profile_picture_url = 13;
 }
 
+message GetMicrosoftTeamsLinkContextRequest {
+  string link_id = 1;
+}
+
+message GetMicrosoftTeamsLinkContextResponse {
+  optional string team_name = 1;
+  optional string user_name = 2;
+}
+
 message GetMonthlyBillingCycleRequest {
+  optional int32 team_id = 1;
 }
 
 message GetMonthlyBillingCycleResponse {
@@ -2165,6 +2267,42 @@ message GetMonthlyInvoiceResponse {
   int32 last_hard_limit_cents = 6;
   int64 period_start_ms = 7;
   int64 period_end_ms = 8;
+}
+
+message GetOrganizationGroupMembersRequest {
+  string organization_id = 1;
+  string group_public_id = 3;
+  optional int32 page = 4;
+  optional int32 page_size = 5;
+  optional string search_term = 6;
+}
+
+message GetOrganizationGroupMembersResponse {
+  repeated OrganizationGroupMember members = 1;
+  int32 total_members = 2;
+  int32 total_pages = 3;
+}
+
+message GetOrganizationGroupRequest {
+  string organization_id = 1;
+  string group_public_id = 3;
+}
+
+message GetOrganizationGroupResponse {
+  OrganizationGroup group = 1;
+}
+
+message GetOrganizationGroupsRequest {
+  string organization_id = 1;
+  optional int32 page = 2;
+  optional int32 page_size = 3;
+  optional string search_term = 4;
+}
+
+message GetOrganizationGroupsResponse {
+  repeated OrganizationGroup groups = 1;
+  int32 total_groups = 2;
+  int32 total_pages = 3;
 }
 
 message GetOrganizationMembersRequest {
@@ -2268,6 +2406,14 @@ message GetProtectedGitScopesResponse {
   repeated ProtectedGitScope scopes = 1;
 }
 
+message GetPublicProfileByHandleRequest {
+  string handle = 1;
+}
+
+message GetPublicProfileByHandleResponse {
+  UserProfile profile = 1;
+}
+
 message GetPublicSharedConversationRequest {
   string share_id = 1;
 }
@@ -2291,18 +2437,6 @@ message GetPublicSlackInstallUrlWithUserScopesRequest {
 
 message GetPublicSlackInstallUrlWithUserScopesResponse {
   string url = 1;
-}
-
-message GetPublisherRequest {
-  oneof identifier {
-    int64 publisher_id = 1;
-    string name = 2;
-  }
-}
-
-message GetPublisherResponse {
-  Publisher publisher = 1;
-  bool can_edit = 2;
 }
 
 message GetPullRequestForBranchRequest {
@@ -2530,6 +2664,7 @@ message GetTeamAdminSettingsResponse {
   optional bool allow_third_party_plugin_imports = 32;
   optional GlassSettings glass_settings = 33;
   optional TeamAdminNewChatModelResetSettings new_chat_model_reset_settings = 34;
+  optional ModelAllowlist model_allowlist = 35;
 }
 
 message GetTeamAnalyticsRequest {
@@ -2625,6 +2760,7 @@ message GetTeamInviteLinkRequest {
   int32 team_id = 1;
   optional int32 valid_for_seconds = 2;
   optional bool create_if_missing = 3;
+  optional TeamMemberBillingTier billing_tier = 4;
 }
 
 message GetTeamInviteLinkResponse {
@@ -2724,6 +2860,15 @@ message GetTeamRulesResponse {
   repeated Rule rules = 1;
 }
 
+message GetTeamScimRequireUserDirectoryPreviewRequest {
+  int32 team_id = 1;
+}
+
+message GetTeamScimRequireUserDirectoryPreviewResponse {
+  int32 impacted_user_count = 1;
+  repeated ScimRequireUserDirectoryImpactedUser impacted_users = 2;
+}
+
 message GetTeamSharedConversationSettingsRequest {
   int32 team_id = 1;
 }
@@ -2757,6 +2902,9 @@ message GetTeamSpendResponse {
     optional int64 removed_at = 11;
     optional int32 effective_per_user_limit_dollars = 12;
     optional string profile_picture_url = 13;
+    optional TeamMemberBillingTier billing_tier = 14;
+    optional double auto_percent_used = 15;
+    optional double api_percent_used = 16;
   }
 
   repeated TeamMemberSpend team_member_spend = 1;
@@ -2771,6 +2919,7 @@ message GetTeamSpendResponse {
   optional int32 subscription_limited_users = 10;
   optional bool has_any_spend_limit_overrides = 11;
   optional bool has_any_free_usage = 12;
+  optional bool self_serve_tiered_pricing_enabled = 13;
 }
 
 message GetTeamsRequest {
@@ -2820,6 +2969,7 @@ message GetUsageLimitPolicyStatusResponse {
   bool has_pending_request = 8;
   repeated string allowed_model_ids = 9;
   repeated string allowed_model_tags = 10;
+  optional ErrorButton primary_button = 11;
 }
 
 message GetUsageLimitStatusAndActiveGrantsRequest {
@@ -2837,6 +2987,7 @@ message GetUsageLimitStatusAndActiveGrantsResponse {
     bool has_pending_request = 8;
     repeated string allowed_model_ids = 9;
     repeated string allowed_model_tags = 10;
+    optional ErrorButton primary_button = 11;
   }
 
   UsageLimitPolicyStatus usage_limit_policy_status = 1;
@@ -2900,6 +3051,7 @@ message GetUserOrganizationsResponse {
 
 message GetUserPrivacyModeRequest {
   PrivacyMode inferred_privacy_mode = 1;
+  optional int32 team_id = 2;
 }
 
 message GetUserPrivacyModeResponse {
@@ -2909,6 +3061,13 @@ message GetUserPrivacyModeResponse {
   bool is_not_migrated_to_server_source_of_truth = 4;
   bool partner_data_share = 5;
   bool has_acknowledged_grace_period_disclaimer = 6;
+}
+
+message GetUserProfileRequest {
+}
+
+message GetUserProfileResponse {
+  optional UserProfile profile = 1;
 }
 
 message GetUserPullRequestsRequest {
@@ -2986,6 +3145,7 @@ message GlobalCommand {
   GlobalCommandAvailability availability = 4;
   optional string argument_hint = 5;
   repeated GlobalCommandSurface disabled_surfaces = 6;
+  bool requires_all_workspace_folders_are_git_repos = 7;
 }
 
 message Group {
@@ -3135,6 +3295,7 @@ message IsOnNewPricingResponse {
   bool is_opted_out = 2;
   bool has_auto_spillover = 3;
   optional int32 dashboard_user_id = 4;
+  bool has_tiered_self_serve_team_spillover = 5;
 }
 
 message JoinableTeam {
@@ -3331,20 +3492,6 @@ message ListOrganizationApiKeysResponse {
   repeated OrganizationApiKey api_keys = 1;
 }
 
-message ListPublishersRequest {
-  optional int32 owner_user_id = 1;
-  optional int32 owner_team_id = 2;
-  optional string search = 3;
-  optional int32 page_size = 4;
-  optional string page_token = 5;
-}
-
-message ListPublishersResponse {
-  repeated Publisher publishers = 1;
-  optional string next_page_token = 2;
-  bool has_more = 3;
-}
-
 message ListSharedConversationsRequest {
   optional SharedConversationVisibility visibility = 1;
   optional int32 creator_id = 2;
@@ -3525,10 +3672,71 @@ message McpDescriptor {
   optional string source_url = 4;
 }
 
+message McpOAuthRefreshLockBeginRequest {
+  string server_url = 1;
+  McpOAuthRefreshLockExecutorKind executor_kind = 2;
+  string executor_id = 3;
+  optional int64 observed_updated_at_ms = 4;
+  optional string service_account_id = 5;
+}
+
+message McpOAuthRefreshLockBeginResponse {
+  McpOAuthRefreshLockBeginOutcome outcome = 1;
+  optional string lease_handle = 2;
+  bool should_enforce = 3;
+}
+
+message McpOAuthRefreshLockReleaseRequest {
+  string lease_handle = 1;
+  McpOAuthRefreshLockReleaseReason reason = 2;
+}
+
+message McpOAuthRefreshLockReleaseResponse {
+}
+
 message Metadata {
   optional string title = 1;
   optional string description = 2;
   optional string discount_type = 3;
+}
+
+message ModelAllowlist {
+  enum DefaultBehavior {
+    DEFAULT_BEHAVIOR_UNSPECIFIED = 0;
+    DEFAULT_BEHAVIOR_ENABLED = 1;
+    DEFAULT_BEHAVIOR_DISABLED = 2;
+  }
+
+  DefaultBehavior new_provider_default = 1;
+  DefaultBehavior new_model_default = 2;
+  map<string, aiserver.v1.ModelAllowlistProviderEntry> providers = 3;
+  optional ModelAllowlistByok byok = 4;
+}
+
+message ModelAllowlistByok {
+  optional ModelAllowlistByokEntry openai = 1;
+  optional ModelAllowlistByokEntry anthropic = 2;
+  optional ModelAllowlistByokEntry google = 3;
+  optional ModelAllowlistByokEntry azure = 4;
+  optional ModelAllowlistByokEntry bedrock = 5;
+}
+
+message ModelAllowlistByokEntry {
+  bool enabled = 1;
+}
+
+message ModelAllowlistModelEntry {
+  bool enabled = 1;
+  map<string, aiserver.v1.ModelAllowlistParameterRestriction> parameter_restrictions = 2;
+}
+
+message ModelAllowlistParameterRestriction {
+  repeated string allowed_values = 1;
+}
+
+message ModelAllowlistProviderEntry {
+  bool enabled = 1;
+  map<string, aiserver.v1.ModelAllowlistModelEntry> models = 2;
 }
 
 message MoveOrganizationMemberToTeamRequest {
@@ -3592,6 +3800,26 @@ message OrganizationApiKey {
   repeated string scopes = 5;
 }
 
+message OrganizationGroup {
+  int64 id = 1;
+  string name = 2;
+  string organization_id = 3;
+  int64 created_at = 4;
+  int64 updated_at = 5;
+  int32 member_count = 6;
+  string public_id = 7;
+}
+
+message OrganizationGroupMember {
+  int32 user_id = 1;
+  optional string email = 2;
+  optional string first_name = 3;
+  optional string last_name = 4;
+  int64 joined_at = 5;
+  bool is_admin = 6;
+  optional int32 monthly_spending_limit_dollars = 7;
+}
+
 message OrganizationMember {
   int32 user_id = 1;
   string auth_id = 2;
@@ -3634,6 +3862,8 @@ message ParsedPluginEntry {
   repeated CommandDescriptor commands = 10;
   optional string logo_url = 11;
   google.protobuf.Struct variables = 12;
+  optional string source_git_url = 13;
+  optional string source_git_ref = 14;
 }
 
 message ParseGitHubRepoForPluginRequest {
@@ -3687,6 +3917,8 @@ message Plugin {
   optional string release_tag = 36;
   repeated string curated_category_keys = 37;
   google.protobuf.Struct variables = 38;
+  optional TeamMarketplacePluginInstallMode team_marketplace_install_mode = 39;
+  google.protobuf.Struct team_marketplace_configured_variables = 40;
 }
 
 message PluginMcpConfigEntry {
@@ -3905,6 +4137,10 @@ message RefreshMarketplaceRequest {
 message RefreshMarketplaceResponse {
   Marketplace marketplace = 1;
   int32 plugins_indexed = 2;
+  int32 plugins_updated = 3;
+  int32 plugins_deprecated = 4;
+  repeated string deprecated_plugin_names = 5;
+  repeated string errors = 6;
 }
 
 message RegisteredPlugin {
@@ -4027,6 +4263,16 @@ message RemoveMemberRequest {
 
 message RemoveMemberResponse {
   bool has_billing_cycle_usage = 1;
+}
+
+message RemoveOrganizationGroupMembersRequest {
+  string organization_id = 1;
+  int64 group_id = 2;
+  repeated int32 user_ids = 3;
+}
+
+message RemoveOrganizationGroupMembersResponse {
+  int32 removed_count = 1;
 }
 
 message RemoveRepoPatternRequest {
@@ -4162,6 +4408,13 @@ message ScimConflictUser {
   optional int32 current_billing_group_directory_group_id = 7;
 }
 
+message ScimRequireUserDirectoryImpactedUser {
+  int32 user_id = 1;
+  string name = 2;
+  string email = 3;
+  optional string profile_picture_url = 4;
+}
+
 message SendDownloadEmailRequest {
 }
 
@@ -4174,6 +4427,7 @@ message SendTeamInviteRequest {
   string email = 2;
   TeamRole role = 3;
   optional string message = 4;
+  optional TeamMemberBillingTier billing_tier = 5;
 }
 
 message SendTeamInviteResponse {
@@ -4255,6 +4509,13 @@ message SetHardLimitRequest {
 message SetHardLimitResponse {
 }
 
+message SetJobDataRequest {
+  string job_role = 1;
+}
+
+message SetJobDataResponse {
+}
+
 message SetMcpConfigRequest {
   bool team_scope = 1;
   int32 team_id = 2;
@@ -4263,6 +4524,37 @@ message SetMcpConfigRequest {
 }
 
 message SetMcpConfigResponse {
+}
+
+message SetMicrosoftTeamsAuthRequest {
+  string link_id = 1;
+}
+
+message SetMicrosoftTeamsAuthResponse {
+  string success_type = 1;
+}
+
+message SetOrganizationMemberRoleRequest {
+  string organization_id = 1;
+  int32 user_id = 2;
+  UserOrganizationRole role = 3;
+}
+
+message SetOrganizationMemberRoleResponse {
+  bool updated = 1;
+  UserOrganizationRole role = 2;
+}
+
+message SetOrganizationMemberTeamsRequest {
+  string organization_id = 1;
+  int32 user_id = 2;
+  repeated int32 team_ids = 3;
+}
+
+message SetOrganizationMemberTeamsResponse {
+  bool changed = 1;
+  repeated int32 added_team_ids = 2;
+  repeated int32 removed_team_ids = 3;
 }
 
 message SetServiceAccountSpendLimitRequest {
@@ -4298,6 +4590,7 @@ message SetSpendLimitPolicyRequest {
   repeated int32 notify_admin_user_ids = 10;
   optional bool notify_member = 11;
   bool clear_conflicting_policy = 12;
+  optional bool auto_alerts_enabled = 13;
 }
 
 message SetSpendLimitPolicyResponse {
@@ -4316,6 +4609,15 @@ message SetTeamMarketplacePluginPoliciesRequest {
 
 message SetTeamMarketplacePluginPoliciesResponse {
   repeated TeamMarketplacePluginPolicy policies = 1;
+}
+
+message SetTeamMarketplacePluginPolicyVariablesRequest {
+  int64 marketplace_id = 1;
+  int64 plugin_id = 2;
+  google.protobuf.Struct variables = 3;
+}
+
+message SetTeamMarketplacePluginPolicyVariablesResponse {
 }
 
 message SetTeamMarketplaceRepositoryRequest {
@@ -4474,6 +4776,7 @@ message SpendLimitPolicy {
   optional bool is_dynamic_team_limit = 4;
   optional string resource_threshold_id = 5;
   optional LinkedUsageAlertPolicy linked_alert = 6;
+  optional bool auto_alerts_enabled = 7;
 }
 
 message StartBugbotBackfillLearningRequest {
@@ -4596,6 +4899,8 @@ message Team {
   repeated string domain_join_domains = 26;
   bool sso_enabled = 27;
   optional int64 customer_balance_cents = 28;
+  bool scim_require_user_directory = 29;
+  bool self_serve_tiered_pricing_enabled = 30;
 }
 
 message TeamAdminModelRef {
@@ -4659,6 +4964,8 @@ message TeamMember {
   int32 id = 2;
   TeamRole role = 3;
   bool is_removed = 5;
+  TeamMemberBillingTier billing_tier = 6;
+  TeamMemberBillingTier pending_billing_tier = 7;
 }
 
 message TeamMemberDomain {
@@ -4806,6 +5113,16 @@ message UpdateBugbotManualRepositoryRuleResponse {
   BugbotManualRepositoryRule rule = 1;
 }
 
+message UpdateBugbotModeRequest {
+  BugbotMode mode = 1;
+  repeated BugbotModePrompt prompts = 2;
+}
+
+message UpdateBugbotModeResponse {
+  BugbotMode mode = 1;
+  repeated BugbotModePrompt prompts = 2;
+}
+
 message UpdateBugBotProUserSettingsRequest {
   bool enabled = 1;
 }
@@ -4934,6 +5251,16 @@ message UpdateMarketplaceResponse {
   Marketplace marketplace = 1;
 }
 
+message UpdateOrganizationGroupRequest {
+  string organization_id = 1;
+  int64 group_id = 2;
+  string name = 3;
+}
+
+message UpdateOrganizationGroupResponse {
+  OrganizationGroup group = 1;
+}
+
 message UpdateOrganizationTeamRequest {
   string organization_id = 1;
   int32 team_id = 2;
@@ -4959,19 +5286,6 @@ message UpdatePluginRequest {
 
 message UpdatePluginResponse {
   Plugin plugin = 1;
-}
-
-message UpdatePublisherRequest {
-  int64 publisher_id = 1;
-  optional string display_name = 2;
-  optional string description = 3;
-  optional string logo_url = 4;
-  optional string website_url = 5;
-  optional string support_url = 6;
-}
-
-message UpdatePublisherResponse {
-  Publisher publisher = 1;
 }
 
 message UpdateRoleRequest {
@@ -5096,6 +5410,7 @@ message UpdateTeamAdminSettingsRequest {
   optional bool allow_third_party_plugin_imports = 33;
   optional GlassSettings glass_settings = 34;
   optional TeamAdminNewChatModelResetSettings new_chat_model_reset_settings = 35;
+  optional ModelAllowlist model_allowlist = 36;
 }
 
 message UpdateTeamAdminSettingsResponse {
@@ -5225,6 +5540,14 @@ message UpdateTeamRuleResponse {
   Rule rule = 1;
 }
 
+message UpdateTeamScimRequireUserDirectorySettingRequest {
+  int32 team_id = 1;
+  bool scim_require_user_directory = 2;
+}
+
+message UpdateTeamScimRequireUserDirectorySettingResponse {
+}
+
 message UpdateTeamSharedConversationSettingsRequest {
   int32 team_id = 1;
   SharedConversationSettings settings = 2;
@@ -5240,6 +5563,7 @@ message UpdateUsageAlertsRequest {
   optional bool notify_all_admins = 4;
   repeated int32 notify_admin_user_ids = 5;
   optional bool notify_member = 6;
+  repeated string notification_channels = 7;
 }
 
 message UpdateUsageAlertsResponse {
@@ -5272,6 +5596,16 @@ message UpdateUserPluginInstallResponse {
   UserPluginInstall install = 1;
 }
 
+message UpdateUserProfileRequest {
+  optional string visibility = 1;
+  map<string, string> links = 2;
+  optional google.protobuf.Struct metadata = 3;
+}
+
+message UpdateUserProfileResponse {
+  UserProfile profile = 1;
+}
+
 message UpgradeToYearlyRequest {
   int32 team_id = 1;
 }
@@ -5297,6 +5631,8 @@ message UsageAlert {
   optional int32 threshold_bps = 15;
   optional string resource_threshold_id = 16;
   optional int32 resource_threshold_cents = 17;
+  optional string resource_threshold_level = 18;
+  repeated string notification_channels = 19;
 }
 
 message UserPluginInstall {
@@ -5307,6 +5643,16 @@ message UserPluginInstall {
   int64 updated_at = 7;
   Plugin plugin = 8;
   optional string pinned_git_ref = 10;
+}
+
+message UserProfile {
+  optional string handle = 1;
+  string visibility = 2;
+  map<string, string> links = 3;
+  string created_at = 4;
+  string updated_at = 5;
+  optional string display_name = 6;
+  optional string avatar_url = 7;
 }
 
 message UserPullRequest {
@@ -5373,10 +5719,20 @@ service DashboardService {
   rpc GetUserOrganizations (GetUserOrganizationsRequest) returns (GetUserOrganizationsResponse);
   rpc GetOrganizationMembers (GetOrganizationMembersRequest) returns (GetOrganizationMembersResponse);
   rpc MoveOrganizationMemberToTeam (MoveOrganizationMemberToTeamRequest) returns (MoveOrganizationMemberToTeamResponse);
+  rpc SetOrganizationMemberTeams (SetOrganizationMemberTeamsRequest) returns (SetOrganizationMemberTeamsResponse);
   rpc BulkMoveOrganizationMembers (BulkMoveOrganizationMembersRequest) returns (BulkMoveOrganizationMembersResponse);
+  rpc SetOrganizationMemberRole (SetOrganizationMemberRoleRequest) returns (SetOrganizationMemberRoleResponse);
   rpc UpdateOrganizationTeam (UpdateOrganizationTeamRequest) returns (UpdateOrganizationTeamResponse);
   rpc GetDirectoryGroups (GetDirectoryGroupsRequest) returns (GetDirectoryGroupsResponse);
   rpc UpdateDirectoryGroupSettings (UpdateDirectoryGroupSettingsRequest) returns (UpdateDirectoryGroupSettingsResponse);
+  rpc GetOrganizationGroups (GetOrganizationGroupsRequest) returns (GetOrganizationGroupsResponse);
+  rpc GetOrganizationGroup (GetOrganizationGroupRequest) returns (GetOrganizationGroupResponse);
+  rpc GetOrganizationGroupMembers (GetOrganizationGroupMembersRequest) returns (GetOrganizationGroupMembersResponse);
+  rpc CreateOrganizationGroup (CreateOrganizationGroupRequest) returns (CreateOrganizationGroupResponse);
+  rpc UpdateOrganizationGroup (UpdateOrganizationGroupRequest) returns (UpdateOrganizationGroupResponse);
+  rpc DeleteOrganizationGroup (DeleteOrganizationGroupRequest) returns (DeleteOrganizationGroupResponse);
+  rpc AddOrganizationGroupMembers (AddOrganizationGroupMembersRequest) returns (AddOrganizationGroupMembersResponse);
+  rpc RemoveOrganizationGroupMembers (RemoveOrganizationGroupMembersRequest) returns (RemoveOrganizationGroupMembersResponse);
   rpc GetGroups (GetGroupsRequest) returns (GetGroupsResponse);
   rpc GetGroupMembers (GetGroupMembersRequest) returns (GetGroupMembersResponse);
   rpc CreateGroup (CreateGroupRequest) returns (CreateGroupResponse);
@@ -5442,6 +5798,8 @@ service DashboardService {
   rpc MarkMcpServersSeen (MarkMcpServersSeenRequest) returns (MarkMcpServersSeenResponse);
   rpc StoreMcpOAuthToken (StoreMcpOAuthTokenRequest) returns (StoreMcpOAuthTokenResponse);
   rpc GetMcpOAuthTokens (GetMcpOAuthTokensRequest) returns (GetMcpOAuthTokensResponse);
+  rpc McpOAuthRefreshLockBegin (McpOAuthRefreshLockBeginRequest) returns (McpOAuthRefreshLockBeginResponse);
+  rpc McpOAuthRefreshLockRelease (McpOAuthRefreshLockReleaseRequest) returns (McpOAuthRefreshLockReleaseResponse);
   rpc DeleteMcpOAuthToken (DeleteMcpOAuthTokenRequest) returns (DeleteMcpOAuthTokenResponse);
   rpc ValidateMcpOAuthTokens (ValidateMcpOAuthTokensRequest) returns (ValidateMcpOAuthTokensResponse);
   rpc CheckHttpMcpStatus (CheckHttpMcpStatusRequest) returns (CheckHttpMcpStatusResponse);
@@ -5555,6 +5913,8 @@ service DashboardService {
   rpc UpdateSelfGithubAllowlist (UpdateSelfGithubAllowlistRequest) returns (UpdateSelfGithubAllowlistResponse);
   rpc GetTeamBugbotSettings (GetTeamBugbotSettingsRequest) returns (GetTeamBugbotSettingsResponse);
   rpc UpdateTeamBugbotSettings (UpdateTeamBugbotSettingsRequest) returns (UpdateTeamBugbotSettingsResponse);
+  rpc GetBugbotMode (GetBugbotModeRequest) returns (GetBugbotModeResponse);
+  rpc UpdateBugbotMode (UpdateBugbotModeRequest) returns (UpdateBugbotModeResponse);
   rpc GetBugbotUserSettings (GetBugbotUserSettingsRequest) returns (GetBugbotUserSettingsResponse);
   rpc UpdateBugbotUserSettings (UpdateBugbotUserSettingsRequest) returns (UpdateBugbotUserSettingsResponse);
   rpc GetBugBotProUserSettings (GetBugBotProUserSettingsRequest) returns (GetBugBotProUserSettingsResponse);
@@ -5628,6 +5988,8 @@ service DashboardService {
   rpc ConfirmGithubInstallation (ConfirmGithubInstallationRequest) returns (ConfirmGithubInstallationResponse);
   rpc UpdateTeamName (UpdateTeamNameRequest) returns (UpdateTeamNameResponse);
   rpc UpdateTeamDashboardAnalyticsSetting (UpdateTeamDashboardAnalyticsSettingRequest) returns (UpdateTeamDashboardAnalyticsSettingResponse);
+  rpc UpdateTeamScimRequireUserDirectorySetting (UpdateTeamScimRequireUserDirectorySettingRequest) returns (UpdateTeamScimRequireUserDirectorySettingResponse);
+  rpc GetTeamScimRequireUserDirectoryPreview (GetTeamScimRequireUserDirectoryPreviewRequest) returns (GetTeamScimRequireUserDirectoryPreviewResponse);
   rpc GetSlackUserSettings (GetSlackUserSettingsRequest) returns (GetSlackUserSettingsResponse);
   rpc UpdateSlackUserSettings (UpdateSlackUserSettingsRequest) returns (UpdateSlackUserSettingsResponse);
   rpc GetSlackRepoRoutingRules (GetSlackRepoRoutingRulesRequest) returns (GetSlackRepoRoutingRulesResponse);
@@ -5637,6 +5999,8 @@ service DashboardService {
   rpc IsOnNewPricing (IsOnNewPricingRequest) returns (IsOnNewPricingResponse);
   rpc GetLinearAuthUrl (GetLinearAuthUrlRequest) returns (GetLinearAuthUrlResponse);
   rpc ConnectLinearCallback (ConnectLinearCallbackRequest) returns (ConnectLinearCallbackResponse);
+  rpc GetMicrosoftTeamsLinkContext (GetMicrosoftTeamsLinkContextRequest) returns (GetMicrosoftTeamsLinkContextResponse);
+  rpc SetMicrosoftTeamsAuth (SetMicrosoftTeamsAuthRequest) returns (SetMicrosoftTeamsAuthResponse);
   rpc GetLinearStatus (GetLinearStatusRequest) returns (GetLinearStatusResponse);
   rpc DisconnectLinear (DisconnectLinearRequest) returns (DisconnectLinearResponse);
   rpc GetLinearTeams (GetLinearTeamsRequest) returns (GetLinearTeamsResponse);
@@ -5673,6 +6037,10 @@ service DashboardService {
   rpc UpdateUsageAlerts (UpdateUsageAlertsRequest) returns (UpdateUsageAlertsResponse);
   rpc RequestIndividualLimitsOptOut (RequestIndividualLimitsOptOutRequest) returns (RequestIndividualLimitsOptOutResponse);
   rpc ListMarketplacePlugins (ListMarketplacePluginsRequest) returns (ListMarketplacePluginsResponse);
+  rpc GetUserProfile (GetUserProfileRequest) returns (GetUserProfileResponse);
+  rpc UpdateUserProfile (UpdateUserProfileRequest) returns (UpdateUserProfileResponse);
+  rpc ClaimUserProfileHandle (ClaimUserProfileHandleRequest) returns (ClaimUserProfileHandleResponse);
+  rpc GetPublicProfileByHandle (GetPublicProfileByHandleRequest) returns (GetPublicProfileByHandleResponse);
   rpc GetPlugin (GetPluginRequest) returns (GetPluginResponse);
   rpc CreatePlugin (CreatePluginRequest) returns (CreatePluginResponse);
   rpc UpdatePlugin (UpdatePluginRequest) returns (UpdatePluginResponse);
@@ -5699,10 +6067,6 @@ service DashboardService {
   rpc UninstallTeamPlugin (UninstallTeamPluginRequest) returns (UninstallTeamPluginResponse);
   rpc GetEffectiveUserPlugins (GetEffectiveUserPluginsRequest) returns (GetEffectiveUserPluginsResponse);
   rpc ResolvePluginsByRef (ResolvePluginsByRefRequest) returns (ResolvePluginsByRefResponse);
-  rpc ListPublishers (ListPublishersRequest) returns (ListPublishersResponse);
-  rpc GetPublisher (GetPublisherRequest) returns (GetPublisherResponse);
-  rpc CreatePublisher (CreatePublisherRequest) returns (CreatePublisherResponse);
-  rpc UpdatePublisher (UpdatePublisherRequest) returns (UpdatePublisherResponse);
   rpc DeprecatePlugin (DeprecatePluginRequest) returns (DeprecatePluginResponse);
   rpc ListMarketplaces (ListMarketplacesRequest) returns (ListMarketplacesResponse);
   rpc AddMarketplace (AddMarketplaceRequest) returns (AddMarketplaceResponse);
@@ -5714,8 +6078,10 @@ service DashboardService {
   rpc UpdateTeamMarketplaceConfig (UpdateTeamMarketplaceConfigRequest) returns (UpdateTeamMarketplaceConfigResponse);
   rpc SetTeamMarketplaceRepository (SetTeamMarketplaceRepositoryRequest) returns (SetTeamMarketplaceRepositoryResponse);
   rpc SetTeamMarketplacePluginPolicies (SetTeamMarketplacePluginPoliciesRequest) returns (SetTeamMarketplacePluginPoliciesResponse);
+  rpc SetTeamMarketplacePluginPolicyVariables (SetTeamMarketplacePluginPolicyVariablesRequest) returns (SetTeamMarketplacePluginPolicyVariablesResponse);
   rpc ApplyTeamMarketplaceRequiredPlugins (ApplyTeamMarketplaceRequiredPluginsRequest) returns (ApplyTeamMarketplaceRequiredPluginsResponse);
   rpc LinkPluginsToTeamMarketplace (LinkPluginsToTeamMarketplaceRequest) returns (LinkPluginsToTeamMarketplaceResponse);
   rpc UnlinkPluginsFromTeamMarketplace (UnlinkPluginsFromTeamMarketplaceRequest) returns (UnlinkPluginsFromTeamMarketplaceResponse);
   rpc GetManagedSkills (GetManagedSkillsRequest) returns (GetManagedSkillsResponse);
+  rpc SetJobData (SetJobDataRequest) returns (SetJobDataResponse);
 }

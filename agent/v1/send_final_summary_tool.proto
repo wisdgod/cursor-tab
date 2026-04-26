@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message SendFinalSummaryArgs {
+  optional string final_summary = 1;
+}
+
+message SendFinalSummaryError {
+  string error = 1;
+}
+
+message SendFinalSummaryResult {
+  oneof result {
+    SendFinalSummarySuccess success = 1;
+    SendFinalSummaryError error = 2;
+  }
+}
+
+message SendFinalSummarySuccess {
+  string final_summary = 1;
+}
+
+message SendFinalSummaryToolCall {
+  SendFinalSummaryArgs args = 1;
+  SendFinalSummaryResult result = 2;
+}

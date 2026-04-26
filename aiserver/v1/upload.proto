@@ -1,0 +1,140 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/docs.proto";
+
+enum UploadStatus {
+  UPLOAD_STATUS_UNSPECIFIED = 0;
+  UPLOAD_STATUS_IN_PROGRESS = 1;
+  UPLOAD_STATUS_SUCCEEDED = 2;
+  UPLOAD_STATUS_FAILED = 3;
+  UPLOAD_STATUS_NOT_FOUND = 4;
+}
+
+message GetDocRequest {
+  string doc_identifier = 1;
+}
+
+message GetPagesRequest {
+  string doc_identifier = 1;
+}
+
+message MarkAsPublicRequest {
+  string doc_identifier = 1;
+  string password = 2;
+  string doc_name = 3;
+}
+
+message NewDocumentationRequest {
+  string doc_identifier = 1;
+  DocumentationMetadata metadata = 2;
+  repeated string ignore_prefixes = 4;
+  repeated string ignore_urls = 5;
+  optional string custom_instructions = 6;
+  optional bool publish_to_team = 7;
+  optional bool client_handles_uuid = 8;
+}
+
+message Pages {
+  repeated string pages = 1;
+  repeated string page_urls = 2;
+}
+
+message ProtoDoc {
+  int32 id = 1;
+  string uuid = 2;
+  string doc_identifier = 3;
+  string doc_name = 4;
+  string doc_url_root = 5;
+  string doc_url_prefix = 6;
+  bool is_different_prefix = 7;
+  string created_at = 8;
+  string updated_at = 9;
+  string last_uploaded_at = 10;
+  UploadedStatus upload_status = 11;
+  bool show_to_all_users = 12;
+  int32 team_id = 13;
+  string custom_instructions = 14;
+  repeated ProtoDocPage pages = 15;
+  bool publish_to_team = 16;
+}
+
+message ProtoDocPage {
+  string url = 1;
+  string title = 2;
+}
+
+message RescrapeDocsRequest {
+  string doc_identifier = 1;
+  optional bool force_reupload = 2;
+}
+
+message RescrapeDocsRequestV2 {
+  NewDocumentationRequest new_doc_req = 1;
+  optional bool force_reupload = 2;
+}
+
+message RescrapeDocsResponse {
+  bool success = 1;
+  optional string new_doc_identifier = 2;
+}
+
+message UploadDocumentationRequest {
+  string doc_identifier = 1;
+}
+
+message UploadedStatus {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_IN_PROGRESS = 1;
+    STATUS_SUCCEEDED = 2;
+    STATUS_FAILED = 3;
+    STATUS_NOT_FOUND = 4;
+  }
+
+  Status status = 1;
+  repeated string uploaded_pages = 2;
+}
+
+message UploadedStatusRequest {
+  string doc_identifier = 1;
+}
+
+message UploadResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_SUCCESS = 1;
+    STATUS_FAILURE = 2;
+    STATUS_ALREADY_EXISTS = 3;
+    STATUS_SIMILAR_ALREADY_EXISTS = 4;
+  }
+
+  Status status = 1;
+  float progress = 2;
+  string similar_doc_identifier = 3;
+  repeated string uploaded_pages = 4;
+  string doc_uuid = 5;
+}
+
+message UpsertDocsRequest {
+  optional UploadStatus upload_status = 1;
+  optional string ignore_index_prefix = 2;
+  optional int32 doc_id = 3;
+}
+
+message UpsertDocsResponse {
+  repeated UploadResponse responses = 1;
+}
+
+service UploadService {
+  rpc UploadDocumentation (NewDocumentationRequest) returns (UploadResponse);
+  rpc UploadDocumentationStatus (UploadDocumentationRequest) returns (UploadedStatus);
+  rpc MarkAsPublic (MarkAsPublicRequest) returns (UploadedStatus);
+  rpc UploadStatus (UploadedStatusRequest) returns (UploadedStatus);
+  rpc GetPages (GetPagesRequest) returns (Pages);
+  rpc GetDoc (GetDocRequest) returns (ProtoDoc);
+  rpc RescrapeDocs (RescrapeDocsRequest) returns (RescrapeDocsResponse);
+  rpc RescrapeDocsV2 (RescrapeDocsRequestV2) returns (RescrapeDocsResponse);
+  rpc UpsertAllDocs (UpsertDocsRequest) returns (UpsertDocsResponse);
+}

@@ -158,3 +158,19 @@ message SwWriteTextFileWithLintsRequest {
 message SwWriteTextFileWithLintsResponse {
   repeated LinterError new_linter_errors = 1;
 }
+
+service ShadowWorkspaceService {
+  rpc GetLintsForChange (GetLintsForChangeRequest) returns (GetLintsForChangeResponse);
+  rpc ShadowHealthCheck (ShadowHealthCheckRequest) returns (ShadowHealthCheckResponse);
+  rpc SwSyncIndex (SwSyncIndexRequest) returns (SwSyncIndexResponse);
+  rpc SwProvideTemporaryAccessToken (SwProvideTemporaryAccessTokenRequest) returns (SwProvideTemporaryAccessTokenResponse);
+  rpc SwCompileRepoIncludeExcludePatterns (SwCompileRepoIncludeExcludePatternsRequest) returns (SwCompileRepoIncludeExcludePatternsResponse);
+  rpc SwCallClientSideV2Tool (SwCallClientSideV2ToolRequest) returns (SwCallClientSideV2ToolResponse);
+  rpc SwGetExplicitContext (SwGetExplicitContextRequest) returns (SwGetExplicitContextResponse);
+  rpc SwWriteTextFileWithLints (SwWriteTextFileWithLintsRequest) returns (SwWriteTextFileWithLintsResponse);
+  rpc SwGetEnvironmentInfo (SwGetEnvironmentInfoRequest) returns (SwGetEnvironmentInfoResponse);
+  rpc SwGetLinterErrors (SwGetLinterErrorsRequest) returns (SwGetLinterErrorsResponse);
+  rpc SwGetMcpTools (SwGetMcpToolsRequest) returns (SwGetMcpToolsResponse);
+  rpc SwTrackModel (SwTrackModelRequest) returns (SwTrackModelResponse);
+  rpc SwCallDiagnosticsExecutor (SwCallDiagnosticsExecutorRequest) returns (SwCallDiagnosticsExecutorResponse);
+}

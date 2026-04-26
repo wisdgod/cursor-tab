@@ -1,0 +1,191 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+enum InvocationStatus {
+  INVOCATION_STATUS_UNSPECIFIED = 0;
+  INVOCATION_STATUS_RUNNING = 1;
+  INVOCATION_STATUS_COMPLETED_SUCCESS = 2;
+  INVOCATION_STATUS_COMPLETED_FAILURE = 3;
+  INVOCATION_STATUS_ABORTED = 4;
+}
+
+enum MetricScope {
+  METRIC_SCOPE_UNSPECIFIED = 0;
+  METRIC_SCOPE_INVOCATION = 1;
+  METRIC_SCOPE_MACHINE = 2;
+  METRIC_SCOPE_PROCESS = 3;
+  METRIC_SCOPE_SUITE = 4;
+  METRIC_SCOPE_CASE = 5;
+  METRIC_SCOPE_ITERATION = 6;
+}
+
+message InvocationInfo {
+  string source_type = 1;
+  string source_id = 2;
+  optional string git_repo_url = 3;
+  optional string git_sha = 4;
+  optional string git_branch = 5;
+  optional int32 git_commit_number = 6;
+  optional bool git_dirty = 7;
+  optional string triggered_by_id = 8;
+  optional string client_version = 9;
+  google.protobuf.Timestamp created_at = 10;
+  optional google.protobuf.Struct metadata = 11;
+}
+
+message IterationInfo {
+  string local_id = 1;
+  string case_local_id = 2;
+  int32 iteration_number = 3;
+  optional int32 start_ms = 4;
+  optional int32 duration_ms = 5;
+  string status = 6;
+  optional google.protobuf.Struct summary = 7;
+}
+
+message MachineInfo {
+  string local_id = 1;
+  optional string host_name = 2;
+  optional string ip_address = 3;
+  optional string instance_type = 4;
+  optional string os = 5;
+  optional string arch = 6;
+  optional google.protobuf.Struct metadata = 7;
+}
+
+message MetricSample {
+  string base_metric_name = 1;
+  MetricScope scope_type = 2;
+  string scope_local_id = 3;
+  int32 t_rel_ms = 4;
+  int32 sample_index = 5;
+  oneof value_type {
+    double value_numeric = 6;
+    string value_text = 7;
+  }
+  string unit = 10;
+  optional google.protobuf.Struct extra = 8;
+  optional MetricTypeDetails metric_type_details = 9;
+}
+
+message MetricTypeDetails {
+  string unit = 1;
+  optional string description = 2;
+  optional bool higher_is_better = 3;
+  optional google.protobuf.Struct tags = 4;
+}
+
+message PerformanceChunk {
+  repeated MachineInfo machines = 1;
+  repeated ProcessInfo processes = 2;
+  repeated TestSuiteInfo suites = 3;
+  repeated TestCaseInfo cases = 4;
+  repeated IterationInfo iterations = 5;
+  repeated MetricSample metrics = 6;
+}
+
+message PerformanceData {
+  InvocationInfo invocation = 1;
+  repeated MachineInfo machines = 2;
+  repeated ProcessInfo processes = 3;
+  repeated TestSuiteInfo suites = 4;
+  repeated TestCaseInfo cases = 5;
+  repeated IterationInfo iterations = 6;
+  repeated MetricSample metric_samples = 7;
+}
+
+message ProcessInfo {
+  string local_id = 1;
+  string machine_local_id = 2;
+  int32 pid = 3;
+  optional string name = 4;
+  optional string arch = 5;
+  optional int32 start_ms = 6;
+  optional google.protobuf.Struct metadata = 7;
+}
+
+message RecordInvocationWithDataRequest {
+  InvocationInfo invocation = 1;
+  PerformanceChunk chunk = 2;
+}
+
+message RecordInvocationWithDataResponse {
+  string invocation_id = 1;
+  string message = 2;
+}
+
+message RecordPerformanceChunkRequest {
+  oneof invocation_ref {
+    string invocation_id = 1;
+    InvocationInfo invocation_info = 2;
+  }
+  PerformanceChunk chunk = 3;
+}
+
+message RecordPerformanceChunkResponse {
+  string invocation_id = 1;
+  int32 machines_inserted = 2;
+  int32 processes_inserted = 3;
+  int32 suites_inserted = 4;
+  int32 cases_inserted = 5;
+  int32 iterations_inserted = 6;
+  int32 metric_samples_inserted = 7;
+  string message = 8;
+}
+
+message RecordPerformanceDataRequest {
+  PerformanceData data = 1;
+}
+
+message RecordPerformanceDataResponse {
+  string invocation_id = 1;
+  string message = 2;
+}
+
+message TestCaseInfo {
+  string local_id = 1;
+  string suite_local_id = 2;
+  string name = 3;
+  optional string conceptual_test_id = 4;
+  optional google.protobuf.Struct metadata = 5;
+}
+
+message TestSuiteInfo {
+  string local_id = 1;
+  string process_local_id = 2;
+  string file_path = 3;
+  string name = 4;
+  optional google.protobuf.Struct metadata = 5;
+}
+
+message UpdateInvocationStatusRequest {
+  string invocation_id = 1;
+  InvocationStatus status = 2;
+}
+
+message UpdateInvocationStatusResponse {
+  string invocation_id = 1;
+  InvocationStatus status = 2;
+}
+
+message UpsertInvocationRequest {
+  InvocationInfo invocation = 1;
+}
+
+message UpsertInvocationResponse {
+  string invocation_id = 1;
+  bool already_existed = 2;
+  InvocationStatus status = 3;
+}
+
+service CiMetricsService {
+  rpc RecordPerformanceData (RecordPerformanceDataRequest) returns (RecordPerformanceDataResponse);
+  rpc UpsertInvocation (UpsertInvocationRequest) returns (UpsertInvocationResponse);
+  rpc RecordPerformanceChunk (RecordPerformanceChunkRequest) returns (RecordPerformanceChunkResponse);
+  rpc RecordInvocationWithData (RecordInvocationWithDataRequest) returns (RecordInvocationWithDataResponse);
+  rpc UpdateInvocationStatus (UpdateInvocationStatusRequest) returns (UpdateInvocationStatusResponse);
+}

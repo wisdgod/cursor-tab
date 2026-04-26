@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message ReplaceEnvArgs {
+  ReplaceEnvConfig config = 1;
+}
+
+message ReplaceEnvConfig {
+  string install_script = 1;
+}
+
+message ReplaceEnvFailure {
+  string error_message = 1;
+  string setup_logs = 2;
+}
+
+message ReplaceEnvResult {
+  oneof result {
+    ReplaceEnvSuccess success = 1;
+    ReplaceEnvFailure failure = 2;
+  }
+}
+
+message ReplaceEnvSuccess {
+  string setup_logs = 1;
+}
+
+message ReplaceEnvToolCall {
+  ReplaceEnvArgs args = 1;
+  ReplaceEnvResult result = 2;
+}

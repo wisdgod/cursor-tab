@@ -149,6 +149,8 @@ message PodEvent {
     google.protobuf.Empty acquired_repo_state = 42;
     google.protobuf.Empty private_worker_ready = 53;
     WaitingForWorkerStatus waiting_for_worker = 54;
+    SpanStarted span_started = 55;
+    SpanEnded span_ended = 56;
   }
 }
 
@@ -160,6 +162,17 @@ message PodIdentity {
 message ProgressDetail {
   uint64 current = 1;
   uint64 total = 2;
+}
+
+message SpanEnded {
+  string span_id = 1;
+}
+
+message SpanStarted {
+  string span_id = 1;
+  string name = 2;
+  optional string parent_span_id = 3;
+  optional uint32 turn_index = 4;
 }
 
 message WaitingForWorkerStatus {

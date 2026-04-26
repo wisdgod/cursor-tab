@@ -303,3 +303,10 @@ message TraceSpan {
   optional Status status = 12;
   repeated TraceLink links = 13;
 }
+
+service MetricsService {
+  rpc ReportIncrement (ReportMetricsRequest) returns (ReportMetricsResponse);
+  rpc ReportDecrement (ReportMetricsRequest) returns (ReportMetricsResponse);
+  rpc ReportDistribution (ReportMetricsRequest) returns (ReportMetricsResponse);
+  rpc ReportGauge (ReportMetricsRequest) returns (ReportMetricsResponse);
+}

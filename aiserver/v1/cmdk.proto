@@ -229,3 +229,12 @@ message TimingInfo {
   double user_input_time = 1;
   double stream_cmdk_time = 2;
 }
+
+service CmdKService {
+  rpc StreamCmdK (StreamCmdKRequest) returns (stream StreamCmdKResponseContextWrapped);
+  rpc StreamHypermode (StreamHypermodeRequest) returns (stream StreamCmdKResponseContextWrapped);
+  rpc RerankCmdKContext (RerankCmdKContextRequest) returns (RerankCmdKContextResponse);
+  rpc StreamTerminalCmdK (StreamTerminalCmdKRequest) returns (stream StreamTerminalCmdKResponseContextWrapped);
+  rpc RerankTerminalCmdKContext (RerankTerminalCmdKContextRequest) returns (RerankTerminalCmdKContextResponse);
+  rpc GetRelevantChunks (GetRelevantChunksRequest) returns (stream StreamGetRelevantChunksResponseContextWrapped);
+}

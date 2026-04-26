@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/chat.proto";
+import "aiserver/v1/utils.proto";
+
+message BugAnalysisRequest {
+  repeated Commit relevant_commits = 1;
+  ConversationMessage bug_description_and_file_attachments = 2;
+  ModelDetails model_details = 3;
+}
+
+message BugAnalysisResponse {
+  string reasoning = 1;
+  string bug_description = 2;
+}
+
+message FileFilterRequest {
+  repeated ConversationMessage.CodeChunk files = 1;
+  ConversationMessage bug_description = 2;
+}
+
+message FileFilterResponse {
+  string file_path = 1;
+  float file_score = 2;
+}
+
+message GitFilterRequest {
+  repeated Commit commits = 1;
+  ConversationMessage bug_description = 2;
+}
+
+message GitFilterResponse {
+  string relevant_commit = 1;
+  float commit_score = 2;
+}
+
+service DebuggerService {
+  rpc GitFilter (GitFilterRequest) returns (stream GitFilterResponse);
+  rpc FileFilter (FileFilterRequest) returns (stream FileFilterResponse);
+  rpc BugAnalysis (BugAnalysisRequest) returns (stream BugAnalysisResponse);
+}

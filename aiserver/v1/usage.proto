@@ -182,4 +182,6 @@ message UsageEventDisplay {
   optional string service_account_id = 16;
   optional bool is_headless = 17;
   optional float charged_cents = 18;
+  optional string cloud_agent_id = 19;
+  optional string automation_id = 20;
 }

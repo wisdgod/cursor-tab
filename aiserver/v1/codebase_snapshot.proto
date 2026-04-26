@@ -1,0 +1,134 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+enum CodebaseKind {
+  CODEBASE_KIND_UNSPECIFIED = 0;
+  CODEBASE_KIND_GIT_MAIN_WORKTREE_ROOT = 1;
+  CODEBASE_KIND_GIT_MAIN_WORKTREE_SUBDIRECTORY = 2;
+  CODEBASE_KIND_GIT_LINKED_WORKTREE_ROOT = 3;
+  CODEBASE_KIND_GIT_LINKED_WORKTREE_SUBDIRECTORY = 4;
+  CODEBASE_KIND_PLAIN_DIRECTORY = 5;
+  CODEBASE_KIND_DOT_CURSOR = 6;
+}
+
+enum CodebaseSnapshotReason {
+  CODEBASE_SNAPSHOT_REASON_UNSPECIFIED = 0;
+  CODEBASE_SNAPSHOT_REASON_MANUAL = 1;
+  CODEBASE_SNAPSHOT_REASON_AGENT_REQUEST_START = 2;
+  CODEBASE_SNAPSHOT_REASON_AGENT_REQUEST_END = 3;
+}
+
+message CompletePackfileUploadRequest {
+  string codebase_uuid = 1;
+  string upload_uuid = 2;
+  PackfileUploadCompletion completion = 3;
+}
+
+message CompletePackfileUploadResponse {
+}
+
+message CreatePackfileUploadRequest {
+  string codebase_uuid = 1;
+  PackfileMetadata packfile = 2;
+}
+
+message CreatePackfileUploadResponse {
+  message AlreadyUploaded {
+  }
+
+  message UploadRequired {
+    string upload_uuid = 1;
+    PackfileUploadMethod method = 2;
+  }
+
+  oneof result {
+    UploadRequired upload_required = 1;
+    AlreadyUploaded already_uploaded = 2;
+  }
+}
+
+message GetCodebaseSnapshotStatusRequest {
+  string codebase_uuid = 1;
+  string commit_hash = 2;
+}
+
+message GetCodebaseSnapshotStatusResponse {
+  message Incomplete {
+  }
+
+  message Pending {
+  }
+
+  message Verified {
+  }
+
+  oneof status {
+    Pending pending = 1;
+    Verified verified = 2;
+    Incomplete incomplete = 3;
+  }
+}
+
+message PackfileMetadata {
+  string pack_id = 1;
+  string content_sha256 = 2;
+  uint64 size_bytes = 3;
+}
+
+message PackfileUploadCompletion {
+  message DirectChunkedUpload {
+  }
+
+  oneof completion {
+    DirectChunkedUpload direct_chunked_upload = 1;
+  }
+}
+
+message PackfileUploadMethod {
+  message DirectChunkedUpload {
+    uint64 chunk_size_bytes = 1;
+  }
+
+  oneof method {
+    DirectChunkedUpload direct_chunked_upload = 1;
+  }
+}
+
+message RegisterCodebaseRequest {
+  string codebase_uuid = 1;
+  string path = 2;
+  CodebaseKind kind = 3;
+}
+
+message RegisterCodebaseResponse {
+}
+
+message RegisterCodebaseSnapshotRequest {
+  string codebase_uuid = 1;
+  string commit_hash = 2;
+  string tree_hash = 3;
+  CodebaseSnapshotReason reason = 4;
+}
+
+message RegisterCodebaseSnapshotResponse {
+}
+
+message UploadPackfileChunkRequest {
+  string codebase_uuid = 1;
+  string upload_uuid = 2;
+  uint32 chunk_index = 3;
+  bytes data = 4;
+}
+
+message UploadPackfileChunkResponse {
+}
+
+service CodebaseSnapshotService {
+  rpc RegisterCodebase (RegisterCodebaseRequest) returns (RegisterCodebaseResponse);
+  rpc RegisterCodebaseSnapshot (RegisterCodebaseSnapshotRequest) returns (RegisterCodebaseSnapshotResponse);
+  rpc GetCodebaseSnapshotStatus (GetCodebaseSnapshotStatusRequest) returns (GetCodebaseSnapshotStatusResponse);
+  rpc CreatePackfileUpload (CreatePackfileUploadRequest) returns (CreatePackfileUploadResponse);
+  rpc CompletePackfileUpload (CompletePackfileUploadRequest) returns (CompletePackfileUploadResponse);
+  rpc UploadPackfileChunk (UploadPackfileChunkRequest) returns (UploadPackfileChunkResponse);
+}

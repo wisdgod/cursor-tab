@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message UpdatePrCodeTourArgs {
+  string feedback = 1;
+  string tool_call_id = 2;
+}
+
+message UpdatePrCodeTourError {
+  string error = 1;
+}
+
+message UpdatePrCodeTourResult {
+  oneof result {
+    UpdatePrCodeTourSuccess success = 1;
+    UpdatePrCodeTourError error = 2;
+  }
+}
+
+message UpdatePrCodeTourSuccess {
+  string revision_id = 1;
+  string message = 2;
+}
+
+message UpdatePrCodeTourToolCall {
+  UpdatePrCodeTourArgs args = 1;
+  UpdatePrCodeTourResult result = 2;
+}

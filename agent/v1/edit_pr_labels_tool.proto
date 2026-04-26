@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message EditPrLabelsArgs {
+  string tool_call_id = 1;
+  string pr_url = 2;
+  repeated string add_labels = 4;
+  repeated string remove_labels = 5;
+}
+
+message EditPrLabelsError {
+  string error = 1;
+}
+
+message EditPrLabelsResult {
+  oneof result {
+    EditPrLabelsSuccess success = 1;
+    EditPrLabelsError error = 2;
+  }
+}
+
+message EditPrLabelsSuccess {
+  string pr_url = 1;
+  int32 pr_number = 2;
+  string message = 3;
+}
+
+message EditPrLabelsToolCall {
+  EditPrLabelsArgs args = 1;
+  EditPrLabelsResult result = 2;
+}

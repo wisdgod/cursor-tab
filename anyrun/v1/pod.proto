@@ -27,10 +27,18 @@ enum PodCreatingPhase {
   POD_CREATING_PHASE_POST_START = 5;
 }
 
+enum PodStartCacheSource {
+  POD_START_CACHE_SOURCE_UNSPECIFIED = 0;
+  POD_START_CACHE_SOURCE_NODE_LOCAL_FIRECRACKER_SNAPSHOT = 1;
+  POD_START_CACHE_SOURCE_REMOTE_ROOTAR_CHECKPOINT = 2;
+}
+
 message DaemonPod {
   PodStatus status = 2;
   optional uint32 internal_proxy_port = 3;
   optional DefaultPortConfig default_port_config = 4;
+  optional string started_from_checkpoint_group_id = 5;
+  optional PodStartCacheSource started_from_cache_source = 6;
 }
 
 message DockerBuildFailure {
@@ -78,6 +86,9 @@ message Pod {
   optional uint64 modified_timestamp = 23;
   optional uint64 pod_awake_since = 24;
   repeated string low_cardinality_labels = 25;
+  repeated string checkpoint_group_ids = 26;
+  optional string started_from_checkpoint_group_id = 27;
+  optional PodStartCacheSource started_from_cache_source = 28;
 }
 
 message PodCollection {

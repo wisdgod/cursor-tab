@@ -138,3 +138,11 @@ message TokensWithLogprobs {
   string token = 1;
   float log_probability = 2;
 }
+
+service LinterService {
+  rpc LintFile (LintFileRequest) returns (LintFileResponse);
+  rpc LintChunk (LintChunkRequest) returns (LintChunkResponse);
+  rpc LintFimChunk (LintFimChunkRequest) returns (LintFimChunkResponse);
+  rpc LintExplanation (LintExplanationRequest) returns (stream LintExplanationResponse);
+  rpc LintExplanation2 (LintExplanationRequest) returns (LintExplanationResponse2);
+}

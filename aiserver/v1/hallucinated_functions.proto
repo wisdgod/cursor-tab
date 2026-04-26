@@ -1,0 +1,235 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/chat.proto";
+import "aiserver/v1/context.proto";
+import "aiserver/v1/context_ast.proto";
+import "aiserver/v1/cpp.proto";
+import "aiserver/v1/repository.proto";
+import "aiserver/v1/shadow_workspace.proto";
+import "aiserver/v1/utils.proto";
+
+message CodebaseKnowledgeCmdKInstructionFewShotPromptProps {
+  message Example {
+    CodebaseKnowledgeCmdKInstructionPromptProps props = 1;
+    string instruction = 2;
+    string reasoning = 3;
+  }
+
+  repeated Example examples = 1;
+  CodebaseKnowledgeCmdKInstructionPromptProps current = 2;
+  int32 token_limit = 8;
+  string tokenizer = 9;
+  bool chain_of_thought = 10;
+}
+
+message CodebaseKnowledgeCmdKInstructionPromptProps {
+  string relative_workspace_path = 1;
+  repeated string current_file_lines = 2;
+  int32 start_line_one_indexed_inclusive = 3;
+  int32 end_line_one_indexed_exclusive = 4;
+  repeated string ground_truth_lines = 5;
+  repeated PrHistoryItem pr_history = 6;
+  repeated CodeResult scored_codebase_context = 7;
+  int32 token_limit = 8;
+  string tokenizer = 9;
+}
+
+message CodebaseKnowledgeCmdKPromptProps {
+  string relative_workspace_path = 1;
+  repeated string current_file_lines = 2;
+  int32 start_line_one_indexed_inclusive = 3;
+  int32 end_line_one_indexed_exclusive = 4;
+  string instruction = 5;
+  repeated PrHistoryItem pr_history = 6;
+  repeated CodeResult scored_codebase_context = 7;
+  int32 token_limit = 8;
+  string tokenizer = 9;
+}
+
+message ExtractFunctionNameFromImplementationPromptProps {
+  string text = 1;
+}
+
+message HallucinatedFunctionsProtoPrompt {
+  string text = 1;
+  repeated PotentiallyCachedContextItem context_items = 2;
+}
+
+message Opus2ChainApplyPlanRequest {
+  string relative_workspace_path = 1;
+  string file_contents = 2;
+  int32 implementation_start_line_inclusive = 3;
+  int32 implementation_end_line_inclusive = 4;
+  string apply_plan = 5;
+}
+
+message Opus2ChainApplyPlanResponse {
+  string text = 1;
+}
+
+message Opus2ChainPlanPromptProps {
+  Opus2ChainPlanRequest request = 1;
+  optional string plan = 2;
+}
+
+message Opus2ChainPlanRequest {
+  enum OpusPlanVersion {
+    OPUS_PLAN_VERSION_UNSPECIFIED = 0;
+    OPUS_PLAN_VERSION_V0 = 1;
+    OPUS_PLAN_VERSION_V1_MORE_CONTEXT_AND_GUIDELINES = 2;
+  }
+
+  message BranchDiff {
+    message FileDiff {
+      string file_name = 1;
+      string diff = 2;
+      bool too_big = 3;
+    }
+
+    repeated FileDiff file_diffs = 1;
+    repeated Commit commits = 2;
+  }
+
+  message CodebaseInformation {
+    message File {
+      string relative_workspace_path = 1;
+      string contents = 2;
+      repeated int32 interesting_lines = 3;
+    }
+
+    message QA {
+      string question = 1;
+      string answer = 2;
+    }
+
+    repeated File files = 1;
+    repeated QA qa = 2;
+  }
+
+  message File {
+    string relative_workspace_path = 1;
+    string text = 2;
+  }
+
+  string relative_workspace_path = 1;
+  string file_contents = 2;
+  int32 implementation_start_line_inclusive = 3;
+  int32 implementation_end_line_inclusive = 4;
+  repeated CppFileDiffHistory diff_history = 5;
+  repeated int32 call_site_lines = 6;
+  string function_name = 7;
+  CmdKDebugInfo debug_info = 9;
+  HallucinatedFunctionsProtoPrompt prompt = 20;
+  string branch_notes = 10;
+  string branch_name = 11;
+  repeated CodeResult scored_codebase_context = 12;
+  BranchDiff diff_to_base_branch = 13;
+  repeated File branch_diff_files = 16;
+  repeated File diff_history_files = 14;
+  optional CodebaseInformation codebase_information = 8;
+  OpusPlanVersion plan_version = 15;
+  ContextAST context_ast = 17;
+}
+
+message Opus2ChainPlanResponse {
+  string text = 1;
+}
+
+message Opus2ChainReflectRequest {
+  string relative_workspace_path = 1;
+  string old_file_contents = 2;
+  int32 implementation_start_line_inclusive = 3;
+  int32 implementation_end_line_inclusive = 4;
+  repeated string new_implementation_lines = 5;
+  repeated int32 call_site_lines = 6;
+  string function_name = 7;
+  string branch_notes = 8;
+  string branch_name = 9;
+  GetLintsForChangeResponse lints = 10;
+}
+
+message Opus2ChainReflectResponse {
+  message AcceptDecision {
+  }
+
+  message Decision {
+    oneof decision {
+      AcceptDecision accept = 1;
+      RetryWithoutMoreInformationDecision retry_without_more_information = 2;
+      RetryWithCodebaseQuestionDecision retry_with_codebase_question = 3;
+    }
+  }
+
+  message RetryWithCodebaseQuestionDecision {
+    repeated string codebase_questions = 1;
+  }
+
+  message RetryWithoutMoreInformationDecision {
+  }
+
+  string text = 1;
+  Decision decision = 2;
+}
+
+message PrHistoryItem {
+  string relative_workspace_path = 1;
+  repeated string original_lines = 2;
+  repeated string new_lines = 4;
+  int32 start_line_one_indexed = 5;
+}
+
+message ScoredCodebaseContext {
+  repeated CodeResult codebase_context = 1;
+}
+
+message SortUsefulTypesNaiveRequest {
+  message IRange {
+    int32 start_line_number = 1;
+    int32 start_column = 2;
+    int32 end_line_number = 3;
+    int32 end_column = 4;
+  }
+
+  string relative_workspace_path = 1;
+  string file_contents = 2;
+  IRange query_range = 3;
+  repeated UsefulType useful_types = 4;
+}
+
+message SortUsefulTypesNaiveResponse {
+  repeated UsefulType useful_types = 1;
+}
+
+message UsefulType {
+  string relative_workspace_path = 1;
+  int32 start_line = 2;
+  string text = 3;
+  optional double score = 4;
+}
+
+message V0ChainRunRequest {
+  string relative_workspace_path = 1;
+  string file_contents = 2;
+  int32 implementation_start_line_inclusive = 3;
+  int32 implementation_end_line_inclusive = 4;
+  repeated CppFileDiffHistory diff_history = 5;
+  repeated int32 call_site_lines = 6;
+  string function_name = 7;
+  repeated UsefulType useful_types = 8;
+  HallucinatedFunctionsProtoPrompt prompt = 10;
+  CmdKDebugInfo debug_info = 9;
+}
+
+message V0ChainRunResponse {
+  string text = 1;
+}
+
+service HallucinatedFunctionsService {
+  rpc V0ChainRun (V0ChainRunRequest) returns (stream V0ChainRunResponse);
+  rpc Opus2ChainPlan (Opus2ChainPlanRequest) returns (stream Opus2ChainPlanResponse);
+  rpc Opus2ChainApplyPlan (Opus2ChainApplyPlanRequest) returns (stream Opus2ChainApplyPlanResponse);
+  rpc Opus2ChainReflect (Opus2ChainReflectRequest) returns (stream Opus2ChainReflectResponse);
+  rpc SortUsefulTypesNaive (SortUsefulTypesNaiveRequest) returns (SortUsefulTypesNaiveResponse);
+}

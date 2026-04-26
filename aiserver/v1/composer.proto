@@ -12,6 +12,14 @@ message ComposerCapabilityContext {
     optional string ci_failures = 4;
   }
 
+  message MicrosoftTeamsIntegrationContext {
+    string thread = 1;
+    optional string channel_name = 2;
+    optional string team_name = 3;
+    optional string channel_description = 4;
+    optional string team_description = 5;
+  }
+
   message SlackIntegrationContext {
     string thread = 1;
     optional string channel_name = 2;
@@ -22,6 +30,7 @@ message ComposerCapabilityContext {
   oneof data {
     SlackIntegrationContext slack_integration = 27;
     GithubPRContext github_pr = 28;
+    MicrosoftTeamsIntegrationContext microsoft_teams_integration = 29;
   }
 }
 

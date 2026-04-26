@@ -1,0 +1,167 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message BatchedUploadCommitsIntoGitGraphRequest {
+  string workspace_id = 1;
+  repeated GitGraphCommit commits = 2;
+}
+
+message BatchedUploadCommitsIntoGitGraphResponse {
+  message Result {
+    string sha = 1;
+    bool success = 2;
+    bool already_visited = 3;
+  }
+
+  repeated Result results = 1;
+}
+
+message DeleteGitGraphRequest {
+  string workspace_id = 1;
+}
+
+message DeleteGitGraphResponse {
+}
+
+message GetGitGraphRelatedFilesRequest {
+  string workspace_id = 1;
+  string encrypted_relative_path = 2;
+  int32 max_num_files = 3;
+}
+
+message GetGitGraphRelatedFilesResponse {
+  repeated GitGraphRelatedFile related_files = 1;
+  float time_taken_ms = 2;
+}
+
+message GetGitGraphStatusRequest {
+  string workspace_id = 1;
+}
+
+message GetGitGraphStatusResponse {
+  int32 num_successful_commits = 1;
+  int32 num_failed_commits = 2;
+}
+
+message GetPendingCommitsRequest {
+  string workspace_id = 1;
+  int32 max_num_commits = 2;
+}
+
+message GetPendingCommitsResponse {
+  message Commit {
+    string sha = 1;
+    optional string visited_neighbor_sha = 2;
+    int32 parent_walk_depth = 3;
+  }
+
+  repeated Commit commits = 1;
+  float wait_before_uploading_ms = 2;
+}
+
+message GitGraphCommit {
+  repeated GitGraphCommitFile files = 1;
+  double timestamp_ms = 2;
+  string sha = 3;
+  repeated string parent_shas = 4;
+}
+
+message GitGraphCommitFile {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_ADDED = 1;
+    STATUS_DELETED = 2;
+    STATUS_MODIFIED = 3;
+    STATUS_RENAMED = 4;
+  }
+
+  int32 deletions = 1;
+  int32 additions = 2;
+  Status status = 3;
+  string encrypted_from_relative_path = 5;
+  string encrypted_to_relative_path = 6;
+}
+
+message GitGraphCreated {
+  string workspace_id = 1;
+  string verify_commit = 2;
+}
+
+message GitGraphRelatedFile {
+  string encrypted_relative_path = 1;
+  double weight = 2;
+}
+
+message InitGitGraphChallengeRequest {
+  message Response {
+    string verify_commit = 1;
+    string verify_value = 2;
+  }
+
+  string root_sha = 1;
+  string search_key = 2;
+  repeated Response responses = 3;
+}
+
+message InitGitGraphChallengeResponse {
+  GitGraphCreated created = 1;
+}
+
+message InitGitGraphRequest {
+  string root_sha = 1;
+  string search_key = 2;
+  string verify_commit = 3;
+  string verify_value = 4;
+}
+
+message InitGitGraphResponse {
+  message Challenge {
+    message VisitedCommits {
+      repeated string visited_commits = 1;
+    }
+
+    repeated string verify_commits = 1;
+    repeated string root_commits = 2;
+    repeated VisitedCommits visited_commits = 3;
+  }
+
+  oneof response {
+    GitGraphCreated created = 1;
+    Challenge challenge = 2;
+  }
+}
+
+message IsGitGraphEnabledRequest {
+}
+
+message IsGitGraphEnabledResponse {
+  bool is_enabled = 1;
+}
+
+message MarkPendingCommitsRequest {
+  message Commit {
+    string sha = 1;
+    repeated string parent_shas = 2;
+    double timestamp_ms = 3;
+  }
+
+  string workspace_id = 1;
+  repeated Commit commits = 2;
+}
+
+message MarkPendingCommitsResponse {
+  repeated string already_visited_shas = 1;
+}
+
+service GitGraphService {
+  rpc InitGitGraph (InitGitGraphRequest) returns (InitGitGraphResponse);
+  rpc InitGitGraphChallenge (InitGitGraphChallengeRequest) returns (InitGitGraphChallengeResponse);
+  rpc BatchedUploadCommitsIntoGitGraph (BatchedUploadCommitsIntoGitGraphRequest) returns (BatchedUploadCommitsIntoGitGraphResponse);
+  rpc GetPendingCommits (GetPendingCommitsRequest) returns (GetPendingCommitsResponse);
+  rpc MarkPendingCommits (MarkPendingCommitsRequest) returns (MarkPendingCommitsResponse);
+  rpc GetGitGraphRelatedFiles (GetGitGraphRelatedFilesRequest) returns (GetGitGraphRelatedFilesResponse);
+  rpc GetGitGraphStatus (GetGitGraphStatusRequest) returns (GetGitGraphStatusResponse);
+  rpc DeleteGitGraph (DeleteGitGraphRequest) returns (DeleteGitGraphResponse);
+  rpc IsGitGraphEnabled (IsGitGraphEnabledRequest) returns (IsGitGraphEnabledResponse);
+}

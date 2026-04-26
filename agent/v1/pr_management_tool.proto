@@ -8,6 +8,7 @@ message CreatePrAction {
   optional string base_branch = 3;
   optional bool draft = 4;
   string branch_name = 5;
+  repeated string add_labels = 6;
 }
 
 message PrManagementArgs {
@@ -74,4 +75,6 @@ message UpdatePrAction {
   optional string body = 3;
   optional string base_branch = 4;
   optional string branch_name = 5;
+  repeated string add_labels = 6;
+  repeated string remove_labels = 7;
 }

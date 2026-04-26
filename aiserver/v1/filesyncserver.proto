@@ -136,3 +136,15 @@ message SingleUpdateRequest {
   string replaced_string = 4;
   SimpleRange range = 5;
 }
+
+service FileSyncService {
+  rpc FSUploadFile (FSUploadFileRequest) returns (FSUploadFileResponse);
+  rpc FSSyncFile (FSSyncFileRequest) returns (FSSyncFileResponse);
+  rpc FSIsEnabledForUser (FSIsEnabledForUserRequest) returns (FSIsEnabledForUserResponse);
+  rpc FSConfig (FSConfigRequest) returns (FSConfigResponse);
+  rpc FSGetFileContents (FSGetFileContentsRequest) returns (FSGetFileContentsResponse);
+  rpc FSGetMultiFileContents (FSGetMultiFileContentsRequest) returns (FSGetMultiFileContentsResponse);
+  rpc FSInternalSyncFile (FSSyncFileRequest) returns (FSSyncFileResponse);
+  rpc FSInternalUploadFile (FSUploadFileRequest) returns (FSUploadFileResponse);
+  rpc FSInternalHealthCheck (FSInternalHealthCheckRequest) returns (FSInternalHealthCheckResponse);
+}

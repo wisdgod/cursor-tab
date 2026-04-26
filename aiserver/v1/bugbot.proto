@@ -3,6 +3,7 @@ syntax = "proto3";
 package aiserver.v1;
 
 import "aiserver/v1/utils.proto";
+import "google/protobuf/timestamp.proto";
 
 enum BugbotDeeplinkEventKind {
   BUGBOT_DEEPLINK_EVENT_KIND_UNSPECIFIED = 0;
@@ -42,6 +43,7 @@ message BugReport {
   optional string title = 7;
   optional string rationale = 9;
   optional string triggered_by_rule_id = 10;
+  optional float model_confidence = 11;
 }
 
 message BugReports {
@@ -71,6 +73,31 @@ message GetEncryptedBugDataResponse {
   BugReport bug_report = 1;
 }
 
+message GetProUserTrialEndRequest {
+  int32 user_id = 1;
+}
+
+message GetProUserTrialEndResponse {
+  optional google.protobuf.Timestamp trial_end_date = 1;
+}
+
+message GetRepoNodeIdRequest {
+  string owner = 1;
+  string repo_name = 2;
+}
+
+message GetRepoNodeIdResponse {
+  string node_id = 1;
+}
+
+message GetTeamTrialEndRequest {
+  int32 team_id = 1;
+}
+
+message GetTeamTrialEndResponse {
+  optional google.protobuf.Timestamp trial_end_date = 1;
+}
+
 message LogDeeplinkEventRequest {
   int32 user_id = 1;
   string bug_id = 2;
@@ -88,6 +115,24 @@ message RunBugBotPromptProps {
   string date = 3;
   repeated FileAndOutline context_files = 4;
   optional string file_content_source = 5;
+}
+
+message SetProUserTrialEndRequest {
+  int32 user_id = 1;
+  optional google.protobuf.Timestamp trial_end_date = 2;
+}
+
+message SetProUserTrialEndResponse {
+  bool success = 1;
+}
+
+message SetTeamTrialEndRequest {
+  int32 team_id = 1;
+  optional google.protobuf.Timestamp trial_end_date = 2;
+}
+
+message SetTeamTrialEndResponse {
+  bool success = 1;
 }
 
 message StreamBugBotRequest {
@@ -110,4 +155,18 @@ message StreamBugBotRequest {
   optional string constrain_to_file = 10;
   optional Range constrain_to_range = 11;
   optional bool deep_review = 14;
+}
+
+service BugbotAdminService {
+  rpc GetTeamTrialEnd (GetTeamTrialEndRequest) returns (GetTeamTrialEndResponse);
+  rpc SetTeamTrialEnd (SetTeamTrialEndRequest) returns (SetTeamTrialEndResponse);
+  rpc GetProUserTrialEnd (GetProUserTrialEndRequest) returns (GetProUserTrialEndResponse);
+  rpc SetProUserTrialEnd (SetProUserTrialEndRequest) returns (SetProUserTrialEndResponse);
+  rpc GetRepoNodeId (GetRepoNodeIdRequest) returns (GetRepoNodeIdResponse);
+}
+
+service BugbotService {
+  rpc LogDeeplinkEvent (LogDeeplinkEventRequest) returns (LogDeeplinkEventResponse);
+  rpc GetEncryptedBugData (GetEncryptedBugDataRequest) returns (GetEncryptedBugDataResponse);
+  rpc GetEncryptedBugDataMultiple (GetEncryptedBugDataMultipleRequest) returns (GetEncryptedBugDataMultipleResponse);
 }

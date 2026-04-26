@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message GetDebuggingDataUploadUrlRequest {
+}
+
+message GetDebuggingDataUploadUrlResponse {
+  string url = 1;
+}
+
+message LogWhenTabTurnsOffRequest {
+  string stack_trace = 1;
+}
+
+message LogWhenTabTurnsOffResponse {
+}
+
+service ClientLoggerService {
+  rpc GetDebuggingDataUploadUrl (GetDebuggingDataUploadUrlRequest) returns (GetDebuggingDataUploadUrlResponse);
+  rpc LogWhenTabTurnsOff (LogWhenTabTurnsOffRequest) returns (LogWhenTabTurnsOffResponse);
+}

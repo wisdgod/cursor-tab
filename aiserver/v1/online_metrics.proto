@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message OnlineMetricsConfig {
+  bool enabled = 1;
+  int32 max_requests_tracked = 2;
+  int32 max_requests_tracked_mb = 3;
+  double max_request_retention_seconds = 4;
+  bool send_original_file_contents_for_initial_snapshot = 5;
+  bool send_full_added_lines_in_diff_changes = 6;
+  int32 num_commits_tracked = 7;
+  repeated int32 time_intervals_tracked_minutes = 8;
+  int32 too_big_file_size_bytes = 9;
+}
+
+message ReportAgentSnapshotRequest {
+  string agent_request_id = 1;
+  repeated RequestTrackingFileSnapshot initial_file_snapshots = 2;
+  repeated RequestTrackingFileSnapshot file_snapshots = 3;
+  repeated string too_big_files = 4;
+  string name = 11;
+  double snapshot_date_unix_milliseconds = 10;
+}
+
+message ReportAgentSnapshotResponse {
+}
+
+message RequestTrackingFileGitInfo {
+  message GitInfo {
+    string git_root = 1;
+    string branch = 2;
+    string commit_hash = 3;
+  }
+
+  oneof info {
+    GitInfo git_info = 1;
+    bool no_repo_found = 2;
+  }
+}
+
+message RequestTrackingFileSnapshot {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_ADDED = 1;
+    KIND_DELETED = 2;
+    KIND_MODIFIED = 3;
+  }
+
+  message DiffChange {
+    int32 original_start_line_number_one_indexed = 1;
+    int32 original_end_line_number_exclusive_one_indexed = 2;
+    int32 modified_start_line_number_one_indexed = 3;
+    int32 modified_end_line_number_exclusive_one_indexed = 4;
+    repeated int32 tokenized_added_lines = 6;
+    repeated string added_lines = 5;
+  }
+
+  string fs_path = 1;
+  string file_uuid = 2;
+  double file_size_bytes = 3;
+  int32 num_lines = 4;
+  Kind kind = 9;
+  bool diff_timed_out = 5;
+  RequestTrackingFileGitInfo git_info = 8;
+  repeated DiffChange diff_changes = 6;
+  optional string original_file_contents = 7;
+}
+
+message StoredRequestTrackingMetadata {
+  message File {
+    string fs_path = 1;
+    string file_uuid = 2;
+    RequestTrackingFileGitInfo git_info = 3;
+    bool too_big = 4;
+  }
+
+  string agent_request_id = 1;
+  repeated File request_files = 2;
+  repeated RequestTrackingFileGitInfo deduplicated_git_infos = 3;
+  int32 num_commits_tracked = 4;
+  double start_tracking_date_unix_milliseconds = 5;
+  double file_size_bytes = 6;
+  string workspace_id = 7;
+}
+
+service OnlineMetricsService {
+  rpc ReportAgentSnapshot (ReportAgentSnapshotRequest) returns (ReportAgentSnapshotResponse);
+}

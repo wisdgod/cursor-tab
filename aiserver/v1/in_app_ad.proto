@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message GetAllAdPreviewsRequest {
+}
+
+message GetAllAdPreviewsResponse {
+  repeated InAppAdPreview ads = 1;
+}
+
+message HasSeenAdRequest {
+  string ad_id = 1;
+}
+
+message HasSeenAdResponse {
+  bool has_seen = 1;
+}
+
+message InAppAdPreview {
+  string ad_id = 1;
+  repeated string gates = 2;
+  repeated string experiments = 3;
+  string source_file_url = 4;
+  repeated InAppAdVariantPreview variants = 5;
+}
+
+message InAppAdVariantPreview {
+  string variant_label = 1;
+  bytes ad_bytes = 2;
+}
+
+message MarkAdAsSeenRequest {
+  string ad_id = 1;
+  optional string analytics_variant = 2;
+}
+
+message MarkAdAsSeenResponse {
+}
+
+message ResetUserAdViewsRequest {
+}
+
+message ResetUserAdViewsResponse {
+}
+
+service InAppAdService {
+  rpc HasSeenAd (HasSeenAdRequest) returns (HasSeenAdResponse);
+  rpc MarkAdAsSeen (MarkAdAsSeenRequest) returns (MarkAdAsSeenResponse);
+  rpc ResetUserAdViews (ResetUserAdViewsRequest) returns (ResetUserAdViewsResponse);
+  rpc GetAllAdPreviews (GetAllAdPreviewsRequest) returns (GetAllAdPreviewsResponse);
+}

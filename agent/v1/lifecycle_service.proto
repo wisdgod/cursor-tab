@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/worker_bridge.proto";
+
+enum EntryType {
+  ENTRY_TYPE_UNSPECIFIED = 0;
+  ENTRY_TYPE_FILE = 1;
+  ENTRY_TYPE_DIRECTORY = 2;
+  ENTRY_TYPE_SYMLINK = 3;
+}
+
+service LifecycleService {
+  rpc ResetInstance (Empty) returns (Empty);
+  rpc RenewInstance (Empty) returns (Empty);
+  rpc ClaimWorker (ClaimWorkerRequest) returns (Empty);
+  rpc ReleaseWorker (ReleaseWorkerRequest) returns (Empty);
+}

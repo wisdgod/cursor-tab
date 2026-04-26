@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/telemetry.proto";
+
+message CpuProfileConfig {
+  int32 interval = 1;
+}
+
+message HeapProfileConfig {
+  int32 sampling_interval = 1;
+  optional bool include_objects_collected_by_major_gc = 2;
+  optional bool include_objects_collected_by_minor_gc = 3;
+}
+
+message ProfileConfig {
+  string id = 1;
+  optional HeapProfileConfig heap = 2;
+  optional CpuProfileConfig cpu = 3;
+}
+
+message ProfileScheduleConfig {
+  message ScheduleConfig {
+    int32 interval = 1;
+    int32 duration = 2;
+  }
+
+  string id = 1;
+  string process = 2;
+  string config_id = 3;
+  ScheduleConfig schedule = 4;
+  int32 activity_timeout = 5;
+}
+
+message ProfilingConfig {
+  bool enabled = 1;
+  repeated ProfileConfig configs = 2;
+  repeated ProfileScheduleConfig schedules = 3;
+}
+
+service ProfilingService {
+  rpc SubmitProfile (SubmitProfileRequest) returns (SubmitProfileResponse);
+}

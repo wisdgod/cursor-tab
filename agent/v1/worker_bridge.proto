@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message ClaimWorkerRequest {
+  string http_mcp_config_json = 1;
+  string mcp_config_json = 2;
+}
+
+message Empty {
+}
+
+message Frame {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_REQUEST = 1;
+    KIND_RESPONSE = 2;
+    KIND_ERROR = 3;
+  }
+
+  string id = 1;
+  string method = 2;
+  bytes data = 3;
+  Kind kind = 4;
+  string error = 5;
+}
+
+message ReleaseWorkerRequest {
+}
+
+service PrivateWorkerBridgeExternalService {
+  rpc Connect (stream Frame) returns (stream Frame);
+}

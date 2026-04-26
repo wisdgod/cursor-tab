@@ -142,6 +142,43 @@ message BlockDiffPatch {
   int32 start_from_change_index = 5;
 }
 
+message BrowserEvent {
+  message Navigation {
+    string url = 1;
+    optional string title = 2;
+  }
+
+  message TabClosed {
+  }
+
+  message TabCreated {
+  }
+
+  message ToolAction {
+    enum Source {
+      SOURCE_UNSPECIFIED = 0;
+      SOURCE_MCP_TOOL = 1;
+      SOURCE_MANUAL_USER = 2;
+    }
+
+    string tool_name = 1;
+    string args_json = 2;
+    optional bool success = 3;
+    optional string post_snapshot_yaml = 4;
+    optional string post_url = 5;
+    optional string post_title = 6;
+    Source source = 7;
+  }
+
+  string view_id = 1;
+  oneof event {
+    TabCreated tab_created = 2;
+    TabClosed tab_closed = 3;
+    Navigation navigation = 4;
+    ToolAction tool_action = 5;
+  }
+}
+
 message BugBotEvent {
   enum BackgroundIntervalInterruptedReason {
     BACKGROUND_INTERVAL_INTERRUPTED_REASON_UNSPECIFIED = 0;
@@ -589,6 +626,7 @@ message CppSessionEvent {
     TerminalEvent terminal_event = 48;
     WorktreeEvent worktree_event = 49;
     ReviewChangesOpenedEvent review_changes_opened_event = 50;
+    BrowserEvent browser_event = 51;
     BackgroundFilesEvent background_files_event = 16;
   }
   double performance_now_timestamp = 5;

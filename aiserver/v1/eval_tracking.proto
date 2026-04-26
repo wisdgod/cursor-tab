@@ -1,0 +1,376 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+enum EvalRolloutStatus {
+  EVAL_ROLLOUT_STATUS_UNSPECIFIED = 0;
+  EVAL_ROLLOUT_STATUS_PENDING = 1;
+  EVAL_ROLLOUT_STATUS_RUNNING = 2;
+  EVAL_ROLLOUT_STATUS_FINISHED = 3;
+  EVAL_ROLLOUT_STATUS_FAILED = 4;
+  EVAL_ROLLOUT_STATUS_KILLED = 5;
+}
+
+enum EvalRunStatus {
+  EVAL_RUN_STATUS_UNSPECIFIED = 0;
+  EVAL_RUN_STATUS_PENDING = 1;
+  EVAL_RUN_STATUS_RUNNING = 2;
+  EVAL_RUN_STATUS_FINISHED = 3;
+  EVAL_RUN_STATUS_FAILED = 4;
+  EVAL_RUN_STATUS_KILLED = 5;
+  EVAL_RUN_STATUS_SUBMITTED = 6;
+  EVAL_RUN_STATUS_BUILDING = 7;
+}
+
+enum RlEvalJobDbStatus {
+  RL_EVAL_JOB_DB_STATUS_UNSPECIFIED = 0;
+  RL_EVAL_JOB_DB_STATUS_PENDING = 1;
+  RL_EVAL_JOB_DB_STATUS_BUILDING = 2;
+  RL_EVAL_JOB_DB_STATUS_SUBMITTED = 3;
+  RL_EVAL_JOB_DB_STATUS_RUNNING = 4;
+  RL_EVAL_JOB_DB_STATUS_FINISHED = 5;
+  RL_EVAL_JOB_DB_STATUS_FAILED = 6;
+  RL_EVAL_JOB_DB_STATUS_CANCELED = 7;
+}
+
+enum RlEvalStepDbStatus {
+  RL_EVAL_STEP_DB_STATUS_UNSPECIFIED = 0;
+  RL_EVAL_STEP_DB_STATUS_PENDING = 1;
+  RL_EVAL_STEP_DB_STATUS_RUNNING = 2;
+  RL_EVAL_STEP_DB_STATUS_FINISHED = 3;
+  RL_EVAL_STEP_DB_STATUS_FAILED = 4;
+  RL_EVAL_STEP_DB_STATUS_SKIPPED = 5;
+  RL_EVAL_STEP_DB_STATUS_CANCELED = 6;
+}
+
+message CreateEvalCronJobRequest {
+  string name = 1;
+  string schedule = 2;
+  string channel = 3;
+  string mode = 4;
+  string args = 5;
+  optional string thread_ts = 6;
+  optional string slack_username = 7;
+}
+
+message CreateEvalCronJobResponse {
+  string id = 1;
+}
+
+message CreateEvalRequest {
+  string name = 1;
+  optional string description = 2;
+  optional google.protobuf.Struct tags = 3;
+}
+
+message CreateEvalResponse {
+  string id = 1;
+}
+
+message CreateRunRequest {
+  string eval_id = 1;
+  string dataset_name = 2;
+  string model_name = 3;
+  optional string request_id = 4;
+  optional google.protobuf.Struct params = 5;
+  optional string created_by = 6;
+  optional string artifact_uri = 7;
+  optional int32 iteration_count = 8;
+  repeated RunParamKV param_rows = 9;
+  repeated RunTagKV tags = 10;
+  optional string slack_channel = 11;
+  optional string slack_thread_ts = 12;
+  optional string slack_user_id = 13;
+}
+
+message CreateRunResponse {
+  string id = 1;
+}
+
+message DeleteEvalCronJobByNameRequest {
+  string name = 1;
+}
+
+message DeleteEvalCronJobByNameResponse {
+}
+
+message EvalCronJobSummary {
+  string id = 1;
+  string name = 2;
+  string schedule = 3;
+  string channel = 4;
+  string mode = 5;
+  string args = 6;
+  optional string thread_ts = 7;
+  optional string slack_username = 8;
+  bool is_active = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message EvalRunRecord {
+  string id = 1;
+  string eval_id = 2;
+  string dataset_name = 3;
+  string model_name = 4;
+  string request_id = 5;
+  string artifact_uri = 6;
+  optional int32 iteration_count = 7;
+  optional string created_by = 8;
+}
+
+message EvalSummary {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message GetEvalByNameRequest {
+  string name = 1;
+}
+
+message GetEvalByNameResponse {
+  EvalSummary eval = 1;
+}
+
+message GetEvalCronJobByNameRequest {
+  string name = 1;
+}
+
+message GetEvalCronJobByNameResponse {
+  EvalCronJobSummary job = 1;
+}
+
+message GetRunRequest {
+  optional string request_id = 1;
+  optional string artifact_uri = 2;
+}
+
+message GetRunResponse {
+  EvalRunRecord run = 1;
+}
+
+message HeartbeatProgress {
+  int32 completed_count = 1;
+  int32 failed_count = 2;
+  int32 running_count = 3;
+  int32 total_count = 4;
+  optional int32 retry_count = 5;
+}
+
+message HeartbeatRequest {
+  string run_id = 1;
+  optional HeartbeatProgress progress = 2;
+}
+
+message HeartbeatResponse {
+  bool ok = 1;
+  bool kill_requested = 2;
+}
+
+message ListEvalCronJobsRequest {
+}
+
+message ListEvalCronJobsResponse {
+  repeated EvalCronJobSummary jobs = 1;
+}
+
+message LogRunMetricsRequest {
+  string run_id = 1;
+  repeated RunMetricItem metrics = 2;
+}
+
+message LogRunMetricsResponse {
+  int32 count = 1;
+}
+
+message RequestKillRequest {
+  string run_id = 1;
+}
+
+message RequestKillResponse {
+  bool ok = 1;
+}
+
+message RunMetricItem {
+  string key = 1;
+  double value_num = 2;
+  string value_text = 3;
+  string unit = 4;
+  google.protobuf.Struct tags = 5;
+  int32 step = 6;
+  google.protobuf.Timestamp ts = 7;
+}
+
+message RunParamKV {
+  string key_path = 1;
+  oneof value {
+    string value_text = 2;
+    double value_num = 3;
+    bool value_bool = 4;
+    google.protobuf.Struct value_json = 5;
+    bool value_null = 6;
+  }
+}
+
+message RunTagKV {
+  string key = 1;
+  string value = 2;
+}
+
+message SetEvalRunRlEvalJobStepRequest {
+  optional string run_id = 1;
+  optional string rl_eval_job_step_id = 2;
+  optional string request_id = 3;
+  optional string job_id = 4;
+  optional int32 step = 5;
+}
+
+message SetEvalRunRlEvalJobStepResponse {
+  bool ok = 1;
+}
+
+message SetRayJobNameRequest {
+  string run_id = 1;
+  string ray_job_name = 2;
+}
+
+message SetRayJobNameResponse {
+  bool ok = 1;
+}
+
+message SetRunParamsRequest {
+  string run_id = 1;
+  repeated RunParamKV params = 2;
+  bool replace_existing = 3;
+}
+
+message SetRunParamsResponse {
+  int32 count = 1;
+}
+
+message SetRunSummaryRequest {
+  string run_id = 1;
+  google.protobuf.Struct summary = 2;
+  optional string artifact_uri = 3;
+}
+
+message SetRunSummaryResponse {
+  bool ok = 1;
+}
+
+message SetRunTagsRequest {
+  string run_id = 1;
+  repeated RunTagKV tags = 2;
+  bool replace_existing = 3;
+}
+
+message SetRunTagsResponse {
+  int32 count = 1;
+}
+
+message UpdateRlEvalJobRequest {
+  string job_id = 1;
+  optional RlEvalJobDbStatus status = 2;
+  optional string ray_job_name = 3;
+  optional string ray_job_namespace = 4;
+  optional string experiment_name = 5;
+  optional google.protobuf.Timestamp started_at = 6;
+  optional google.protobuf.Timestamp finished_at = 7;
+}
+
+message UpdateRlEvalJobResponse {
+  bool ok = 1;
+}
+
+message UpdateRlEvalStepDatasetEvalRequest {
+  string job_id = 1;
+  int32 step = 2;
+  optional RlEvalStepDbStatus status = 3;
+  optional int32 progress_completed = 4;
+  optional int32 progress_failed = 5;
+  optional int32 progress_total = 6;
+  optional google.protobuf.Struct metrics = 7;
+  optional google.protobuf.Timestamp completed_at = 8;
+}
+
+message UpdateRlEvalStepDatasetEvalResponse {
+  bool ok = 1;
+}
+
+message UpdateRunStatusRequest {
+  string run_id = 1;
+  EvalRunStatus status = 2;
+  optional string error_message = 3;
+  optional google.protobuf.Timestamp end_time = 4;
+}
+
+message UpdateRunStatusResponse {
+  bool ok = 1;
+}
+
+message UpsertRlEvalJobStepRequest {
+  string job_id = 1;
+  int32 step = 2;
+  optional RlEvalStepDbStatus status = 3;
+  optional google.protobuf.Timestamp started_at = 9;
+  optional google.protobuf.Timestamp finished_at = 10;
+}
+
+message UpsertRlEvalJobStepResponse {
+  bool ok = 1;
+  string step_id = 2;
+}
+
+message UpsertRunRolloutStatusRequest {
+  string run_id = 1;
+  string rollout_request_id = 2;
+  string data_point_id = 3;
+  int32 iteration_no = 4;
+  EvalRolloutStatus status = 5;
+  optional string message = 6;
+  optional string s3_task_result_key = 7;
+  optional double latency_ms = 8;
+  optional google.protobuf.Struct metrics = 9;
+  optional google.protobuf.Struct metrics_by_scorer = 10;
+  optional google.protobuf.Struct error = 11;
+  optional string error_message = 12;
+  optional google.protobuf.Timestamp end_time = 13;
+  optional int32 prompt_tokens = 14;
+  optional int32 completion_tokens = 15;
+  optional int32 cache_read_tokens = 16;
+  optional int32 cache_write_tokens = 17;
+  optional double total_cost_usd = 18;
+  optional google.protobuf.Struct structured_outputs_by_scorer = 19;
+}
+
+message UpsertRunRolloutStatusResponse {
+  bool ok = 1;
+}
+
+service EvalTrackingService {
+  rpc CreateEval (CreateEvalRequest) returns (CreateEvalResponse);
+  rpc GetEvalByName (GetEvalByNameRequest) returns (GetEvalByNameResponse);
+  rpc GetRun (GetRunRequest) returns (GetRunResponse);
+  rpc CreateRun (CreateRunRequest) returns (CreateRunResponse);
+  rpc UpdateRunStatus (UpdateRunStatusRequest) returns (UpdateRunStatusResponse);
+  rpc SetRunSummary (SetRunSummaryRequest) returns (SetRunSummaryResponse);
+  rpc LogRunMetrics (LogRunMetricsRequest) returns (LogRunMetricsResponse);
+  rpc SetRunParams (SetRunParamsRequest) returns (SetRunParamsResponse);
+  rpc SetRunTags (SetRunTagsRequest) returns (SetRunTagsResponse);
+  rpc UpsertRunRolloutStatus (UpsertRunRolloutStatusRequest) returns (UpsertRunRolloutStatusResponse);
+  rpc Heartbeat (HeartbeatRequest) returns (HeartbeatResponse);
+  rpc RequestKill (RequestKillRequest) returns (RequestKillResponse);
+  rpc SetRayJobName (SetRayJobNameRequest) returns (SetRayJobNameResponse);
+  rpc CreateEvalCronJob (CreateEvalCronJobRequest) returns (CreateEvalCronJobResponse);
+  rpc GetEvalCronJobByName (GetEvalCronJobByNameRequest) returns (GetEvalCronJobByNameResponse);
+  rpc ListEvalCronJobs (ListEvalCronJobsRequest) returns (ListEvalCronJobsResponse);
+  rpc DeleteEvalCronJobByName (DeleteEvalCronJobByNameRequest) returns (DeleteEvalCronJobByNameResponse);
+  rpc UpdateRlEvalJob (UpdateRlEvalJobRequest) returns (UpdateRlEvalJobResponse);
+  rpc UpsertRlEvalJobStep (UpsertRlEvalJobStepRequest) returns (UpsertRlEvalJobStepResponse);
+  rpc SetEvalRunRlEvalJobStep (SetEvalRunRlEvalJobStepRequest) returns (SetEvalRunRlEvalJobStepResponse);
+  rpc UpdateRlEvalStepDatasetEval (UpdateRlEvalStepDatasetEvalRequest) returns (UpdateRlEvalStepDatasetEvalResponse);
+}

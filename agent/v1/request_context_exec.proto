@@ -42,6 +42,18 @@ message ImageProto {
   string mime_type = 7;
 }
 
+message MatchedInstalledPlugin {
+  string display_name = 1;
+  string description = 2;
+  string matched_keyword = 3;
+  repeated RecentlyAddedPlugin.CapabilityDescriptor skills = 4;
+  repeated RecentlyAddedPlugin.CapabilityDescriptor subagents = 5;
+  repeated RecentlyAddedPlugin.CapabilityDescriptor hooks = 6;
+  repeated RecentlyAddedPlugin.CapabilityDescriptor rules = 7;
+  repeated RecentlyAddedPlugin.CapabilityDescriptor commands = 8;
+  repeated string mcp_servers = 9;
+}
+
 message PrecomputedHumanChange {
   string path = 1;
   repeated PrecomputedHumanChangeRenderedDiff rendered_diffs = 2;
@@ -106,6 +118,8 @@ message RequestContext {
   optional McpMetaToolOptions mcp_meta_tool_options = 34;
   optional bool read_lints_enabled = 35;
   optional bool mcp_info_complete = 36;
+  repeated CursorRule non_file_rules = 37;
+  optional MatchedInstalledPlugin matched_installed_plugin = 38;
 }
 
 message RequestContextArgs {
@@ -131,6 +145,7 @@ message RequestContextEnv {
   optional bool secret_redaction_enabled = 18;
   optional bool computer_use_supported = 19;
   optional bool is_working_dir_home_dir = 20;
+  optional string process_working_directory = 21;
 }
 
 message RequestContextError {

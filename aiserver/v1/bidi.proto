@@ -25,3 +25,7 @@ message BidiPollResponse {
 message BidiRequestId {
   string request_id = 1;
 }
+
+service BidiService {
+  rpc BidiAppend (BidiAppendRequest) returns (BidiAppendResponse);
+}

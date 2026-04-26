@@ -3,6 +3,7 @@ syntax = "proto3";
 package agent.v1;
 
 import "agent/v1/agent.proto";
+import "agent/v1/selected_context.proto";
 import "agent/v1/subagents.proto";
 
 enum ForceBackgroundSubagentStatus {
@@ -46,6 +47,44 @@ message SubagentArgs {
   optional bool interrupt = 13;
   TaskMode mode = 14;
   optional string fork_agent_id = 15;
+  optional string root_parent_conversation_id = 16;
+  optional SelectedContext selected_context = 17;
+  optional bool direct_meta_parent_child_subagent = 18;
+}
+
+message SubagentAwaitArgs {
+  string agent_id = 1;
+  uint32 timeout_ms = 2;
+}
+
+message SubagentAwaitComplete {
+  string agent_id = 1;
+  optional string transcript_path = 2;
+  int32 tool_call_count = 3;
+  optional string final_message = 4;
+}
+
+message SubagentAwaitError {
+  optional string agent_id = 1;
+  string error = 2;
+}
+
+message SubagentAwaitNotFound {
+  string agent_id = 1;
+}
+
+message SubagentAwaitResult {
+  oneof result {
+    SubagentAwaitComplete complete = 1;
+    SubagentAwaitStillRunning still_running = 2;
+    SubagentAwaitNotFound not_found = 3;
+    SubagentAwaitError error = 4;
+  }
+}
+
+message SubagentAwaitStillRunning {
+  string agent_id = 1;
+  optional string transcript_path = 2;
 }
 
 message SubagentError {

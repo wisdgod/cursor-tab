@@ -40,3 +40,8 @@ message WarmApplyRequest {
 
 message WarmApplyResponse {
 }
+
+service FastApplyService {
+  rpc ReportEditFate (ReportEditFateRequest) returns (ReportEditFateResponse);
+  rpc WarmApply (WarmApplyRequest) returns (WarmApplyResponse);
+}

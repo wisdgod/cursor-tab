@@ -1,0 +1,386 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/online_metrics.proto";
+import "aiserver/v1/profiling.proto";
+import "aiserver/v1/review.proto";
+import "aiserver/v1/utils.proto";
+
+enum BugbotPlanType {
+  BUGBOT_PLAN_TYPE_UNSPECIFIED = 0;
+  BUGBOT_PLAN_TYPE_TEAM = 1;
+  BUGBOT_PLAN_TYPE_USER = 2;
+}
+
+enum ButtonType {
+  BUTTON_TYPE_UNSPECIFIED = 0;
+  BUTTON_TYPE_LEADING = 1;
+  BUTTON_TYPE_PRIMARY = 2;
+  BUTTON_TYPE_SECONDARY = 3;
+}
+
+enum ClientSurface {
+  CLIENT_SURFACE_UNSPECIFIED = 0;
+  CLIENT_SURFACE_EDITOR = 1;
+  CLIENT_SURFACE_GLASS = 2;
+}
+
+enum ClientUpdateLevel {
+  CLIENT_UPDATE_LEVEL_UNSPECIFIED = 0;
+  CLIENT_UPDATE_LEVEL_NONE = 1;
+  CLIENT_UPDATE_LEVEL_RECOMMENDED = 2;
+  CLIENT_UPDATE_LEVEL_REQUIRED = 3;
+}
+
+enum DisplayMode {
+  DISPLAY_MODE_UNSPECIFIED = 0;
+  DISPLAY_MODE_TOAST = 1;
+  DISPLAY_MODE_MODAL = 2;
+}
+
+enum Http2Config {
+  HTTP2_CONFIG_UNSPECIFIED = 0;
+  HTTP2_CONFIG_FORCE_ALL_DISABLED = 1;
+  HTTP2_CONFIG_FORCE_ALL_ENABLED = 2;
+  HTTP2_CONFIG_FORCE_BIDI_DISABLED = 3;
+  HTTP2_CONFIG_FORCE_BIDI_ENABLED = 4;
+}
+
+enum InAppAdTrigger {
+  IN_APP_AD_TRIGGER_UNSPECIFIED = 0;
+  IN_APP_AD_TRIGGER_MOUNT = 1;
+  IN_APP_AD_TRIGGER_FIND_ISSUES = 2;
+  IN_APP_AD_TRIGGER_GIT_PUSH = 3;
+}
+
+enum InferenceProviderWarningTrigger {
+  INFERENCE_PROVIDER_WARNING_TRIGGER_UNSPECIFIED = 0;
+  INFERENCE_PROVIDER_WARNING_TRIGGER_ON_SELECT = 1;
+  INFERENCE_PROVIDER_WARNING_TRIGGER_ON_ERROR = 2;
+}
+
+enum RemoteConnectionType {
+  REMOTE_CONNECTION_TYPE_UNSPECIFIED = 0;
+  REMOTE_CONNECTION_TYPE_LOCAL = 1;
+  REMOTE_CONNECTION_TYPE_WSL = 2;
+  REMOTE_CONNECTION_TYPE_SSH = 3;
+  REMOTE_CONNECTION_TYPE_DEVCONTAINER = 4;
+  REMOTE_CONNECTION_TYPE_DEVCONTAINER_SSH = 5;
+  REMOTE_CONNECTION_TYPE_DEVCONTAINER_WSL = 6;
+}
+
+message AdButton {
+  string text = 1;
+  ButtonType button_type = 2;
+  oneof action {
+    string external_url = 3;
+    string command_id = 4;
+    ClientAction client_action = 5;
+  }
+}
+
+message AdContent {
+  optional string tag = 1;
+  string title = 2;
+  repeated AdSection sections = 3;
+  optional bool center_title = 4;
+}
+
+message AdHeader {
+  optional string banner_url = 1;
+  optional string banner_url_light = 2;
+  optional string banner_url_dark = 3;
+}
+
+message AdSection {
+  string icon_svg = 1;
+  string title = 2;
+  string description = 3;
+  optional bool is_beta = 4;
+}
+
+message AgentLayoutPolicy {
+  repeated string allowed_action_ids = 1;
+  repeated string denied_action_ids = 2;
+}
+
+message AgentTelemetryConfig {
+  bool enabled = 1;
+}
+
+message AgentUrlConfig {
+  string agent_url = 1;
+  string agentn_url = 2;
+}
+
+message AutoContextConfig {
+  bool enabled = 1;
+  bool enabled_fallback = 2;
+  bool enabled_git_graph = 3;
+  bool enabled_sem_search = 4;
+  bool enabled_v2 = 5;
+}
+
+message BackgroundComposerConfig {
+  bool enable_background_agent = 1;
+  bool show_background_agent_in_beta_settings = 2;
+  optional int32 window_in_window_preload_count = 3;
+  optional double window_in_window_ping_interval_ms = 4;
+  optional bool show_background_agent_disclaimer = 5;
+  optional bool show_background_agent_slack_ad = 6;
+  bool show_background_agent_history_action = 7;
+  optional int32 max_window_in_windows = 8;
+  bool use_modal_experience = 9;
+}
+
+message BugbotConfig {
+  bool bugbot_plan_enabled = 1;
+  BugbotPlanType bugbot_plan_type = 2;
+}
+
+message ChatConfig {
+  bool disable_unification = 1;
+  int32 full_context_token_limit = 2;
+  bool disable_yolo_mode = 3;
+  int32 max_rule_length = 4;
+  int32 max_mcp_tools = 5;
+  int32 warn_mcp_tools = 6;
+  string summarization_message = 7;
+  int32 num_files_for_memory_generation = 8;
+  bool memory_default_enabled = 9;
+  int32 num_summarizations_before_warning_shown = 10;
+  bool cursor_rules_read_file_fix_enabled = 11;
+  bool dont_send_ctrl_c_before_command = 12;
+  int32 client_statsig_poll_interval_ms = 13;
+  bool disable_statsig = 14;
+  repeated string list_dir_v2_predefined_ignore_globs = 15;
+}
+
+message ClientTracingConfig {
+  double global_sample_rate = 1;
+  double traces_sample_rate = 2;
+  double logger_sample_rate = 3;
+  double minidump_sample_rate = 4;
+  double error_rate_limit = 5;
+  double performance_unit_rate_limit = 6;
+  double profiles_sample_rate = 7;
+  double json_stringify_sample_rate = 8;
+}
+
+message ClientVersionStatus {
+  ClientUpdateLevel update_level = 1;
+  string current_client_version = 2;
+  string min_supported_client_version = 3;
+  string min_allowed_client_version = 4;
+  optional string message = 5;
+}
+
+message CodebaseTelemetryConfig {
+  bool enabled = 1;
+  string reset_token = 2;
+}
+
+message DevEnvironment {
+  bool has_alternative_cli = 1;
+  bool has_cursor_agent_cli = 2;
+}
+
+message FolderSizeLimit {
+  int32 max_total_bytes = 1;
+  int32 max_num_files = 2;
+}
+
+message GetServerConfigRequest {
+  bool telem_enabled = 1;
+  repeated double bug_bot_dismissed_notification_last_10_times_unix_ms = 2;
+  repeated double bug_bot_viewed_notification_last_10_times_unix_ms = 3;
+  VscodeOSStatistics os_stats = 4;
+  VscodeOSProperties os_properties = 5;
+  RemoteAuthority remote_authority = 6;
+  InAppAdTrigger in_app_ad_trigger = 7;
+  DevEnvironment dev_environment = 8;
+  ClientSurface client_surface = 9;
+}
+
+message GetServerConfigResponse {
+  BugConfigResponse bug_config_response = 1;
+  bool is_dev_do_not_use_for_secret_things_because_can_be_spoofed_by_users = 2;
+  IndexingConfig indexing_config = 3;
+  ClientTracingConfig client_tracing_config = 4;
+  ChatConfig chat_config = 5;
+  string config_version = 6;
+  Http2Config http2_config = 7;
+  ProfilingConfig profiling_config = 8;
+  MetricsConfig metrics_config = 9;
+  BackgroundComposerConfig background_composer_config = 10;
+  AutoContextConfig auto_context_config = 11;
+  repeated ModelMigration model_migrations = 12;
+  MemoryMonitorConfig memory_monitor_config = 13;
+  FolderSizeLimit folder_size_limit = 14;
+  OnlineMetricsConfig online_metrics_config = 20;
+  GitIndexingConfig git_indexing_config = 15;
+  PerformanceEventsConfig performance_events_config = 16;
+  optional InAppAd current_in_app_ad = 17;
+  TraceConfig trace_config = 18;
+  optional RunTerminalServerConfig run_terminal_server_config = 19;
+  InteractionConfig interaction_config = 21;
+  AgentTelemetryConfig agent_telemetry_config = 22;
+  optional ClientVersionStatus client_version_status = 23;
+  optional UpdateConfig update_config = 24;
+  optional AgentLayoutPolicy agent_layout_policy = 25;
+  bool use_nlb_for_nal = 26;
+  AgentUrlConfig agent_url_config = 27;
+  optional bool cli_sandbox_default_enabled = 28;
+  optional bool claude_code_hooks_enabled = 29;
+  optional TerminalTipConfig terminal_tip_config = 30;
+  optional string model_picker_nudge = 31;
+  repeated InferenceProviderWarning inference_provider_warnings = 32;
+  optional OnboardingConfig onboarding_config = 33;
+  optional BugbotConfig bugbot_config = 34;
+  optional CodebaseTelemetryConfig codebase_telemetry_config = 35;
+}
+
+message GitIndexingConfig {
+  optional bool enabled = 1;
+  optional int32 max_pr_count = 2;
+  optional int32 max_pr_size = 3;
+  optional int32 pr_embedding_context = 4;
+  optional int32 js_concurrency = 5;
+  optional int32 js_chunk_size = 6;
+  optional int32 cpu_concurrency = 7;
+  optional int32 indexing_period_seconds = 8;
+  optional int32 max_attempts_per_pr = 9;
+  optional bool allow_index_copy_from_server = 10;
+}
+
+message InAppAd {
+  string id = 1;
+  AdHeader header = 2;
+  AdContent content = 3;
+  repeated AdButton buttons = 4;
+  optional bool force_dark_close_button = 5;
+  DisplayMode display_mode = 6;
+  optional string analytics_variant = 7;
+  optional ModalDisplayConfig modal_display_config = 8;
+  repeated ClientSurface target_surfaces = 9;
+}
+
+message IndexingConfig {
+  int32 max_concurrent_uploads = 1;
+  int32 absolute_max_number_files = 2;
+  int32 max_file_retries = 3;
+  int32 sync_concurrency = 4;
+  int32 auto_indexing_max_num_files = 5;
+  int32 indexing_period_seconds = 6;
+  string repo42_auth_token = 7;
+  optional bool incremental = 8;
+  optional string default_user_path_encryption_key = 9;
+  optional string default_team_path_encryption_key = 10;
+  optional bool multi_root_indexing_enabled = 11;
+  double copy_status_check_period_seconds = 12;
+  int32 copy_timeout_seconds = 13;
+  int32 max_batch_bytes = 14;
+  int32 max_batch_num_requests = 15;
+  int32 max_sync_merkle_batch_size = 16;
+}
+
+message InferenceProviderWarning {
+  string message = 1;
+  repeated string affected_models = 2;
+  optional string fallback_model = 3;
+  InferenceProviderWarningTrigger trigger = 4;
+}
+
+message InteractionConfig {
+  bool profiling_enabled = 1;
+  bool metrics_enabled = 2;
+  optional int32 profiling_interval_sec = 3;
+  optional int32 metrics_interval_sec = 4;
+  optional int32 profiling_max_buffer_size = 5;
+  optional int32 profiling_interaction_duration_threshold_ms = 6;
+  optional int32 profiling_sample_interval_ms = 7;
+  optional int32 metrics_min_interactions_for_loaf = 8;
+  optional int32 metrics_min_foreground_time_ms = 9;
+  optional int32 metrics_combined_inp_drop_highest_count = 10;
+  optional int32 metrics_click_inp_drop_highest_count = 11;
+  optional int32 metrics_keypress_inp_drop_highest_count = 12;
+  optional int32 metrics_startup_threshold_sec = 13;
+}
+
+message MemoryMonitorConfig {
+  bool enabled = 1;
+  bool show_status_entry = 2;
+  optional int32 base_threshold_mb = 3;
+  optional int32 critical_offset_mb = 4;
+  optional int32 process_memory_interval_sec = 5;
+}
+
+message MetricsConfig {
+  bool enabled_in_privacy_mode = 2;
+  bool enabled_in_non_privacy_mode = 3;
+}
+
+message ModalDisplayConfig {
+  optional string background_gradient = 1;
+  optional string description = 2;
+  optional string background_gradient_light = 3;
+  optional string background_gradient_dark = 4;
+}
+
+message ModelMigration {
+  string id = 1;
+  string model_setting = 2;
+  string target_model = 3;
+  optional string previous_model = 4;
+  optional bool migrate_mode_models = 5;
+  optional bool remove_previous_model = 6;
+  optional bool max_mode = 7;
+  optional bool migrate_old_composers_and_current_composer = 8;
+}
+
+message OnboardingConfig {
+  repeated string marketplace_plugin_names = 1;
+}
+
+message PerformanceEventsConfig {
+  bool enabled = 1;
+  optional int32 buffer_size = 2;
+  optional int32 flush_interval_ms = 3;
+}
+
+message RemoteAuthority {
+  RemoteConnectionType connection_type = 1;
+}
+
+message RunTerminalServerConfig {
+  repeated string composite_shell_commands = 1;
+  repeated string safe_shell_commands = 2;
+}
+
+message TerminalTipConfig {
+  string message = 1;
+  bool enabled = 2;
+}
+
+message TraceConfig {
+  bool enabled = 1;
+  optional int32 buffer_size = 2;
+  optional int32 flush_interval_ms = 3;
+  optional double sample_rate = 4;
+}
+
+message UpdateConfig {
+  enum UpdateMode {
+    UPDATE_MODE_UNSPECIFIED = 0;
+    UPDATE_MODE_ONE_TIME = 1;
+  }
+
+  string release_track = 1;
+  UpdateMode mode = 2;
+  optional int32 applied_at = 3;
+}
+
+service ServerConfigService {
+  rpc GetServerConfig (GetServerConfigRequest) returns (GetServerConfigResponse);
+}

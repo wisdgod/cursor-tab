@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/telemetry.proto";
+
+service TraceService {
+  rpc SubmitSpans (SubmitSpansRequest) returns (SubmitSpansResponse);
+}

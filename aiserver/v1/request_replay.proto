@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message RecordRequestRequest {
+  string request_id = 1;
+  string auth_id = 2;
+  string json_payload = 3;
+}
+
+message RecordRequestResponse {
+}
+
+message ReplayRequestRequest {
+  string request_id = 1;
+  string auth_id = 2;
+}
+
+message ReplayRequestResponse {
+  string json_payload = 1;
+}
+
+message RequestReplayHealthRequest {
+}
+
+message RequestReplayHealthResponse {
+  bool healthy = 1;
+}
+
+service RequestReplayService {
+  rpc Health (RequestReplayHealthRequest) returns (RequestReplayHealthResponse);
+  rpc RecordRequest (RecordRequestRequest) returns (RecordRequestResponse);
+  rpc ReplayRequest (ReplayRequestRequest) returns (ReplayRequestResponse);
+}
