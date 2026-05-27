@@ -4,9 +4,9 @@ package agent.v1;
 
 import "agent/v1/cursor_rules.proto";
 
-message ReadRange {
-  uint32 start_line = 1;
-  uint32 end_line = 2;
+message ReadToolCall {
+  ReadToolArgs args = 1;
+  ReadToolResult result = 2;
 }
 
 message ReadToolArgs {
@@ -16,15 +16,6 @@ message ReadToolArgs {
   optional bool include_line_numbers = 5;
 }
 
-message ReadToolCall {
-  ReadToolArgs args = 1;
-  ReadToolResult result = 2;
-}
-
-message ReadToolError {
-  string error_message = 1;
-}
-
 message ReadToolResult {
   oneof result {
     ReadToolSuccess success = 1;
@@ -32,13 +23,12 @@ message ReadToolResult {
   }
 }
 
+message ReadRange {
+  uint32 start_line = 1;
+  uint32 end_line = 2;
+}
+
 message ReadToolSuccess {
-  oneof output {
-    string content = 1;
-    bytes data = 6;
-    bytes data_blob_id = 9;
-    bytes content_blob_id = 10;
-  }
   bool is_empty = 2;
   bool exceeded_limit = 3;
   uint32 total_lines = 4;
@@ -48,4 +38,14 @@ message ReadToolSuccess {
   optional bool include_line_numbers = 11;
   repeated string related_cursor_rule_paths = 12;
   repeated CursorRule related_cursor_rules = 13;
+  oneof output {
+    string content = 1;
+    bytes data = 6;
+    bytes data_blob_id = 9;
+    bytes content_blob_id = 10;
+  }
+}
+
+message ReadToolError {
+  string error_message = 1;
 }

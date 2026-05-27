@@ -4,11 +4,6 @@ package agent.v1;
 
 import "agent/v1/mcp_exec.proto";
 
-message McpToolCall {
-  McpArgs args = 1;
-  McpToolResult result = 2;
-}
-
 message McpToolError {
   string error = 1;
   string read_tool_def_reminder = 2;
@@ -21,4 +16,9 @@ message McpToolResult {
     McpRejected rejected = 3;
     McpPermissionDenied permission_denied = 4;
   }
+}
+
+message McpToolCall {
+  McpArgs args = 1;
+  McpToolResult result = 2;
 }

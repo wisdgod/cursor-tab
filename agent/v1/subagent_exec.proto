@@ -12,23 +12,6 @@ enum ForceBackgroundSubagentStatus {
   FORCE_BACKGROUND_SUBAGENT_STATUS_NOT_FOUND = 2;
 }
 
-message ClientContinuationConfig {
-  int32 idle_threshold = 1;
-  int32 max_loops = 2;
-  string nudge_message = 3;
-  string escape_message_template = 4;
-  bool collect_background_children = 5;
-  string children_completed_message_template = 6;
-}
-
-message ForceBackgroundSubagentArgs {
-  string tool_call_id = 1;
-}
-
-message ForceBackgroundSubagentResult {
-  ForceBackgroundSubagentStatus status = 1;
-}
-
 message SubagentArgs {
   string tool_call_id = 1;
   string subagent_type = 2;
@@ -39,38 +22,40 @@ message SubagentArgs {
   optional bool run_in_background = 7;
   ClientContinuationConfig continuation_config = 8;
   optional string parent_conversation_id = 9;
-  oneof credentials {
-    ApiKeyCredentials api_key_credentials = 10;
-    AzureCredentials azure_credentials = 11;
-    BedrockCredentials bedrock_credentials = 12;
-  }
   optional bool interrupt = 13;
   TaskMode mode = 14;
   optional string fork_agent_id = 15;
   optional string root_parent_conversation_id = 16;
   optional SelectedContext selected_context = 17;
   optional bool direct_meta_parent_child_subagent = 18;
+  SubagentExecutionEnvironment environment = 19;
+  optional string cloud_base_branch = 20;
+  oneof credentials {
+    ApiKeyCredentials api_key_credentials = 10;
+    AzureCredentials azure_credentials = 11;
+    BedrockCredentials bedrock_credentials = 12;
+  }
+}
+
+message ClientContinuationConfig {
+  int32 idle_threshold = 1;
+  int32 max_loops = 2;
+  string nudge_message = 3;
+  string escape_message_template = 4;
+  bool collect_background_children = 5;
+  string children_completed_message_template = 6;
+}
+
+message SubagentResult {
+  oneof result {
+    SubagentSuccess success = 1;
+    SubagentError error = 2;
+  }
 }
 
 message SubagentAwaitArgs {
   string agent_id = 1;
   uint32 timeout_ms = 2;
-}
-
-message SubagentAwaitComplete {
-  string agent_id = 1;
-  optional string transcript_path = 2;
-  int32 tool_call_count = 3;
-  optional string final_message = 4;
-}
-
-message SubagentAwaitError {
-  optional string agent_id = 1;
-  string error = 2;
-}
-
-message SubagentAwaitNotFound {
-  string agent_id = 1;
 }
 
 message SubagentAwaitResult {
@@ -82,21 +67,25 @@ message SubagentAwaitResult {
   }
 }
 
+message SubagentAwaitComplete {
+  string agent_id = 1;
+  optional string transcript_path = 2;
+  int32 tool_call_count = 3;
+  optional string final_message = 4;
+}
+
 message SubagentAwaitStillRunning {
   string agent_id = 1;
   optional string transcript_path = 2;
 }
 
-message SubagentError {
-  optional string agent_id = 1;
-  string error = 2;
+message SubagentAwaitNotFound {
+  string agent_id = 1;
 }
 
-message SubagentResult {
-  oneof result {
-    SubagentSuccess success = 1;
-    SubagentError error = 2;
-  }
+message SubagentAwaitError {
+  optional string agent_id = 1;
+  string error = 2;
 }
 
 message SubagentSuccess {
@@ -105,4 +94,17 @@ message SubagentSuccess {
   int32 tool_call_count = 3;
   SubagentBackgroundReason background_reason = 4;
   optional string transcript_path = 5;
+}
+
+message SubagentError {
+  optional string agent_id = 1;
+  string error = 2;
+}
+
+message ForceBackgroundSubagentArgs {
+  string tool_call_id = 1;
+}
+
+message ForceBackgroundSubagentResult {
+  ForceBackgroundSubagentStatus status = 1;
 }

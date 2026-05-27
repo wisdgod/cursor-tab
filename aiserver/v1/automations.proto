@@ -4,11 +4,28 @@ package aiserver.v1;
 
 import "google/protobuf/struct.proto";
 
-enum AutomationFilterDecision {
-  AUTOMATION_FILTER_DECISION_UNSPECIFIED = 0;
-  AUTOMATION_FILTER_DECISION_ALLOW = 1;
-  AUTOMATION_FILTER_DECISION_BLOCK = 2;
-  AUTOMATION_FILTER_DECISION_ERROR = 3;
+enum SlackCompletionReactionMode {
+  SLACK_COMPLETION_REACTION_MODE_UNSPECIFIED = 0;
+  SLACK_COMPLETION_REACTION_MODE_ON = 1;
+  SLACK_COMPLETION_REACTION_MODE_OFF = 2;
+  SLACK_COMPLETION_REACTION_MODE_CUSTOM = 3;
+}
+
+enum AutomationScope {
+  AUTOMATION_SCOPE_UNSPECIFIED = 0;
+  AUTOMATION_SCOPE_USER = 1;
+  AUTOMATION_SCOPE_TEAM = 2;
+  AUTOMATION_SCOPE_TEAM_VISIBLE = 3;
+  AUTOMATION_SCOPE_TEAM_EDITABLE = 4;
+  AUTOMATION_SCOPE_TEAM_EDITABLE_USER = 5;
+}
+
+enum AutomationCreationSource {
+  AUTOMATION_CREATION_SOURCE_UNSPECIFIED = 0;
+  AUTOMATION_CREATION_SOURCE_PORTAL_WEB = 1;
+  AUTOMATION_CREATION_SOURCE_GLASS_UI = 2;
+  AUTOMATION_CREATION_SOURCE_SKILL_MCP = 3;
+  AUTOMATION_CREATION_SOURCE_CONFIG_AS_CODE = 4;
 }
 
 enum AutomationManagedBy {
@@ -16,6 +33,79 @@ enum AutomationManagedBy {
   AUTOMATION_MANAGED_BY_UI = 1;
   AUTOMATION_MANAGED_BY_DEPLOY = 2;
   AUTOMATION_MANAGED_BY_ANY = 3;
+}
+
+enum PromptEffortLevel {
+  PROMPT_EFFORT_LEVEL_UNSPECIFIED = 0;
+  PROMPT_EFFORT_LEVEL_STANDARD = 1;
+  PROMPT_EFFORT_LEVEL_HARD = 10;
+}
+
+enum GitPullRequestAction {
+  GIT_PULL_REQUEST_ACTION_UNSPECIFIED = 0;
+  GIT_PULL_REQUEST_ACTION_OPENED = 1;
+  GIT_PULL_REQUEST_ACTION_PUSHED = 2;
+  GIT_PULL_REQUEST_ACTION_MERGED = 3;
+  GIT_PULL_REQUEST_ACTION_COMMENTED = 4;
+  GIT_PULL_REQUEST_ACTION_DRAFT_OPENED = 5;
+  GIT_PULL_REQUEST_ACTION_LABELED = 6;
+  GIT_PULL_REQUEST_ACTION_UNLABELED = 7;
+}
+
+enum GitCICompletionCondition {
+  GIT_CI_COMPLETION_CONDITION_UNSPECIFIED = 0;
+  GIT_CI_COMPLETION_CONDITION_FAILURE = 1;
+  GIT_CI_COMPLETION_CONDITION_SUCCESS = 2;
+  GIT_CI_COMPLETION_CONDITION_ANY = 3;
+}
+
+enum PlatformActionStatus {
+  PLATFORM_ACTION_STATUS_UNSPECIFIED = 0;
+  PLATFORM_ACTION_STATUS_PENDING = 1;
+  PLATFORM_ACTION_STATUS_SUCCESS = 2;
+  PLATFORM_ACTION_STATUS_ERROR = 3;
+  PLATFORM_ACTION_STATUS_SKIPPED = 4;
+}
+
+enum PlatformActionScope {
+  PLATFORM_ACTION_SCOPE_UNSPECIFIED = 0;
+  PLATFORM_ACTION_SCOPE_WORKFLOW = 1;
+  PLATFORM_ACTION_SCOPE_TRIGGER = 2;
+}
+
+enum PlatformTriggerType {
+  PLATFORM_TRIGGER_TYPE_UNSPECIFIED = 0;
+  PLATFORM_TRIGGER_TYPE_GIT = 1;
+  PLATFORM_TRIGGER_TYPE_SLACK = 2;
+  PLATFORM_TRIGGER_TYPE_LINEAR = 3;
+  PLATFORM_TRIGGER_TYPE_CRON = 4;
+  PLATFORM_TRIGGER_TYPE_WEBHOOK = 5;
+  PLATFORM_TRIGGER_TYPE_SLACK_CHANNEL_CREATED = 6;
+  PLATFORM_TRIGGER_TYPE_PAGERDUTY = 7;
+  PLATFORM_TRIGGER_TYPE_SENTRY = 8;
+  PLATFORM_TRIGGER_TYPE_MICROSOFT_TEAMS = 9;
+  PLATFORM_TRIGGER_TYPE_MICROSOFT_TEAMS_CHANNEL_CREATED = 10;
+}
+
+enum AutomationRunListKind {
+  AUTOMATION_RUN_LIST_KIND_UNSPECIFIED = 0;
+  AUTOMATION_RUN_LIST_KIND_EXECUTION_RUNS = 1;
+  AUTOMATION_RUN_LIST_KIND_FILTER_EVALUATIONS = 2;
+}
+
+enum AutomationFilterDecision {
+  AUTOMATION_FILTER_DECISION_UNSPECIFIED = 0;
+  AUTOMATION_FILTER_DECISION_ALLOW = 1;
+  AUTOMATION_FILTER_DECISION_BLOCK = 2;
+  AUTOMATION_FILTER_DECISION_ERROR = 3;
+}
+
+enum AutomationRunStatus {
+  AUTOMATION_RUN_STATUS_UNSPECIFIED = 0;
+  AUTOMATION_RUN_STATUS_RUNNING = 1;
+  AUTOMATION_RUN_STATUS_FAILED = 2;
+  AUTOMATION_RUN_STATUS_SUCCEEDED = 3;
+  AUTOMATION_RUN_STATUS_SKIPPED = 4;
 }
 
 enum AutomationRunFailureCode {
@@ -31,86 +121,24 @@ enum AutomationRunFailureCode {
   AUTOMATION_RUN_FAILURE_CODE_CONCURRENT_LIMIT_EXCEEDED = 10;
   AUTOMATION_RUN_FAILURE_CODE_BRANCH_NOT_FOUND = 11;
   AUTOMATION_RUN_FAILURE_CODE_MODEL_BLOCKED = 12;
+  AUTOMATION_RUN_FAILURE_CODE_PRIVATE_WORKERS_DISABLED = 13;
+  AUTOMATION_RUN_FAILURE_CODE_PRIVATE_WORKER_RESOURCE_EXHAUSTED = 14;
 }
 
-enum AutomationRunListKind {
-  AUTOMATION_RUN_LIST_KIND_UNSPECIFIED = 0;
-  AUTOMATION_RUN_LIST_KIND_EXECUTION_RUNS = 1;
-  AUTOMATION_RUN_LIST_KIND_FILTER_EVALUATIONS = 2;
-}
-
-enum AutomationRunStatus {
-  AUTOMATION_RUN_STATUS_UNSPECIFIED = 0;
-  AUTOMATION_RUN_STATUS_RUNNING = 1;
-  AUTOMATION_RUN_STATUS_FAILED = 2;
-  AUTOMATION_RUN_STATUS_SUCCEEDED = 3;
-  AUTOMATION_RUN_STATUS_SKIPPED = 4;
-}
-
-enum AutomationScope {
-  AUTOMATION_SCOPE_UNSPECIFIED = 0;
-  AUTOMATION_SCOPE_USER = 1;
-  AUTOMATION_SCOPE_TEAM = 2;
-  AUTOMATION_SCOPE_TEAM_VISIBLE = 3;
-  AUTOMATION_SCOPE_TEAM_EDITABLE = 4;
-  AUTOMATION_SCOPE_TEAM_EDITABLE_USER = 5;
-}
-
-enum GitCICompletionCondition {
-  GIT_CI_COMPLETION_CONDITION_UNSPECIFIED = 0;
-  GIT_CI_COMPLETION_CONDITION_FAILURE = 1;
-  GIT_CI_COMPLETION_CONDITION_SUCCESS = 2;
-  GIT_CI_COMPLETION_CONDITION_ANY = 3;
-}
-
-enum GitPullRequestAction {
-  GIT_PULL_REQUEST_ACTION_UNSPECIFIED = 0;
-  GIT_PULL_REQUEST_ACTION_OPENED = 1;
-  GIT_PULL_REQUEST_ACTION_PUSHED = 2;
-  GIT_PULL_REQUEST_ACTION_MERGED = 3;
-  GIT_PULL_REQUEST_ACTION_COMMENTED = 4;
-  GIT_PULL_REQUEST_ACTION_DRAFT_OPENED = 5;
-  GIT_PULL_REQUEST_ACTION_LABELED = 6;
-  GIT_PULL_REQUEST_ACTION_UNLABELED = 7;
-}
-
-enum PlatformActionScope {
-  PLATFORM_ACTION_SCOPE_UNSPECIFIED = 0;
-  PLATFORM_ACTION_SCOPE_WORKFLOW = 1;
-  PLATFORM_ACTION_SCOPE_TRIGGER = 2;
-}
-
-enum PlatformActionStatus {
-  PLATFORM_ACTION_STATUS_UNSPECIFIED = 0;
-  PLATFORM_ACTION_STATUS_PENDING = 1;
-  PLATFORM_ACTION_STATUS_SUCCESS = 2;
-  PLATFORM_ACTION_STATUS_ERROR = 3;
-  PLATFORM_ACTION_STATUS_SKIPPED = 4;
-}
-
-enum PlatformTriggerType {
-  PLATFORM_TRIGGER_TYPE_UNSPECIFIED = 0;
-  PLATFORM_TRIGGER_TYPE_GIT = 1;
-  PLATFORM_TRIGGER_TYPE_SLACK = 2;
-  PLATFORM_TRIGGER_TYPE_LINEAR = 3;
-  PLATFORM_TRIGGER_TYPE_CRON = 4;
-  PLATFORM_TRIGGER_TYPE_WEBHOOK = 5;
-  PLATFORM_TRIGGER_TYPE_SLACK_CHANNEL_CREATED = 6;
-  PLATFORM_TRIGGER_TYPE_PAGERDUTY = 7;
-  PLATFORM_TRIGGER_TYPE_SENTRY = 8;
-}
-
-enum PromptEffortLevel {
-  PROMPT_EFFORT_LEVEL_UNSPECIFIED = 0;
-  PROMPT_EFFORT_LEVEL_STANDARD = 1;
-  PROMPT_EFFORT_LEVEL_HARD = 10;
-}
-
-enum SlackCompletionReactionMode {
-  SLACK_COMPLETION_REACTION_MODE_UNSPECIFIED = 0;
-  SLACK_COMPLETION_REACTION_MODE_ON = 1;
-  SLACK_COMPLETION_REACTION_MODE_OFF = 2;
-  SLACK_COMPLETION_REACTION_MODE_CUSTOM = 3;
+message Trigger {
+  optional string agentic_filter_prompt = 14;
+  oneof trigger {
+    CronTrigger cron = 1;
+    GitTrigger git = 2;
+    SlackTrigger slack_trigger = 7;
+    LinearTrigger linear = 9;
+    WebhookTrigger webhook = 11;
+    SlackChannelCreatedTrigger slack_channel_created = 12;
+    PagerDutyTrigger pagerduty = 13;
+    SentryTrigger sentry = 15;
+    MicrosoftTeamsTrigger microsoft_teams_trigger = 16;
+    MicrosoftTeamsChannelCreatedTrigger microsoft_teams_channel_created = 17;
+  }
 }
 
 message Action {
@@ -124,7 +152,300 @@ message Action {
     ReadSlackAction read_slack = 10;
     ApprovePrAction approve_pr = 11;
     ResolveReviewThreadsAction resolve_review_threads = 12;
+    MicrosoftTeamsAction microsoft_teams = 13;
+    ReadMicrosoftTeamsAction read_microsoft_teams = 14;
   }
+}
+
+message McpAction {
+  McpServerConfig server = 1;
+}
+
+message McpServerConfig {
+  optional int64 id = 4;
+  string name = 1;
+}
+
+message AgentPrivateWorkerLabel {
+  string key = 1;
+  string value = 2;
+}
+
+message AgentPrivateWorkerConfig {
+  repeated AgentPrivateWorkerLabel labels = 1;
+}
+
+message AgentOptions {
+  optional bool skip_install = 1;
+  optional AgentPrivateWorkerConfig private_worker = 2;
+  optional string environment_public_id = 3;
+}
+
+message Workflow {
+  repeated Trigger triggers = 10;
+  repeated Action actions = 11;
+  repeated Prompt prompts = 3;
+  optional string model = 8;
+  optional GitConfig git_config = 12;
+  optional AgentOptions agent_options = 13;
+  optional bool memory_enabled = 14;
+  repeated string slack_notified_channels = 15;
+  optional SlackCompletionReactionMode slack_completion_reaction_mode = 16;
+  optional string slack_completion_reaction_custom_emoji = 17;
+  optional google.protobuf.Struct managed_config = 18;
+}
+
+message Prompt {
+  string prompt = 1;
+  PromptEffortLevel effort_level = 2;
+}
+
+message GitConfig {
+  string repo = 3;
+  string branch = 4;
+  repeated string repos = 5;
+}
+
+message CronTrigger {
+  string cron = 1;
+}
+
+message GitTrigger {
+  repeated string user_allowlist = 3;
+  oneof event {
+    GitPullRequestEvent pull_request = 1;
+    GitPushEvent push = 2;
+    GitCICompletedEvent ci_completed = 4;
+    GitIssueLabeledEvent issue_labeled = 5;
+    GitLabelEvent label = 6;
+  }
+}
+
+message GitPullRequestEvent {
+  string repo = 1;
+  repeated string repos = 2;
+  bool ignore_draft_prs = 3;
+  bool only_once = 4;
+  GitPullRequestAction pr_action = 5;
+  repeated string commenter_allowlist = 6;
+  string comment_contains = 7;
+  bool comment_contains_is_regex = 10;
+  string label_name = 8;
+  repeated string orgs = 9;
+}
+
+message GitPushEvent {
+  string repo = 1;
+  string branch = 2;
+  repeated string repos = 3;
+}
+
+message GitCICompletedEvent {
+  repeated string repos = 1;
+  GitCICompletionCondition condition = 2;
+  bool ignore_base_failures = 3;
+  string branch = 4;
+}
+
+message GitIssueLabeledEvent {
+  repeated string repos = 1;
+  string label_name = 2;
+  bool unlabeled = 3;
+}
+
+message GitLabelEvent {
+  repeated string repos = 1;
+  string label_name = 2;
+  bool on_added = 3;
+  bool on_removed = 4;
+  bool pull_requests = 5;
+  bool issues = 6;
+}
+
+message SlackTrigger {
+  string channel = 1;
+  string message_contains = 3;
+  bool message_contains_is_regex = 4;
+  repeated string channels = 5;
+  bool block_unauthenticated_slack_users = 6;
+  optional SlackCompletionReactionMode slack_completion_reaction_mode = 7;
+  optional string slack_completion_reaction_custom_emoji = 8;
+}
+
+message SlackChannelCreatedTrigger {
+  string channel_name_contains = 1;
+}
+
+message LinearTrigger {
+  repeated string project_ids = 4;
+  repeated string team_ids = 6;
+  oneof event {
+    LinearIssueCreatedEvent issue_created = 1;
+    LinearStatusChangedEvent status_changed = 2;
+    LinearEndOfCycleEvent end_of_cycle = 3;
+  }
+}
+
+message LinearIssueCreatedEvent {
+}
+
+message LinearStatusChangedEvent {
+  repeated string status_ids = 1;
+}
+
+message LinearEndOfCycleEvent {
+  repeated string cycle_ids = 1;
+}
+
+message WebhookTrigger {
+}
+
+message PagerDutyTrigger {
+  repeated string service_ids = 6;
+  oneof event {
+    PagerDutyIncidentTriggeredEvent incident_triggered = 1;
+    PagerDutyIncidentAcknowledgedEvent incident_acknowledged = 2;
+    PagerDutyIncidentResolvedEvent incident_resolved = 3;
+    PagerDutyIncidentEscalatedEvent incident_escalated = 4;
+    PagerDutyIncidentAnyEvent incident_any = 5;
+  }
+}
+
+message PagerDutyIncidentTriggeredEvent {
+}
+
+message PagerDutyIncidentAcknowledgedEvent {
+}
+
+message PagerDutyIncidentResolvedEvent {
+}
+
+message PagerDutyIncidentEscalatedEvent {
+}
+
+message PagerDutyIncidentAnyEvent {
+}
+
+message SentryTrigger {
+  repeated string project_ids = 7;
+  oneof event {
+    SentryIssueCreatedEvent issue_created = 1;
+    SentryIssueResolvedEvent issue_resolved = 2;
+    SentryIssueAssignedEvent issue_assigned = 3;
+    SentryIssueArchivedEvent issue_archived = 4;
+    SentryIssueUnresolvedEvent issue_unresolved = 5;
+    SentryIssueAnyEvent issue_any = 6;
+  }
+}
+
+message SentryIssueCreatedEvent {
+}
+
+message SentryIssueResolvedEvent {
+}
+
+message SentryIssueAssignedEvent {
+}
+
+message SentryIssueArchivedEvent {
+}
+
+message SentryIssueUnresolvedEvent {
+}
+
+message SentryIssueAnyEvent {
+}
+
+message MicrosoftTeamsTrigger {
+  string tenant_id = 1;
+  string team_id = 2;
+  repeated string team_ids = 3;
+  repeated string channel_ids = 4;
+  string message_contains = 5;
+  bool message_contains_is_regex = 6;
+  bool block_unauthenticated_teams_users = 7;
+}
+
+message MicrosoftTeamsChannelCreatedTrigger {
+  string tenant_id = 1;
+  repeated string team_ids = 2;
+  string channel_name_contains = 3;
+}
+
+message GitPrAction {
+}
+
+message PrCommentAction {
+  bool minimize_previous_comments = 1;
+  bool allow_inline_comments = 2;
+  bool resolve_stale_threads = 3;
+  bool allow_approve = 4;
+}
+
+message ManageCheckRunAction {
+  bool deterministic = 1;
+}
+
+message RequestReviewersAction {
+}
+
+message ApprovePrAction {
+}
+
+message ReadSlackAction {
+}
+
+message ResolveReviewThreadsAction {
+}
+
+message SlackAction {
+  string channel = 1;
+  bool generalized = 2;
+  bool respond_in_thread = 3;
+  bool post_as_thread = 4;
+  repeated string channels = 5;
+}
+
+message MicrosoftTeamsAction {
+  string tenant_id = 1;
+  string team_id = 2;
+  string channel_id = 3;
+  repeated string channel_ids = 4;
+  bool generalized = 5;
+  bool respond_in_thread = 6;
+  bool post_as_thread = 7;
+}
+
+message ReadMicrosoftTeamsAction {
+}
+
+message PrCommentActionPayload {
+  int32 pr_number = 1;
+  string repo_url = 2;
+}
+
+message GitPrActionPayload {
+  optional string pr_url = 1;
+  string repo_url = 2;
+}
+
+message SlackActionPayload {
+  string channel = 1;
+  optional string triggering_pr_url = 2;
+  optional string reply_thread_ts = 4;
+}
+
+message ResolveReviewThreadsActionPayload {
+  int32 pr_number = 1;
+  string repo_url = 2;
+}
+
+message MicrosoftTeamsActionPayload {
+  string tenant_id = 1;
+  string team_id = 2;
+  string channel_id = 3;
+  optional string triggering_pr_url = 4;
+  optional string reply_root_message_id = 5;
 }
 
 message ActionPayload {
@@ -133,6 +454,7 @@ message ActionPayload {
     GitPrActionPayload git_pr = 2;
     SlackActionPayload slack = 3;
     ResolveReviewThreadsActionPayload resolve_review_threads = 4;
+    MicrosoftTeamsActionPayload microsoft_teams = 5;
   }
 }
 
@@ -140,48 +462,89 @@ message ActionsPayload {
   repeated ActionPayload payloads = 4;
 }
 
-message AgentOptions {
-  optional bool skip_install = 1;
-  optional AgentPrivateWorkerConfig private_worker = 2;
+message PlatformActionEntry {
+  PlatformActionScope scope = 1;
+  int32 action_index = 2;
+  string action_type = 3;
+  PlatformActionStatus status = 4;
+  string error_message = 5;
+  map<string, string> metadata = 6;
+  int64 timestamp = 8;
 }
 
-message AgentPrivateWorkerConfig {
-  repeated AgentPrivateWorkerLabel labels = 1;
+message PlatformActionsPayload {
+  repeated PlatformActionEntry actions = 1;
 }
 
-message AgentPrivateWorkerLabel {
-  string key = 1;
-  string value = 2;
+message SlackTriggerPayload {
+  string channel = 1;
+  string message_text = 2;
+  string user_id = 3;
+  string message_ts = 4;
+  optional string thread_ts = 5;
 }
 
-message ApplyAutomationSpecRequest {
-  AutomationDeploySpec spec = 1;
+message SlackChannelCreatedTriggerPayload {
+  string channel_id = 1;
+  string channel_name = 2;
+  string creator_id = 3;
 }
 
-message ApplyAutomationSpecResponse {
-  AutomationWithOwner workflow = 1;
-  bool created = 2;
+message LinearTriggerPayload {
+  string issue_id = 1;
+  string issue_identifier = 2;
+  string project_id = 3;
+  string team_id = 4;
+  oneof event {
+    LinearIssueCreatedPayload issue_created = 5;
+    LinearStatusChangedPayload status_changed = 6;
+    LinearEndOfCyclePayload end_of_cycle = 7;
+  }
 }
 
-message ApprovePrAction {
+message LinearIssueCreatedPayload {
 }
 
-message Automation {
-  string name = 2;
-  bool enabled = 3;
-  Workflow workflow = 4;
-  int64 created_at = 5;
-  int64 updated_at = 6;
-  optional string description = 7;
-  string automation_id = 8;
-  AutomationScope scope = 9;
-  optional string service_account_id = 10;
-  AutomationManagedBy managed_by = 11;
-  optional string deploy_key = 12;
-  optional int64 deploy_last_applied_at = 13;
-  optional string deploy_last_apply_error = 14;
-  optional string managed_type = 15;
-  optional bool hidden = 16;
+message LinearStatusChangedPayload {
+  string old_status_id = 1;
+  string new_status_id = 2;
+}
+
+message LinearEndOfCyclePayload {
+  string cycle_id = 1;
+  string cycle_name = 2;
+}
+
+message PagerDutyTriggerPayload {
+  string incident_id = 1;
+  string incident_title = 2;
+  string incident_status = 3;
+  string incident_urgency = 4;
+  string service_id = 5;
+  string service_name = 6;
+  string incident_url = 7;
+  string event_type = 8;
+}
+
+message SentryTriggerPayload {
+  string issue_id = 1;
+  string short_id = 2;
+  string title = 3;
+  string issue_url = 4;
+  string project_id = 5;
+  string project_slug = 6;
+  string action = 7;
+  string status = 8;
+  string substatus = 9;
+}
+
+message TriggerMetadataEntry {
+  PlatformTriggerType trigger_type = 1;
+  map<string, string> metadata = 2;
+}
+
+message TriggerMetadataPayload {
+  repeated TriggerMetadataEntry entries = 1;
 }
 
 message AutomationDeploySource {
@@ -207,94 +570,22 @@ message AutomationDeploySpec {
   optional AutomationManagedBy managed_by = 9;
 }
 
-message AutomationRun {
-  string background_composer_id = 3;
-  string namespaced_workflow_id = 4;
-  Workflow workflow = 5;
-  int64 created_at = 6;
-  int64 updated_at = 7;
-  optional PlatformActionsPayload platform_actions = 8;
-  optional TriggerMetadataPayload trigger_metadata = 9;
-  string uuid = 10;
-  string automation_id = 11;
-  AutomationRunStatus status = 12;
-  string error_message = 13;
-  optional AutomationRunFailureDetails failure_details = 14;
-  optional int64 completed_at = 15;
-  optional AutomationFilterDecision filter_decision = 16;
-  optional string filter_rationale = 17;
-  optional string filter_error_message = 18;
+message ValidateAutomationSpecRequest {
+  AutomationDeploySpec spec = 1;
 }
 
-message AutomationRunFailureDetails {
-  AutomationRunFailureCode code = 1;
-  string title = 2;
-  string message = 3;
-  optional string cta_label = 4;
-  optional string cta_path = 5;
+message ValidateAutomationSpecResponse {
+  bool would_create = 1;
+  optional string automation_id = 2;
 }
 
-message AutomationWithOwner {
-  Automation workflow = 1;
-  int32 user_id = 2;
-  string owner_name = 3;
+message ApplyAutomationSpecRequest {
+  AutomationDeploySpec spec = 1;
 }
 
-message BuilderCompletionContext {
-  string stage = 1;
-  string current_config_json = 2;
-  bool github_connected = 3;
-  bool slack_connected = 4;
-  bool linear_connected = 5;
-  bool pagerduty_connected = 6;
-}
-
-message BuilderCompletionMessage {
-  string role = 1;
-  string content = 2;
-}
-
-message BuilderCompletionRequest {
-  repeated BuilderCompletionMessage messages = 1;
-  BuilderCompletionContext context = 2;
-}
-
-message BuilderCompletionResponse {
-  string content = 1;
-}
-
-message CancelAllAutomationRunsRequest {
-  string automation_id = 1;
-}
-
-message CancelAllAutomationRunsResponse {
-  int32 cancelled_count = 1;
-  string message = 2;
-}
-
-message CancelAutomationRunRequest {
-  string background_composer_id = 1;
-}
-
-message CancelAutomationRunResponse {
-  bool success = 1;
-  string message = 2;
-}
-
-message CICompletedSamplePayload {
-  int32 pr_number = 1;
-  string repo = 2;
-}
-
-message ConnectSentryCallbackRequest {
-  string code = 1;
-  string installation_id = 2;
-  string state = 3;
-  optional string organization_slug = 4;
-}
-
-message ConnectSentryCallbackResponse {
-  bool success = 1;
+message ApplyAutomationSpecResponse {
+  AutomationWithOwner workflow = 1;
+  bool created = 2;
 }
 
 message CreateAutomationRequest {
@@ -305,66 +596,31 @@ message CreateAutomationRequest {
   optional string template_id = 5;
   optional string managed_type = 6;
   optional bool hidden = 7;
+  optional int32 team_id = 8;
+  AutomationCreationSource creation_source = 9;
 }
 
 message CreateAutomationResponse {
   AutomationWithOwner workflow = 1;
 }
 
-message CreateWorkflowFromTemplateRequest {
-  string template_id = 1;
-  string name = 2;
-  InputValues input_values = 3;
-  optional string description = 4;
+message ListAutomationsRequest {
+  optional int32 team_id = 1;
 }
 
-message CreateWorkflowFromTemplateResponse {
-  Automation workflow = 1;
-}
-
-message CronSamplePayload {
-}
-
-message CronTrigger {
-  string cron = 1;
-}
-
-message DeleteAutomationRequest {
-  string automation_id = 2;
-}
-
-message DeleteAutomationResponse {
-}
-
-message DisableAutomationForTeamShutdownRequest {
-  int32 team_id = 1;
-  string automation_id = 2;
-}
-
-message DisableAutomationForTeamShutdownResponse {
-}
-
-message DisconnectSentryRequest {
-}
-
-message DisconnectSentryResponse {
-  bool success = 1;
-}
-
-message GetAutomationMemoryRequest {
-  string automation_id = 1;
-  string file = 2;
-}
-
-message GetAutomationMemoryResponse {
-  string file = 1;
-  string content = 2;
-  bool exists = 3;
-  optional string version = 4;
+message ListAutomationsResponse {
+  repeated AutomationWithOwner workflows = 1;
 }
 
 message GetAutomationRequest {
   string automation_id = 2;
+}
+
+message RestrictedAutomationSummary {
+  string automation_id = 1;
+  string name = 2;
+  bool enabled = 3;
+  string owner_name = 4;
 }
 
 message GetAutomationResponse {
@@ -374,349 +630,60 @@ message GetAutomationResponse {
   }
 }
 
-message GetAutomationRunRequest {
-  string background_composer_id = 1;
+message UpdateAutomationRequest {
+  optional string name = 2;
+  optional Workflow workflow = 3;
+  optional bool enabled = 4;
+  optional string description = 5;
+  string automation_id = 6;
+  optional AutomationScope scope = 7;
+  optional string managed_type = 8;
+  optional bool hidden = 9;
 }
 
-message GetAutomationRunResponse {
-  optional AutomationRun run = 1;
+message UpdateAutomationResponse {
+  AutomationWithOwner workflow = 1;
 }
 
-message GetRunSummaryRequest {
-  optional string automation_id = 1;
-}
-
-message GetRunSummaryResponse {
-  repeated RunSummaryWindow windows = 1;
-  repeated HistogramBucket histogram = 2;
-}
-
-message GetSecuritybotResolutionStatsRequest {
-  optional string automation_id = 1;
-}
-
-message GetSecuritybotResolutionStatsResponse {
-  uint32 vulnerabilities_count = 1;
-  uint32 fixed_count = 2;
-  uint32 automation_count = 3;
-}
-
-message GetSentryAuthUrlRequest {
-}
-
-message GetSentryAuthUrlResponse {
-  string install_url = 1;
-  string csrf_token = 2;
-}
-
-message GetSentryProjectsRequest {
-}
-
-message GetSentryProjectsResponse {
-  repeated SentryProject projects = 1;
-  optional string organization_slug = 2;
-}
-
-message GetSentryStatusRequest {
-}
-
-message GetSentryStatusResponse {
-  bool is_connected = 1;
-  optional string organization_slug = 2;
-}
-
-message GetWorkflowTemplateRequest {
-  string template_id = 1;
-}
-
-message GetWorkflowTemplateResponse {
-  WorkflowTemplate template = 1;
-}
-
-message GitCICompletedEvent {
-  repeated string repos = 1;
-  GitCICompletionCondition condition = 2;
-  bool ignore_base_failures = 3;
-  string branch = 4;
-}
-
-message GitConfig {
-  string repo = 3;
-  string branch = 4;
-  repeated string repos = 5;
-}
-
-message GitIssueLabeledEvent {
-  repeated string repos = 1;
-  string label_name = 2;
-  bool unlabeled = 3;
-}
-
-message GitLabelEvent {
-  repeated string repos = 1;
-  string label_name = 2;
-  bool on_added = 3;
-  bool on_removed = 4;
-  bool pull_requests = 5;
-  bool issues = 6;
-}
-
-message GitPrAction {
-}
-
-message GitPrActionPayload {
-  optional string pr_url = 1;
-  string repo_url = 2;
-}
-
-message GitPullRequestEvent {
-  string repo = 1;
-  repeated string repos = 2;
-  bool ignore_draft_prs = 3;
-  bool only_once = 4;
-  GitPullRequestAction pr_action = 5;
-  repeated string commenter_allowlist = 6;
-  string comment_contains = 7;
-  string label_name = 8;
-  repeated string orgs = 9;
-}
-
-message GitPushEvent {
-  string repo = 1;
-  string branch = 2;
-  repeated string repos = 3;
-}
-
-message GitTrigger {
-  oneof event {
-    GitPullRequestEvent pull_request = 1;
-    GitPushEvent push = 2;
-    GitCICompletedEvent ci_completed = 4;
-    GitIssueLabeledEvent issue_labeled = 5;
-    GitLabelEvent label = 6;
-  }
-  repeated string user_allowlist = 3;
-}
-
-message HistogramBucket {
-  int64 start_time = 1;
-  int32 count = 2;
-}
-
-message InputField {
-  string key = 1;
-  string display_name = 2;
-  string description = 3;
-  oneof type {
-    string string_value = 4;
-    StringList string_list_value = 5;
-    bool bool_value = 6;
-  }
-}
-
-message InputSchema {
-  repeated InputField fields = 1;
-}
-
-message InputValue {
-  string key = 1;
-  oneof value {
-    string string_value = 2;
-    StringList string_list_value = 3;
-    bool bool_value = 4;
-  }
-}
-
-message InputValues {
-  repeated InputValue values = 1;
-}
-
-message LinearEndOfCycleEvent {
-  repeated string cycle_ids = 1;
-}
-
-message LinearEndOfCyclePayload {
-  string cycle_id = 1;
-  string cycle_name = 2;
-}
-
-message LinearIssueCreatedEvent {
-}
-
-message LinearIssueCreatedPayload {
-}
-
-message LinearSamplePayload {
-  string issue_id = 1;
-  string issue_identifier = 2;
-}
-
-message LinearStatusChangedEvent {
-  repeated string status_ids = 1;
-}
-
-message LinearStatusChangedPayload {
-  string old_status_id = 1;
-  string new_status_id = 2;
-}
-
-message LinearTrigger {
-  oneof event {
-    LinearIssueCreatedEvent issue_created = 1;
-    LinearStatusChangedEvent status_changed = 2;
-    LinearEndOfCycleEvent end_of_cycle = 3;
-  }
-  repeated string project_ids = 4;
-  repeated string team_ids = 6;
-}
-
-message LinearTriggerPayload {
-  string issue_id = 1;
-  string issue_identifier = 2;
-  string project_id = 3;
-  string team_id = 4;
-  oneof event {
-    LinearIssueCreatedPayload issue_created = 5;
-    LinearStatusChangedPayload status_changed = 6;
-    LinearEndOfCyclePayload end_of_cycle = 7;
-  }
-}
-
-message ListAllRunsRequest {
-  optional string automation_id = 1;
-  optional int32 limit = 2;
-  optional string cursor = 3;
-  AutomationRunListKind run_kind = 4;
-}
-
-message ListAllRunsResponse {
-  repeated AutomationRun runs = 1;
-  optional string next_cursor = 2;
-}
-
-message ListAutomationMemoriesRequest {
+message UpdateAutomationAuthoringModeRequest {
   string automation_id = 1;
+  AutomationManagedBy managed_by = 2;
+  optional string deploy_key = 3;
 }
 
-message ListAutomationMemoriesResponse {
-  repeated string files = 1;
+message UpdateAutomationAuthoringModeResponse {
+  AutomationWithOwner workflow = 1;
 }
 
-message ListAutomationRunsRequest {
-  optional int32 limit = 2;
-  string automation_id = 3;
-  optional string cursor = 4;
-  AutomationRunListKind run_kind = 5;
+message DeleteAutomationRequest {
+  string automation_id = 2;
 }
 
-message ListAutomationRunsResponse {
-  repeated AutomationRun runs = 1;
-  optional string next_cursor = 2;
+message DeleteAutomationResponse {
 }
 
-message ListAutomationsRequest {
-}
-
-message ListAutomationsResponse {
-  repeated AutomationWithOwner workflows = 1;
-}
-
-message ListWorkflowTemplatesRequest {
-  optional string category = 1;
-}
-
-message ListWorkflowTemplatesResponse {
-  repeated WorkflowTemplate templates = 1;
-}
-
-message ManageCheckRunAction {
-  bool deterministic = 1;
-}
-
-message McpAction {
-  McpServerConfig server = 1;
-}
-
-message McpServerConfig {
-  string name = 1;
-}
-
-message McpTemplateHint {
-  string name = 1;
-  optional string url = 2;
-}
-
-message PagerDutyIncidentAcknowledgedEvent {
-}
-
-message PagerDutyIncidentAnyEvent {
-}
-
-message PagerDutyIncidentEscalatedEvent {
-}
-
-message PagerDutyIncidentResolvedEvent {
-}
-
-message PagerDutyIncidentTriggeredEvent {
-}
-
-message PagerDutySamplePayload {
-  string incident_id = 1;
-  string event_type = 2;
-}
-
-message PagerDutyTrigger {
-  oneof event {
-    PagerDutyIncidentTriggeredEvent incident_triggered = 1;
-    PagerDutyIncidentAcknowledgedEvent incident_acknowledged = 2;
-    PagerDutyIncidentResolvedEvent incident_resolved = 3;
-    PagerDutyIncidentEscalatedEvent incident_escalated = 4;
-    PagerDutyIncidentAnyEvent incident_any = 5;
+message TestAutomationRequest {
+  string automation_id = 8;
+  optional int32 trigger_index = 12;
+  optional string test_repo = 13;
+  optional string test_branch = 14;
+  oneof sample_payload {
+    CronSamplePayload cron = 2;
+    PullRequestSamplePayload pull_request = 3;
+    PushSamplePayload push = 4;
+    SlackSamplePayload slack = 5;
+    LinearSamplePayload linear = 6;
+    CICompletedSamplePayload ci_completed = 7;
+    WebhookSamplePayload webhook = 9;
+    SlackChannelCreatedSamplePayload slack_channel_created = 10;
+    PagerDutySamplePayload pagerduty = 11;
+    SentrySamplePayload sentry = 15;
+    MicrosoftTeamsSamplePayload microsoft_teams = 16;
+    MicrosoftTeamsChannelCreatedSamplePayload microsoft_teams_channel_created = 17;
   }
-  repeated string service_ids = 6;
 }
 
-message PagerDutyTriggerPayload {
-  string incident_id = 1;
-  string incident_title = 2;
-  string incident_status = 3;
-  string incident_urgency = 4;
-  string service_id = 5;
-  string service_name = 6;
-  string incident_url = 7;
-  string event_type = 8;
-}
-
-message PlatformActionEntry {
-  PlatformActionScope scope = 1;
-  int32 action_index = 2;
-  string action_type = 3;
-  PlatformActionStatus status = 4;
-  string error_message = 5;
-  map<string, string> metadata = 6;
-  int64 timestamp = 8;
-}
-
-message PlatformActionsPayload {
-  repeated PlatformActionEntry actions = 1;
-}
-
-message PrCommentAction {
-  bool minimize_previous_comments = 1;
-  bool allow_inline_comments = 2;
-  bool resolve_stale_threads = 3;
-  bool allow_approve = 4;
-}
-
-message PrCommentActionPayload {
-  int32 pr_number = 1;
-  string repo_url = 2;
-}
-
-message Prompt {
-  string prompt = 1;
-  PromptEffortLevel effort_level = 2;
+message CronSamplePayload {
 }
 
 message PullRequestSamplePayload {
@@ -731,55 +698,27 @@ message PushSamplePayload {
   string ref = 2;
 }
 
-message ReadSlackAction {
+message SlackSamplePayload {
+  string message = 1;
 }
 
-message RequestReviewersAction {
+message LinearSamplePayload {
+  string issue_id = 1;
+  string issue_identifier = 2;
 }
 
-message ResolveReviewThreadsAction {
-}
-
-message ResolveReviewThreadsActionPayload {
+message CICompletedSamplePayload {
   int32 pr_number = 1;
-  string repo_url = 2;
+  string repo = 2;
 }
 
-message RestrictedAutomationSummary {
-  string automation_id = 1;
-  string name = 2;
-  bool enabled = 3;
-  string owner_name = 4;
+message SlackChannelCreatedSamplePayload {
+  string channel_name = 1;
 }
 
-message RunSummaryWindow {
-  string key = 1;
-  int32 succeeded = 2;
-  int32 failed = 3;
-}
-
-message SentryIssueAnyEvent {
-}
-
-message SentryIssueArchivedEvent {
-}
-
-message SentryIssueAssignedEvent {
-}
-
-message SentryIssueCreatedEvent {
-}
-
-message SentryIssueResolvedEvent {
-}
-
-message SentryIssueUnresolvedEvent {
-}
-
-message SentryProject {
-  string id = 1;
-  string slug = 2;
-  string name = 3;
+message WebhookSamplePayload {
+  string context = 1;
+  string webhook_payload_json = 2;
 }
 
 message SentrySamplePayload {
@@ -788,86 +727,87 @@ message SentrySamplePayload {
   string project_id = 3;
 }
 
-message SentryTrigger {
-  oneof event {
-    SentryIssueCreatedEvent issue_created = 1;
-    SentryIssueResolvedEvent issue_resolved = 2;
-    SentryIssueAssignedEvent issue_assigned = 3;
-    SentryIssueArchivedEvent issue_archived = 4;
-    SentryIssueUnresolvedEvent issue_unresolved = 5;
-    SentryIssueAnyEvent issue_any = 6;
-  }
-  repeated string project_ids = 7;
+message PagerDutySamplePayload {
+  string incident_id = 1;
+  string event_type = 2;
 }
 
-message SentryTriggerPayload {
-  string issue_id = 1;
-  string short_id = 2;
-  string title = 3;
-  string issue_url = 4;
-  string project_id = 5;
-  string project_slug = 6;
-  string action = 7;
-  string status = 8;
-  string substatus = 9;
-}
-
-message SlackAction {
-  string channel = 1;
-  bool generalized = 2;
-  bool respond_in_thread = 3;
-  bool post_as_thread = 4;
-  repeated string channels = 5;
-}
-
-message SlackActionPayload {
-  string channel = 1;
-  optional string triggering_pr_url = 2;
-  optional string reply_thread_ts = 4;
-}
-
-message SlackChannelCreatedSamplePayload {
-  string channel_name = 1;
-}
-
-message SlackChannelCreatedTrigger {
-  string channel_name_contains = 1;
-}
-
-message SlackChannelCreatedTriggerPayload {
-  string channel_id = 1;
-  string channel_name = 2;
-  string creator_id = 3;
-}
-
-message SlackSamplePayload {
+message MicrosoftTeamsSamplePayload {
   string message = 1;
 }
 
-message SlackTrigger {
-  string channel = 1;
-  string message_contains = 3;
-  bool message_contains_is_regex = 4;
-  repeated string channels = 5;
-  bool block_unauthenticated_slack_users = 6;
-  optional SlackCompletionReactionMode slack_completion_reaction_mode = 7;
-  optional string slack_completion_reaction_custom_emoji = 8;
+message MicrosoftTeamsChannelCreatedSamplePayload {
+  string channel_name = 1;
 }
 
-message SlackTriggerPayload {
-  string channel = 1;
-  string message_text = 2;
-  string user_id = 3;
-  string message_ts = 4;
-  optional string thread_ts = 5;
+message TestAutomationResponse {
+  string message = 1;
+  optional string background_composer_id = 2;
 }
 
-message StringList {
-  repeated string values = 1;
+message Automation {
+  string name = 2;
+  bool enabled = 3;
+  Workflow workflow = 4;
+  int64 created_at = 5;
+  int64 updated_at = 6;
+  optional string description = 7;
+  string automation_id = 8;
+  AutomationScope scope = 9;
+  optional string service_account_id = 10;
+  AutomationManagedBy managed_by = 11;
+  optional string deploy_key = 12;
+  optional int64 deploy_last_applied_at = 13;
+  optional string deploy_last_apply_error = 14;
+  optional string managed_type = 15;
+  optional bool hidden = 16;
+}
+
+message AutomationWithOwner {
+  Automation workflow = 1;
+  int32 user_id = 2;
+  string owner_name = 3;
+}
+
+message ListAutomationRunsRequest {
+  optional int32 limit = 2;
+  string automation_id = 3;
+  optional string cursor = 4;
+  AutomationRunListKind run_kind = 5;
+}
+
+message ListAutomationRunsResponse {
+  repeated AutomationRun runs = 1;
+  optional string next_cursor = 2;
+}
+
+message GetAutomationRunRequest {
+  string background_composer_id = 1;
+}
+
+message GetAutomationRunResponse {
+  optional AutomationRun run = 1;
+}
+
+message ListAllRunsRequest {
+  optional string automation_id = 1;
+  optional int32 limit = 2;
+  optional string cursor = 3;
+  AutomationRunListKind run_kind = 4;
+  optional int32 team_id = 5;
+  bool owner_only = 6;
+}
+
+message ListAllRunsResponse {
+  repeated AutomationRun runs = 1;
+  optional string next_cursor = 2;
 }
 
 message TestAutomationFilterRequest {
   string automation_id = 1;
+  optional int32 trigger_index = 11;
+  optional string test_repo = 12;
+  optional string test_branch = 13;
   oneof sample_payload {
     CronSamplePayload cron = 2;
     PullRequestSamplePayload pull_request = 3;
@@ -879,10 +819,9 @@ message TestAutomationFilterRequest {
     SlackChannelCreatedSamplePayload slack_channel_created = 9;
     PagerDutySamplePayload pagerduty = 10;
     SentrySamplePayload sentry = 15;
+    MicrosoftTeamsSamplePayload microsoft_teams = 16;
+    MicrosoftTeamsChannelCreatedSamplePayload microsoft_teams_channel_created = 17;
   }
-  optional int32 trigger_index = 11;
-  optional string test_repo = 12;
-  optional string test_branch = 13;
 }
 
 message TestAutomationFilterResponse {
@@ -891,68 +830,24 @@ message TestAutomationFilterResponse {
   optional string error_message = 3;
 }
 
-message TestAutomationRequest {
-  oneof sample_payload {
-    CronSamplePayload cron = 2;
-    PullRequestSamplePayload pull_request = 3;
-    PushSamplePayload push = 4;
-    SlackSamplePayload slack = 5;
-    LinearSamplePayload linear = 6;
-    CICompletedSamplePayload ci_completed = 7;
-    WebhookSamplePayload webhook = 9;
-    SlackChannelCreatedSamplePayload slack_channel_created = 10;
-    PagerDutySamplePayload pagerduty = 11;
-    SentrySamplePayload sentry = 15;
-  }
-  string automation_id = 8;
-  optional int32 trigger_index = 12;
-  optional string test_repo = 13;
-  optional string test_branch = 14;
-}
-
-message TestAutomationResponse {
-  string message = 1;
-  optional string background_composer_id = 2;
-}
-
-message ToolSuggestion {
-  string slug = 1;
-  string label = 2;
-  repeated string evidence = 3;
-  string config_note = 4;
-}
-
-message Trigger {
-  oneof trigger {
-    CronTrigger cron = 1;
-    GitTrigger git = 2;
-    SlackTrigger slack_trigger = 7;
-    LinearTrigger linear = 9;
-    WebhookTrigger webhook = 11;
-    SlackChannelCreatedTrigger slack_channel_created = 12;
-    PagerDutyTrigger pagerduty = 13;
-    SentryTrigger sentry = 15;
-  }
-  optional string agentic_filter_prompt = 14;
-}
-
-message TriggerMetadataEntry {
-  PlatformTriggerType trigger_type = 1;
-  map<string, string> metadata = 2;
-}
-
-message TriggerMetadataPayload {
-  repeated TriggerMetadataEntry entries = 1;
-}
-
-message UpdateAutomationAuthoringModeRequest {
+message ListAutomationMemoriesRequest {
   string automation_id = 1;
-  AutomationManagedBy managed_by = 2;
-  optional string deploy_key = 3;
 }
 
-message UpdateAutomationAuthoringModeResponse {
-  AutomationWithOwner workflow = 1;
+message ListAutomationMemoriesResponse {
+  repeated string files = 1;
+}
+
+message GetAutomationMemoryRequest {
+  string automation_id = 1;
+  string file = 2;
+}
+
+message GetAutomationMemoryResponse {
+  string file = 1;
+  string content = 2;
+  bool exists = 3;
+  optional string version = 4;
 }
 
 message UpdateAutomationMemoryRequest {
@@ -972,58 +867,82 @@ message UpdateAutomationMemoryResponse {
   bool conflict = 4;
 }
 
-message UpdateAutomationRequest {
-  optional string name = 2;
-  optional Workflow workflow = 3;
-  optional bool enabled = 4;
-  optional string description = 5;
-  string automation_id = 6;
-  optional AutomationScope scope = 7;
-  optional string managed_type = 8;
-  optional bool hidden = 9;
+message AutomationRunFailureDetails {
+  AutomationRunFailureCode code = 1;
+  string title = 2;
+  string message = 3;
+  optional string cta_label = 4;
+  optional string cta_path = 5;
 }
 
-message UpdateAutomationResponse {
-  AutomationWithOwner workflow = 1;
+message AutomationRun {
+  string background_composer_id = 3;
+  string namespaced_workflow_id = 4;
+  Workflow workflow = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
+  optional PlatformActionsPayload platform_actions = 8;
+  optional TriggerMetadataPayload trigger_metadata = 9;
+  string uuid = 10;
+  string automation_id = 11;
+  AutomationRunStatus status = 12;
+  string error_message = 13;
+  optional AutomationRunFailureDetails failure_details = 14;
+  optional int64 completed_at = 15;
+  optional AutomationFilterDecision filter_decision = 16;
+  optional string filter_rationale = 17;
+  optional string filter_error_message = 18;
 }
 
-message ValidateAutomationSpecRequest {
-  AutomationDeploySpec spec = 1;
+message GetRunSummaryRequest {
+  optional string automation_id = 1;
+  optional int32 team_id = 2;
+  bool owner_only = 3;
 }
 
-message ValidateAutomationSpecResponse {
-  bool would_create = 1;
-  optional string automation_id = 2;
+message GetRunSummaryResponse {
+  repeated RunSummaryWindow windows = 1;
+  repeated HistogramBucket histogram = 2;
 }
 
-message ValidateAutomationToolsRequest {
-  string prompt = 1;
+message RunSummaryWindow {
+  string key = 1;
+  int32 succeeded = 2;
+  int32 failed = 3;
 }
 
-message ValidateAutomationToolsResponse {
-  repeated ToolSuggestion suggestions = 1;
+message HistogramBucket {
+  int64 start_time = 1;
+  int32 count = 2;
 }
 
-message WebhookSamplePayload {
-  string context = 1;
-  string webhook_payload_json = 2;
+message GetSecuritybotResolutionStatsRequest {
+  optional string automation_id = 1;
+  optional int32 team_id = 2;
 }
 
-message WebhookTrigger {
+message GetSecuritybotResolutionStatsResponse {
+  uint32 vulnerabilities_count = 1;
+  uint32 fixed_count = 2;
+  uint32 automation_count = 3;
 }
 
-message Workflow {
-  repeated Trigger triggers = 10;
-  repeated Action actions = 11;
-  repeated Prompt prompts = 3;
-  optional string model = 8;
-  optional GitConfig git_config = 12;
-  optional AgentOptions agent_options = 13;
-  optional bool memory_enabled = 14;
-  repeated string slack_notified_channels = 15;
-  optional SlackCompletionReactionMode slack_completion_reaction_mode = 16;
-  optional string slack_completion_reaction_custom_emoji = 17;
-  optional google.protobuf.Struct managed_config = 18;
+message CancelAutomationRunRequest {
+  string background_composer_id = 1;
+}
+
+message CancelAutomationRunResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message CancelAllAutomationRunsRequest {
+  string automation_id = 1;
+}
+
+message CancelAllAutomationRunsResponse {
+  int32 cancelled_count = 1;
+  string message = 2;
 }
 
 message WorkflowTemplate {
@@ -1038,36 +957,196 @@ message WorkflowTemplate {
   repeated McpTemplateHint mcp_hints = 9;
 }
 
+message McpTemplateHint {
+  string name = 1;
+  optional string url = 2;
+}
+
+message InputSchema {
+  repeated InputField fields = 1;
+}
+
+message InputField {
+  string key = 1;
+  string display_name = 2;
+  string description = 3;
+  oneof type {
+    string string_value = 4;
+    StringList string_list_value = 5;
+    bool bool_value = 6;
+  }
+}
+
+message StringList {
+  repeated string values = 1;
+}
+
+message InputValues {
+  repeated InputValue values = 1;
+}
+
+message InputValue {
+  string key = 1;
+  oneof value {
+    string string_value = 2;
+    StringList string_list_value = 3;
+    bool bool_value = 4;
+  }
+}
+
+message ListWorkflowTemplatesRequest {
+  optional string category = 1;
+}
+
+message ListWorkflowTemplatesResponse {
+  repeated WorkflowTemplate templates = 1;
+}
+
+message GetWorkflowTemplateRequest {
+  string template_id = 1;
+}
+
+message GetWorkflowTemplateResponse {
+  WorkflowTemplate template = 1;
+}
+
+message CreateWorkflowFromTemplateRequest {
+  string template_id = 1;
+  string name = 2;
+  InputValues input_values = 3;
+  optional string description = 4;
+  AutomationCreationSource creation_source = 5;
+}
+
+message CreateWorkflowFromTemplateResponse {
+  Automation workflow = 1;
+}
+
+message ValidateAutomationToolsRequest {
+  string prompt = 1;
+}
+
+message ValidateAutomationToolsResponse {
+  repeated ToolSuggestion suggestions = 1;
+}
+
+message ToolSuggestion {
+  string slug = 1;
+  string label = 2;
+  repeated string evidence = 3;
+  string config_note = 4;
+}
+
+message BuilderCompletionMessage {
+  string role = 1;
+  string content = 2;
+}
+
+message BuilderCompletionContext {
+  string stage = 1;
+  string current_config_json = 2;
+  bool github_connected = 3;
+  bool slack_connected = 4;
+  bool linear_connected = 5;
+  bool pagerduty_connected = 6;
+  bool microsoft_teams_connected = 7;
+}
+
+message BuilderCompletionRequest {
+  repeated BuilderCompletionMessage messages = 1;
+  BuilderCompletionContext context = 2;
+}
+
+message BuilderCompletionResponse {
+  string content = 1;
+}
+
+message DisableAutomationForTeamShutdownRequest {
+  int32 team_id = 1;
+  string automation_id = 2;
+}
+
+message DisableAutomationForTeamShutdownResponse {
+}
+
+message GetSentryAuthUrlRequest {
+}
+
+message GetSentryAuthUrlResponse {
+  string install_url = 1;
+  string csrf_token = 2;
+}
+
+message ConnectSentryCallbackRequest {
+  string code = 1;
+  string installation_id = 2;
+  string state = 3;
+  optional string organization_slug = 4;
+}
+
+message ConnectSentryCallbackResponse {
+  bool success = 1;
+}
+
+message GetSentryStatusRequest {
+}
+
+message GetSentryStatusResponse {
+  bool is_connected = 1;
+  optional string organization_slug = 2;
+}
+
+message GetSentryProjectsRequest {
+}
+
+message SentryProject {
+  string id = 1;
+  string slug = 2;
+  string name = 3;
+}
+
+message GetSentryProjectsResponse {
+  repeated SentryProject projects = 1;
+  optional string organization_slug = 2;
+}
+
+message DisconnectSentryRequest {
+}
+
+message DisconnectSentryResponse {
+  bool success = 1;
+}
+
 service AutomationsService {
-  rpc CreateAutomation (CreateAutomationRequest) returns (CreateAutomationResponse);
-  rpc ListAutomations (ListAutomationsRequest) returns (ListAutomationsResponse);
-  rpc GetAutomation (GetAutomationRequest) returns (GetAutomationResponse);
-  rpc UpdateAutomation (UpdateAutomationRequest) returns (UpdateAutomationResponse);
-  rpc UpdateAutomationAuthoringMode (UpdateAutomationAuthoringModeRequest) returns (UpdateAutomationAuthoringModeResponse);
-  rpc ValidateAutomationSpec (ValidateAutomationSpecRequest) returns (ValidateAutomationSpecResponse);
-  rpc ApplyAutomationSpec (ApplyAutomationSpecRequest) returns (ApplyAutomationSpecResponse);
-  rpc DeleteAutomation (DeleteAutomationRequest) returns (DeleteAutomationResponse);
-  rpc TestAutomation (TestAutomationRequest) returns (TestAutomationResponse);
-  rpc TestAutomationFilter (TestAutomationFilterRequest) returns (TestAutomationFilterResponse);
-  rpc ListAutomationRuns (ListAutomationRunsRequest) returns (ListAutomationRunsResponse);
-  rpc GetAutomationRun (GetAutomationRunRequest) returns (GetAutomationRunResponse);
-  rpc ListAllRuns (ListAllRunsRequest) returns (ListAllRunsResponse);
-  rpc GetRunSummary (GetRunSummaryRequest) returns (GetRunSummaryResponse);
-  rpc GetSecuritybotResolutionStats (GetSecuritybotResolutionStatsRequest) returns (GetSecuritybotResolutionStatsResponse);
-  rpc CancelAutomationRun (CancelAutomationRunRequest) returns (CancelAutomationRunResponse);
-  rpc CancelAllAutomationRuns (CancelAllAutomationRunsRequest) returns (CancelAllAutomationRunsResponse);
-  rpc ListAutomationMemories (ListAutomationMemoriesRequest) returns (ListAutomationMemoriesResponse);
-  rpc GetAutomationMemory (GetAutomationMemoryRequest) returns (GetAutomationMemoryResponse);
-  rpc UpdateAutomationMemory (UpdateAutomationMemoryRequest) returns (UpdateAutomationMemoryResponse);
-  rpc ListWorkflowTemplates (ListWorkflowTemplatesRequest) returns (ListWorkflowTemplatesResponse);
-  rpc GetWorkflowTemplate (GetWorkflowTemplateRequest) returns (GetWorkflowTemplateResponse);
-  rpc CreateWorkflowFromTemplate (CreateWorkflowFromTemplateRequest) returns (CreateWorkflowFromTemplateResponse);
-  rpc ValidateAutomationTools (ValidateAutomationToolsRequest) returns (ValidateAutomationToolsResponse);
-  rpc BuilderCompletion (BuilderCompletionRequest) returns (BuilderCompletionResponse);
-  rpc DisableAutomationForTeamShutdown (DisableAutomationForTeamShutdownRequest) returns (DisableAutomationForTeamShutdownResponse);
-  rpc GetSentryAuthUrl (GetSentryAuthUrlRequest) returns (GetSentryAuthUrlResponse);
-  rpc ConnectSentryCallback (ConnectSentryCallbackRequest) returns (ConnectSentryCallbackResponse);
-  rpc GetSentryStatus (GetSentryStatusRequest) returns (GetSentryStatusResponse);
-  rpc GetSentryProjects (GetSentryProjectsRequest) returns (GetSentryProjectsResponse);
-  rpc DisconnectSentry (DisconnectSentryRequest) returns (DisconnectSentryResponse);
+  rpc CreateAutomation(CreateAutomationRequest) returns (CreateAutomationResponse);
+  rpc ListAutomations(ListAutomationsRequest) returns (ListAutomationsResponse);
+  rpc GetAutomation(GetAutomationRequest) returns (GetAutomationResponse);
+  rpc UpdateAutomation(UpdateAutomationRequest) returns (UpdateAutomationResponse);
+  rpc UpdateAutomationAuthoringMode(UpdateAutomationAuthoringModeRequest) returns (UpdateAutomationAuthoringModeResponse);
+  rpc ValidateAutomationSpec(ValidateAutomationSpecRequest) returns (ValidateAutomationSpecResponse);
+  rpc ApplyAutomationSpec(ApplyAutomationSpecRequest) returns (ApplyAutomationSpecResponse);
+  rpc DeleteAutomation(DeleteAutomationRequest) returns (DeleteAutomationResponse);
+  rpc TestAutomation(TestAutomationRequest) returns (TestAutomationResponse);
+  rpc TestAutomationFilter(TestAutomationFilterRequest) returns (TestAutomationFilterResponse);
+  rpc ListAutomationRuns(ListAutomationRunsRequest) returns (ListAutomationRunsResponse);
+  rpc GetAutomationRun(GetAutomationRunRequest) returns (GetAutomationRunResponse);
+  rpc ListAllRuns(ListAllRunsRequest) returns (ListAllRunsResponse);
+  rpc GetRunSummary(GetRunSummaryRequest) returns (GetRunSummaryResponse);
+  rpc GetSecuritybotResolutionStats(GetSecuritybotResolutionStatsRequest) returns (GetSecuritybotResolutionStatsResponse);
+  rpc CancelAutomationRun(CancelAutomationRunRequest) returns (CancelAutomationRunResponse);
+  rpc CancelAllAutomationRuns(CancelAllAutomationRunsRequest) returns (CancelAllAutomationRunsResponse);
+  rpc ListAutomationMemories(ListAutomationMemoriesRequest) returns (ListAutomationMemoriesResponse);
+  rpc GetAutomationMemory(GetAutomationMemoryRequest) returns (GetAutomationMemoryResponse);
+  rpc UpdateAutomationMemory(UpdateAutomationMemoryRequest) returns (UpdateAutomationMemoryResponse);
+  rpc ListWorkflowTemplates(ListWorkflowTemplatesRequest) returns (ListWorkflowTemplatesResponse);
+  rpc GetWorkflowTemplate(GetWorkflowTemplateRequest) returns (GetWorkflowTemplateResponse);
+  rpc CreateWorkflowFromTemplate(CreateWorkflowFromTemplateRequest) returns (CreateWorkflowFromTemplateResponse);
+  rpc ValidateAutomationTools(ValidateAutomationToolsRequest) returns (ValidateAutomationToolsResponse);
+  rpc BuilderCompletion(BuilderCompletionRequest) returns (BuilderCompletionResponse);
+  rpc DisableAutomationForTeamShutdown(DisableAutomationForTeamShutdownRequest) returns (DisableAutomationForTeamShutdownResponse);
+  rpc GetSentryAuthUrl(GetSentryAuthUrlRequest) returns (GetSentryAuthUrlResponse);
+  rpc ConnectSentryCallback(ConnectSentryCallbackRequest) returns (ConnectSentryCallbackResponse);
+  rpc GetSentryStatus(GetSentryStatusRequest) returns (GetSentryStatusResponse);
+  rpc GetSentryProjects(GetSentryProjectsRequest) returns (GetSentryProjectsResponse);
+  rpc DisconnectSentry(DisconnectSentryRequest) returns (DisconnectSentryResponse);
 }

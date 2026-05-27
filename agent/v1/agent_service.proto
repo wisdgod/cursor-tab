@@ -8,6 +8,43 @@ import "agent/v1/kv.proto";
 import "agent/v1/mcp.proto";
 import "aiserver/v1/bidi.proto";
 
+message ClientHeartbeat {
+}
+
+message PrewarmRequest {
+  ModelDetails model_details = 1;
+  optional RequestedModel requested_model = 9;
+  optional string conversation_id = 2;
+  ConversationStateStructure conversation_state = 3;
+  McpTools mcp_tools = 4;
+  optional McpFileSystemOptions mcp_file_system_options = 5;
+  optional string best_of_n_group_id = 6;
+  optional bool try_use_best_of_n_promotion = 7;
+  optional string custom_system_prompt = 8;
+  optional bool suggest_next_prompt = 10;
+  optional string subagent_type_name = 11;
+  optional bool exclude_workspace_context = 12;
+  optional string harness = 13;
+  repeated RequestedModel selected_subagent_models = 14;
+  repeated ModelDetails selected_subagent_model_details = 15;
+  optional string conversation_group_id = 16;
+  repeated PreFetchedBlob pre_fetched_blobs = 17;
+  optional bool client_supports_inline_images = 18;
+  repeated SubagentModelOverride subagent_model_overrides = 19;
+  optional bool can_create_cloud_subagents = 20;
+  optional bool suppress_subagent_progress_update_tool = 21;
+}
+
+message ExecServerAbort {
+  uint32 id = 1;
+}
+
+message ExecServerControlMessage {
+  oneof message {
+    ExecServerAbort abort = 1;
+  }
+}
+
 message AgentClientMessage {
   oneof message {
     AgentRunRequest run_request = 1;
@@ -32,12 +69,20 @@ message AgentServerMessage {
   }
 }
 
-message BlobEntry {
-  bytes id = 1;
-  bytes value = 2;
+message NameAgentRequest {
+  string user_message = 1;
 }
 
-message ClientHeartbeat {
+message NameAgentResponse {
+  string name = 1;
+}
+
+message UpdateConversationMetadataRequest {
+  string conversation_id = 1;
+  optional string name = 2;
+}
+
+message UpdateConversationMetadataResponse {
 }
 
 message CreateTranscriptOverviewRequest {
@@ -48,21 +93,12 @@ message CreateTranscriptOverviewResponse {
   string overview = 1;
 }
 
-message ExecServerAbort {
-  uint32 id = 1;
+message GetUsableModelsRequest {
+  repeated string custom_model_ids = 1;
 }
 
-message ExecServerControlMessage {
-  oneof message {
-    ExecServerAbort abort = 1;
-  }
-}
-
-message GetAllowedModelIntentsRequest {
-}
-
-message GetAllowedModelIntentsResponse {
-  repeated string model_intents = 1;
+message GetUsableModelsResponse {
+  repeated ModelDetails models = 1;
 }
 
 message GetDefaultModelForCliRequest {
@@ -72,29 +108,11 @@ message GetDefaultModelForCliResponse {
   ModelDetails model = 1;
 }
 
-message GetNewChatNudgeLegacyModelPickerRequest {
-  string current_model = 1;
-  bool max_mode = 2;
+message GetAllowedModelIntentsRequest {
 }
 
-message GetNewChatNudgeLegacyModelPickerResponse {
-  optional NewChatNudge nudge = 1;
-}
-
-message GetNewChatNudgeParameterizedModelPickerRequest {
-  RequestedModel current_model = 1;
-}
-
-message GetNewChatNudgeParameterizedModelPickerResponse {
-  optional NewChatNudgeV2 nudge = 1;
-}
-
-message GetUsableModelsRequest {
-  repeated string custom_model_ids = 1;
-}
-
-message GetUsableModelsResponse {
-  repeated ModelDetails models = 1;
+message GetAllowedModelIntentsResponse {
+  repeated string model_intents = 1;
 }
 
 message IdeEditorsStateFile {
@@ -110,12 +128,65 @@ message IdeEditorsStateLite {
   repeated IdeEditorsStateFile recently_viewed_files = 1;
 }
 
-message NameAgentRequest {
-  string user_message = 1;
+message BlobEntry {
+  bytes id = 1;
+  bytes value = 2;
 }
 
-message NameAgentResponse {
-  string name = 1;
+message UploadConversationBlobsRequest {
+  string conversation_id = 1;
+  repeated BlobEntry blobs = 2;
+  int32 chunk_index = 3;
+  int32 total_chunks = 4;
+}
+
+message UploadConversationBlobsResponse {
+}
+
+message GetSignedUrlForAttachedMediaRequest {
+  string conversation_id = 3;
+  optional string key = 1;
+  optional string mime_type = 2;
+  optional int64 content_length_bytes = 4;
+}
+
+message GetSignedUrlForAttachedMediaResponse {
+  string key = 1;
+  string post_url = 2;
+  string get_url = 3;
+  int64 expires_at_unix_ms = 4;
+  int64 refresh_after_unix_ms = 5;
+  map<string, string> post_fields = 6;
+}
+
+message NotifyConversationCloneRequest {
+  string conversation_id = 1;
+  string source_conversation_id = 2;
+  string source_request_id = 3;
+}
+
+message NotifyConversationCloneResponse {
+}
+
+message GetNewChatNudgeLegacyModelPickerRequest {
+  string current_model = 1;
+  bool max_mode = 2;
+}
+
+message GetNewChatNudgeLegacyModelPickerResponse {
+  optional NewChatNudge nudge = 1;
+}
+
+message NudgeBumpVariant {
+  string banner_message = 1;
+}
+
+message NudgeAskVariant {
+  string popup_message = 1;
+  string accept_label = 2;
+}
+
+message NudgeSilentSwitchVariant {
 }
 
 message NewChatNudge {
@@ -129,6 +200,14 @@ message NewChatNudge {
   }
 }
 
+message GetNewChatNudgeParameterizedModelPickerRequest {
+  RequestedModel current_model = 1;
+}
+
+message GetNewChatNudgeParameterizedModelPickerResponse {
+  optional NewChatNudgeV2 nudge = 1;
+}
+
 message NewChatNudgeV2 {
   string nudge_id = 1;
   RequestedModel target_model = 2;
@@ -140,69 +219,19 @@ message NewChatNudgeV2 {
   }
 }
 
-message NotifyConversationCloneRequest {
-  string conversation_id = 1;
-  string source_conversation_id = 2;
-  string source_request_id = 3;
-}
-
-message NotifyConversationCloneResponse {
-}
-
-message NudgeAskVariant {
-  string popup_message = 1;
-  string accept_label = 2;
-}
-
-message NudgeBumpVariant {
-  string banner_message = 1;
-}
-
-message NudgeSilentSwitchVariant {
-}
-
-message PrewarmRequest {
-  ModelDetails model_details = 1;
-  optional RequestedModel requested_model = 9;
-  optional string conversation_id = 2;
-  ConversationStateStructure conversation_state = 3;
-  McpTools mcp_tools = 4;
-  optional McpFileSystemOptions mcp_file_system_options = 5;
-  optional string best_of_n_group_id = 6;
-  optional bool try_use_best_of_n_promotion = 7;
-  optional string custom_system_prompt = 8;
-  optional bool suggest_next_prompt = 10;
-  optional string subagent_type_name = 11;
-  optional bool exclude_workspace_context = 12;
-  optional string harness = 13;
-  repeated RequestedModel selected_subagent_models = 14;
-  repeated ModelDetails selected_subagent_model_details = 15;
-  optional string conversation_group_id = 16;
-  repeated PreFetchedBlob pre_fetched_blobs = 17;
-  optional bool client_supports_inline_images = 18;
-}
-
-message UploadConversationBlobsRequest {
-  string conversation_id = 1;
-  repeated BlobEntry blobs = 2;
-  int32 chunk_index = 3;
-  int32 total_chunks = 4;
-}
-
-message UploadConversationBlobsResponse {
-}
-
 service AgentService {
-  rpc Run (stream AgentClientMessage) returns (stream AgentServerMessage);
-  rpc RunSSE (aiserver.v1.BidiRequestId) returns (stream AgentServerMessage);
-  rpc RunPoll (aiserver.v1.BidiPollRequest) returns (stream aiserver.v1.BidiPollResponse);
-  rpc NameAgent (NameAgentRequest) returns (NameAgentResponse);
-  rpc CreateTranscriptOverview (CreateTranscriptOverviewRequest) returns (CreateTranscriptOverviewResponse);
-  rpc GetUsableModels (GetUsableModelsRequest) returns (GetUsableModelsResponse);
-  rpc GetDefaultModelForCli (GetDefaultModelForCliRequest) returns (GetDefaultModelForCliResponse);
-  rpc GetAllowedModelIntents (GetAllowedModelIntentsRequest) returns (GetAllowedModelIntentsResponse);
-  rpc UploadConversationBlobs (UploadConversationBlobsRequest) returns (UploadConversationBlobsResponse);
-  rpc NotifyConversationClone (NotifyConversationCloneRequest) returns (NotifyConversationCloneResponse);
-  rpc GetNewChatNudgeLegacyModelPicker (GetNewChatNudgeLegacyModelPickerRequest) returns (GetNewChatNudgeLegacyModelPickerResponse);
-  rpc GetNewChatNudgeParameterizedModelPicker (GetNewChatNudgeParameterizedModelPickerRequest) returns (GetNewChatNudgeParameterizedModelPickerResponse);
+  rpc Run(stream AgentClientMessage) returns (stream AgentServerMessage);
+  rpc RunSSE(aiserver.v1.BidiRequestId) returns (stream AgentServerMessage);
+  rpc RunPoll(aiserver.v1.BidiPollRequest) returns (stream aiserver.v1.BidiPollResponse);
+  rpc NameAgent(NameAgentRequest) returns (NameAgentResponse);
+  rpc UpdateConversationMetadata(UpdateConversationMetadataRequest) returns (UpdateConversationMetadataResponse);
+  rpc CreateTranscriptOverview(CreateTranscriptOverviewRequest) returns (CreateTranscriptOverviewResponse);
+  rpc GetUsableModels(GetUsableModelsRequest) returns (GetUsableModelsResponse);
+  rpc GetDefaultModelForCli(GetDefaultModelForCliRequest) returns (GetDefaultModelForCliResponse);
+  rpc GetAllowedModelIntents(GetAllowedModelIntentsRequest) returns (GetAllowedModelIntentsResponse);
+  rpc UploadConversationBlobs(UploadConversationBlobsRequest) returns (UploadConversationBlobsResponse);
+  rpc GetSignedUrlForAttachedMedia(GetSignedUrlForAttachedMediaRequest) returns (GetSignedUrlForAttachedMediaResponse);
+  rpc NotifyConversationClone(NotifyConversationCloneRequest) returns (NotifyConversationCloneResponse);
+  rpc GetNewChatNudgeLegacyModelPicker(GetNewChatNudgeLegacyModelPickerRequest) returns (GetNewChatNudgeLegacyModelPickerResponse);
+  rpc GetNewChatNudgeParameterizedModelPicker(GetNewChatNudgeParameterizedModelPickerRequest) returns (GetNewChatNudgeParameterizedModelPickerResponse);
 }

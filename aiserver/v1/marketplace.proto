@@ -14,5 +14,5 @@ message CreateMarketplaceExtensionPublisherResponse {
 }
 
 service MarketplaceService {
-  rpc CreateMarketplaceExtensionPublisher (CreateMarketplaceExtensionPublisherRequest) returns (CreateMarketplaceExtensionPublisherResponse);
+  rpc CreateMarketplaceExtensionPublisher(CreateMarketplaceExtensionPublisherRequest) returns (CreateMarketplaceExtensionPublisherResponse);
 }

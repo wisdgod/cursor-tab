@@ -18,14 +18,12 @@ enum LogLevel {
   LOG_LEVEL_FATAL = 5;
 }
 
-message CallClientSideV2ToolRequest {
-  ClientSideToolV2Call tool_call = 1;
-  string root_path = 2;
-  string composer_id = 3;
+message TrackModelRequest {
+  string root_path = 1;
+  string absolute_path = 2;
 }
 
-message CallClientSideV2ToolResponse {
-  ClientSideToolV2Result tool_result = 1;
+message TrackModelResponse {
 }
 
 message CallDiagnosticsExecutorRequest {
@@ -35,15 +33,6 @@ message CallDiagnosticsExecutorRequest {
 
 message CallDiagnosticsExecutorResponse {
   agent.v1.DiagnosticsResult diagnostics_result = 1;
-}
-
-message CompileRepoIncludeExcludePatternsRequest {
-  string root_path = 1;
-  SwCompileRepoIncludeExcludePatternsRequest request = 2;
-}
-
-message CompileRepoIncludeExcludePatternsResponse {
-  SwCompileRepoIncludeExcludePatternsResponse response = 1;
 }
 
 message ExecRequest {
@@ -58,12 +47,14 @@ message ExecResponse {
   int32 exit_code = 3;
 }
 
-message GetEnvironmentInfoRequest {
-  string root_path = 1;
+message WarmCursorServerRequest {
+  string commit = 1;
+  int32 port = 2;
+  string connection_token = 3;
+  string root_path = 4;
 }
 
-message GetEnvironmentInfoResponse {
-  EnvironmentInfo environment_info = 1;
+message WarmCursorServerResponse {
 }
 
 message GetExplicitContextRequest {
@@ -72,6 +63,14 @@ message GetExplicitContextRequest {
 
 message GetExplicitContextResponse {
   ExplicitContext explicit_context = 1;
+}
+
+message GetEnvironmentInfoRequest {
+  string root_path = 1;
+}
+
+message GetEnvironmentInfoResponse {
+  EnvironmentInfo environment_info = 1;
 }
 
 message GetFileStatsRequest {
@@ -84,8 +83,97 @@ message GetFileStatsResponse {
     bool path_exists = 2;
     bool is_file = 3;
   }
-
   repeated Stat file_stats = 1;
+}
+
+message CompileRepoIncludeExcludePatternsRequest {
+  string root_path = 1;
+  SwCompileRepoIncludeExcludePatternsRequest request = 2;
+}
+
+message CompileRepoIncludeExcludePatternsResponse {
+  SwCompileRepoIncludeExcludePatternsResponse response = 1;
+}
+
+message ProvideTemporaryAccessTokenRequest {
+  string access_token = 1;
+}
+
+message ProvideTemporaryAccessTokenResponse {
+}
+
+message PingRequest {
+}
+
+message PingResponse {
+}
+
+message ReadTextFileRequest {
+  string absolute_path = 1;
+}
+
+message ReadTextFileResponse {
+  string contents = 1;
+  bool path_does_not_exist = 2;
+  bool was_truncated = 3;
+  bool is_not_a_file = 4;
+}
+
+message WriteTextFileRequest {
+  string absolute_path = 1;
+  string new_contents = 2;
+  bool get_new_linter_errors = 3;
+  string root_path = 4;
+}
+
+message WriteTextFileResponse {
+  repeated LinterError new_linter_errors = 1;
+}
+
+message SyncIndexRequest {
+  string root_path = 1;
+  RepositoryInfo repository_info = 2;
+  string path_encryption_key = 3;
+  optional double indexing_progress_threshold = 4;
+  optional bool async = 5;
+}
+
+message SyncIndexResponse {
+}
+
+message UpgradeRequest {
+}
+
+message UpgradeResponse {
+  string version = 1;
+  string new_port = 2;
+}
+
+message CallClientSideV2ToolRequest {
+  ClientSideToolV2Call tool_call = 1;
+  string root_path = 2;
+  string composer_id = 3;
+}
+
+message CallClientSideV2ToolResponse {
+  ClientSideToolV2Result tool_result = 1;
+}
+
+message RefreshGitHubAccessTokenRequest {
+  string github_access_token = 1;
+  string hostname = 2;
+}
+
+message RefreshGitHubAccessTokenResponse {
+}
+
+message GetWorkspaceChangesHashRequest {
+  string root_path = 1;
+  string base_ref = 2;
+}
+
+message GetWorkspaceChangesHashResponse {
+  string hash = 1;
 }
 
 message GetLinterErrorsRequest {
@@ -101,28 +189,17 @@ message GetLogsRequest {
   uint32 max_num_logs = 1;
 }
 
+message LogEntry {
+  google.protobuf.Timestamp log_timestamp = 1;
+  LogLevel log_level = 2;
+  string log_data = 3;
+  map<string, string> context = 4;
+}
+
 message GetLogsResponse {
   repeated LogEntry log_entries = 1;
   bool has_more_logs = 2;
   uint32 num_dropped_logs = 3;
-}
-
-message GetMcpToolsRequest {
-  string root_path = 1;
-  optional string browser_integration_preference = 2;
-}
-
-message GetMcpToolsResponse {
-  repeated MCPParams.Tool tools = 1;
-}
-
-message GetWorkspaceChangesHashRequest {
-  string root_path = 1;
-  string base_ref = 2;
-}
-
-message GetWorkspaceChangesHashResponse {
-  string hash = 1;
 }
 
 message InstallExtensionsRequest {
@@ -135,114 +212,36 @@ message InstallExtensionsResponse {
   repeated string failed = 2;
 }
 
-message LogEntry {
-  google.protobuf.Timestamp log_timestamp = 1;
-  LogLevel log_level = 2;
-  string log_data = 3;
-  map<string, string> context = 4;
-}
-
-message PingRequest {
-}
-
-message PingResponse {
-}
-
-message ProvideTemporaryAccessTokenRequest {
-  string access_token = 1;
-}
-
-message ProvideTemporaryAccessTokenResponse {
-}
-
-message ReadTextFileRequest {
-  string absolute_path = 1;
-}
-
-message ReadTextFileResponse {
-  string contents = 1;
-  bool path_does_not_exist = 2;
-  bool was_truncated = 3;
-  bool is_not_a_file = 4;
-}
-
-message RefreshGitHubAccessTokenRequest {
-  string github_access_token = 1;
-  string hostname = 2;
-}
-
-message RefreshGitHubAccessTokenResponse {
-}
-
-message SyncIndexRequest {
+message GetMcpToolsRequest {
   string root_path = 1;
-  RepositoryInfo repository_info = 2;
-  string path_encryption_key = 3;
-  optional double indexing_progress_threshold = 4;
-  optional bool async = 5;
+  optional string browser_integration_preference = 2;
 }
 
-message SyncIndexResponse {
-}
-
-message TrackModelRequest {
-  string root_path = 1;
-  string absolute_path = 2;
-}
-
-message TrackModelResponse {
-}
-
-message UpgradeRequest {
-}
-
-message UpgradeResponse {
-  string version = 1;
-  string new_port = 2;
-}
-
-message WarmCursorServerRequest {
-  string commit = 1;
-  int32 port = 2;
-  string connection_token = 3;
-  string root_path = 4;
-}
-
-message WarmCursorServerResponse {
-}
-
-message WriteTextFileRequest {
-  string absolute_path = 1;
-  string new_contents = 2;
-  bool get_new_linter_errors = 3;
-  string root_path = 4;
-}
-
-message WriteTextFileResponse {
-  repeated LinterError new_linter_errors = 1;
+message GetMcpToolsResponse {
+  repeated MCPParams.Tool tools = 1;
 }
 
 service VmDaemonService {
-  rpc SyncIndex (SyncIndexRequest) returns (SyncIndexResponse);
-  rpc CompileRepoIncludeExcludePatterns (CompileRepoIncludeExcludePatternsRequest) returns (CompileRepoIncludeExcludePatternsResponse);
-  rpc Upgrade (UpgradeRequest) returns (UpgradeResponse);
-  rpc Ping (PingRequest) returns (PingResponse);
-  rpc Exec (ExecRequest) returns (ExecResponse);
-  rpc CallClientSideV2Tool (CallClientSideV2ToolRequest) returns (CallClientSideV2ToolResponse);
-  rpc ReadTextFile (ReadTextFileRequest) returns (ReadTextFileResponse);
-  rpc WriteTextFile (WriteTextFileRequest) returns (WriteTextFileResponse);
-  rpc GetFileStats (GetFileStatsRequest) returns (GetFileStatsResponse);
-  rpc GetExplicitContext (GetExplicitContextRequest) returns (GetExplicitContextResponse);
-  rpc GetEnvironmentInfo (GetEnvironmentInfoRequest) returns (GetEnvironmentInfoResponse);
-  rpc ProvideTemporaryAccessToken (ProvideTemporaryAccessTokenRequest) returns (ProvideTemporaryAccessTokenResponse);
-  rpc WarmCursorServer (WarmCursorServerRequest) returns (WarmCursorServerResponse);
-  rpc RefreshGitHubAccessToken (RefreshGitHubAccessTokenRequest) returns (RefreshGitHubAccessTokenResponse);
-  rpc GetWorkspaceChangesHash (GetWorkspaceChangesHashRequest) returns (GetWorkspaceChangesHashResponse);
-  rpc GetDiff (GetDiffRequest) returns (GetDiffResponse);
-  rpc GetLinterErrors (GetLinterErrorsRequest) returns (GetLinterErrorsResponse);
-  rpc GetLogs (GetLogsRequest) returns (GetLogsResponse);
-  rpc InstallExtensions (InstallExtensionsRequest) returns (InstallExtensionsResponse);
-  rpc GetMcpTools (GetMcpToolsRequest) returns (GetMcpToolsResponse);
-  rpc TrackModel (TrackModelRequest) returns (TrackModelResponse);
-  rpc CallDiagnosticsExecutor (CallDiagnosticsExecutorRequest) returns (CallDiagnosticsExecutorResponse);
+  rpc SyncIndex(SyncIndexRequest) returns (SyncIndexResponse);
+  rpc CompileRepoIncludeExcludePatterns(CompileRepoIncludeExcludePatternsRequest) returns (CompileRepoIncludeExcludePatternsResponse);
+  rpc Upgrade(UpgradeRequest) returns (UpgradeResponse);
+  rpc Ping(PingRequest) returns (PingResponse);
+  rpc Exec(ExecRequest) returns (ExecResponse);
+  rpc CallClientSideV2Tool(CallClientSideV2ToolRequest) returns (CallClientSideV2ToolResponse);
+  rpc ReadTextFile(ReadTextFileRequest) returns (ReadTextFileResponse);
+  rpc WriteTextFile(WriteTextFileRequest) returns (WriteTextFileResponse);
+  rpc GetFileStats(GetFileStatsRequest) returns (GetFileStatsResponse);
+  rpc GetExplicitContext(GetExplicitContextRequest) returns (GetExplicitContextResponse);
+  rpc GetEnvironmentInfo(GetEnvironmentInfoRequest) returns (GetEnvironmentInfoResponse);
+  rpc ProvideTemporaryAccessToken(ProvideTemporaryAccessTokenRequest) returns (ProvideTemporaryAccessTokenResponse);
+  rpc WarmCursorServer(WarmCursorServerRequest) returns (WarmCursorServerResponse);
+  rpc RefreshGitHubAccessToken(RefreshGitHubAccessTokenRequest) returns (RefreshGitHubAccessTokenResponse);
+  rpc GetWorkspaceChangesHash(GetWorkspaceChangesHashRequest) returns (GetWorkspaceChangesHashResponse);
+  rpc GetDiff(GetDiffRequest) returns (GetDiffResponse);
+  rpc GetLinterErrors(GetLinterErrorsRequest) returns (GetLinterErrorsResponse);
+  rpc GetLogs(GetLogsRequest) returns (GetLogsResponse);
+  rpc InstallExtensions(InstallExtensionsRequest) returns (InstallExtensionsResponse);
+  rpc GetMcpTools(GetMcpToolsRequest) returns (GetMcpToolsResponse);
+  rpc TrackModel(TrackModelRequest) returns (TrackModelResponse);
+  rpc CallDiagnosticsExecutor(CallDiagnosticsExecutorRequest) returns (CallDiagnosticsExecutorResponse);
 }

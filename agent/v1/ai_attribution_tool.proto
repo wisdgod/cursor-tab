@@ -14,10 +14,6 @@ message AiAttributionArgs {
   optional bool include_line_ranges = 10;
 }
 
-message AiAttributionError {
-  string error = 1;
-}
-
 message AiAttributionResult {
   oneof result {
     AiAttributionSuccess success = 1;
@@ -28,6 +24,10 @@ message AiAttributionResult {
 message AiAttributionSuccess {
   string attribution_text = 1;
   optional OutputLocation output_location = 2;
+}
+
+message AiAttributionError {
+  string error = 1;
 }
 
 message AiAttributionToolCall {

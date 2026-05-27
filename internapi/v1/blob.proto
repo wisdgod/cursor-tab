@@ -16,6 +16,10 @@ enum BlobType {
   BLOB_TYPE_VIDEO = 10;
 }
 
+message ImageBlobData {
+  string mime_type = 1;
+}
+
 message BlobData {
   BlobType blob_type = 1;
   bytes blob_id = 2;
@@ -27,8 +31,4 @@ message BlobData {
 
 message BlobDataPerMessage {
   repeated BlobData blob_data = 1;
-}
-
-message ImageBlobData {
-  string mime_type = 1;
 }

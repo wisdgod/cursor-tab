@@ -23,6 +23,6 @@ message WatchStatusResponse {
 }
 
 service PrivateWorkerApiService {
-  rpc GetWorkerId (google.protobuf.Empty) returns (GetWorkerIdResponse);
-  rpc WatchStatus (google.protobuf.Empty) returns (stream WatchStatusResponse);
+  rpc GetWorkerId(google.protobuf.Empty) returns (GetWorkerIdResponse);
+  rpc WatchStatus(google.protobuf.Empty) returns (stream WatchStatusResponse);
 }

@@ -5,6 +5,7 @@ package aiserver.v1;
 import "aiserver/v1/aiserver.proto";
 import "aiserver/v1/bugbot.proto";
 import "aiserver/v1/conversations.proto";
+import "aiserver/v1/server_config.proto";
 import "aiserver/v1/utils.proto";
 
 enum CodeTourDoneReason {
@@ -22,47 +23,16 @@ message BugConfigRequest {
   repeated double bug_bot_viewed_notification_last_10_times_unix_ms = 3;
 }
 
-message BugConfigResponse {
-  message BugBotV1 {
-    bool enabled = 1;
-    bool is_subsidized = 2;
-    int32 background_call_frequency_ms = 3;
-    bool kill_switch = 4;
-    double show_intrusive_notification_only_if_last_time_was_more_than_ms_ago = 5;
-    optional int32 background_diff_absolute_max_tokens = 6;
-    optional int32 background_diff_min_min_token_threshold = 7;
-    optional int32 background_diff_min_max_token_threshold = 8;
-    optional double background_diff_last_commit_less_than_this_many_ms_ago = 9;
-    optional int32 background_unified_context_lines = 15;
-    optional bool background_diff_include_uncommitted = 16;
-    optional int32 default_diff_context_lines = 10;
-    optional int32 diff_absolute_max_tokens = 11;
-    optional int32 custom_instructions_max_char_length = 12;
-    optional int32 default_fallback_iterations = 13;
-    optional int32 threshold_for_expensive_run_modal_cents = 14;
-    optional string cheap_model_name = 17;
-    optional int32 cheap_absolute_max_tokens = 18;
-    optional int32 expensive_absolute_max_tokens = 19;
-  }
+message StreamBugBotLinterRequest {
+  GitDiff git_diff = 1;
+  string active_file = 2;
+  int32 cursor_line_number_one_indexed = 3;
+  optional string session_id = 4;
+  bool telem_enabled = 5;
+}
 
-  message LinterStrategyV1 {
-    bool enabled = 1;
-    bool try_trigger_on_save = 2;
-    double wait_between_triggers_ms = 3;
-  }
-
-  message LinterStrategyV2 {
-    bool enabled = 1;
-    double wait_between_triggers_ms = 2;
-    double debounce_triggers_ms = 3;
-    int32 keep_lines_around_chunk = 4;
-    int32 prevent_triggering_for_files_with_this_many_lines = 5;
-    bool prevent_triggering_when_lints = 6;
-  }
-
-  LinterStrategyV1 linter_strategy_v1 = 1;
-  BugBotV1 bug_bot_v1 = 2;
-  LinterStrategyV2 linter_strategy_v2 = 3;
+message StreamBugBotLinterResponse {
+  repeated BugReport bugs = 1;
 }
 
 message ChunkDiff {
@@ -71,6 +41,17 @@ message ChunkDiff {
   int32 new_start = 3;
   int32 old_lines = 4;
   int32 new_lines = 5;
+}
+
+message ReviewRequestV2 {
+  message FileDiff {
+    File file = 1;
+    repeated ChunkDiff chunk_diffs = 2;
+  }
+  repeated FileDiff file_diffs = 1;
+  optional string linter_rules = 2;
+  optional bool also_find_hard_bugs = 3;
+  optional string save_request_as = 4;
 }
 
 message ReviewBugV2 {
@@ -88,6 +69,10 @@ message ReviewBugV2 {
   int32 full_chunk_total_lines = 12;
 }
 
+message ReviewResponseV2 {
+  ReviewBugV2 bug = 1;
+}
+
 message ReviewChatRequestV2 {
   File file = 1;
   ReviewBugV2 bug = 2;
@@ -99,56 +84,73 @@ message ReviewChatResponseV2 {
   string text = 1;
 }
 
-message ReviewRequestV2 {
-  message FileDiff {
-    File file = 1;
-    repeated ChunkDiff chunk_diffs = 2;
+message StreamCodeTourRequest {
+  enum PromptConstructionMode {
+    PROMPT_CONSTRUCTION_MODE_UNSPECIFIED = 0;
+    PROMPT_CONSTRUCTION_MODE_SERVER_COMPACT = 1;
+    PROMPT_CONSTRUCTION_MODE_CLIENT_RAW = 2;
   }
-
-  repeated FileDiff file_diffs = 1;
-  optional string linter_rules = 2;
-  optional bool also_find_hard_bugs = 3;
-  optional string save_request_as = 4;
-}
-
-message ReviewResponseV2 {
-  ReviewBugV2 bug = 1;
-}
-
-message StreamBugBotLinterRequest {
-  GitDiff git_diff = 1;
-  string active_file = 2;
-  int32 cursor_line_number_one_indexed = 3;
-  optional string session_id = 4;
-  bool telem_enabled = 5;
-}
-
-message StreamBugBotLinterResponse {
-  repeated BugReport bugs = 1;
-}
-
-message StreamBugFindingRequest {
-  message FileDiff {
-    message Hunk {
-      int32 old_start_one_indexed = 1;
-      int32 new_start_one_indexed = 2;
-      repeated string old_lines = 3;
-      repeated string new_lines = 4;
-    }
-
-    message Line {
-      int32 one_indexed_line_number = 1;
-      string line = 2;
-    }
-
-    string relative_workspace_path = 1;
-    repeated Line lines = 2;
-    repeated Hunk hunks = 3;
-    optional string old_relative_workspace_path = 4;
-    bool not_truncated = 5;
+  message PullRequestReference {
+    string provider = 1;
+    string owner = 2;
+    string repository = 3;
+    int64 pull_request_number = 4;
+    optional string title = 5;
+    optional string body = 6;
+    optional string base_branch = 7;
+    optional string base_sha = 8;
+    optional string head_sha = 9;
   }
+  PullRequestReference pull_request = 1;
+  GitDiff diff = 2;
+  optional string user_prompt = 3;
+  optional string idempotency_key = 4;
+  optional int32 max_steps = 5;
+  optional string model_id = 6;
+  repeated string commit_hashes = 7;
+  optional string system_prompt = 8;
+  optional bool diff_references_only = 9;
+  optional PromptConstructionMode prompt_construction_mode = 10;
+  optional string raw_user_prompt = 11;
+}
 
-  repeated FileDiff file_diffs = 1;
+message StreamCodeTourResponse {
+  message StatusEvent {
+    enum Status {
+      STATUS_UNSPECIFIED = 0;
+      STATUS_STARTED = 1;
+      STATUS_PROCESSING = 2;
+    }
+    Status status = 1;
+    optional string message = 2;
+  }
+  message DoneEvent {
+    CodeTourDoneReason reason = 1;
+  }
+  message ErrorEvent {
+    string message = 1;
+    CodeTourDoneReason reason = 2;
+  }
+  message MarkdownDeltaEvent {
+    string markdown_delta = 1;
+  }
+  message ThinkingDeltaEvent {
+    string thinking_delta = 1;
+  }
+  message Blame {
+    repeated CommitMetrics commits = 1;
+    repeated ConversationReference conversations = 2;
+  }
+  optional string request_id = 4;
+  optional string conversation_id = 5;
+  optional Blame blame = 6;
+  oneof event {
+    StatusEvent status = 1;
+    DoneEvent done = 2;
+    ErrorEvent error = 3;
+    MarkdownDeltaEvent markdown_delta = 7;
+    ThinkingDeltaEvent thinking_delta = 8;
+  }
 }
 
 message StreamBugFindingResponse {
@@ -161,86 +163,36 @@ message StreamBugFindingResponse {
     double confidence = 6;
     string description = 7;
   }
-
   repeated Bug bugs = 1;
 }
 
-message StreamCodeTourRequest {
-  message PullRequestReference {
-    string provider = 1;
-    string owner = 2;
-    string repository = 3;
-    int64 pull_request_number = 4;
-    optional string title = 5;
-    optional string body = 6;
-    optional string base_branch = 7;
-    optional string base_sha = 8;
-    optional string head_sha = 9;
-  }
-
-  PullRequestReference pull_request = 1;
-  GitDiff diff = 2;
-  optional string user_prompt = 3;
-  optional string idempotency_key = 4;
-  optional int32 max_steps = 5;
-  optional string model_id = 6;
-  repeated string commit_hashes = 7;
-  optional string system_prompt = 8;
-  optional bool diff_references_only = 9;
-}
-
-message StreamCodeTourResponse {
-  message Blame {
-    repeated CommitMetrics commits = 1;
-    repeated ConversationReference conversations = 2;
-  }
-
-  message DoneEvent {
-    CodeTourDoneReason reason = 1;
-  }
-
-  message ErrorEvent {
-    string message = 1;
-    CodeTourDoneReason reason = 2;
-  }
-
-  message MarkdownDeltaEvent {
-    string markdown_delta = 1;
-  }
-
-  message StatusEvent {
-    enum Status {
-      STATUS_UNSPECIFIED = 0;
-      STATUS_STARTED = 1;
-      STATUS_PROCESSING = 2;
+message StreamBugFindingRequest {
+  message FileDiff {
+    message Hunk {
+      int32 old_start_one_indexed = 1;
+      int32 new_start_one_indexed = 2;
+      repeated string old_lines = 3;
+      repeated string new_lines = 4;
     }
-
-    Status status = 1;
-    optional string message = 2;
+    message Line {
+      int32 one_indexed_line_number = 1;
+      string line = 2;
+    }
+    string relative_workspace_path = 1;
+    repeated Line lines = 2;
+    repeated Hunk hunks = 3;
+    optional string old_relative_workspace_path = 4;
+    bool not_truncated = 5;
   }
-
-  message ThinkingDeltaEvent {
-    string thinking_delta = 1;
-  }
-
-  oneof event {
-    StatusEvent status = 1;
-    DoneEvent done = 2;
-    ErrorEvent error = 3;
-    MarkdownDeltaEvent markdown_delta = 7;
-    ThinkingDeltaEvent thinking_delta = 8;
-  }
-  optional string request_id = 4;
-  optional string conversation_id = 5;
-  optional Blame blame = 6;
+  repeated FileDiff file_diffs = 1;
 }
 
 service ReviewService {
-  rpc StreamReview (ReviewRequestV2) returns (stream ReviewResponseV2);
-  rpc StreamReviewChat (ReviewChatRequestV2) returns (stream ReviewChatResponseV2);
-  rpc StreamSlowReview (ReviewRequestV2) returns (stream ReviewResponseV2);
-  rpc StreamCodeTour (StreamCodeTourRequest) returns (stream StreamCodeTourResponse);
-  rpc BugConfig (BugConfigRequest) returns (BugConfigResponse);
-  rpc StreamBugBotLinter (StreamBugBotLinterRequest) returns (stream StreamBugBotLinterResponse);
-  rpc StreamBugFinding (StreamBugFindingRequest) returns (stream StreamBugFindingResponse);
+  rpc StreamReview(ReviewRequestV2) returns (stream ReviewResponseV2);
+  rpc StreamReviewChat(ReviewChatRequestV2) returns (stream ReviewChatResponseV2);
+  rpc StreamSlowReview(ReviewRequestV2) returns (stream ReviewResponseV2);
+  rpc StreamCodeTour(StreamCodeTourRequest) returns (stream StreamCodeTourResponse);
+  rpc BugConfig(BugConfigRequest) returns (BugConfigResponse);
+  rpc StreamBugBotLinter(StreamBugBotLinterRequest) returns (stream StreamBugBotLinterResponse);
+  rpc StreamBugFinding(StreamBugFindingRequest) returns (stream StreamBugFindingResponse);
 }

@@ -6,13 +6,23 @@ import "aiserver/v1/repository.proto";
 import "aiserver/v1/shadow_workspace.proto";
 import "aiserver/v1/utils.proto";
 
-message OpusChainGetFileInstructionRequest {
-  string relative_workspace_path = 1;
-  string high_level_ai_answer = 2;
+message ReportModeSelectionRequest {
+  string mode = 1;
+  CmdKDebugInfo debug_info = 2;
 }
 
-message OpusChainGetFileInstructionResponse {
-  string file_instruction = 1;
+message ReportModeSelectionResponse {
+}
+
+message RecordAcceptedPatchRequest {
+  string patch_uuid = 1;
+  string patch_string = 2;
+  string source = 3;
+  string reflection = 4;
+  CmdKDebugInfo debug_info = 5;
+}
+
+message RecordAcceptedPatchResponse {
 }
 
 message OpusChainGetFilePathsRequest {
@@ -24,41 +34,7 @@ message OpusChainGetFilePathsResponse {
     string raw_path = 1;
     repeated int32 interesting_lines = 2;
   }
-
   repeated Path paths = 1;
-}
-
-message OpusChainGetPlanRequest {
-  message CodebaseInformation {
-    message File {
-      string relative_workspace_path = 1;
-      string contents = 2;
-      repeated int32 interesting_lines = 3;
-    }
-
-    message QA {
-      string question = 1;
-      string answer = 2;
-    }
-
-    repeated File files = 1;
-    repeated QA qa = 2;
-  }
-
-  string relative_workspace_path = 1;
-  string file_contents = 2;
-  string branch_notes = 3;
-  string branch_name = 4;
-  string high_level_ai_answer = 5;
-  string originating_reflection = 9;
-  optional string override_model = 6;
-  optional int32 override_token_limit = 7;
-  repeated CodeResult scored_codebase_context = 15;
-  optional CodebaseInformation codebase_information = 8;
-}
-
-message OpusChainGetPlanResponse {
-  string text = 1;
 }
 
 message OpusChainReflectRequest {
@@ -77,7 +53,11 @@ message OpusChainReflectRequest {
 message OpusChainReflectResponse {
   message AcceptDecision {
   }
-
+  message RetryWithoutMoreInformationDecision {
+  }
+  message RetryWithCodebaseQuestionDecision {
+    repeated string codebase_questions = 1;
+  }
   message Decision {
     oneof decision {
       AcceptDecision accept = 1;
@@ -85,42 +65,54 @@ message OpusChainReflectResponse {
       RetryWithCodebaseQuestionDecision retry_with_codebase_question = 3;
     }
   }
-
-  message RetryWithCodebaseQuestionDecision {
-    repeated string codebase_questions = 1;
-  }
-
-  message RetryWithoutMoreInformationDecision {
-  }
-
   string text = 1;
   Decision decision = 2;
 }
 
-message RecordAcceptedPatchRequest {
-  string patch_uuid = 1;
-  string patch_string = 2;
-  string source = 3;
-  string reflection = 4;
-  CmdKDebugInfo debug_info = 5;
+message OpusChainGetFileInstructionRequest {
+  string relative_workspace_path = 1;
+  string high_level_ai_answer = 2;
 }
 
-message RecordAcceptedPatchResponse {
+message OpusChainGetFileInstructionResponse {
+  string file_instruction = 1;
 }
 
-message ReportModeSelectionRequest {
-  string mode = 1;
-  CmdKDebugInfo debug_info = 2;
+message OpusChainGetPlanRequest {
+  message CodebaseInformation {
+    message File {
+      string relative_workspace_path = 1;
+      string contents = 2;
+      repeated int32 interesting_lines = 3;
+    }
+    message QA {
+      string question = 1;
+      string answer = 2;
+    }
+    repeated File files = 1;
+    repeated QA qa = 2;
+  }
+  string relative_workspace_path = 1;
+  string file_contents = 2;
+  string branch_notes = 3;
+  string branch_name = 4;
+  string high_level_ai_answer = 5;
+  string originating_reflection = 9;
+  optional string override_model = 6;
+  optional int32 override_token_limit = 7;
+  repeated CodeResult scored_codebase_context = 15;
+  optional CodebaseInformation codebase_information = 8;
 }
 
-message ReportModeSelectionResponse {
+message OpusChainGetPlanResponse {
+  string text = 1;
 }
 
 service AiBranchService {
-  rpc OpusChainGetPlan (OpusChainGetPlanRequest) returns (stream OpusChainGetPlanResponse);
-  rpc OpusChainGetFileInstruction (OpusChainGetFileInstructionRequest) returns (OpusChainGetFileInstructionResponse);
-  rpc OpusChainReflect (OpusChainReflectRequest) returns (stream OpusChainReflectResponse);
-  rpc OpusChainGetFilePaths (OpusChainGetFilePathsRequest) returns (OpusChainGetFilePathsResponse);
-  rpc RecordAcceptedPatch (RecordAcceptedPatchRequest) returns (RecordAcceptedPatchResponse);
-  rpc ReportModeSelection (ReportModeSelectionRequest) returns (ReportModeSelectionResponse);
+  rpc OpusChainGetPlan(OpusChainGetPlanRequest) returns (stream OpusChainGetPlanResponse);
+  rpc OpusChainGetFileInstruction(OpusChainGetFileInstructionRequest) returns (OpusChainGetFileInstructionResponse);
+  rpc OpusChainReflect(OpusChainReflectRequest) returns (stream OpusChainReflectResponse);
+  rpc OpusChainGetFilePaths(OpusChainGetFilePathsRequest) returns (OpusChainGetFilePathsResponse);
+  rpc RecordAcceptedPatch(RecordAcceptedPatchRequest) returns (RecordAcceptedPatchResponse);
+  rpc ReportModeSelection(ReportModeSelectionRequest) returns (ReportModeSelectionResponse);
 }

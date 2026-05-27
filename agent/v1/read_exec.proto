@@ -10,29 +10,6 @@ message ReadArgs {
   optional string encoding_hint = 6;
 }
 
-message ReadError {
-  string path = 1;
-  string error = 2;
-}
-
-message ReadFileNotFound {
-  string path = 1;
-}
-
-message ReadInvalidFile {
-  string path = 1;
-  string reason = 2;
-}
-
-message ReadPermissionDenied {
-  string path = 1;
-}
-
-message ReadRejected {
-  string path = 1;
-  string reason = 2;
-}
-
 message ReadResult {
   oneof result {
     ReadSuccess success = 1;
@@ -46,13 +23,36 @@ message ReadResult {
 
 message ReadSuccess {
   string path = 1;
-  oneof output {
-    string content = 2;
-    bytes data = 5;
-  }
   int32 total_lines = 3;
   int64 file_size = 4;
   bool truncated = 6;
   optional bytes output_blob_id = 7;
   bool range_applied = 8;
+  oneof output {
+    string content = 2;
+    bytes data = 5;
+  }
+}
+
+message ReadError {
+  string path = 1;
+  string error = 2;
+}
+
+message ReadRejected {
+  string path = 1;
+  string reason = 2;
+}
+
+message ReadFileNotFound {
+  string path = 1;
+}
+
+message ReadPermissionDenied {
+  string path = 1;
+}
+
+message ReadInvalidFile {
+  string path = 1;
+  string reason = 2;
 }

@@ -8,26 +8,6 @@ message AwaitArgs {
   optional string regex = 3;
 }
 
-message AwaitError {
-  string error = 1;
-}
-
-message AwaitResult {
-  oneof result {
-    AwaitTaskComplete complete = 1;
-    AwaitTaskStillRunning still_running = 2;
-    AwaitError error = 3;
-    AwaitSuccess success = 4;
-  }
-}
-
-message AwaitSuccess {
-  oneof await_result {
-    AwaitTaskComplete complete = 1;
-    AwaitTaskStillRunning still_running = 2;
-  }
-}
-
 message AwaitTaskComplete {
   string task_id = 1;
   uint64 runtime_ms = 2;
@@ -45,6 +25,26 @@ message AwaitTaskStillRunning {
   uint64 output_length = 4;
   bool regex_requested = 5;
   optional string regex_match = 6;
+}
+
+message AwaitError {
+  string error = 1;
+}
+
+message AwaitSuccess {
+  oneof await_result {
+    AwaitTaskComplete complete = 1;
+    AwaitTaskStillRunning still_running = 2;
+  }
+}
+
+message AwaitResult {
+  oneof result {
+    AwaitTaskComplete complete = 1;
+    AwaitTaskStillRunning still_running = 2;
+    AwaitError error = 3;
+    AwaitSuccess success = 4;
+  }
 }
 
 message AwaitToolCall {

@@ -11,28 +11,6 @@ message WriteArgs {
   optional string encoding_hint = 6;
 }
 
-message WriteError {
-  string path = 1;
-  string error = 2;
-}
-
-message WriteNoSpace {
-  string path = 1;
-}
-
-message WritePermissionDenied {
-  string path = 1;
-  string directory = 2;
-  string operation = 3;
-  string error = 4;
-  bool is_readonly = 5;
-}
-
-message WriteRejected {
-  string path = 1;
-  string reason = 2;
-}
-
 message WriteResult {
   oneof result {
     WriteSuccess success = 1;
@@ -48,4 +26,26 @@ message WriteSuccess {
   int32 lines_created = 2;
   int32 file_size = 3;
   optional string file_content_after_write = 4;
+}
+
+message WritePermissionDenied {
+  string path = 1;
+  string directory = 2;
+  string operation = 3;
+  string error = 4;
+  bool is_readonly = 5;
+}
+
+message WriteNoSpace {
+  string path = 1;
+}
+
+message WriteError {
+  string path = 1;
+  string error = 2;
+}
+
+message WriteRejected {
+  string path = 1;
+  string reason = 2;
 }

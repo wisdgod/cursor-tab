@@ -6,6 +6,10 @@ message SendFinalSummaryArgs {
   optional string final_summary = 1;
 }
 
+message SendFinalSummarySuccess {
+  string final_summary = 1;
+}
+
 message SendFinalSummaryError {
   string error = 1;
 }
@@ -15,10 +19,6 @@ message SendFinalSummaryResult {
     SendFinalSummarySuccess success = 1;
     SendFinalSummaryError error = 2;
   }
-}
-
-message SendFinalSummarySuccess {
-  string final_summary = 1;
 }
 
 message SendFinalSummaryToolCall {

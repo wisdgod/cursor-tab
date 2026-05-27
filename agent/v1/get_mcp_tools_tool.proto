@@ -2,13 +2,6 @@ syntax = "proto3";
 
 package agent.v1;
 
-message GetMcpToolsAgentResult {
-  oneof result {
-    GetMcpToolsSuccess success = 1;
-    GetMcpToolsError error = 2;
-  }
-}
-
 message GetMcpToolsArgs {
   optional string server = 1;
   optional string tool_name = 2;
@@ -16,13 +9,20 @@ message GetMcpToolsArgs {
   string tool_call_id = 4;
 }
 
-message GetMcpToolsError {
-  string error = 1;
+message GetMcpToolsAgentResult {
+  oneof result {
+    GetMcpToolsSuccess success = 1;
+    GetMcpToolsError error = 2;
+  }
 }
 
 message GetMcpToolsSuccess {
   string content = 1;
   optional string output_file_path = 2;
+}
+
+message GetMcpToolsError {
+  string error = 1;
 }
 
 message GetMcpToolsToolCall {

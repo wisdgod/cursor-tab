@@ -2,26 +2,26 @@ syntax = "proto3";
 
 package aiserver.v1;
 
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
-message CreateContractExpansionRequest {
+message GetManualEnterpriseContractRequest {
   int32 team_id = 1;
-  int32 contract_id = 2;
-  google.protobuf.Timestamp start_date = 3;
-  int32 committed_usage_dollars = 4;
-  int32 committed_seats = 5;
-  double platform_discount_percent = 6;
-  string salesforce_account_id = 7;
-  string salesforce_opportunity_id = 8;
-  string salesforce_line_item_id = 9;
-  optional double cursor_token_fee_cents_per_million_tokens = 10;
-  optional double pooled_usage_revenue_discount_percent = 11;
-  optional double on_demand_usage_revenue_discount_percent = 12;
-  optional int64 organization_id = 13;
+  int32 id = 2;
+  optional int64 organization_id = 3;
 }
 
-message CreateContractExpansionResponse {
+message GetManualEnterpriseContractResponse {
   EnterpriseContract contract = 1;
+}
+
+message ListManualEnterpriseContractsRequest {
+  int32 team_id = 1;
+  optional int64 organization_id = 2;
+}
+
+message ListManualEnterpriseContractsResponse {
+  repeated EnterpriseContract contracts = 1;
 }
 
 message CreateManualEnterpriseContractRequest {
@@ -38,9 +38,53 @@ message CreateManualEnterpriseContractRequest {
   optional double pooled_usage_revenue_discount_percent = 11;
   optional double on_demand_usage_revenue_discount_percent = 12;
   optional int64 organization_id = 13;
+  optional google.protobuf.Struct changed_by = 14;
 }
 
 message CreateManualEnterpriseContractResponse {
+  EnterpriseContract contract = 1;
+}
+
+message CreateContractExpansionRequest {
+  int32 team_id = 1;
+  int32 contract_id = 2;
+  google.protobuf.Timestamp start_date = 3;
+  int32 committed_usage_dollars = 4;
+  int32 committed_seats = 5;
+  double platform_discount_percent = 6;
+  string salesforce_account_id = 7;
+  string salesforce_opportunity_id = 8;
+  string salesforce_line_item_id = 9;
+  optional double cursor_token_fee_cents_per_million_tokens = 10;
+  optional double pooled_usage_revenue_discount_percent = 11;
+  optional double on_demand_usage_revenue_discount_percent = 12;
+  optional int64 organization_id = 13;
+  optional google.protobuf.Struct changed_by = 14;
+}
+
+message CreateContractExpansionResponse {
+  EnterpriseContract contract = 1;
+}
+
+message UpsertManualEnterpriseContractRequest {
+  int32 id = 1;
+  int32 team_id = 2;
+  google.protobuf.Timestamp start_date = 3;
+  google.protobuf.Timestamp end_date = 4;
+  int32 committed_usage_dollars = 5;
+  int32 committed_seats = 6;
+  double platform_discount_percent = 7;
+  string salesforce_account_id = 8;
+  string salesforce_opportunity_id = 9;
+  string salesforce_line_item_id = 10;
+  optional double cursor_token_fee_cents_per_million_tokens = 11;
+  optional double pooled_usage_revenue_discount_percent = 12;
+  optional double on_demand_usage_revenue_discount_percent = 13;
+  optional int64 organization_id = 14;
+  optional google.protobuf.Struct changed_by = 15;
+}
+
+message UpsertManualEnterpriseContractResponse {
   EnterpriseContract contract = 1;
 }
 
@@ -48,17 +92,50 @@ message DeleteManualEnterpriseContractRequest {
   int32 id = 1;
   int32 team_id = 2;
   optional int64 organization_id = 3;
+  optional google.protobuf.Struct changed_by = 4;
 }
 
 message DeleteManualEnterpriseContractResponse {
   EnterpriseContract contract = 1;
 }
 
+message ListEnterpriseContractsRequest {
+  int32 team_id = 1;
+  optional int64 organization_id = 2;
+}
+
+message ListEnterpriseContractsResponse {
+  repeated EnterpriseContract contracts = 1;
+}
+
 message EnableTokenBasedPricingRequest {
   int32 team_id = 1;
+  optional string target_membership_type = 2;
 }
 
 message EnableTokenBasedPricingResponse {
+  bool success = 1;
+}
+
+message GetEnterpriseStatusRequest {
+  int32 team_id = 1;
+}
+
+message GetEnterpriseStatusResponse {
+  int32 team_id = 1;
+  string team_membership_type = 2;
+  string pricing_strategy = 3;
+  double platform_discount = 4;
+  int32 committed_dollars = 5;
+  string name = 6;
+  google.protobuf.Timestamp scheduled_token_based_contract_starts_at = 7;
+}
+
+message StartTokenBasedTrialRequest {
+  int32 team_id = 1;
+}
+
+message StartTokenBasedTrialResponse {
   bool success = 1;
 }
 
@@ -81,28 +158,37 @@ message EnterpriseContract {
   optional int64 organization_id = 16;
 }
 
-message GetEnterpriseStatusRequest {
+message ListManualEnterpriseContractArchiveRequest {
   int32 team_id = 1;
+  optional int64 organization_id = 2;
+  optional int32 contract_id = 3;
 }
 
-message GetEnterpriseStatusResponse {
-  int32 team_id = 1;
-  string team_membership_type = 2;
-  string pricing_strategy = 3;
-  double platform_discount = 4;
-  int32 committed_dollars = 5;
-  string name = 6;
-  google.protobuf.Timestamp scheduled_token_based_contract_starts_at = 7;
+message ListManualEnterpriseContractArchiveResponse {
+  repeated ManualEnterpriseContractArchiveEntry entries = 1;
 }
 
-message GetManualEnterpriseContractRequest {
-  int32 team_id = 1;
-  int32 id = 2;
-  optional int64 organization_id = 3;
-}
-
-message GetManualEnterpriseContractResponse {
-  EnterpriseContract contract = 1;
+message ManualEnterpriseContractArchiveEntry {
+  int64 id = 1;
+  optional int32 manual_enterprise_contract_id = 2;
+  string action = 3;
+  optional google.protobuf.Struct changed_by = 4;
+  google.protobuf.Timestamp changed_at = 5;
+  optional int32 team_id = 6;
+  optional int64 organization_id = 7;
+  google.protobuf.Timestamp start_date = 8;
+  google.protobuf.Timestamp end_date = 9;
+  int32 committed_usage_dollars = 10;
+  int32 committed_seats = 11;
+  double platform_discount_percent = 12;
+  optional double cursor_token_fee_cents_per_million_tokens = 13;
+  optional double pooled_usage_revenue_discount_percent = 14;
+  optional double on_demand_usage_revenue_discount_percent = 15;
+  string salesforce_account_id = 16;
+  string salesforce_opportunity_id = 17;
+  string salesforce_line_item_id = 18;
+  google.protobuf.Timestamp contract_created_at = 19;
+  google.protobuf.Timestamp contract_updated_at = 20;
 }
 
 message GetTeamUsageForDateRangeRequest {
@@ -115,63 +201,17 @@ message GetTeamUsageForDateRangeResponse {
   int64 total_cents = 1;
 }
 
-message ListEnterpriseContractsRequest {
-  int32 team_id = 1;
-  optional int64 organization_id = 2;
-}
-
-message ListEnterpriseContractsResponse {
-  repeated EnterpriseContract contracts = 1;
-}
-
-message ListManualEnterpriseContractsRequest {
-  int32 team_id = 1;
-  optional int64 organization_id = 2;
-}
-
-message ListManualEnterpriseContractsResponse {
-  repeated EnterpriseContract contracts = 1;
-}
-
-message StartTokenBasedTrialRequest {
-  int32 team_id = 1;
-}
-
-message StartTokenBasedTrialResponse {
-  bool success = 1;
-}
-
-message UpsertManualEnterpriseContractRequest {
-  int32 id = 1;
-  int32 team_id = 2;
-  google.protobuf.Timestamp start_date = 3;
-  google.protobuf.Timestamp end_date = 4;
-  int32 committed_usage_dollars = 5;
-  int32 committed_seats = 6;
-  double platform_discount_percent = 7;
-  string salesforce_account_id = 8;
-  string salesforce_opportunity_id = 9;
-  string salesforce_line_item_id = 10;
-  optional double cursor_token_fee_cents_per_million_tokens = 11;
-  optional double pooled_usage_revenue_discount_percent = 12;
-  optional double on_demand_usage_revenue_discount_percent = 13;
-  optional int64 organization_id = 14;
-}
-
-message UpsertManualEnterpriseContractResponse {
-  EnterpriseContract contract = 1;
-}
-
 service EnterpriseAdminService {
-  rpc GetManualEnterpriseContract (GetManualEnterpriseContractRequest) returns (GetManualEnterpriseContractResponse);
-  rpc ListManualEnterpriseContracts (ListManualEnterpriseContractsRequest) returns (ListManualEnterpriseContractsResponse);
-  rpc CreateManualEnterpriseContract (CreateManualEnterpriseContractRequest) returns (CreateManualEnterpriseContractResponse);
-  rpc CreateContractExpansion (CreateContractExpansionRequest) returns (CreateContractExpansionResponse);
-  rpc UpsertManualEnterpriseContract (UpsertManualEnterpriseContractRequest) returns (UpsertManualEnterpriseContractResponse);
-  rpc DeleteManualEnterpriseContract (DeleteManualEnterpriseContractRequest) returns (DeleteManualEnterpriseContractResponse);
-  rpc ListEnterpriseContracts (ListEnterpriseContractsRequest) returns (ListEnterpriseContractsResponse);
-  rpc EnableTokenBasedPricing (EnableTokenBasedPricingRequest) returns (EnableTokenBasedPricingResponse);
-  rpc GetEnterpriseStatus (GetEnterpriseStatusRequest) returns (GetEnterpriseStatusResponse);
-  rpc StartTokenBasedTrial (StartTokenBasedTrialRequest) returns (StartTokenBasedTrialResponse);
-  rpc GetTeamUsageForDateRange (GetTeamUsageForDateRangeRequest) returns (GetTeamUsageForDateRangeResponse);
+  rpc GetManualEnterpriseContract(GetManualEnterpriseContractRequest) returns (GetManualEnterpriseContractResponse);
+  rpc ListManualEnterpriseContracts(ListManualEnterpriseContractsRequest) returns (ListManualEnterpriseContractsResponse);
+  rpc ListManualEnterpriseContractArchive(ListManualEnterpriseContractArchiveRequest) returns (ListManualEnterpriseContractArchiveResponse);
+  rpc CreateManualEnterpriseContract(CreateManualEnterpriseContractRequest) returns (CreateManualEnterpriseContractResponse);
+  rpc CreateContractExpansion(CreateContractExpansionRequest) returns (CreateContractExpansionResponse);
+  rpc UpsertManualEnterpriseContract(UpsertManualEnterpriseContractRequest) returns (UpsertManualEnterpriseContractResponse);
+  rpc DeleteManualEnterpriseContract(DeleteManualEnterpriseContractRequest) returns (DeleteManualEnterpriseContractResponse);
+  rpc ListEnterpriseContracts(ListEnterpriseContractsRequest) returns (ListEnterpriseContractsResponse);
+  rpc EnableTokenBasedPricing(EnableTokenBasedPricingRequest) returns (EnableTokenBasedPricingResponse);
+  rpc GetEnterpriseStatus(GetEnterpriseStatusRequest) returns (GetEnterpriseStatusResponse);
+  rpc StartTokenBasedTrial(StartTokenBasedTrialRequest) returns (StartTokenBasedTrialResponse);
+  rpc GetTeamUsageForDateRange(GetTeamUsageForDateRangeRequest) returns (GetTeamUsageForDateRangeResponse);
 }

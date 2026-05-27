@@ -12,7 +12,26 @@ enum UploadStatus {
   UPLOAD_STATUS_NOT_FOUND = 4;
 }
 
-message GetDocRequest {
+message RescrapeDocsRequest {
+  string doc_identifier = 1;
+  optional bool force_reupload = 2;
+}
+
+message RescrapeDocsRequestV2 {
+  NewDocumentationRequest new_doc_req = 1;
+  optional bool force_reupload = 2;
+}
+
+message RescrapeDocsResponse {
+  bool success = 1;
+  optional string new_doc_identifier = 2;
+}
+
+message UploadedStatusRequest {
+  string doc_identifier = 1;
+}
+
+message UploadDocumentationRequest {
   string doc_identifier = 1;
 }
 
@@ -20,25 +39,8 @@ message GetPagesRequest {
   string doc_identifier = 1;
 }
 
-message MarkAsPublicRequest {
+message GetDocRequest {
   string doc_identifier = 1;
-  string password = 2;
-  string doc_name = 3;
-}
-
-message NewDocumentationRequest {
-  string doc_identifier = 1;
-  DocumentationMetadata metadata = 2;
-  repeated string ignore_prefixes = 4;
-  repeated string ignore_urls = 5;
-  optional string custom_instructions = 6;
-  optional bool publish_to_team = 7;
-  optional bool client_handles_uuid = 8;
-}
-
-message Pages {
-  repeated string pages = 1;
-  repeated string page_urls = 2;
 }
 
 message ProtoDoc {
@@ -65,40 +67,25 @@ message ProtoDocPage {
   string title = 2;
 }
 
-message RescrapeDocsRequest {
+message Pages {
+  repeated string pages = 1;
+  repeated string page_urls = 2;
+}
+
+message MarkAsPublicRequest {
   string doc_identifier = 1;
-  optional bool force_reupload = 2;
+  string password = 2;
+  string doc_name = 3;
 }
 
-message RescrapeDocsRequestV2 {
-  NewDocumentationRequest new_doc_req = 1;
-  optional bool force_reupload = 2;
-}
-
-message RescrapeDocsResponse {
-  bool success = 1;
-  optional string new_doc_identifier = 2;
-}
-
-message UploadDocumentationRequest {
+message NewDocumentationRequest {
   string doc_identifier = 1;
-}
-
-message UploadedStatus {
-  enum Status {
-    STATUS_UNSPECIFIED = 0;
-    STATUS_IN_PROGRESS = 1;
-    STATUS_SUCCEEDED = 2;
-    STATUS_FAILED = 3;
-    STATUS_NOT_FOUND = 4;
-  }
-
-  Status status = 1;
-  repeated string uploaded_pages = 2;
-}
-
-message UploadedStatusRequest {
-  string doc_identifier = 1;
+  DocumentationMetadata metadata = 2;
+  repeated string ignore_prefixes = 4;
+  repeated string ignore_urls = 5;
+  optional string custom_instructions = 6;
+  optional bool publish_to_team = 7;
+  optional bool client_handles_uuid = 8;
 }
 
 message UploadResponse {
@@ -109,12 +96,23 @@ message UploadResponse {
     STATUS_ALREADY_EXISTS = 3;
     STATUS_SIMILAR_ALREADY_EXISTS = 4;
   }
-
   Status status = 1;
   float progress = 2;
   string similar_doc_identifier = 3;
   repeated string uploaded_pages = 4;
   string doc_uuid = 5;
+}
+
+message UploadedStatus {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_IN_PROGRESS = 1;
+    STATUS_SUCCEEDED = 2;
+    STATUS_FAILED = 3;
+    STATUS_NOT_FOUND = 4;
+  }
+  Status status = 1;
+  repeated string uploaded_pages = 2;
 }
 
 message UpsertDocsRequest {
@@ -128,13 +126,13 @@ message UpsertDocsResponse {
 }
 
 service UploadService {
-  rpc UploadDocumentation (NewDocumentationRequest) returns (UploadResponse);
-  rpc UploadDocumentationStatus (UploadDocumentationRequest) returns (UploadedStatus);
-  rpc MarkAsPublic (MarkAsPublicRequest) returns (UploadedStatus);
-  rpc UploadStatus (UploadedStatusRequest) returns (UploadedStatus);
-  rpc GetPages (GetPagesRequest) returns (Pages);
-  rpc GetDoc (GetDocRequest) returns (ProtoDoc);
-  rpc RescrapeDocs (RescrapeDocsRequest) returns (RescrapeDocsResponse);
-  rpc RescrapeDocsV2 (RescrapeDocsRequestV2) returns (RescrapeDocsResponse);
-  rpc UpsertAllDocs (UpsertDocsRequest) returns (UpsertDocsResponse);
+  rpc UploadDocumentation(NewDocumentationRequest) returns (UploadResponse);
+  rpc UploadDocumentationStatus(UploadDocumentationRequest) returns (UploadedStatus);
+  rpc MarkAsPublic(MarkAsPublicRequest) returns (UploadedStatus);
+  rpc UploadStatus(UploadedStatusRequest) returns (UploadedStatus);
+  rpc GetPages(GetPagesRequest) returns (Pages);
+  rpc GetDoc(GetDocRequest) returns (ProtoDoc);
+  rpc RescrapeDocs(RescrapeDocsRequest) returns (RescrapeDocsResponse);
+  rpc RescrapeDocsV2(RescrapeDocsRequestV2) returns (RescrapeDocsResponse);
+  rpc UpsertAllDocs(UpsertDocsRequest) returns (UpsertDocsResponse);
 }

@@ -2,8 +2,31 @@ syntax = "proto3";
 
 package agent.v1;
 
-import "agent/v1/lifecycle_service.proto";
 import "aiserver/v1/utils.proto";
+
+enum EntryType {
+  ENTRY_TYPE_UNSPECIFIED = 0;
+  ENTRY_TYPE_FILE = 1;
+  ENTRY_TYPE_DIRECTORY = 2;
+  ENTRY_TYPE_SYMLINK = 3;
+}
+
+enum BatchGetDiffErrorKind {
+  BATCH_GET_DIFF_ERROR_KIND_UNSPECIFIED = 0;
+  BATCH_GET_DIFF_ERROR_KIND_FETCH_FAILED = 1;
+  BATCH_GET_DIFF_ERROR_KIND_DIFF_FAILED = 2;
+  BATCH_GET_DIFF_ERROR_KIND_UNAUTHENTICATED = 3;
+  BATCH_GET_DIFF_ERROR_KIND_NOT_FOUND = 4;
+  BATCH_GET_DIFF_ERROR_KIND_INTERNAL = 5;
+}
+
+enum ArtifactUploadStatus {
+  ARTIFACT_UPLOAD_STATUS_UNSPECIFIED = 0;
+  ARTIFACT_UPLOAD_STATUS_NOT_STARTED = 1;
+  ARTIFACT_UPLOAD_STATUS_IN_PROGRESS = 2;
+  ARTIFACT_UPLOAD_STATUS_COMPLETED = 3;
+  ARTIFACT_UPLOAD_STATUS_FAILED = 4;
+}
 
 enum ArtifactPathErrorKind {
   ARTIFACT_PATH_ERROR_KIND_UNSPECIFIED = 0;
@@ -21,64 +44,37 @@ enum ArtifactUploadDispatchStatus {
   ARTIFACT_UPLOAD_DISPATCH_STATUS_SKIPPED_ALREADY_IN_PROGRESS = 3;
 }
 
-enum ArtifactUploadStatus {
-  ARTIFACT_UPLOAD_STATUS_UNSPECIFIED = 0;
-  ARTIFACT_UPLOAD_STATUS_NOT_STARTED = 1;
-  ARTIFACT_UPLOAD_STATUS_IN_PROGRESS = 2;
-  ARTIFACT_UPLOAD_STATUS_COMPLETED = 3;
-  ARTIFACT_UPLOAD_STATUS_FAILED = 4;
+enum ArtifactRestoreStatus {
+  ARTIFACT_RESTORE_STATUS_UNSPECIFIED = 0;
+  ARTIFACT_RESTORE_STATUS_RESTORED = 1;
+  ARTIFACT_RESTORE_STATUS_SKIPPED_ALREADY_EXISTS = 2;
+  ARTIFACT_RESTORE_STATUS_REJECTED = 3;
 }
 
-message ArtifactPathError {
-  ArtifactPathErrorKind kind = 1;
-  string code = 2;
-  string message = 3;
+message PingRequest {
 }
 
-message ArtifactUploadDispatchResult {
-  string absolute_path = 1;
-  ArtifactUploadDispatchStatus status = 2;
-  string message = 3;
-  optional string slack_file_id = 4;
+message PingResponse {
 }
 
-message ArtifactUploadInstruction {
-  string absolute_path = 1;
-  string upload_url = 2;
-  string method = 3;
-  map<string, string> headers = 4;
-  optional string content_type = 5;
-  optional string slack_upload_url = 6;
-  optional string slack_file_id = 7;
+message GetCapabilitiesRequest {
 }
 
-message ArtifactUploadMetadata {
-  string absolute_path = 1;
-  uint64 size_bytes = 2;
-  int64 updated_at_unix_ms = 3;
-  ArtifactUploadStatus status = 4;
-  uint64 bytes_uploaded = 5;
-  string last_error = 6;
-  uint32 upload_attempts = 7;
-  int64 last_started_at_unix_ms = 8;
-  int64 last_finished_at_unix_ms = 9;
-  string upload_id = 10;
+message GetCapabilitiesResponse {
+  optional bool computer_use_supported = 1;
 }
 
-message DirectoryEntry {
-  string name = 1;
-  string path = 2;
-  EntryType type = 3;
-  uint64 size_bytes = 4;
-  int64 modified_at_unix_ms = 5;
+message ReloadAgentSkillsRequest {
 }
 
-message DownloadCursorServerRequest {
-  string commit = 1;
+message ReloadAgentSkillsResponse {
 }
 
-message DownloadCursorServerResponse {
-  bool already_downloaded = 1;
+message ReloadPluginsRequest {
+  repeated string reload_targets = 1;
+}
+
+message ReloadPluginsResponse {
 }
 
 message ExecRequest {
@@ -96,40 +92,16 @@ message ExecResponse {
   }
 }
 
+message StdoutEvent {
+  string data = 1;
+}
+
+message StderrEvent {
+  string data = 1;
+}
+
 message ExitEvent {
   int32 exit_code = 1;
-}
-
-message GetCapabilitiesRequest {
-}
-
-message GetCapabilitiesResponse {
-  optional bool computer_use_supported = 1;
-}
-
-message GetMcpRefreshTokensRequest {
-}
-
-message GetMcpRefreshTokensResponse {
-  map<string, string> refresh_tokens = 1;
-}
-
-message GetWorkspaceChangesHashRequest {
-  string root_path = 1;
-  string base_ref = 2;
-}
-
-message GetWorkspaceChangesHashResponse {
-  string hash = 1;
-}
-
-message ListArtifactsRequest {
-  repeated string extra_paths = 1;
-}
-
-message ListArtifactsResponse {
-  repeated ArtifactUploadMetadata artifacts = 1;
-  map<string, agent.v1.ArtifactPathError> path_errors = 2;
 }
 
 message ListDirectoryRequest {
@@ -141,18 +113,12 @@ message ListDirectoryResponse {
   repeated DirectoryEntry entries = 1;
 }
 
-message PingRequest {
-}
-
-message PingResponse {
-}
-
-message ReadBinaryFileRequest {
-  string path = 1;
-}
-
-message ReadBinaryFileResponse {
-  bytes content = 1;
+message DirectoryEntry {
+  string name = 1;
+  string path = 2;
+  EntryType type = 3;
+  uint64 size_bytes = 4;
+  int64 modified_at_unix_ms = 5;
 }
 
 message ReadTextFileRequest {
@@ -163,6 +129,67 @@ message ReadTextFileResponse {
   string content = 1;
 }
 
+message WriteTextFileRequest {
+  string path = 1;
+  string content = 2;
+}
+
+message WriteTextFileResponse {
+}
+
+message ReadBinaryFileRequest {
+  string path = 1;
+}
+
+message ReadBinaryFileResponse {
+  bytes content = 1;
+}
+
+message WriteBinaryFileRequest {
+  string path = 1;
+  bytes content = 2;
+}
+
+message WriteBinaryFileResponse {
+}
+
+message GetWorkspaceChangesHashRequest {
+  string root_path = 1;
+  string base_ref = 2;
+}
+
+message GetWorkspaceChangesHashResponse {
+  string hash = 1;
+}
+
+message BatchGetDiffRequest {
+  repeated BatchGetDiffItem items = 1;
+}
+
+message BatchGetDiffItem {
+  aiserver.v1.GetDiffRequest diff_request = 1;
+  repeated string fetch_branches = 2;
+}
+
+message BatchGetDiffResponse {
+  repeated BatchGetDiffResult results = 1;
+}
+
+message BatchGetDiffResult {
+  uint32 item_index = 1;
+  repeated string fetched_branches = 4;
+  repeated string failed_branches = 5;
+  oneof result {
+    aiserver.v1.GetDiffResponse diff = 2;
+    BatchGetDiffError error = 3;
+  }
+}
+
+message BatchGetDiffError {
+  BatchGetDiffErrorKind kind = 1;
+  string message = 2;
+}
+
 message RefreshGithubAccessTokenRequest {
   string github_access_token = 1;
   string hostname = 2;
@@ -171,25 +198,93 @@ message RefreshGithubAccessTokenRequest {
 message RefreshGithubAccessTokenResponse {
 }
 
-message ReloadAgentSkillsRequest {
+message WarmRemoteAccessServerRequest {
+  string commit = 1;
+  int32 port = 2;
+  string connection_token = 3;
 }
 
-message ReloadAgentSkillsResponse {
+message WarmRemoteAccessServerResponse {
 }
 
-message ReloadPluginsRequest {
-  repeated string reload_targets = 1;
+message ListArtifactsRequest {
+  repeated string extra_paths = 1;
 }
 
-message ReloadPluginsResponse {
+message ArtifactUploadMetadata {
+  string absolute_path = 1;
+  uint64 size_bytes = 2;
+  int64 updated_at_unix_ms = 3;
+  ArtifactUploadStatus status = 4;
+  uint64 bytes_uploaded = 5;
+  string last_error = 6;
+  uint32 upload_attempts = 7;
+  int64 last_started_at_unix_ms = 8;
+  int64 last_finished_at_unix_ms = 9;
+  string upload_id = 10;
 }
 
-message StderrEvent {
-  string data = 1;
+message ArtifactPathError {
+  ArtifactPathErrorKind kind = 1;
+  string code = 2;
+  string message = 3;
 }
 
-message StdoutEvent {
-  string data = 1;
+message ListArtifactsResponse {
+  repeated ArtifactUploadMetadata artifacts = 1;
+  map<string, ArtifactPathError> path_errors = 2;
+}
+
+message UploadArtifactsRequest {
+  repeated ArtifactUploadInstruction uploads = 1;
+  bool wait_for_completion = 2;
+}
+
+message ArtifactUploadInstruction {
+  string absolute_path = 1;
+  string upload_url = 2;
+  string method = 3;
+  map<string, string> headers = 4;
+  optional string content_type = 5;
+  optional string slack_upload_url = 6;
+  optional string slack_file_id = 7;
+}
+
+message ArtifactUploadDispatchResult {
+  string absolute_path = 1;
+  ArtifactUploadDispatchStatus status = 2;
+  string message = 3;
+  optional string slack_file_id = 4;
+}
+
+message UploadArtifactsResponse {
+  repeated ArtifactUploadDispatchResult results = 1;
+}
+
+message RestoreArtifactInstruction {
+  string absolute_path = 1;
+  string download_url = 2;
+  int64 updated_at_unix_ms = 3;
+}
+
+message RestoreArtifactResult {
+  ArtifactRestoreStatus status = 2;
+  string error_message = 3;
+}
+
+message RestoreArtifactsRequest {
+  repeated RestoreArtifactInstruction artifacts = 1;
+}
+
+message RestoreArtifactsResponse {
+  repeated RestoreArtifactResult results = 1;
+}
+
+message GetMcpRefreshTokensRequest {
+}
+
+message GetMcpRefreshTokensResponse {
+  map<string, string> refresh_tokens = 1;
 }
 
 message UpdateEnvironmentVariablesRequest {
@@ -202,58 +297,34 @@ message UpdateEnvironmentVariablesResponse {
   uint32 removed = 2;
 }
 
-message UploadArtifactsRequest {
-  repeated ArtifactUploadInstruction uploads = 1;
-  bool wait_for_completion = 2;
-}
-
-message UploadArtifactsResponse {
-  repeated ArtifactUploadDispatchResult results = 1;
-}
-
-message WarmRemoteAccessServerRequest {
+message DownloadCursorServerRequest {
   string commit = 1;
-  int32 port = 2;
-  string connection_token = 3;
 }
 
-message WarmRemoteAccessServerResponse {
-}
-
-message WriteBinaryFileRequest {
-  string path = 1;
-  bytes content = 2;
-}
-
-message WriteBinaryFileResponse {
-}
-
-message WriteTextFileRequest {
-  string path = 1;
-  string content = 2;
-}
-
-message WriteTextFileResponse {
+message DownloadCursorServerResponse {
+  bool already_downloaded = 1;
 }
 
 service ControlService {
-  rpc Ping (PingRequest) returns (PingResponse);
-  rpc GetCapabilities (GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
-  rpc Exec (ExecRequest) returns (stream ExecResponse);
-  rpc ListDirectory (ListDirectoryRequest) returns (ListDirectoryResponse);
-  rpc ReadTextFile (ReadTextFileRequest) returns (ReadTextFileResponse);
-  rpc WriteTextFile (WriteTextFileRequest) returns (WriteTextFileResponse);
-  rpc ReadBinaryFile (ReadBinaryFileRequest) returns (ReadBinaryFileResponse);
-  rpc WriteBinaryFile (WriteBinaryFileRequest) returns (WriteBinaryFileResponse);
-  rpc GetDiff (aiserver.v1.GetDiffRequest) returns (aiserver.v1.GetDiffResponse);
-  rpc GetWorkspaceChangesHash (GetWorkspaceChangesHashRequest) returns (GetWorkspaceChangesHashResponse);
-  rpc RefreshGithubAccessToken (RefreshGithubAccessTokenRequest) returns (RefreshGithubAccessTokenResponse);
-  rpc WarmRemoteAccessServer (WarmRemoteAccessServerRequest) returns (WarmRemoteAccessServerResponse);
-  rpc ListArtifacts (ListArtifactsRequest) returns (ListArtifactsResponse);
-  rpc UploadArtifacts (UploadArtifactsRequest) returns (UploadArtifactsResponse);
-  rpc GetMcpRefreshTokens (GetMcpRefreshTokensRequest) returns (GetMcpRefreshTokensResponse);
-  rpc DownloadCursorServer (DownloadCursorServerRequest) returns (DownloadCursorServerResponse);
-  rpc UpdateEnvironmentVariables (UpdateEnvironmentVariablesRequest) returns (UpdateEnvironmentVariablesResponse);
-  rpc ReloadAgentSkills (ReloadAgentSkillsRequest) returns (ReloadAgentSkillsResponse);
-  rpc ReloadPlugins (ReloadPluginsRequest) returns (ReloadPluginsResponse);
+  rpc Ping(PingRequest) returns (PingResponse);
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+  rpc Exec(ExecRequest) returns (stream ExecResponse);
+  rpc ListDirectory(ListDirectoryRequest) returns (ListDirectoryResponse);
+  rpc ReadTextFile(ReadTextFileRequest) returns (ReadTextFileResponse);
+  rpc WriteTextFile(WriteTextFileRequest) returns (WriteTextFileResponse);
+  rpc ReadBinaryFile(ReadBinaryFileRequest) returns (ReadBinaryFileResponse);
+  rpc WriteBinaryFile(WriteBinaryFileRequest) returns (WriteBinaryFileResponse);
+  rpc GetDiff(aiserver.v1.GetDiffRequest) returns (aiserver.v1.GetDiffResponse);
+  rpc BatchGetDiff(BatchGetDiffRequest) returns (BatchGetDiffResponse);
+  rpc GetWorkspaceChangesHash(GetWorkspaceChangesHashRequest) returns (GetWorkspaceChangesHashResponse);
+  rpc RefreshGithubAccessToken(RefreshGithubAccessTokenRequest) returns (RefreshGithubAccessTokenResponse);
+  rpc WarmRemoteAccessServer(WarmRemoteAccessServerRequest) returns (WarmRemoteAccessServerResponse);
+  rpc ListArtifacts(ListArtifactsRequest) returns (ListArtifactsResponse);
+  rpc UploadArtifacts(UploadArtifactsRequest) returns (UploadArtifactsResponse);
+  rpc RestoreArtifacts(RestoreArtifactsRequest) returns (RestoreArtifactsResponse);
+  rpc GetMcpRefreshTokens(GetMcpRefreshTokensRequest) returns (GetMcpRefreshTokensResponse);
+  rpc DownloadCursorServer(DownloadCursorServerRequest) returns (DownloadCursorServerResponse);
+  rpc UpdateEnvironmentVariables(UpdateEnvironmentVariablesRequest) returns (UpdateEnvironmentVariablesResponse);
+  rpc ReloadAgentSkills(ReloadAgentSkillsRequest) returns (ReloadAgentSkillsResponse);
+  rpc ReloadPlugins(ReloadPluginsRequest) returns (ReloadPluginsResponse);
 }

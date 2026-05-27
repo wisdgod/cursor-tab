@@ -7,35 +7,6 @@ message DeleteArgs {
   string tool_call_id = 2;
 }
 
-message DeleteError {
-  string path = 1;
-  string error = 2;
-}
-
-message DeleteFileBusy {
-  string path = 1;
-}
-
-message DeleteFileNotFound {
-  string path = 1;
-}
-
-message DeleteNotFile {
-  string path = 1;
-  string actual_type = 2;
-}
-
-message DeletePermissionDenied {
-  string path = 1;
-  string client_visible_error = 2;
-  bool is_readonly = 3;
-}
-
-message DeleteRejected {
-  string path = 1;
-  string reason = 2;
-}
-
 message DeleteResult {
   oneof result {
     DeleteSuccess success = 1;
@@ -53,4 +24,33 @@ message DeleteSuccess {
   string deleted_file = 2;
   int64 file_size = 3;
   string prev_content = 4;
+}
+
+message DeleteFileNotFound {
+  string path = 1;
+}
+
+message DeleteNotFile {
+  string path = 1;
+  string actual_type = 2;
+}
+
+message DeletePermissionDenied {
+  string path = 1;
+  string client_visible_error = 2;
+  bool is_readonly = 3;
+}
+
+message DeleteFileBusy {
+  string path = 1;
+}
+
+message DeleteRejected {
+  string path = 1;
+  string reason = 2;
+}
+
+message DeleteError {
+  string path = 1;
+  string error = 2;
 }

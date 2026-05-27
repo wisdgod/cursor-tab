@@ -2,15 +2,6 @@ syntax = "proto3";
 
 package agent.v1;
 
-message CreatePrAction {
-  string title = 1;
-  string body = 2;
-  optional string base_branch = 3;
-  optional bool draft = 4;
-  string branch_name = 5;
-  repeated string add_labels = 6;
-}
-
 message PrManagementArgs {
   string tool_call_id = 1;
   oneof action {
@@ -19,33 +10,25 @@ message PrManagementArgs {
   }
 }
 
-message PrManagementError {
-  string error = 1;
-}
-
-message PrManagementNeedsConfirmation {
-  string message = 1;
-  string discovered_pr_url = 2;
-  int32 discovered_pr_number = 3;
-  string discovered_pr_title = 4;
+message CreatePrAction {
+  string title = 1;
+  string body = 2;
+  optional string base_branch = 3;
+  optional bool draft = 4;
   string branch_name = 5;
+  repeated string add_labels = 6;
+  optional string repo_url = 7;
 }
 
-message PrManagementRegistered {
-  string message = 1;
-  string title = 2;
-  string body = 3;
+message UpdatePrAction {
+  optional string pr_url = 1;
+  optional string title = 2;
+  optional string body = 3;
   optional string base_branch = 4;
-  optional bool draft = 5;
-  string branch_name = 6;
-}
-
-message PrManagementRejected {
-  string reason = 1;
-}
-
-message PrManagementRequestQuery {
-  PrManagementArgs args = 1;
+  optional string branch_name = 5;
+  repeated string add_labels = 6;
+  repeated string remove_labels = 7;
+  optional string repo_url = 8;
 }
 
 message PrManagementResult {
@@ -64,17 +47,36 @@ message PrManagementSuccess {
   string message = 3;
 }
 
+message PrManagementError {
+  string error = 1;
+}
+
+message PrManagementRejected {
+  string reason = 1;
+}
+
+message PrManagementRegistered {
+  string message = 1;
+  string title = 2;
+  string body = 3;
+  optional string base_branch = 4;
+  optional bool draft = 5;
+  string branch_name = 6;
+}
+
+message PrManagementNeedsConfirmation {
+  string message = 1;
+  string discovered_pr_url = 2;
+  int32 discovered_pr_number = 3;
+  string discovered_pr_title = 4;
+  string branch_name = 5;
+}
+
 message PrManagementToolCall {
   PrManagementArgs args = 1;
   PrManagementResult result = 2;
 }
 
-message UpdatePrAction {
-  optional string pr_url = 1;
-  optional string title = 2;
-  optional string body = 3;
-  optional string base_branch = 4;
-  optional string branch_name = 5;
-  repeated string add_labels = 6;
-  repeated string remove_labels = 7;
+message PrManagementRequestQuery {
+  PrManagementArgs args = 1;
 }

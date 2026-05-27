@@ -2,6 +2,10 @@ syntax = "proto3";
 
 package aiserver.v1;
 
+message BidiRequestId {
+  string request_id = 1;
+}
+
 message BidiAppendRequest {
   string data = 1;
   BidiRequestId request_id = 2;
@@ -22,10 +26,6 @@ message BidiPollResponse {
   optional bool eof = 3;
 }
 
-message BidiRequestId {
-  string request_id = 1;
-}
-
 service BidiService {
-  rpc BidiAppend (BidiAppendRequest) returns (BidiAppendResponse);
+  rpc BidiAppend(BidiAppendRequest) returns (BidiAppendResponse);
 }

@@ -2,12 +2,17 @@ syntax = "proto3";
 
 package agent.v1;
 
+message ReplaceEnvConfig {
+  string install_script = 1;
+  string dockerfile_contents = 2;
+}
+
 message ReplaceEnvArgs {
   ReplaceEnvConfig config = 1;
 }
 
-message ReplaceEnvConfig {
-  string install_script = 1;
+message ReplaceEnvSuccess {
+  string setup_logs = 1;
 }
 
 message ReplaceEnvFailure {
@@ -22,11 +27,12 @@ message ReplaceEnvResult {
   }
 }
 
-message ReplaceEnvSuccess {
-  string setup_logs = 1;
-}
-
 message ReplaceEnvToolCall {
   ReplaceEnvArgs args = 1;
   ReplaceEnvResult result = 2;
+  string associated_pod_key = 3;
+}
+
+message ReplaceEnvToolCallDelta {
+  string associated_pod_key = 1;
 }

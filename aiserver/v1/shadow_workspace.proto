@@ -7,74 +7,11 @@ import "aiserver/v1/repository.proto";
 import "aiserver/v1/tools.proto";
 import "aiserver/v1/utils.proto";
 
-message GetLintsForChangeRequest {
-  message File {
-    message IRange {
-      int32 start_line_number = 1;
-      int32 start_column = 2;
-      int32 end_line_number = 3;
-      int32 end_column = 4;
-    }
-
-    message RangeCollection {
-      repeated IRange ranges = 1;
-    }
-
-    string relative_workspace_path = 1;
-    string initial_content = 2;
-    string final_content = 3;
-    optional RangeCollection get_all_lints_not_just_delta_lints_for_ranges_in_final_model = 4;
-  }
-
-  repeated File files = 1;
-  bool include_quick_fixes = 2;
-  bool do_not_use_in_prod_new_files_should_be_temporarily_created_for_increased_accuracy = 3;
+message SwTrackModelRequest {
+  string absolute_path = 1;
 }
 
-message GetLintsForChangeResponse {
-  message Lint {
-    message QuickFix {
-      message Edit {
-        string relative_workspace_path = 1;
-        string text = 2;
-        int32 start_line_number_one_indexed = 3;
-        int32 start_column_one_indexed = 4;
-        int32 end_line_number_inclusive_one_indexed = 5;
-        int32 end_column_one_indexed = 6;
-      }
-
-      string message = 1;
-      string kind = 2;
-      bool is_preferred = 3;
-      repeated Edit edits = 4;
-    }
-
-    string message = 1;
-    string severity = 2;
-    string relative_workspace_path = 3;
-    int32 start_line_number_one_indexed = 4;
-    int32 start_column_one_indexed = 5;
-    int32 end_line_number_inclusive_one_indexed = 6;
-    int32 end_column_one_indexed = 7;
-    repeated QuickFix quick_fixes = 9;
-  }
-
-  repeated Lint lints = 1;
-}
-
-message ShadowHealthCheckRequest {
-}
-
-message ShadowHealthCheckResponse {
-}
-
-message SwCallClientSideV2ToolRequest {
-  ClientSideToolV2Call tool_call = 1;
-  string composer_id = 2;
-}
-
-message SwCallClientSideV2ToolResponse {
-  ClientSideToolV2Result tool_result = 1;
+message SwTrackModelResponse {
 }
 
 message SwCallDiagnosticsExecutorRequest {
@@ -85,23 +22,13 @@ message SwCallDiagnosticsExecutorResponse {
   agent.v1.DiagnosticsResult diagnostics_result = 1;
 }
 
-message SwCompileRepoIncludeExcludePatternsRequest {
-  optional string include_pattern = 1;
-  optional string exclude_pattern = 2;
-  string path_encryption_key = 3;
-  RepositoryInfo repository_info = 4;
+message SwWriteTextFileWithLintsRequest {
+  string absolute_path = 1;
+  string new_contents = 2;
 }
 
-message SwCompileRepoIncludeExcludePatternsResponse {
-  optional string glob_filter = 1;
-  optional string not_glob_filter = 2;
-}
-
-message SwGetEnvironmentInfoRequest {
-}
-
-message SwGetEnvironmentInfoResponse {
-  EnvironmentInfo environment_info = 1;
+message SwWriteTextFileWithLintsResponse {
+  repeated LinterError new_linter_errors = 1;
 }
 
 message SwGetExplicitContextRequest {
@@ -109,6 +36,13 @@ message SwGetExplicitContextRequest {
 
 message SwGetExplicitContextResponse {
   ExplicitContext explicit_context = 1;
+}
+
+message SwGetEnvironmentInfoRequest {
+}
+
+message SwGetEnvironmentInfoResponse {
+  EnvironmentInfo environment_info = 1;
 }
 
 message SwGetLinterErrorsRequest {
@@ -127,11 +61,38 @@ message SwGetMcpToolsResponse {
   repeated MCPParams.Tool tools = 1;
 }
 
+message SwCallClientSideV2ToolRequest {
+  ClientSideToolV2Call tool_call = 1;
+  string composer_id = 2;
+}
+
+message SwCallClientSideV2ToolResponse {
+  ClientSideToolV2Result tool_result = 1;
+}
+
+message SwCompileRepoIncludeExcludePatternsRequest {
+  optional string include_pattern = 1;
+  optional string exclude_pattern = 2;
+  string path_encryption_key = 3;
+  RepositoryInfo repository_info = 4;
+}
+
+message SwCompileRepoIncludeExcludePatternsResponse {
+  optional string glob_filter = 1;
+  optional string not_glob_filter = 2;
+}
+
 message SwProvideTemporaryAccessTokenRequest {
   string access_token = 1;
 }
 
 message SwProvideTemporaryAccessTokenResponse {
+}
+
+message ShadowHealthCheckRequest {
+}
+
+message ShadowHealthCheckResponse {
 }
 
 message SwSyncIndexRequest {
@@ -143,34 +104,67 @@ message SwSyncIndexRequest {
 message SwSyncIndexResponse {
 }
 
-message SwTrackModelRequest {
-  string absolute_path = 1;
+message GetLintsForChangeRequest {
+  message File {
+    message RangeCollection {
+      repeated IRange ranges = 1;
+    }
+    message IRange {
+      int32 start_line_number = 1;
+      int32 start_column = 2;
+      int32 end_line_number = 3;
+      int32 end_column = 4;
+    }
+    string relative_workspace_path = 1;
+    string initial_content = 2;
+    string final_content = 3;
+    optional RangeCollection get_all_lints_not_just_delta_lints_for_ranges_in_final_model = 4;
+  }
+  repeated File files = 1;
+  bool include_quick_fixes = 2;
+  bool do_not_use_in_prod_new_files_should_be_temporarily_created_for_increased_accuracy = 3;
 }
 
-message SwTrackModelResponse {
-}
-
-message SwWriteTextFileWithLintsRequest {
-  string absolute_path = 1;
-  string new_contents = 2;
-}
-
-message SwWriteTextFileWithLintsResponse {
-  repeated LinterError new_linter_errors = 1;
+message GetLintsForChangeResponse {
+  message Lint {
+    message QuickFix {
+      message Edit {
+        string relative_workspace_path = 1;
+        string text = 2;
+        int32 start_line_number_one_indexed = 3;
+        int32 start_column_one_indexed = 4;
+        int32 end_line_number_inclusive_one_indexed = 5;
+        int32 end_column_one_indexed = 6;
+      }
+      string message = 1;
+      string kind = 2;
+      bool is_preferred = 3;
+      repeated Edit edits = 4;
+    }
+    string message = 1;
+    string severity = 2;
+    string relative_workspace_path = 3;
+    int32 start_line_number_one_indexed = 4;
+    int32 start_column_one_indexed = 5;
+    int32 end_line_number_inclusive_one_indexed = 6;
+    int32 end_column_one_indexed = 7;
+    repeated QuickFix quick_fixes = 9;
+  }
+  repeated Lint lints = 1;
 }
 
 service ShadowWorkspaceService {
-  rpc GetLintsForChange (GetLintsForChangeRequest) returns (GetLintsForChangeResponse);
-  rpc ShadowHealthCheck (ShadowHealthCheckRequest) returns (ShadowHealthCheckResponse);
-  rpc SwSyncIndex (SwSyncIndexRequest) returns (SwSyncIndexResponse);
-  rpc SwProvideTemporaryAccessToken (SwProvideTemporaryAccessTokenRequest) returns (SwProvideTemporaryAccessTokenResponse);
-  rpc SwCompileRepoIncludeExcludePatterns (SwCompileRepoIncludeExcludePatternsRequest) returns (SwCompileRepoIncludeExcludePatternsResponse);
-  rpc SwCallClientSideV2Tool (SwCallClientSideV2ToolRequest) returns (SwCallClientSideV2ToolResponse);
-  rpc SwGetExplicitContext (SwGetExplicitContextRequest) returns (SwGetExplicitContextResponse);
-  rpc SwWriteTextFileWithLints (SwWriteTextFileWithLintsRequest) returns (SwWriteTextFileWithLintsResponse);
-  rpc SwGetEnvironmentInfo (SwGetEnvironmentInfoRequest) returns (SwGetEnvironmentInfoResponse);
-  rpc SwGetLinterErrors (SwGetLinterErrorsRequest) returns (SwGetLinterErrorsResponse);
-  rpc SwGetMcpTools (SwGetMcpToolsRequest) returns (SwGetMcpToolsResponse);
-  rpc SwTrackModel (SwTrackModelRequest) returns (SwTrackModelResponse);
-  rpc SwCallDiagnosticsExecutor (SwCallDiagnosticsExecutorRequest) returns (SwCallDiagnosticsExecutorResponse);
+  rpc GetLintsForChange(GetLintsForChangeRequest) returns (GetLintsForChangeResponse);
+  rpc ShadowHealthCheck(ShadowHealthCheckRequest) returns (ShadowHealthCheckResponse);
+  rpc SwSyncIndex(SwSyncIndexRequest) returns (SwSyncIndexResponse);
+  rpc SwProvideTemporaryAccessToken(SwProvideTemporaryAccessTokenRequest) returns (SwProvideTemporaryAccessTokenResponse);
+  rpc SwCompileRepoIncludeExcludePatterns(SwCompileRepoIncludeExcludePatternsRequest) returns (SwCompileRepoIncludeExcludePatternsResponse);
+  rpc SwCallClientSideV2Tool(SwCallClientSideV2ToolRequest) returns (SwCallClientSideV2ToolResponse);
+  rpc SwGetExplicitContext(SwGetExplicitContextRequest) returns (SwGetExplicitContextResponse);
+  rpc SwWriteTextFileWithLints(SwWriteTextFileWithLintsRequest) returns (SwWriteTextFileWithLintsResponse);
+  rpc SwGetEnvironmentInfo(SwGetEnvironmentInfoRequest) returns (SwGetEnvironmentInfoResponse);
+  rpc SwGetLinterErrors(SwGetLinterErrorsRequest) returns (SwGetLinterErrorsResponse);
+  rpc SwGetMcpTools(SwGetMcpToolsRequest) returns (SwGetMcpToolsResponse);
+  rpc SwTrackModel(SwTrackModelRequest) returns (SwTrackModelResponse);
+  rpc SwCallDiagnosticsExecutor(SwCallDiagnosticsExecutorRequest) returns (SwCallDiagnosticsExecutorResponse);
 }

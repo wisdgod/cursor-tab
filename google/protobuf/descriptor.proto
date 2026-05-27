@@ -4,17 +4,37 @@ package google.protobuf;
 
 enum Edition {
   EDITION_UNKNOWN = 0;
-  EDITION_1_TEST_ONLY = 1;
-  EDITION_2_TEST_ONLY = 2;
   EDITION_LEGACY = 900;
   EDITION_PROTO2 = 998;
   EDITION_PROTO3 = 999;
   EDITION_2023 = 1000;
   EDITION_2024 = 1001;
+  EDITION_1_TEST_ONLY = 1;
+  EDITION_2_TEST_ONLY = 2;
   EDITION_99997_TEST_ONLY = 99997;
   EDITION_99998_TEST_ONLY = 99998;
   EDITION_99999_TEST_ONLY = 99999;
   EDITION_MAX = 2147483647;
+}
+
+message FileDescriptorSet {
+  repeated FileDescriptorProto file = 1;
+}
+
+message FileDescriptorProto {
+  optional string name = 1;
+  optional string package = 2;
+  repeated string dependency = 3;
+  repeated int32 public_dependency = 10;
+  repeated int32 weak_dependency = 11;
+  repeated DescriptorProto message_type = 4;
+  repeated EnumDescriptorProto enum_type = 5;
+  repeated ServiceDescriptorProto service = 6;
+  repeated FieldDescriptorProto extension = 7;
+  optional FileOptions options = 8;
+  optional SourceCodeInfo source_code_info = 9;
+  optional string syntax = 12;
+  optional Edition edition = 14;
 }
 
 message DescriptorProto {
@@ -23,12 +43,10 @@ message DescriptorProto {
     optional int32 end = 2;
     optional ExtensionRangeOptions options = 3;
   }
-
   message ReservedRange {
     optional int32 start = 1;
     optional int32 end = 2;
   }
-
   optional string name = 1;
   repeated FieldDescriptorProto field = 2;
   repeated FieldDescriptorProto extension = 6;
@@ -41,47 +59,11 @@ message DescriptorProto {
   repeated string reserved_name = 10;
 }
 
-message EnumDescriptorProto {
-  message EnumReservedRange {
-    optional int32 start = 1;
-    optional int32 end = 2;
-  }
-
-  optional string name = 1;
-  repeated EnumValueDescriptorProto value = 2;
-  optional EnumOptions options = 3;
-  repeated EnumReservedRange reserved_range = 4;
-  repeated string reserved_name = 5;
-}
-
-message EnumOptions {
-  optional bool allow_alias = 2;
-  optional bool deprecated = 3;
-  optional bool deprecated_legacy_json_field_conflicts = 6;
-  optional FeatureSet features = 7;
-  repeated UninterpretedOption uninterpreted_option = 999;
-}
-
-message EnumValueDescriptorProto {
-  optional string name = 1;
-  optional int32 number = 2;
-  optional EnumValueOptions options = 3;
-}
-
-message EnumValueOptions {
-  optional bool deprecated = 1;
-  optional FeatureSet features = 2;
-  optional bool debug_redact = 3;
-  optional FieldOptions.FeatureSupport feature_support = 4;
-  repeated UninterpretedOption uninterpreted_option = 999;
-}
-
 message ExtensionRangeOptions {
   enum VerificationState {
     DECLARATION = 0;
     UNVERIFIED = 1;
   }
-
   message Declaration {
     optional int32 number = 1;
     optional string full_name = 2;
@@ -89,78 +71,13 @@ message ExtensionRangeOptions {
     optional bool reserved = 5;
     optional bool repeated = 6;
   }
-
   repeated UninterpretedOption uninterpreted_option = 999;
   repeated Declaration declaration = 2;
   optional FeatureSet features = 50;
-  optional VerificationState verification = 3;
-}
-
-message FeatureSet {
-  enum EnumType {
-    ENUM_TYPE_UNKNOWN = 0;
-    OPEN = 1;
-    CLOSED = 2;
-  }
-
-  enum FieldPresence {
-    FIELD_PRESENCE_UNKNOWN = 0;
-    EXPLICIT = 1;
-    IMPLICIT = 2;
-    LEGACY_REQUIRED = 3;
-  }
-
-  enum JsonFormat {
-    JSON_FORMAT_UNKNOWN = 0;
-    ALLOW = 1;
-    LEGACY_BEST_EFFORT = 2;
-  }
-
-  enum MessageEncoding {
-    MESSAGE_ENCODING_UNKNOWN = 0;
-    LENGTH_PREFIXED = 1;
-    DELIMITED = 2;
-  }
-
-  enum RepeatedFieldEncoding {
-    REPEATED_FIELD_ENCODING_UNKNOWN = 0;
-    PACKED = 1;
-    EXPANDED = 2;
-  }
-
-  enum Utf8Validation {
-    UTF8_VALIDATION_UNKNOWN = 0;
-    VERIFY = 2;
-    NONE = 3;
-  }
-
-  optional FieldPresence field_presence = 1;
-  optional EnumType enum_type = 2;
-  optional RepeatedFieldEncoding repeated_field_encoding = 3;
-  optional Utf8Validation utf8_validation = 4;
-  optional MessageEncoding message_encoding = 5;
-  optional JsonFormat json_format = 6;
-}
-
-message FeatureSetDefaults {
-  message FeatureSetEditionDefault {
-    optional Edition edition = 3;
-    optional FeatureSet overridable_features = 4;
-    optional FeatureSet fixed_features = 5;
-  }
-
-  repeated FeatureSetEditionDefault defaults = 1;
-  optional Edition minimum_edition = 4;
-  optional Edition maximum_edition = 5;
+  optional VerificationState verification = 3 [default = UNVERIFIED];
 }
 
 message FieldDescriptorProto {
-  enum Label {
-    LABEL_OPTIONAL = 1;
-    LABEL_REQUIRED = 2;
-    LABEL_REPEATED = 3;
-  }
-
   enum Type {
     TYPE_DOUBLE = 1;
     TYPE_FLOAT = 2;
@@ -181,7 +98,11 @@ message FieldDescriptorProto {
     TYPE_SINT32 = 17;
     TYPE_SINT64 = 18;
   }
-
+  enum Label {
+    LABEL_OPTIONAL = 1;
+    LABEL_REPEATED = 3;
+    LABEL_REQUIRED = 2;
+  }
   optional string name = 1;
   optional int32 number = 3;
   optional Label label = 4;
@@ -195,25 +116,99 @@ message FieldDescriptorProto {
   optional bool proto3_optional = 17;
 }
 
+message OneofDescriptorProto {
+  optional string name = 1;
+  optional OneofOptions options = 2;
+}
+
+message EnumDescriptorProto {
+  message EnumReservedRange {
+    optional int32 start = 1;
+    optional int32 end = 2;
+  }
+  optional string name = 1;
+  repeated EnumValueDescriptorProto value = 2;
+  optional EnumOptions options = 3;
+  repeated EnumReservedRange reserved_range = 4;
+  repeated string reserved_name = 5;
+}
+
+message EnumValueDescriptorProto {
+  optional string name = 1;
+  optional int32 number = 2;
+  optional EnumValueOptions options = 3;
+}
+
+message ServiceDescriptorProto {
+  optional string name = 1;
+  repeated MethodDescriptorProto method = 2;
+  optional ServiceOptions options = 3;
+}
+
+message MethodDescriptorProto {
+  optional string name = 1;
+  optional string input_type = 2;
+  optional string output_type = 3;
+  optional MethodOptions options = 4;
+  optional bool client_streaming = 5 [default = false];
+  optional bool server_streaming = 6 [default = false];
+}
+
+message FileOptions {
+  enum OptimizeMode {
+    SPEED = 1;
+    CODE_SIZE = 2;
+    LITE_RUNTIME = 3;
+  }
+  optional string java_package = 1;
+  optional string java_outer_classname = 8;
+  optional bool java_multiple_files = 10 [default = false];
+  optional bool java_generate_equals_and_hash = 20;
+  optional bool java_string_check_utf8 = 27 [default = false];
+  optional OptimizeMode optimize_for = 9 [default = SPEED];
+  optional string go_package = 11;
+  optional bool cc_generic_services = 16 [default = false];
+  optional bool java_generic_services = 17 [default = false];
+  optional bool py_generic_services = 18 [default = false];
+  optional bool deprecated = 23 [default = false];
+  optional bool cc_enable_arenas = 31 [default = true];
+  optional string objc_class_prefix = 36;
+  optional string csharp_namespace = 37;
+  optional string swift_prefix = 39;
+  optional string php_class_prefix = 40;
+  optional string php_namespace = 41;
+  optional string php_metadata_namespace = 44;
+  optional string ruby_package = 45;
+  optional FeatureSet features = 50;
+  repeated UninterpretedOption uninterpreted_option = 999;
+}
+
+message MessageOptions {
+  optional bool message_set_wire_format = 1 [default = false];
+  optional bool no_standard_descriptor_accessor = 2 [default = false];
+  optional bool deprecated = 3 [default = false];
+  optional bool map_entry = 7;
+  optional bool deprecated_legacy_json_field_conflicts = 11;
+  optional FeatureSet features = 12;
+  repeated UninterpretedOption uninterpreted_option = 999;
+}
+
 message FieldOptions {
   enum CType {
     STRING = 0;
     CORD = 1;
     STRING_PIECE = 2;
   }
-
   enum JSType {
     JS_NORMAL = 0;
     JS_STRING = 1;
     JS_NUMBER = 2;
   }
-
   enum OptionRetention {
     RETENTION_UNKNOWN = 0;
     RETENTION_RUNTIME = 1;
     RETENTION_SOURCE = 2;
   }
-
   enum OptionTargetType {
     TARGET_TYPE_UNKNOWN = 0;
     TARGET_TYPE_FILE = 1;
@@ -226,27 +221,24 @@ message FieldOptions {
     TARGET_TYPE_SERVICE = 8;
     TARGET_TYPE_METHOD = 9;
   }
-
   message EditionDefault {
     optional Edition edition = 3;
     optional string value = 2;
   }
-
   message FeatureSupport {
     optional Edition edition_introduced = 1;
     optional Edition edition_deprecated = 2;
     optional string deprecation_warning = 3;
     optional Edition edition_removed = 4;
   }
-
-  optional CType ctype = 1;
+  optional CType ctype = 1 [default = STRING];
   optional bool packed = 2;
-  optional JSType jstype = 6;
-  optional bool lazy = 5;
-  optional bool unverified_lazy = 15;
-  optional bool deprecated = 3;
-  optional bool weak = 10;
-  optional bool debug_redact = 16;
+  optional JSType jstype = 6 [default = JS_NORMAL];
+  optional bool lazy = 5 [default = false];
+  optional bool unverified_lazy = 15 [default = false];
+  optional bool deprecated = 3 [default = false];
+  optional bool weak = 10 [default = false];
+  optional bool debug_redact = 16 [default = false];
   optional OptionRetention retention = 17;
   repeated OptionTargetType targets = 19;
   repeated EditionDefault edition_defaults = 20;
@@ -255,54 +247,119 @@ message FieldOptions {
   repeated UninterpretedOption uninterpreted_option = 999;
 }
 
-message FileDescriptorProto {
-  optional string name = 1;
-  optional string package = 2;
-  repeated string dependency = 3;
-  repeated int32 public_dependency = 10;
-  repeated int32 weak_dependency = 11;
-  repeated DescriptorProto message_type = 4;
-  repeated EnumDescriptorProto enum_type = 5;
-  repeated ServiceDescriptorProto service = 6;
-  repeated FieldDescriptorProto extension = 7;
-  optional FileOptions options = 8;
-  optional SourceCodeInfo source_code_info = 9;
-  optional string syntax = 12;
-  optional Edition edition = 14;
-}
-
-message FileDescriptorSet {
-  repeated FileDescriptorProto file = 1;
-}
-
-message FileOptions {
-  enum OptimizeMode {
-    SPEED = 1;
-    CODE_SIZE = 2;
-    LITE_RUNTIME = 3;
-  }
-
-  optional string java_package = 1;
-  optional string java_outer_classname = 8;
-  optional bool java_multiple_files = 10;
-  optional bool java_generate_equals_and_hash = 20;
-  optional bool java_string_check_utf8 = 27;
-  optional OptimizeMode optimize_for = 9;
-  optional string go_package = 11;
-  optional bool cc_generic_services = 16;
-  optional bool java_generic_services = 17;
-  optional bool py_generic_services = 18;
-  optional bool deprecated = 23;
-  optional bool cc_enable_arenas = 31;
-  optional string objc_class_prefix = 36;
-  optional string csharp_namespace = 37;
-  optional string swift_prefix = 39;
-  optional string php_class_prefix = 40;
-  optional string php_namespace = 41;
-  optional string php_metadata_namespace = 44;
-  optional string ruby_package = 45;
-  optional FeatureSet features = 50;
+message OneofOptions {
+  optional FeatureSet features = 1;
   repeated UninterpretedOption uninterpreted_option = 999;
+}
+
+message EnumOptions {
+  optional bool allow_alias = 2;
+  optional bool deprecated = 3 [default = false];
+  optional bool deprecated_legacy_json_field_conflicts = 6;
+  optional FeatureSet features = 7;
+  repeated UninterpretedOption uninterpreted_option = 999;
+}
+
+message EnumValueOptions {
+  optional bool deprecated = 1 [default = false];
+  optional FeatureSet features = 2;
+  optional bool debug_redact = 3 [default = false];
+  optional FieldOptions.FeatureSupport feature_support = 4;
+  repeated UninterpretedOption uninterpreted_option = 999;
+}
+
+message ServiceOptions {
+  optional FeatureSet features = 34;
+  optional bool deprecated = 33 [default = false];
+  repeated UninterpretedOption uninterpreted_option = 999;
+}
+
+message MethodOptions {
+  enum IdempotencyLevel {
+    IDEMPOTENCY_UNKNOWN = 0;
+    NO_SIDE_EFFECTS = 1;
+    IDEMPOTENT = 2;
+  }
+  optional bool deprecated = 33 [default = false];
+  optional IdempotencyLevel idempotency_level = 34 [default = IDEMPOTENCY_UNKNOWN];
+  optional FeatureSet features = 35;
+  repeated UninterpretedOption uninterpreted_option = 999;
+}
+
+message UninterpretedOption {
+  message NamePart {
+    required string name_part = 1;
+    required bool is_extension = 2;
+  }
+  repeated NamePart name = 2;
+  optional string identifier_value = 3;
+  optional uint64 positive_int_value = 4;
+  optional int64 negative_int_value = 5;
+  optional double double_value = 6;
+  optional bytes string_value = 7;
+  optional string aggregate_value = 8;
+}
+
+message FeatureSet {
+  enum FieldPresence {
+    FIELD_PRESENCE_UNKNOWN = 0;
+    EXPLICIT = 1;
+    IMPLICIT = 2;
+    LEGACY_REQUIRED = 3;
+  }
+  enum EnumType {
+    ENUM_TYPE_UNKNOWN = 0;
+    OPEN = 1;
+    CLOSED = 2;
+  }
+  enum RepeatedFieldEncoding {
+    REPEATED_FIELD_ENCODING_UNKNOWN = 0;
+    PACKED = 1;
+    EXPANDED = 2;
+  }
+  enum Utf8Validation {
+    UTF8_VALIDATION_UNKNOWN = 0;
+    VERIFY = 2;
+    NONE = 3;
+  }
+  enum MessageEncoding {
+    MESSAGE_ENCODING_UNKNOWN = 0;
+    LENGTH_PREFIXED = 1;
+    DELIMITED = 2;
+  }
+  enum JsonFormat {
+    JSON_FORMAT_UNKNOWN = 0;
+    ALLOW = 1;
+    LEGACY_BEST_EFFORT = 2;
+  }
+  optional FieldPresence field_presence = 1;
+  optional EnumType enum_type = 2;
+  optional RepeatedFieldEncoding repeated_field_encoding = 3;
+  optional Utf8Validation utf8_validation = 4;
+  optional MessageEncoding message_encoding = 5;
+  optional JsonFormat json_format = 6;
+}
+
+message FeatureSetDefaults {
+  message FeatureSetEditionDefault {
+    optional Edition edition = 3;
+    optional FeatureSet overridable_features = 4;
+    optional FeatureSet fixed_features = 5;
+  }
+  repeated FeatureSetEditionDefault defaults = 1;
+  optional Edition minimum_edition = 4;
+  optional Edition maximum_edition = 5;
+}
+
+message SourceCodeInfo {
+  message Location {
+    repeated int32 path = 1 [packed = true];
+    repeated int32 span = 2 [packed = true];
+    optional string leading_comments = 3;
+    optional string trailing_comments = 4;
+    repeated string leading_detached_comments = 6;
+  }
+  repeated Location location = 1;
 }
 
 message GeneratedCodeInfo {
@@ -312,94 +369,11 @@ message GeneratedCodeInfo {
       SET = 1;
       ALIAS = 2;
     }
-
-    repeated int32 path = 1; // packed
+    repeated int32 path = 1 [packed = true];
     optional string source_file = 2;
     optional int32 begin = 3;
     optional int32 end = 4;
     optional Semantic semantic = 5;
   }
-
   repeated Annotation annotation = 1;
-}
-
-message MessageOptions {
-  optional bool message_set_wire_format = 1;
-  optional bool no_standard_descriptor_accessor = 2;
-  optional bool deprecated = 3;
-  optional bool map_entry = 7;
-  optional bool deprecated_legacy_json_field_conflicts = 11;
-  optional FeatureSet features = 12;
-  repeated UninterpretedOption uninterpreted_option = 999;
-}
-
-message MethodDescriptorProto {
-  optional string name = 1;
-  optional string input_type = 2;
-  optional string output_type = 3;
-  optional MethodOptions options = 4;
-  optional bool client_streaming = 5;
-  optional bool server_streaming = 6;
-}
-
-message MethodOptions {
-  enum IdempotencyLevel {
-    IDEMPOTENCY_UNKNOWN = 0;
-    NO_SIDE_EFFECTS = 1;
-    IDEMPOTENT = 2;
-  }
-
-  optional bool deprecated = 33;
-  optional IdempotencyLevel idempotency_level = 34;
-  optional FeatureSet features = 35;
-  repeated UninterpretedOption uninterpreted_option = 999;
-}
-
-message OneofDescriptorProto {
-  optional string name = 1;
-  optional OneofOptions options = 2;
-}
-
-message OneofOptions {
-  optional FeatureSet features = 1;
-  repeated UninterpretedOption uninterpreted_option = 999;
-}
-
-message ServiceDescriptorProto {
-  optional string name = 1;
-  repeated MethodDescriptorProto method = 2;
-  optional ServiceOptions options = 3;
-}
-
-message ServiceOptions {
-  optional FeatureSet features = 34;
-  optional bool deprecated = 33;
-  repeated UninterpretedOption uninterpreted_option = 999;
-}
-
-message SourceCodeInfo {
-  message Location {
-    repeated int32 path = 1; // packed
-    repeated int32 span = 2; // packed
-    optional string leading_comments = 3;
-    optional string trailing_comments = 4;
-    repeated string leading_detached_comments = 6;
-  }
-
-  repeated Location location = 1;
-}
-
-message UninterpretedOption {
-  message NamePart {
-    required string name_part = 1;
-    required bool is_extension = 2;
-  }
-
-  repeated NamePart name = 2;
-  optional string identifier_value = 3;
-  optional uint64 positive_int_value = 4;
-  optional int64 negative_int_value = 5;
-  optional double double_value = 6;
-  optional bytes string_value = 7;
-  optional string aggregate_value = 8;
 }

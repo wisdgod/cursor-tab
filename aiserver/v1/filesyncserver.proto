@@ -5,16 +5,78 @@ package aiserver.v1;
 import "aiserver/v1/utils.proto";
 import "google/protobuf/timestamp.proto";
 
+enum FSUploadErrorType {
+  FS_UPLOAD_ERROR_TYPE_UNSPECIFIED = 0;
+  FS_UPLOAD_ERROR_TYPE_NON_EXISTANT = 1;
+  FS_UPLOAD_ERROR_TYPE_HASH_MISMATCH = 2;
+}
+
 enum FSSyncErrorType {
   FS_SYNC_ERROR_TYPE_UNSPECIFIED = 0;
   FS_SYNC_ERROR_TYPE_NON_EXISTANT = 1;
   FS_SYNC_ERROR_TYPE_HASH_MISMATCH = 2;
 }
 
-enum FSUploadErrorType {
-  FS_UPLOAD_ERROR_TYPE_UNSPECIFIED = 0;
-  FS_UPLOAD_ERROR_TYPE_NON_EXISTANT = 1;
-  FS_UPLOAD_ERROR_TYPE_HASH_MISMATCH = 2;
+message FSUploadFileRequest {
+  string uuid = 1;
+  string relative_workspace_path = 2;
+  string contents = 3;
+  int32 model_version = 4;
+  optional string sha256_hash = 5;
+}
+
+message FSUploadFileResponse {
+  FSUploadErrorType error = 1;
+}
+
+message FilesyncUpdateWithModelVersion {
+  int32 model_version = 1;
+  string relative_workspace_path = 2;
+  repeated SingleUpdateRequest updates = 3;
+  int32 expected_file_length = 4;
+}
+
+message SingleUpdateRequest {
+  int32 start_position = 1;
+  int32 end_position = 2;
+  int32 change_length = 3;
+  string replaced_string = 4;
+  SimpleRange range = 5;
+}
+
+message FSSyncFileRequest {
+  string uuid = 1;
+  string relative_workspace_path = 2;
+  int32 model_version = 3;
+  repeated FilesyncUpdateWithModelVersion filesync_updates = 4;
+  string sha256_hash = 5;
+}
+
+message FSSyncFileResponse {
+  FSSyncErrorType error = 1;
+}
+
+message FSIsEnabledForUserRequest {
+  string uuid = 1;
+}
+
+message FSIsEnabledForUserResponse {
+  bool enabled = 1;
+}
+
+message FSGetFileContentsRequest {
+  string uuid = 1;
+  string auth_id = 2;
+  string relative_workspace_path = 3;
+  int32 model_version = 4;
+  repeated FilesyncUpdateWithModelVersion filesync_updates = 5;
+  optional string sha256_hash = 6;
+  optional google.protobuf.Timestamp earliest_time = 7;
+}
+
+message FSGetFileContentsResponse {
+  string contents = 1;
+  optional string sha256_hash = 2;
 }
 
 message FileRequest {
@@ -25,6 +87,13 @@ message FileRequest {
   optional google.protobuf.Timestamp earliest_time = 5;
 }
 
+message FSGetMultiFileContentsRequest {
+  string auth_id = 1;
+  repeated FilesyncUpdateWithModelVersion filesync_updates = 2;
+  repeated FileRequest file_requests = 3;
+  bool get_all_recent_files = 4;
+}
+
 message FileRetrieved {
   string relative_workspace_path = 1;
   string contents = 2;
@@ -32,11 +101,16 @@ message FileRetrieved {
   google.protobuf.Timestamp last_modified = 4;
 }
 
-message FilesyncUpdateWithModelVersion {
-  int32 model_version = 1;
-  string relative_workspace_path = 2;
-  repeated SingleUpdateRequest updates = 3;
-  int32 expected_file_length = 4;
+message FSGetMultiFileContentsResponse {
+  repeated FileRetrieved files = 1;
+}
+
+message FSInternalHealthCheckRequest {
+  optional bool from_server = 1;
+}
+
+message FSInternalHealthCheckResponse {
+  bool success = 1;
 }
 
 message FSConfigRequest {
@@ -63,88 +137,14 @@ message FSConfigResponse {
   optional int32 sync_update_threshold = 18;
 }
 
-message FSGetFileContentsRequest {
-  string uuid = 1;
-  string auth_id = 2;
-  string relative_workspace_path = 3;
-  int32 model_version = 4;
-  repeated FilesyncUpdateWithModelVersion filesync_updates = 5;
-  optional string sha256_hash = 6;
-  optional google.protobuf.Timestamp earliest_time = 7;
-}
-
-message FSGetFileContentsResponse {
-  string contents = 1;
-  optional string sha256_hash = 2;
-}
-
-message FSGetMultiFileContentsRequest {
-  string auth_id = 1;
-  repeated FilesyncUpdateWithModelVersion filesync_updates = 2;
-  repeated FileRequest file_requests = 3;
-  bool get_all_recent_files = 4;
-}
-
-message FSGetMultiFileContentsResponse {
-  repeated FileRetrieved files = 1;
-}
-
-message FSInternalHealthCheckRequest {
-  optional bool from_server = 1;
-}
-
-message FSInternalHealthCheckResponse {
-  bool success = 1;
-}
-
-message FSIsEnabledForUserRequest {
-  string uuid = 1;
-}
-
-message FSIsEnabledForUserResponse {
-  bool enabled = 1;
-}
-
-message FSSyncFileRequest {
-  string uuid = 1;
-  string relative_workspace_path = 2;
-  int32 model_version = 3;
-  repeated FilesyncUpdateWithModelVersion filesync_updates = 4;
-  string sha256_hash = 5;
-}
-
-message FSSyncFileResponse {
-  FSSyncErrorType error = 1;
-}
-
-message FSUploadFileRequest {
-  string uuid = 1;
-  string relative_workspace_path = 2;
-  string contents = 3;
-  int32 model_version = 4;
-  optional string sha256_hash = 5;
-}
-
-message FSUploadFileResponse {
-  FSUploadErrorType error = 1;
-}
-
-message SingleUpdateRequest {
-  int32 start_position = 1;
-  int32 end_position = 2;
-  int32 change_length = 3;
-  string replaced_string = 4;
-  SimpleRange range = 5;
-}
-
 service FileSyncService {
-  rpc FSUploadFile (FSUploadFileRequest) returns (FSUploadFileResponse);
-  rpc FSSyncFile (FSSyncFileRequest) returns (FSSyncFileResponse);
-  rpc FSIsEnabledForUser (FSIsEnabledForUserRequest) returns (FSIsEnabledForUserResponse);
-  rpc FSConfig (FSConfigRequest) returns (FSConfigResponse);
-  rpc FSGetFileContents (FSGetFileContentsRequest) returns (FSGetFileContentsResponse);
-  rpc FSGetMultiFileContents (FSGetMultiFileContentsRequest) returns (FSGetMultiFileContentsResponse);
-  rpc FSInternalSyncFile (FSSyncFileRequest) returns (FSSyncFileResponse);
-  rpc FSInternalUploadFile (FSUploadFileRequest) returns (FSUploadFileResponse);
-  rpc FSInternalHealthCheck (FSInternalHealthCheckRequest) returns (FSInternalHealthCheckResponse);
+  rpc FSUploadFile(FSUploadFileRequest) returns (FSUploadFileResponse);
+  rpc FSSyncFile(FSSyncFileRequest) returns (FSSyncFileResponse);
+  rpc FSIsEnabledForUser(FSIsEnabledForUserRequest) returns (FSIsEnabledForUserResponse);
+  rpc FSConfig(FSConfigRequest) returns (FSConfigResponse);
+  rpc FSGetFileContents(FSGetFileContentsRequest) returns (FSGetFileContentsResponse);
+  rpc FSGetMultiFileContents(FSGetMultiFileContentsRequest) returns (FSGetMultiFileContentsResponse);
+  rpc FSInternalSyncFile(FSSyncFileRequest) returns (FSSyncFileResponse);
+  rpc FSInternalUploadFile(FSUploadFileRequest) returns (FSUploadFileResponse);
+  rpc FSInternalHealthCheck(FSInternalHealthCheckRequest) returns (FSInternalHealthCheckResponse);
 }

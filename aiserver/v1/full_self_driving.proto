@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+enum FullSelfDrivingMode {
+  FULL_SELF_DRIVING_MODE_UNSPECIFIED = 0;
+  FULL_SELF_DRIVING_MODE_SUGGEST = 1;
+  FULL_SELF_DRIVING_MODE_APPLY = 2;
+}
+
+enum FullSelfDrivingRunSuggestionState {
+  FULL_SELF_DRIVING_RUN_SUGGESTION_STATE_UNSPECIFIED = 0;
+  FULL_SELF_DRIVING_RUN_SUGGESTION_STATE_RUNNING = 1;
+  FULL_SELF_DRIVING_RUN_SUGGESTION_STATE_NO_CHANGES = 2;
+  FULL_SELF_DRIVING_RUN_SUGGESTION_STATE_READY = 3;
+  FULL_SELF_DRIVING_RUN_SUGGESTION_STATE_NOT_SUGGEST_MODE = 4;
+}
+
+message SetFullSelfDrivingConfigRequest {
+  string pr_url = 1;
+  bool enabled = 2;
+  FullSelfDrivingMode mode = 3;
+}
+
+message SetFullSelfDrivingConfigResponse {
+  bool enabled = 1;
+  FullSelfDrivingMode mode = 2;
+}
+
+message GetFullSelfDrivingConfigRequest {
+  string pr_url = 1;
+}
+
+message GetFullSelfDrivingConfigResponse {
+  bool has_config = 1;
+  bool enabled = 2;
+  FullSelfDrivingMode mode = 3;
+}
+
+message ListFullSelfDrivingRunsRequest {
+  string pr_url = 1;
+  optional int32 limit = 2;
+}
+
+message FullSelfDrivingRun {
+  string bc_id = 1;
+  string status = 2;
+  google.protobuf.Timestamp created_at = 3;
+  google.protobuf.Timestamp first_finished_at = 4;
+  string branch_name = 5;
+  bool auto_branch = 6;
+  int32 files_changed = 7;
+  string source = 8;
+  string active_run_id = 9;
+}
+
+message ListFullSelfDrivingRunsResponse {
+  repeated FullSelfDrivingRun runs = 1;
+}
+
+message ListFullSelfDrivingFindingsRequest {
+  string pr_url = 1;
+  string bc_id = 2;
+  optional int32 limit = 3;
+  bool include_superseded = 4;
+}
+
+message FullSelfDrivingFinding {
+  string event_id = 1;
+  google.protobuf.Timestamp last_updated_at = 2;
+  string pr_url = 3;
+  string bc_id = 4;
+  string stable_key = 5;
+  string status = 6;
+  string title = 7;
+  string body = 8;
+  string severity = 9;
+  google.protobuf.Struct payload = 10;
+  string superseded_by_stable_key = 11;
+  string superseded_reason = 12;
+}
+
+message ListFullSelfDrivingFindingsResponse {
+  repeated FullSelfDrivingFinding findings = 1;
+}
+
+message GetFullSelfDrivingRunSuggestionRequest {
+  string pr_url = 1;
+  string bc_id = 2;
+}
+
+message GetFullSelfDrivingRunSuggestionResponse {
+  FullSelfDrivingRunSuggestionState state = 1;
+  string side_branch_name = 2;
+  string head_commit_sha = 3;
+  string base_commit_sha = 4;
+  string create_pr_url = 5;
+  bool already_applied = 6;
+}
+
+message ApplyFullSelfDrivingSuggestionRequest {
+  string pr_url = 1;
+  string bc_id = 2;
+  string head_commit_sha = 3;
+}
+
+message ApplyFullSelfDrivingSuggestionResponse {
+  string new_pr_head_sha = 1;
+}
+
+service FullSelfDrivingService {
+  rpc SetFullSelfDrivingConfig(SetFullSelfDrivingConfigRequest) returns (SetFullSelfDrivingConfigResponse);
+  rpc GetFullSelfDrivingConfig(GetFullSelfDrivingConfigRequest) returns (GetFullSelfDrivingConfigResponse);
+  rpc ListFullSelfDrivingRuns(ListFullSelfDrivingRunsRequest) returns (ListFullSelfDrivingRunsResponse);
+  rpc GetFullSelfDrivingRunSuggestion(GetFullSelfDrivingRunSuggestionRequest) returns (GetFullSelfDrivingRunSuggestionResponse);
+  rpc ApplyFullSelfDrivingSuggestion(ApplyFullSelfDrivingSuggestionRequest) returns (ApplyFullSelfDrivingSuggestionResponse);
+  rpc ListFullSelfDrivingFindings(ListFullSelfDrivingFindingsRequest) returns (ListFullSelfDrivingFindingsResponse);
+}

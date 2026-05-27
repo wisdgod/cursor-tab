@@ -5,6 +5,36 @@ package aiserver.v1;
 import "aiserver/v1/aiserver.proto";
 import "google/protobuf/timestamp.proto";
 
+message ConversationSummarizationPromptOptions {
+  optional string inline_system_prompt = 1;
+  optional string summarization_model = 2;
+  optional string prompt_config_id = 3;
+}
+
+message GetCommitMetricsRequest {
+  repeated string commit_hashes = 1;
+  optional string branch = 2;
+  bool on_demand_summaries = 3;
+  optional bool include_plans = 5;
+  optional bool include_skills = 6;
+  optional bool include_mcps = 7;
+  optional ConversationSummarizationPromptOptions summarization_prompt_options = 12;
+}
+
+message GetCommitMetricsByFilePathRequest {
+  string file_path = 1;
+  optional int32 start_line = 2;
+  optional int32 end_line = 3;
+  optional string commit_hash = 4;
+  optional int32 limit = 5;
+  optional string branch = 6;
+  optional string user_email = 7;
+  optional bool include_plans = 9;
+  optional bool include_skills = 10;
+  optional bool include_mcps = 11;
+  optional ConversationSummarizationPromptOptions summarization_prompt_options = 12;
+}
+
 message CommitMetrics {
   string commit_hash = 1;
   int32 total_lines_added = 2;
@@ -25,6 +55,26 @@ message CommitMetrics {
   optional string commit_source = 20;
 }
 
+message ConversationPlan {
+  optional string title = 1;
+  optional int32 todo_count = 2;
+  optional string plan_file_uri = 3;
+  optional google.protobuf.Timestamp updated_at = 4;
+  optional string content = 5;
+}
+
+message ConversationSkill {
+  string skill_id = 1;
+  optional string platform = 2;
+  optional string skill_source = 3;
+  optional string entrypoint = 4;
+  optional string model_name = 5;
+  optional int32 usage_count = 6;
+  optional google.protobuf.Timestamp last_applied_at = 7;
+  optional string plugin = 8;
+  optional string marketplace = 9;
+}
+
 message ConversationMcp {
   string tool_name = 1;
   optional string mcp_server_name = 2;
@@ -32,14 +82,6 @@ message ConversationMcp {
   optional google.protobuf.Timestamp last_called_at = 4;
   optional string plugin = 5;
   optional string marketplace = 6;
-}
-
-message ConversationPlan {
-  optional string title = 1;
-  optional int32 todo_count = 2;
-  optional string plan_file_uri = 3;
-  optional google.protobuf.Timestamp updated_at = 4;
-  optional string content = 5;
 }
 
 message ConversationReference {
@@ -56,54 +98,12 @@ message ConversationReference {
   optional string initial_prompt = 11;
 }
 
-message ConversationSkill {
-  string skill_id = 1;
-  optional string platform = 2;
-  optional string skill_source = 3;
-  optional string entrypoint = 4;
-  optional string model_name = 5;
-  optional int32 usage_count = 6;
-  optional google.protobuf.Timestamp last_applied_at = 7;
-  optional string plugin = 8;
-  optional string marketplace = 9;
-}
-
-message ConversationSummarizationPromptOptions {
-  optional string inline_system_prompt = 1;
-  optional string summarization_model = 2;
-  optional string prompt_config_id = 3;
-}
-
-message GetCommitMetricsByFilePathRequest {
-  string file_path = 1;
-  optional int32 start_line = 2;
-  optional int32 end_line = 3;
-  optional string commit_hash = 4;
-  optional int32 limit = 5;
-  optional string branch = 6;
-  optional string user_email = 7;
-  optional bool include_plans = 9;
-  optional bool include_skills = 10;
-  optional bool include_mcps = 11;
-  optional ConversationSummarizationPromptOptions summarization_prompt_options = 12;
-}
-
-message GetCommitMetricsRequest {
-  repeated string commit_hashes = 1;
-  optional string branch = 2;
-  bool on_demand_summaries = 3;
-  optional bool include_plans = 5;
-  optional bool include_skills = 6;
-  optional bool include_mcps = 7;
-  optional ConversationSummarizationPromptOptions summarization_prompt_options = 12;
-}
-
 message GetCommitMetricsResponse {
   repeated CommitMetrics commits = 1;
   repeated ConversationReference conversations = 2;
 }
 
 service ConversationsService {
-  rpc GetCommitMetrics (GetCommitMetricsRequest) returns (GetCommitMetricsResponse);
-  rpc GetCommitMetricsByFilePath (GetCommitMetricsByFilePathRequest) returns (GetCommitMetricsResponse);
+  rpc GetCommitMetrics(GetCommitMetricsRequest) returns (GetCommitMetricsResponse);
+  rpc GetCommitMetricsByFilePath(GetCommitMetricsByFilePathRequest) returns (GetCommitMetricsResponse);
 }

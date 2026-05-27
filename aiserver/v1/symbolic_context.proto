@@ -4,71 +4,6 @@ package aiserver.v1;
 
 import "aiserver/v1/utils.proto";
 
-message ChooseCodeReferencesRequest {
-  message FileRequest {
-    string file_id = 1;
-  }
-
-  message NodeRequest {
-    string node_id = 1;
-  }
-
-  string index_id = 1;
-  oneof request {
-    FileRequest file = 2;
-    NodeRequest node = 3;
-  }
-  bool recompute = 4;
-}
-
-message ChooseCodeReferencesResponse {
-  message FileResponse {
-    string file_id = 1;
-    repeated NodeResponse node_responses = 2;
-  }
-
-  message NodeResponse {
-    string node_id = 1;
-    repeated CodeSymbolWithAction actions = 2;
-    bool skipped = 3;
-    repeated string dependencies = 4;
-  }
-
-  oneof response {
-    FileResponse file = 1;
-    NodeResponse node = 2;
-  }
-}
-
-message CodeSnippet {
-  int32 start_line_number = 1;
-  int32 end_line_number = 2;
-  repeated string lines = 3;
-}
-
-message CodeSymbolWithAction {
-  enum CodeSymbolAction {
-    CODE_SYMBOL_ACTION_UNSPECIFIED = 0;
-    CODE_SYMBOL_ACTION_GO_TO_DEFINITION = 1;
-    CODE_SYMBOL_ACTION_GO_TO_IMPLEMENTATION = 2;
-    CODE_SYMBOL_ACTION_REFERENCES = 3;
-  }
-
-  string workspace_relative_path = 1;
-  int32 line_number = 2;
-  int32 symbol_start_column = 3;
-  int32 symbol_end_column = 4;
-  CodeSymbolAction action = 5;
-  string symbol = 6;
-}
-
-message ComputeIndexTopoSortRequest {
-  string index_id = 1;
-}
-
-message ComputeIndexTopoSortResponse {
-}
-
 message CreateExperimentalIndexRequest {
   repeated string files = 1;
   string target_dir = 2;
@@ -77,84 +12,6 @@ message CreateExperimentalIndexRequest {
 
 message CreateExperimentalIndexResponse {
   string index_id = 1;
-}
-
-message ExtractPathsRequest {
-  FileCodeSnippets file_code_snippets = 1;
-}
-
-message ExtractPathsResponse {
-  repeated CodeSymbolWithAction paths = 1;
-}
-
-message FileCodeSnippets {
-  string relative_workspace_path = 1;
-  int32 total_lines = 2;
-  repeated CodeSnippet snippets = 3;
-}
-
-message IndexFileData {
-  message NodeData {
-    string node_id = 1;
-    string stage = 2;
-    string content = 3;
-    string summary = 4;
-  }
-
-  string index_id = 1;
-  string workspace_relative_path = 2;
-  string stage = 3;
-  int32 order = 4;
-  repeated NodeData nodes = 5;
-}
-
-message ListenExperimentalIndexRequest {
-  string index_id = 1;
-}
-
-message ListenExperimentalIndexResponse {
-  message ChooseItem {
-    ChooseCodeReferencesResponse response = 1;
-    ChooseCodeReferencesRequest request = 2;
-    string req_uuid = 3;
-  }
-
-  message ErrorItem {
-    string message = 1;
-    int32 status_code = 2;
-    oneof request {
-      RegisterFileToIndexRequest register = 3;
-      ChooseCodeReferencesRequest choose = 4;
-      SummarizeWithReferencesRequest summarize = 5;
-    }
-    string req_uuid = 6;
-  }
-
-  message ReadyItem {
-    string index_id = 1;
-    ListenExperimentalIndexRequest request = 2;
-  }
-
-  message RegisterItem {
-    RegisterFileToIndexResponse response = 1;
-    RegisterFileToIndexRequest request = 2;
-    string req_uuid = 3;
-  }
-
-  message SummarizeItem {
-    SummarizeWithReferencesResponse response = 1;
-    SummarizeWithReferencesRequest request = 2;
-    string req_uuid = 3;
-  }
-
-  string index_id = 1;
-  oneof item {
-    ReadyItem ready = 2;
-    RegisterItem register = 3;
-    ChooseItem choose = 4;
-    SummarizeItem summarize = 5;
-    ErrorItem error = 6;
-  }
 }
 
 message ListExperimentalIndexFilesRequest {
@@ -166,19 +23,48 @@ message ListExperimentalIndexFilesResponse {
   repeated IndexFileData files = 2;
 }
 
-message ReflectionData {
+message ListenExperimentalIndexRequest {
   string index_id = 1;
-  string id = 2;
-  string summary = 3;
 }
 
-message RegisterCodeReferencesRequest {
-  string node_id = 1;
-  repeated SymbolActionResults references = 2;
-}
-
-message RegisterCodeReferencesResponse {
-  repeated string dependencies = 1;
+message ListenExperimentalIndexResponse {
+  message ReadyItem {
+    string index_id = 1;
+    ListenExperimentalIndexRequest request = 2;
+  }
+  message RegisterItem {
+    RegisterFileToIndexResponse response = 1;
+    RegisterFileToIndexRequest request = 2;
+    string req_uuid = 3;
+  }
+  message ChooseItem {
+    ChooseCodeReferencesResponse response = 1;
+    ChooseCodeReferencesRequest request = 2;
+    string req_uuid = 3;
+  }
+  message SummarizeItem {
+    SummarizeWithReferencesResponse response = 1;
+    SummarizeWithReferencesRequest request = 2;
+    string req_uuid = 3;
+  }
+  message ErrorItem {
+    string message = 1;
+    int32 status_code = 2;
+    string req_uuid = 6;
+    oneof request {
+      RegisterFileToIndexRequest register = 3;
+      ChooseCodeReferencesRequest choose = 4;
+      SummarizeWithReferencesRequest summarize = 5;
+    }
+  }
+  string index_id = 1;
+  oneof item {
+    ReadyItem ready = 2;
+    RegisterItem register = 3;
+    ChooseItem choose = 4;
+    SummarizeItem summarize = 5;
+    ErrorItem error = 6;
+  }
 }
 
 message RegisterFileToIndexRequest {
@@ -195,18 +81,6 @@ message RegisterFileToIndexResponse {
   IndexFileData file_data = 4;
 }
 
-message RequestReceivedResponse {
-  string req_uuid = 1;
-}
-
-message SerializedContextNode {
-  string workspace_relative_path = 1;
-  int32 start_line_number = 2;
-  int32 end_line_number = 3;
-  repeated SerializedContextNode children = 4;
-  FileCodeSnippets node_snippets = 5;
-}
-
 message SetupIndexDependenciesRequest {
   string index_id = 1;
   string file_id = 3;
@@ -216,6 +90,54 @@ message SetupIndexDependenciesRequest {
 message SetupIndexDependenciesResponse {
 }
 
+message ComputeIndexTopoSortRequest {
+  string index_id = 1;
+}
+
+message ComputeIndexTopoSortResponse {
+}
+
+message ChooseCodeReferencesRequest {
+  message FileRequest {
+    string file_id = 1;
+  }
+  message NodeRequest {
+    string node_id = 1;
+  }
+  string index_id = 1;
+  bool recompute = 4;
+  oneof request {
+    FileRequest file = 2;
+    NodeRequest node = 3;
+  }
+}
+
+message ChooseCodeReferencesResponse {
+  message NodeResponse {
+    string node_id = 1;
+    repeated CodeSymbolWithAction actions = 2;
+    bool skipped = 3;
+    repeated string dependencies = 4;
+  }
+  message FileResponse {
+    string file_id = 1;
+    repeated NodeResponse node_responses = 2;
+  }
+  oneof response {
+    FileResponse file = 1;
+    NodeResponse node = 2;
+  }
+}
+
+message RegisterCodeReferencesRequest {
+  string node_id = 1;
+  repeated SymbolActionResults references = 2;
+}
+
+message RegisterCodeReferencesResponse {
+  repeated string dependencies = 1;
+}
+
 message SummarizeWithReferencesRequest {
   string index_id = 1;
   string node_id = 2;
@@ -223,29 +145,49 @@ message SummarizeWithReferencesRequest {
 }
 
 message SummarizeWithReferencesResponse {
-  message Dependency {
-    repeated string nodes = 2;
-  }
-
   message Success {
     string summary = 1;
   }
-
+  message Dependency {
+    repeated string nodes = 2;
+  }
+  string node_id = 3;
   oneof response {
     Success success = 1;
     Dependency dependency = 2;
   }
-  string node_id = 3;
 }
 
-message SymbolActionResultReference {
-  SimpleRange range = 1;
-  FileCodeSnippets reference = 2;
+message RequestReceivedResponse {
+  string req_uuid = 1;
 }
 
-message SymbolActionResults {
-  CodeSymbolWithAction action = 1;
-  repeated SymbolActionResultReference references = 2;
+message ReflectionData {
+  string index_id = 1;
+  string id = 2;
+  string summary = 3;
+}
+
+message IndexFileData {
+  message NodeData {
+    string node_id = 1;
+    string stage = 2;
+    string content = 3;
+    string summary = 4;
+  }
+  string index_id = 1;
+  string workspace_relative_path = 2;
+  string stage = 3;
+  int32 order = 4;
+  repeated NodeData nodes = 5;
+}
+
+message SerializedContextNode {
+  string workspace_relative_path = 1;
+  int32 start_line_number = 2;
+  int32 end_line_number = 3;
+  repeated SerializedContextNode children = 4;
+  FileCodeSnippets node_snippets = 5;
 }
 
 message URIResolutionAttempt {
@@ -257,4 +199,49 @@ message URIResolutionAttempt {
 message URIResolutionResult {
   URIResolutionAttempt request = 1;
   repeated string resolved_paths = 2;
+}
+
+message ExtractPathsRequest {
+  FileCodeSnippets file_code_snippets = 1;
+}
+
+message ExtractPathsResponse {
+  repeated CodeSymbolWithAction paths = 1;
+}
+
+message SymbolActionResults {
+  CodeSymbolWithAction action = 1;
+  repeated SymbolActionResultReference references = 2;
+}
+
+message SymbolActionResultReference {
+  SimpleRange range = 1;
+  FileCodeSnippets reference = 2;
+}
+
+message FileCodeSnippets {
+  string relative_workspace_path = 1;
+  int32 total_lines = 2;
+  repeated CodeSnippet snippets = 3;
+}
+
+message CodeSnippet {
+  int32 start_line_number = 1;
+  int32 end_line_number = 2;
+  repeated string lines = 3;
+}
+
+message CodeSymbolWithAction {
+  enum CodeSymbolAction {
+    CODE_SYMBOL_ACTION_UNSPECIFIED = 0;
+    CODE_SYMBOL_ACTION_GO_TO_DEFINITION = 1;
+    CODE_SYMBOL_ACTION_GO_TO_IMPLEMENTATION = 2;
+    CODE_SYMBOL_ACTION_REFERENCES = 3;
+  }
+  string workspace_relative_path = 1;
+  int32 line_number = 2;
+  int32 symbol_start_column = 3;
+  int32 symbol_end_column = 4;
+  CodeSymbolAction action = 5;
+  string symbol = 6;
 }

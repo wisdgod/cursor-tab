@@ -7,11 +7,6 @@ message FetchArgs {
   string tool_call_id = 2;
 }
 
-message FetchError {
-  string url = 1;
-  string error = 2;
-}
-
 message FetchResult {
   oneof result {
     FetchSuccess success = 1;
@@ -24,4 +19,9 @@ message FetchSuccess {
   string content = 2;
   int32 status_code = 3;
   string content_type = 4;
+}
+
+message FetchError {
+  string url = 1;
+  string error = 2;
 }

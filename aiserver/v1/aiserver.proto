@@ -26,6 +26,7 @@ import "aiserver/v1/telemetry.proto";
 import "aiserver/v1/tools.proto";
 import "aiserver/v1/usage.proto";
 import "aiserver/v1/utils.proto";
+import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 
 enum AvailableModelsScope {
@@ -49,71 +50,101 @@ enum TaskStatus {
   TASK_STATUS_NOT_STARTED = 4;
 }
 
-message AcknowledgeGracePeriodDisclaimerRequest {
+message GetComposerAutocompleteRequest {
+  string input_text = 1;
+  optional string composer_id = 2;
+  optional ComposerAutocompleteContext context = 3;
 }
 
-message AcknowledgeGracePeriodDisclaimerResponse {
+message GetComposerAutocompleteResponse {
+  string suggestion = 1;
 }
 
-message AdvancedCodebaseContextOptions {
-  int32 num_results_per_search = 1;
-  optional string include_pattern = 2;
-  optional string exclude_pattern = 3;
-  RerankerAlgorithm reranker = 4;
-  optional string index_id = 5;
-  bool reasoning_step = 6;
-  optional RechunkerChoice rechunker = 7;
+message ComposerAutocompleteContext {
+  optional CurrentFileContext current_file = 1;
+  repeated CachedFileContext cached_files = 2;
+  repeated ConversationMessage conversation_messages = 3;
+  optional string visible_viewport_text = 4;
+  repeated string first_user_messages = 5;
 }
 
-message AiCodeChange {
-  string change_id = 1;
-  string source = 2;
-  repeated ScoredAiCodeMetadata metadata = 3;
-  optional string model = 4;
-  int32 total_lines_added = 5;
-  int32 total_lines_deleted = 6;
+message CurrentFileContext {
+  string relative_path = 1;
+  string language = 2;
+  int32 cursor_line = 3;
+  string full_content = 4;
 }
 
-message AiProjectRequest {
-  string description = 1;
-  ModelDetails model_details = 2;
+message CachedFileContext {
+  string relative_path = 1;
+  string language = 2;
+  string full_content = 3;
+  int64 last_viewed_timestamp = 4;
 }
 
-message AiProjectResponse {
+message ChatSuggestionItem {
+  string text = 1;
+  string reason = 2;
+  string type = 3;
+  string category = 4;
+}
+
+message RecentChat {
+  string title = 1;
+  optional int64 timestamp = 2;
+  optional string summary = 3;
+  repeated RecentChatMessage messages = 4;
+  optional string todos = 5;
+}
+
+message RecentChatMessage {
+  string role = 1;
+  string text = 2;
+  string context = 3;
+}
+
+message GetChatSuggestionsRequest {
+  repeated RecentChat recent_chats = 1;
+}
+
+message GetChatSuggestionsResponse {
+  repeated ChatSuggestionItem suggestions = 1;
+}
+
+message GetUserInstructionsRequest {
+  repeated RecentChatMessage chats = 1;
+  optional string existing_instructions = 2;
+}
+
+message GetUserInstructionsResponse {
   string text = 1;
 }
 
-message AiThoughtAnnotation {
-  string request_id = 1;
-  string auth_id = 2;
-  CmdKDebugInfo debug_info = 3;
-  string thought = 4;
+message IsTerminalFinishedRequest {
+  string terminal_content = 1;
+  bool check_for_hangs = 2;
+  optional string chat_request_id = 3;
+  optional string command = 4;
 }
 
-message ApiDetails {
-  string api_key = 1;
-  optional bool enable_ghost_mode = 2;
+message IsTerminalFinishedResponseV2 {
+  bool is_finished = 1;
+  optional RunTerminalCommandEndedReason ended_reason = 2;
+  optional int32 exit_code = 3;
+  bool is_hanging = 4;
 }
 
-message AtSymbolDependencyInformation {
-  string name = 1;
-  string from_file = 2;
+message TestBidiRequest {
+  string message = 1;
 }
 
-message AtSymbolOption {
-  int32 index = 1;
-  string text = 2;
-  string type = 3;
+message TestBidiResponse {
+  string message = 1;
 }
 
 message AutoContextFile {
   string relative_workspace_path = 1;
   string file_content = 2;
-}
-
-message AutoContextRankedFile {
-  string relative_workspace_path = 1;
-  float reranking_score = 2;
 }
 
 message AutoContextRequest {
@@ -122,8 +153,298 @@ message AutoContextRequest {
   ModelDetails model_details = 3;
 }
 
+message AutoContextRankedFile {
+  string relative_workspace_path = 1;
+  float reranking_score = 2;
+}
+
 message AutoContextResponse {
   repeated AutoContextRankedFile ranked_files = 1;
+}
+
+message CheckBugBotPriceRequest {
+  int32 diff_char_len = 1;
+  int32 iterations = 2;
+  ModelDetails model_details = 3;
+  optional string session_id = 4;
+}
+
+message CheckBugBotPriceResponse {
+  double cost = 1;
+  string price_id = 2;
+}
+
+message AcknowledgeGracePeriodDisclaimerRequest {
+}
+
+message AcknowledgeGracePeriodDisclaimerResponse {
+}
+
+message CheckBugBotTelemetryHealthyRequest {
+  string session_id = 1;
+}
+
+message CheckBugBotTelemetryHealthyResponse {
+  bool is_healthy = 1;
+}
+
+message RecordIdeBugReactionRequest {
+  string bug_id = 1;
+  string reaction = 2;
+}
+
+message RecordIdeBugReactionResponse {
+  bool success = 1;
+}
+
+message GetSuggestedBugBotIterationsRequest {
+  int32 diff_char_len = 1;
+  ModelDetails model_details = 2;
+}
+
+message GetSuggestedBugBotIterationsResponse {
+  int32 iterations = 1;
+}
+
+message GetEditorBugbotAutoRunStatusRequest {
+}
+
+message GetEditorBugbotAutoRunStatusResponse {
+  bool should_auto_run = 1;
+}
+
+message BugBotStatus {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    STATUS_IN_PROGRESS = 1;
+    STATUS_IN_PROGRESS_ITERATIONS = 2;
+    STATUS_DONE = 3;
+    STATUS_ERROR = 4;
+  }
+  Status status = 1;
+  string message = 2;
+  optional int32 iterations_completed = 3;
+  optional int32 total_iterations = 4;
+  optional int32 total_tokens = 5;
+  optional int32 processed_tokens = 6;
+  optional float processed_cost = 7;
+  optional int32 thinking_tokens = 8;
+  optional float thinking_cost = 9;
+}
+
+message BugbotTrialNotification {
+  bool show = 1;
+  optional string message = 2;
+  optional string learn_more_url = 3;
+}
+
+message StreamBugBotResponse {
+  optional BugReports bug_reports = 1;
+  BugBotStatus status = 2;
+  optional string summary = 3;
+  optional BugbotTrialNotification trial_notification = 4;
+  optional int32 num_turns = 5;
+}
+
+message StreamBugBotAgenticClientMessage {
+  oneof message {
+    StreamBugBotRequest start = 1;
+    agent.v1.ExecClientMessage exec_client_message = 2;
+    agent.v1.ExecClientControlMessage exec_client_control_message = 3;
+  }
+}
+
+message StreamBugBotAgenticServerMessage {
+  oneof message {
+    StreamBugBotResponse bugbot_response = 1;
+    agent.v1.ExecServerMessage exec_server_message = 2;
+    agent.v1.ExecServerControlMessage exec_server_control_message = 3;
+  }
+}
+
+message UiBestOfNJudgeCandidate {
+  string composer_id = 1;
+  GitDiff diff = 2;
+}
+
+message StreamUiBestOfNJudgeStartRequest {
+  string task = 1;
+  repeated UiBestOfNJudgeCandidate candidates = 2;
+}
+
+message UiBestOfNJudgeFinalResult {
+  string winner_composer_id = 1;
+  string reasoning = 2;
+}
+
+message StreamUiBestOfNJudgeClientMessage {
+  oneof message {
+    StreamUiBestOfNJudgeStartRequest start = 1;
+    agent.v1.ExecClientMessage exec_client_message = 2;
+    agent.v1.ExecClientControlMessage exec_client_control_message = 3;
+  }
+}
+
+message StreamUiBestOfNJudgeServerMessage {
+  oneof message {
+    UiBestOfNJudgeFinalResult final_result = 1;
+    agent.v1.ExecServerMessage exec_server_message = 2;
+    agent.v1.ExecServerControlMessage exec_server_control_message = 3;
+  }
+}
+
+message ContextRerankingRequest {
+  optional CurrentFileInfo current_file = 1;
+  repeated ConversationMessage chat_conversation_history = 2;
+  repeated CppFileDiffHistory cpp_diff_trajectories = 3;
+  repeated ContextRerankingCandidateFile candidate_files = 4;
+}
+
+message ContextRerankingResponse {
+  repeated float reranking_scores = 1;
+}
+
+message NameTabRequest {
+  repeated ConversationMessage messages = 1;
+  bool is_project = 2;
+  oneof credentials {
+    agent.v1.ApiKeyCredentials api_key_credentials = 3;
+    agent.v1.AzureCredentials azure_credentials = 4;
+    agent.v1.BedrockCredentials bedrock_credentials = 5;
+  }
+}
+
+message NameTabResponse {
+  string name = 1;
+  string reason = 2;
+  string icon = 3;
+}
+
+message TestModelStatusRequest {
+  string model_name = 1;
+}
+
+message TestModelStatusResponse {
+  string text = 1;
+  float latency = 2;
+  float ttft = 3;
+  float max_time_between_chunks = 4;
+  string server_timing = 5;
+}
+
+message EvaluatePromptHookRequest {
+  string prompt = 1;
+  google.protobuf.Value hook_input_json = 2;
+  optional string model_name = 3;
+}
+
+message EvaluatePromptHookResponse {
+  bool ok = 1;
+  optional string reason = 2;
+}
+
+message TryParseTypeScriptTreeSitterRequest {
+  string workspace_relative_path = 1;
+  string text = 2;
+}
+
+message TryParseTypeScriptTreeSitterResponse {
+  string text = 1;
+}
+
+message DevOnlyGetPastRequestIdsRequest {
+  optional int32 count = 1;
+  optional int32 page = 2;
+}
+
+message DevOnlyPastRequest {
+  string request_id = 1;
+  string date_time = 2;
+  string model_name = 3;
+  string feature_name = 4;
+  string s3_uri = 5;
+  string status = 6;
+  int32 num_prompt_tokens = 7;
+  int32 num_completion_tokens = 8;
+  string api_call_method = 9;
+}
+
+message DevOnlyGetPastRequestIdsResponse {
+  repeated DevOnlyPastRequest past_requests = 1;
+  int32 total_count = 10;
+  bool has_more = 11;
+}
+
+message GetCodebaseQuestionsResponse {
+  repeated string questions = 1;
+}
+
+message AtSymbolOption {
+  int32 index = 1;
+  string text = 2;
+  string type = 3;
+}
+
+message AtSymbolDependencyInformation {
+  string name = 1;
+  string from_file = 2;
+}
+
+message GetAtSymbolSuggestionsRequest {
+  CurrentFileInfo current_file_info = 1;
+  repeated AtSymbolDependencyInformation at_symbol_dependencies = 2;
+  repeated AtSymbolOption at_symbol_options = 3;
+  string user_query = 4;
+  ModelDetails model_details = 5;
+}
+
+message GetAtSymbolSuggestionsResponse {
+  repeated int32 indices = 1;
+  string explanation = 2;
+}
+
+message CurrentFolderFileOrFolder {
+  string name = 1;
+  bool is_folder = 2;
+}
+
+message GetTerminalCompletionRequest {
+  string current_command = 1;
+  repeated string command_history = 2;
+  optional string model_name = 3;
+  repeated CppFileDiffHistory file_diff_histories = 4;
+  optional string git_diff = 5;
+  repeated string commit_history = 6;
+  repeated string past_results = 7;
+  ModelDetails model_details = 8;
+  string user_platform = 9;
+  string current_folder = 10;
+  repeated CurrentFolderFileOrFolder current_folder_structure = 11;
+  repeated File relevant_files = 12;
+}
+
+message GetTerminalCompletionResponse {
+  string command = 1;
+}
+
+message HeuristicsSelection {
+  enum HeuristicsSelectionType {
+    HEURISTICS_SELECTION_TYPE_UNSPECIFIED = 0;
+    HEURISTICS_SELECTION_TYPE_GROUP = 1;
+    HEURISTICS_SELECTION_TYPE_LINE = 2;
+    HEURISTICS_SELECTION_TYPE_FOLDING = 3;
+  }
+  HeuristicsSelectionType type = 1;
+  int32 start_line = 2;
+  int32 end_line = 3;
+}
+
+message CalculateAutoSelectionRequest {
+  CurrentFileInfo current_file_info = 1;
+  CursorPosition cursor_position = 2;
+  SimpleRange selection_range = 3;
+  ModelDetails model_details = 4;
+  repeated HeuristicsSelection heuristics_selections = 5;
 }
 
 message AutoSelectionInstructions {
@@ -138,17 +459,751 @@ message AutoSelectionResult {
   repeated AutoSelectionInstructions instructions = 3;
 }
 
+message CalculateAutoSelectionResponse {
+  repeated AutoSelectionResult results = 1;
+}
+
+message StreamCursorMotionRequest {
+  CurrentFileInfo current_file_info = 1;
+  SimpleRange selection_range = 2;
+  string instruction = 3;
+  ModelDetails model_details = 4;
+}
+
+message StreamCursorMotionResponse {
+  string text = 1;
+}
+
+message BackgroundCmdKRequest {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    TYPE_REFLECT = 1;
+    TYPE_LOOP_ON_LINTS = 2;
+    TYPE_CHAT_AND_APPLY = 3;
+    TYPE_COALESCE_GENERATIONS = 4;
+    TYPE_CODEBASE_CHUNKS = 5;
+    TYPE_SPEC_AND_APPLY = 6;
+    TYPE_ASK_CODEBASE = 7;
+    TYPE_FINETUNED_INSTRUCTIONS = 8;
+    TYPE_USEFUL_TYPES = 9;
+    TYPE_CHAT_AND_APPLY_UNDERSPECIFIED = 10;
+  }
+  message Lint {
+    message QuickFix {
+      message Edit {
+        string relative_workspace_path = 1;
+        string text = 2;
+        int32 start_line_number_one_indexed = 3;
+        int32 start_column_one_indexed = 4;
+        int32 end_line_number_inclusive_one_indexed = 5;
+        int32 end_column_one_indexed = 6;
+      }
+      string message = 1;
+      string kind = 2;
+      bool is_preferred = 3;
+      repeated Edit edits = 4;
+    }
+    string message = 1;
+    string severity = 2;
+    string relative_workspace_path = 3;
+    int32 start_line_number_one_indexed = 4;
+    int32 start_column_one_indexed = 5;
+    int32 end_line_number_inclusive_one_indexed = 6;
+    int32 end_column_one_indexed = 7;
+    repeated QuickFix quick_fixes = 9;
+  }
+  message ProposedChange {
+    string change = 1;
+    repeated Lint linter_errors = 2;
+  }
+  message UsefulType {
+    string relative_workspace_path = 1;
+    int32 start_line = 2;
+    string text = 3;
+    optional double score = 4;
+  }
+  message RecentlyViewedFile {
+    message VisibleRange {
+      int32 start_line_number_inclusive = 1;
+      int32 end_line_number_exclusive = 2;
+      optional int32 viewed_at = 3;
+      optional int32 global_order_descending = 4;
+    }
+    string relative_workspace_path = 1;
+    string contents = 2;
+    repeated VisibleRange visible_ranges = 3;
+  }
+  message Diff {
+    string relative_workspace_path = 1;
+    string diff = 2;
+  }
+  string instruction = 1;
+  CurrentFileInfo current_file = 2;
+  SimpleRange selection_range = 3;
+  Type type = 4;
+  repeated ProposedChange proposed_change_history = 5;
+  repeated CodeBlock related_code_blocks = 6;
+  repeated CppFileDiffHistory diff_history = 7;
+  repeated Lint linter_errors = 8;
+  repeated UsefulType useful_types = 9;
+  repeated RecentlyViewedFile recently_viewed_files = 10;
+  repeated Diff recent_diffs = 11;
+  optional bool multiple_completions = 12;
+}
+
+message BackgroundCmdKResponse {
+  string proposed_change = 1;
+}
+
+message BackgroundCmdKEvalRequest {
+  enum Experiment {
+    EXPERIMENT_UNSPECIFIED = 0;
+    EXPERIMENT_REFLECT = 1;
+    EXPERIMENT_CMD_K_ORIGINAL_RADIUS = 2;
+    EXPERIMENT_LOOP_ON_LINTS = 3;
+    EXPERIMENT_CHAT_AND_APPLY = 4;
+    EXPERIMENT_COMMIT_NOTES = 5;
+    EXPERIMENT_COALESCE_GENERATIONS = 6;
+    EXPERIMENT_REWORD_INSTRUCTIONS = 7;
+    EXPERIMENT_CODEBASE_CHUNKS = 8;
+    EXPERIMENT_SPEC_AND_APPLY = 9;
+    EXPERIMENT_ASK_CODEBASE = 10;
+  }
+  message Lint {
+    message QuickFix {
+      message Edit {
+        string relative_workspace_path = 1;
+        string text = 2;
+        int32 start_line_number_one_indexed = 3;
+        int32 start_column_one_indexed = 4;
+        int32 end_line_number_inclusive_one_indexed = 5;
+        int32 end_column_one_indexed = 6;
+      }
+      string message = 1;
+      string kind = 2;
+      bool is_preferred = 3;
+      repeated Edit edits = 4;
+    }
+    string message = 1;
+    string severity = 2;
+    string relative_workspace_path = 3;
+    int32 start_line_number_one_indexed = 4;
+    int32 start_column_one_indexed = 5;
+    int32 end_line_number_inclusive_one_indexed = 6;
+    int32 end_column_one_indexed = 7;
+    repeated QuickFix quick_fixes = 9;
+  }
+  message ProposedChange {
+    string change = 1;
+    repeated Lint linter_errors = 2;
+  }
+  string instruction = 1;
+  CurrentFileInfo current_file = 2;
+  SimpleRange selection_range = 3;
+  string ground_truth = 4;
+  Experiment experiment = 5;
+  bool run_automated_eval = 6;
+  repeated ProposedChange proposed_change_history = 7;
+  repeated CommitNote commit_notes = 8;
+  repeated CodeBlock related_code_blocks = 9;
+}
+
+message BackgroundCmdKEvalResponse {
+  string proposed_change = 1;
+}
+
+message GetThoughtAnnotationRequest {
+  string request_id = 1;
+}
+
+message UpdateVscodeProfileRequest {
+  string machine_id = 1;
+  repeated string workspace_extensions = 2;
+  repeated string extensions = 3;
+}
+
+message UpdateVscodeProfileResponse {
+}
+
+message GetThoughtAnnotationResponse {
+  AiThoughtAnnotation thought_annotation = 1;
+}
+
+message AiThoughtAnnotation {
+  string request_id = 1;
+  string auth_id = 2;
+  CmdKDebugInfo debug_info = 3;
+  string thought = 4;
+}
+
+message BulkEmbedRequest {
+  repeated string texts = 1;
+}
+
+message BulkEmbedResponse {
+  repeated EmbeddingResponse embeddings = 1;
+}
+
+message EmbeddingResponse {
+  repeated double embedding = 1;
+}
+
+message TakeNotesOnCommitDiffRequest {
+  CommitDiffString diff = 1;
+  string commit_hash = 2;
+}
+
+message TakeNotesOnCommitDiffResponse {
+  repeated CommitNoteWithEmbeddings notes = 1;
+}
+
+message SimpleCommitWithDiff {
+  string commit_hash = 1;
+  string diff = 2;
+}
+
+message IsCursorPredictionEnabledRequest {
+}
+
+message IsCursorPredictionEnabledResponse {
+  bool enabled = 1;
+}
+
+message StreamNextCursorPredictionRequest {
+  message VisibleRange {
+    int32 start_line_number_inclusive = 1;
+    int32 end_line_number_exclusive = 2;
+  }
+  message FileVisibleRange {
+    string filename = 1;
+    repeated VisibleRange visible_ranges = 2;
+  }
+  CurrentFileInfo current_file = 1;
+  repeated string diff_history = 2;
+  optional string model_name = 3;
+  optional LinterErrors linter_errors = 4;
+  repeated CppContextItem context_items = 13;
+  repeated string diff_history_keys = 5;
+  optional bool give_debug_output = 6;
+  repeated CppFileDiffHistory file_diff_histories = 7;
+  repeated CppFileDiffHistory merged_diff_histories = 8;
+  repeated BlockDiffPatch block_diff_patches = 9;
+  optional bool is_nightly = 10;
+  optional bool is_debug = 11;
+  optional bool immediately_ack = 12;
+  optional bool enable_more_context = 17;
+  repeated CppParameterHint parameter_hints = 14;
+  repeated LspSubgraphFullContext lsp_contexts = 15;
+  optional CppIntentInfo cpp_intent_info = 16;
+  optional string workspace_id = 18;
+  repeated FilesyncUpdateWithModelVersion file_sync_updates = 19;
+  repeated FileVisibleRange file_visible_ranges = 20;
+}
+
+message StreamNextCursorPredictionResponse {
+  oneof response {
+    string text = 1;
+    int32 line_number = 2;
+    bool is_not_in_range = 3;
+    string file_name = 4;
+  }
+}
+
+message StreamWebCmdKV1Request {
+  string relative_workspace_path = 1;
+  string file_contents = 2;
+  string prompt = 3;
+  LineRange selection_range = 4;
+  ModelDetails model_details = 5;
+  repeated ImageProto images = 10;
+}
+
+message StreamWebCmdKV1Response {
+  StreamCmdKResponse cmd_k_response = 1;
+}
+
+message ContextScoresRequest {
+  string source_range = 1;
+  repeated string method_signatures = 2;
+}
+
+message ContextScoresResponse {
+  repeated float scores = 1;
+}
+
+message ReportGenerationFeedbackRequest {
+  enum FeedbackType {
+    FEEDBACK_TYPE_UNSPECIFIED = 0;
+    FEEDBACK_TYPE_THUMBS_UP = 1;
+    FEEDBACK_TYPE_THUMBS_DOWN = 2;
+    FEEDBACK_TYPE_NEUTRAL = 3;
+    FEEDBACK_TYPE_STARS = 4;
+  }
+  enum Source {
+    SOURCE_UNSPECIFIED = 0;
+    SOURCE_INLINE = 1;
+    SOURCE_VIBEOMETER = 2;
+  }
+  FeedbackType feedback_type = 1;
+  string request_id = 2;
+  optional string comment = 3;
+  optional int32 stars_overall = 4;
+  optional int32 stars_speed = 6;
+  optional int32 stars_accuracy = 7;
+  optional int32 stars_style_taste = 8;
+  optional bool never_ask_again = 9;
+  optional bool did_popup = 10;
+  Source source = 11;
+}
+
+message ReportGenerationFeedbackResponse {
+}
+
+message ReportAgentFeedbackRequest {
+  enum Sentiment {
+    SENTIMENT_UNSPECIFIED = 0;
+    SENTIMENT_UP = 1;
+    SENTIMENT_DOWN = 2;
+  }
+  string request_id = 1;
+  Sentiment sentiment = 2;
+  repeated string categories = 3;
+  optional string comment = 4;
+  optional string canonical_model_name = 5;
+}
+
+message ReportAgentFeedbackResponse {
+}
+
+message ReportAgentMessageFeedbackRequest {
+  string request_id = 1;
+  string bubble_id = 2;
+  optional string composer_id = 3;
+  string selected_text = 4;
+  optional int32 selection_start = 5;
+  optional int32 selection_end = 6;
+  string comment = 7;
+  optional string canonical_model_name = 8;
+  optional string category = 9;
+  optional string sentiment = 10;
+}
+
+message ReportAgentMessageFeedbackResponse {
+  string s3_uri = 1;
+}
+
+message ShowWelcomeScreenRequest {
+}
+
+message ShowWelcomeScreenResponse {
+  repeated string enable_cards = 1;
+}
+
+message AiProjectRequest {
+  string description = 1;
+  ModelDetails model_details = 2;
+}
+
+message AiProjectResponse {
+  string text = 1;
+}
+
+message ToCamelCaseRequest {
+  string text = 1;
+}
+
+message ToCamelCaseResponse {
+  string text = 1;
+}
+
+message StreamPriomptPromptRequest {
+  string prompt_props = 2;
+  string prompt_props_type_name = 3;
+  bool skip_login_check = 5;
+  ModelDetails model_details = 4;
+}
+
+message StreamPriomptPromptResponse {
+  string text = 1;
+}
+
+message CheckFeatureStatusRequest {
+  string feature_name = 1;
+}
+
+message CheckFeaturesStatusRequest {
+  repeated string feature_names = 1;
+}
+
+message CheckFeaturesStatusResponse {
+  message FeatureStatus {
+    string feature_name = 1;
+    bool enabled = 2;
+  }
+  repeated FeatureStatus feature_statuses = 1;
+}
+
+message GetEffectiveTokenLimitRequest {
+  ModelDetails model_details = 1;
+}
+
+message GetEffectiveTokenLimitResponse {
+  int32 token_limit = 1;
+}
+
+message CheckFeatureStatusResponse {
+  bool enabled = 1;
+}
+
+message CheckNumberConfigRequest {
+  string key = 1;
+}
+
+message CheckNumberConfigResponse {
+  int32 value = 1;
+}
+
+message CheckNumberConfigsRequest {
+  repeated string config_names = 1;
+}
+
+message CheckNumberConfigsResponse {
+  message Config {
+    string config_name = 1;
+    int32 value = 2;
+  }
+  repeated Config configs = 1;
+}
+
+message IntentPredictionRequest {
+  repeated ConversationMessage messages = 1;
+  ContextOptions context_options = 2;
+  ModelDetails model_details = 3;
+}
+
+message IntentPredictionResponse {
+  message ChosenDocumentation {
+    repeated int32 doc_indices = 1;
+    repeated string doc_identifiers = 2;
+    repeated string doc_names = 3;
+  }
+  message ChosenFileContents {
+  }
+  message ChosenLinterDiagnostics {
+    repeated int32 diagnostic_indices = 1;
+  }
+  ChosenDocumentation chosen_documentation = 1;
+  ChosenFileContents chosen_file_contents = 2;
+  ChosenLinterDiagnostics chosen_linter_diagnostics = 3;
+  bool use_global_context = 4;
+  bool use_with_folder_context = 5;
+}
+
+message ContextOptions {
+  message AllDocumentation {
+    message Documentation {
+      string name = 1;
+      string url = 2;
+      string identifier = 3;
+    }
+    repeated Documentation available_docs = 1;
+  }
+  message CurrentFileContents {
+    string relative_workspace_path = 1;
+    string contents = 2;
+    CursorPosition cursor_position = 3;
+    repeated DataframeInfo dataframes = 4;
+    string language_id = 5;
+    CursorRange selection = 6;
+  }
+  message LinterDiagnostics {
+    message Diagnostic {
+      string message = 1;
+      string source = 2;
+      CursorRange range = 3;
+      string relative_workspace_path = 4;
+    }
+    string relative_workspace_path = 1;
+    string contents = 2;
+    repeated Diagnostic diagnostics = 3;
+  }
+  message GlobalContext {
+  }
+  AllDocumentation all_documentation = 1;
+  CurrentFileContents current_file_contents = 2;
+  LinterDiagnostics linter_diagnostics = 3;
+  GlobalContext global_context = 4;
+}
+
+message StreamCursorTutorRequest {
+  repeated ConversationMessage conversation = 1;
+  ModelDetails model_details = 2;
+}
+
+message StreamCursorTutorResponse {
+  string text = 1;
+}
+
+message ModelQueryRequest {
+  enum QueryType {
+    QUERY_TYPE_UNSPECIFIED = 0;
+    QUERY_TYPE_KEYWORDS = 1;
+    QUERY_TYPE_EMBEDDINGS = 2;
+  }
+  CurrentFileInfo current_file = 1;
+  repeated ConversationMessage conversation = 2;
+  repeated RepositoryInfo repositories = 3;
+  ExplicitContext explicit_context = 4;
+  optional string workspace_root_path = 5;
+  repeated CodeBlock code_blocks = 6;
+  ModelDetails model_details = 7;
+  QueryType query_type = 8;
+  RepositoryInfo repository_info = 9;
+  bool faster_and_stupider = 10;
+  bool use_globs = 11;
+}
+
+message ModelQueryResponse {
+  message Query {
+    string query = 1;
+    bool successful_parse = 2;
+    repeated string good_file_extensions = 3;
+    repeated string bad_file_extensions = 4;
+    repeated string good_paths = 5;
+    repeated string bad_paths = 6;
+  }
+  repeated Query queries = 1;
+}
+
+message ModelQueryResponseV2 {
+  message QueryItem {
+    int32 index = 3;
+    oneof partial_query {
+      string text = 1;
+      string glob = 2;
+    }
+  }
+  oneof query_or_reasoning {
+    QueryItem query = 1;
+    string reasoning = 2;
+  }
+}
+
+message ApiDetails {
+  string api_key = 1;
+  optional bool enable_ghost_mode = 2;
+}
+
+message FullFileSearchResult {
+  repeated FileResult results = 1;
+}
+
+message CodeSearchResult {
+  repeated CodeResult results = 1;
+  repeated File all_files = 2;
+}
+
+message RerankerRequest {
+  repeated CodeResult code_results = 1;
+  string query = 2;
+  int32 num_blocks = 3;
+  CurrentFileInfo current_file = 4;
+  repeated ConversationMessage conversation = 5;
+  ApiDetails api_details = 6;
+  oneof context_results {
+    FullFileSearchResult file_search_results = 7;
+    CodeSearchResult code_search_results = 8;
+  }
+}
+
+message RerankerResponse {
+  repeated CodeResult results = 1;
+}
+
+message GenerateTldrRequest {
+  string text = 1;
+}
+
+message GenerateTldrResponse {
+  string summary = 1;
+  string all = 2;
+}
+
+message TaskStreamChatContextRequest {
+  CurrentFileInfo current_file = 1;
+  repeated ConversationMessage conversation = 2;
+  repeated RepositoryInfo repositories = 3;
+  ExplicitContext explicit_context = 4;
+  optional string workspace_root_path = 5;
+  repeated CodeBlock code_blocks = 6;
+  ModelDetails model_details = 7;
+  repeated string documentation_identifiers = 8;
+  LinterErrors linter_errors = 14;
+  AdvancedCodebaseContextOptions advanced_codebase_context = 15;
+  optional bool is_eval = 16;
+  string request_id = 17;
+  optional int32 desired_token_limit = 18;
+}
+
+message AdvancedCodebaseContextOptions {
+  int32 num_results_per_search = 1;
+  optional string include_pattern = 2;
+  optional string exclude_pattern = 3;
+  RerankerAlgorithm reranker = 4;
+  optional string index_id = 5;
+  bool reasoning_step = 6;
+  optional RechunkerChoice rechunker = 7;
+}
+
+message TaskStreamChatContextResponse {
+  message Output {
+    string text = 1;
+  }
+  message GatheringFile {
+    string relative_workspace_path = 1;
+    SimpleRange range = 2;
+    int32 step_index = 3;
+    float score = 4;
+  }
+  message GatheringStep {
+    string title = 1;
+    int32 index = 2;
+    string query = 3;
+  }
+  message RerankingStep {
+    string title = 1;
+    int32 index = 2;
+  }
+  message RerankingFile {
+    string relative_workspace_path = 1;
+    SimpleRange range = 2;
+    string reason = 3;
+    bool failed = 4;
+    float score = 5;
+    int32 step_index = 6;
+  }
+  message ReasoningStep {
+    string title = 1;
+    int32 index = 2;
+  }
+  message ReasoningSubstep {
+    string markdown_explanation = 1;
+    int32 step_index = 2;
+  }
+  oneof response {
+    Output output = 1;
+    GatheringStep gathering_step = 2;
+    GatheringFile gathering_file = 3;
+    RerankingStep reranking_step = 4;
+    RerankingFile reranking_file = 5;
+    ReasoningStep reasoning_step = 6;
+    ReasoningSubstep reasoning_substep = 7;
+  }
+}
+
+message TaskStreamChatContextResponseWrapped {
+  oneof response {
+    TaskStreamChatContextResponse real_response = 1;
+    string background_task_uuid = 2;
+  }
+}
+
+message StreamChatContextRequest {
+  message CodeContext {
+    repeated CodeBlock chunks = 1;
+    repeated CodeResult scored_chunks = 2;
+  }
+  CurrentFileInfo current_file = 1;
+  repeated ConversationMessage conversation = 2;
+  repeated RepositoryInfo repositories = 3;
+  ExplicitContext explicit_context = 4;
+  optional string workspace_root_path = 5;
+  repeated CodeBlock code_blocks = 6;
+  ModelDetails model_details = 7;
+  repeated string documentation_identifiers = 8;
+  string query = 9;
+  CodeContext code_context = 10;
+  bool rerank_results = 11;
+  LinterErrors linter_errors = 14;
+  optional bool is_bash = 15;
+  bool rerank_results_v2 = 16;
+  string conversation_id = 17;
+  bool can_handle_filenames_after_language_ids = 18;
+  bool long_context_mode = 19;
+  bool is_eval = 20;
+  string request_id = 21;
+  optional int32 desired_max_tokens = 22;
+  optional bool runnable_code_blocks = 23;
+  oneof context_results {
+    FullFileSearchResult file_search_results = 12;
+    CodeSearchResult code_search_results = 13;
+  }
+}
+
+message StreamChatContextResponse {
+  message UsedCode {
+    repeated CodeResult code_results = 1;
+  }
+  message CodeLink {
+    string relative_workspace_path = 1;
+    int32 start_line_number = 2;
+    int32 end_line_number = 3;
+  }
+  message ChunkIdentity {
+    string file_name = 1;
+    int32 start_line = 2;
+    int32 end_line = 3;
+    string text = 4;
+    ChunkType chunk_type = 5;
+  }
+  string text = 1;
+  optional string debugging_only_chat_prompt = 2;
+  optional int32 debugging_only_token_count = 3;
+  DocumentationCitation document_citation = 4;
+  optional string filled_prompt = 5;
+  UsedCode used_code = 6;
+  CodeLink code_link = 7;
+  optional ChunkIdentity chunk_identity = 8;
+  optional DocsReference docs_reference = 9;
+  optional SymbolLink symbol_link = 10;
+  optional FileLink file_link = 11;
+}
+
+message StreamChatDeepContextRequest {
+  repeated ConversationMessage conversation = 1;
+  ExplicitContext explicit_context = 2;
+  ModelDetails model_details = 3;
+  SearchRepositoryDeepContextResponse context_results = 4;
+  bool rerank_results = 5;
+}
+
+message StreamChatDeepContextResponse {
+  string text = 1;
+}
+
+message DocumentationInfo {
+  string doc_identifier = 1;
+  DocumentationMetadata metadata = 2;
+}
+
 message AvailableDocsRequest {
+  repeated string additional_doc_identifiers = 4;
   oneof partial_doc {
     string partial_url = 1;
     string partial_doc_name = 2;
     bool get_all = 3;
   }
-  repeated string additional_doc_identifiers = 4;
 }
 
 message AvailableDocsResponse {
   repeated DocumentationInfo docs = 1;
+}
+
+message ThrowErrorCheckRequest {
+  ErrorDetails.Error error = 1;
+}
+
+message ThrowErrorCheckResponse {
 }
 
 message AvailableModelsRequest {
@@ -171,7 +1226,6 @@ message AvailableModelsResponse {
     DEGRADATION_STATUS_DEGRADED = 1;
     DEGRADATION_STATUS_DISABLED = 2;
   }
-
   enum ModelVendorId {
     MODEL_VENDOR_ID_UNSPECIFIED = 0;
     MODEL_VENDOR_ID_ANTHROPIC = 1;
@@ -183,7 +1237,19 @@ message AvailableModelsResponse {
     MODEL_VENDOR_ID_NVIDIA = 7;
     MODEL_VENDOR_ID_ZAI = 8;
   }
-
+  message TooltipData {
+    string primary_text = 1;
+    string secondary_text = 2;
+    bool secondary_warning_text = 3;
+    string icon = 4;
+    string tertiary_text = 5;
+    string tertiary_text_url = 6;
+    optional string markdown_content = 7;
+  }
+  message ModelVendor {
+    ModelVendorId id = 1;
+    string display_name = 2;
+  }
   message AvailableModel {
     string name = 1;
     bool default_on = 2;
@@ -227,60 +1293,6 @@ message AvailableModelsResponse {
     optional string vendor_name = 41;
     optional ModelVendor vendor = 42;
   }
-
-  message ConfirmationDialogue {
-    string title = 1;
-    string body = 2;
-    string key = 3;
-    bool blocks_submission = 4;
-  }
-
-  message FeatureModelConfig {
-    string default_model = 1;
-    repeated string fallback_models = 2;
-    repeated string best_of_n_default_models = 3;
-  }
-
-  message ModelPickerDisplayConfiguration {
-    message NamedModelsViewConfig {
-      message NamedViewToRoutedModelViewButton {
-        string markdown = 1;
-      }
-
-      message NamedViewToRoutedModelViewNoButton {
-      }
-
-      message NamedViewToRoutedModelViewToggle {
-        string markdown = 1;
-      }
-
-      optional NamedViewToRoutedModelViewToggle named_view_to_routed_model_view_toggle = 2;
-      optional NamedViewToRoutedModelViewNoButton named_view_to_routed_model_view_no_button = 3;
-      optional NamedViewToRoutedModelViewButton named_view_to_routed_model_view_button = 4;
-    }
-
-    message RoutedModelViewConfig {
-      message RoutedModelViewToNamedViewButton {
-        string markdown = 1;
-      }
-
-      message RoutedModelViewToNamedViewToggle {
-        string title_markdown = 1;
-        optional string subtitle = 2;
-        optional bool set_to_last_named_model = 3;
-      }
-
-      optional string title = 1;
-      optional RoutedModelViewToNamedViewToggle routed_model_view_to_named_view_toggle = 2;
-      optional RoutedModelViewToNamedViewButton routed_model_view_to_named_view_button = 3;
-      optional bool hide_search_bar = 4;
-      optional bool hide_routed_model_view = 5;
-    }
-
-    RoutedModelViewConfig routed_model_view_config = 1;
-    NamedModelsViewConfig named_models_view_config = 2;
-  }
-
   message ModelVariantConfig {
     repeated agent.v1.RequestedModel.ModelParameterValue parameter_values = 1;
     string display_name = 2;
@@ -292,23 +1304,51 @@ message AvailableModelsResponse {
     optional string tagline = 7;
     optional string variant_string_representation = 9;
     optional ConfirmationDialogue confirmation_dialogue = 10;
+    optional string legacy_slug = 11;
   }
-
-  message ModelVendor {
-    ModelVendorId id = 1;
-    string display_name = 2;
+  message ConfirmationDialogue {
+    string title = 1;
+    string body = 2;
+    string key = 3;
+    bool blocks_submission = 4;
   }
-
-  message TooltipData {
-    string primary_text = 1;
-    string secondary_text = 2;
-    bool secondary_warning_text = 3;
-    string icon = 4;
-    string tertiary_text = 5;
-    string tertiary_text_url = 6;
-    optional string markdown_content = 7;
+  message FeatureModelConfig {
+    string default_model = 1;
+    repeated string fallback_models = 2;
+    repeated string best_of_n_default_models = 3;
   }
-
+  message ModelPickerDisplayConfiguration {
+    message RoutedModelViewConfig {
+      message RoutedModelViewToNamedViewToggle {
+        string title_markdown = 1;
+        optional string subtitle = 2;
+        optional bool set_to_last_named_model = 3;
+      }
+      message RoutedModelViewToNamedViewButton {
+        string markdown = 1;
+      }
+      optional string title = 1;
+      optional RoutedModelViewToNamedViewToggle routed_model_view_to_named_view_toggle = 2;
+      optional RoutedModelViewToNamedViewButton routed_model_view_to_named_view_button = 3;
+      optional bool hide_search_bar = 4;
+      optional bool hide_routed_model_view = 5;
+    }
+    message NamedModelsViewConfig {
+      message NamedViewToRoutedModelViewToggle {
+        string markdown = 1;
+      }
+      message NamedViewToRoutedModelViewNoButton {
+      }
+      message NamedViewToRoutedModelViewButton {
+        string markdown = 1;
+      }
+      optional NamedViewToRoutedModelViewToggle named_view_to_routed_model_view_toggle = 2;
+      optional NamedViewToRoutedModelViewNoButton named_view_to_routed_model_view_no_button = 3;
+      optional NamedViewToRoutedModelViewButton named_view_to_routed_model_view_button = 4;
+    }
+    RoutedModelViewConfig routed_model_view_config = 1;
+    NamedModelsViewConfig named_models_view_config = 2;
+  }
   repeated AvailableModel models = 2;
   repeated string model_names = 1;
   optional FeatureModelConfig composer_model_config = 4;
@@ -318,519 +1358,340 @@ message AvailableModelsResponse {
   optional FeatureModelConfig spec_model_config = 8;
   optional FeatureModelConfig deep_search_model_config = 9;
   optional FeatureModelConfig quick_agent_model_config = 10;
+  map<string, FeatureModelConfig> subagent_model_configs = 16;
   bool use_model_parameters = 11;
   optional int32 disable_unused_models_after_n_hours = 12;
   optional int32 upgrade_unchanged_models_after_n_hours = 13;
   ModelPickerDisplayConfiguration display_configuration = 15;
 }
 
-message BackgroundCmdKEvalRequest {
-  enum Experiment {
-    EXPERIMENT_UNSPECIFIED = 0;
-    EXPERIMENT_REFLECT = 1;
-    EXPERIMENT_CMD_K_ORIGINAL_RADIUS = 2;
-    EXPERIMENT_LOOP_ON_LINTS = 3;
-    EXPERIMENT_CHAT_AND_APPLY = 4;
-    EXPERIMENT_COMMIT_NOTES = 5;
-    EXPERIMENT_COALESCE_GENERATIONS = 6;
-    EXPERIMENT_REWORD_INSTRUCTIONS = 7;
-    EXPERIMENT_CODEBASE_CHUNKS = 8;
-    EXPERIMENT_SPEC_AND_APPLY = 9;
-    EXPERIMENT_ASK_CODEBASE = 10;
+message ModelParameterDefinition {
+  message ModelParameterType {
+    optional BooleanParameterDefinition boolean_parameter = 1;
+    optional EnumParameterDefinition enum_parameter = 2;
   }
-
-  message Lint {
-    message QuickFix {
-      message Edit {
-        string relative_workspace_path = 1;
-        string text = 2;
-        int32 start_line_number_one_indexed = 3;
-        int32 start_column_one_indexed = 4;
-        int32 end_line_number_inclusive_one_indexed = 5;
-        int32 end_column_one_indexed = 6;
-      }
-
-      string message = 1;
-      string kind = 2;
-      bool is_preferred = 3;
-      repeated Edit edits = 4;
+  message BooleanParameterDefinition {
+    message BooleanParameterValue {
+      string value = 1;
+      optional string display_name = 2;
+      optional bool increases_model_cost = 3;
     }
-
-    string message = 1;
-    string severity = 2;
-    string relative_workspace_path = 3;
-    int32 start_line_number_one_indexed = 4;
-    int32 start_column_one_indexed = 5;
-    int32 end_line_number_inclusive_one_indexed = 6;
-    int32 end_column_one_indexed = 7;
-    repeated QuickFix quick_fixes = 9;
+    repeated BooleanParameterValue values = 1;
   }
-
-  message ProposedChange {
-    string change = 1;
-    repeated Lint linter_errors = 2;
-  }
-
-  string instruction = 1;
-  CurrentFileInfo current_file = 2;
-  SimpleRange selection_range = 3;
-  string ground_truth = 4;
-  Experiment experiment = 5;
-  bool run_automated_eval = 6;
-  repeated ProposedChange proposed_change_history = 7;
-  repeated CommitNote commit_notes = 8;
-  repeated CodeBlock related_code_blocks = 9;
-}
-
-message BackgroundCmdKEvalResponse {
-  string proposed_change = 1;
-}
-
-message BackgroundCmdKRequest {
-  enum Type {
-    TYPE_UNSPECIFIED = 0;
-    TYPE_REFLECT = 1;
-    TYPE_LOOP_ON_LINTS = 2;
-    TYPE_CHAT_AND_APPLY = 3;
-    TYPE_COALESCE_GENERATIONS = 4;
-    TYPE_CODEBASE_CHUNKS = 5;
-    TYPE_SPEC_AND_APPLY = 6;
-    TYPE_ASK_CODEBASE = 7;
-    TYPE_FINETUNED_INSTRUCTIONS = 8;
-    TYPE_USEFUL_TYPES = 9;
-    TYPE_CHAT_AND_APPLY_UNDERSPECIFIED = 10;
-  }
-
-  message Diff {
-    string relative_workspace_path = 1;
-    string diff = 2;
-  }
-
-  message Lint {
-    message QuickFix {
-      message Edit {
-        string relative_workspace_path = 1;
-        string text = 2;
-        int32 start_line_number_one_indexed = 3;
-        int32 start_column_one_indexed = 4;
-        int32 end_line_number_inclusive_one_indexed = 5;
-        int32 end_column_one_indexed = 6;
-      }
-
-      string message = 1;
-      string kind = 2;
-      bool is_preferred = 3;
-      repeated Edit edits = 4;
+  message EnumParameterDefinition {
+    message EnumParameterValue {
+      string value = 1;
+      optional string display_name = 2;
+      optional bool increases_model_cost = 3;
     }
-
-    string message = 1;
-    string severity = 2;
-    string relative_workspace_path = 3;
-    int32 start_line_number_one_indexed = 4;
-    int32 start_column_one_indexed = 5;
-    int32 end_line_number_inclusive_one_indexed = 6;
-    int32 end_column_one_indexed = 7;
-    repeated QuickFix quick_fixes = 9;
+    repeated EnumParameterValue values = 1;
   }
-
-  message ProposedChange {
-    string change = 1;
-    repeated Lint linter_errors = 2;
-  }
-
-  message RecentlyViewedFile {
-    message VisibleRange {
-      int32 start_line_number_inclusive = 1;
-      int32 end_line_number_exclusive = 2;
-      optional int32 viewed_at = 3;
-      optional int32 global_order_descending = 4;
-    }
-
-    string relative_workspace_path = 1;
-    string contents = 2;
-    repeated VisibleRange visible_ranges = 3;
-  }
-
-  message UsefulType {
-    string relative_workspace_path = 1;
-    int32 start_line = 2;
-    string text = 3;
-    optional double score = 4;
-  }
-
-  string instruction = 1;
-  CurrentFileInfo current_file = 2;
-  SimpleRange selection_range = 3;
-  Type type = 4;
-  repeated ProposedChange proposed_change_history = 5;
-  repeated CodeBlock related_code_blocks = 6;
-  repeated CppFileDiffHistory diff_history = 7;
-  repeated Lint linter_errors = 8;
-  repeated UsefulType useful_types = 9;
-  repeated RecentlyViewedFile recently_viewed_files = 10;
-  repeated Diff recent_diffs = 11;
-  optional bool multiple_completions = 12;
+  string id = 1;
+  string name = 2;
+  optional string markdown_tooltip = 3;
+  ModelParameterType parameter_type = 4;
+  optional bool is_cycleable_by_hotkey = 5;
 }
 
-message BackgroundCmdKResponse {
-  string proposed_change = 1;
+message ServerTimeRequest {
 }
 
-message BugBotStatus {
+message ServerTimeResponse {
+  double receive_timestamp = 1;
+  double transmit_timestamp = 2;
+}
+
+message HealthCheckRequest {
+}
+
+message HealthCheckResponse {
   enum Status {
     STATUS_UNSPECIFIED = 0;
-    STATUS_IN_PROGRESS = 1;
-    STATUS_IN_PROGRESS_ITERATIONS = 2;
-    STATUS_DONE = 3;
-    STATUS_ERROR = 4;
+    STATUS_HEALTHY = 1;
   }
-
   Status status = 1;
-  string message = 2;
-  optional int32 iterations_completed = 3;
-  optional int32 total_iterations = 4;
-  optional int32 total_tokens = 5;
-  optional int32 processed_tokens = 6;
-  optional float processed_cost = 7;
-  optional int32 thinking_tokens = 8;
-  optional float thinking_cost = 9;
 }
 
-message BugbotTrialNotification {
-  bool show = 1;
-  optional string message = 2;
-  optional string learn_more_url = 3;
+message PrivacyCheckRequest {
 }
 
-message BugContext {
-  repeated string screenshots = 1;
+message PrivacyCheckResponse {
+  bool is_on_privacy_pod = 1;
+  bool is_ghost_mode_on = 2;
+}
+
+message TimeLeftHealthCheckResponse {
+  string time_left = 1;
+}
+
+message StreamGenerateRequest {
+  CurrentFileInfo current_file = 1;
+  repeated ConversationMessage conversation = 2;
+  repeated RepositoryInfo repositories = 3;
+  ExplicitContext explicit_context = 4;
+  optional string workspace_root_path = 5;
+  string query = 6;
+  repeated CodeBlock code_blocks = 7;
+  ModelDetails model_details = 9;
+  repeated string documentation_identifiers = 10;
+  LinterErrors linter_errors = 11;
+  repeated CodeBlock prompt_code_blocks = 12;
+  string session_id = 14;
+  CmdKDebugInfo cmd_k_debug_info = 13;
+  bool fast_mode = 15;
+  StreamGenerateRequest original_request = 16;
+}
+
+message ReviewRequest {
+  string chunk = 1;
+  string file_context = 2;
+  LineRange chunk_range = 3;
+  optional string diff_string = 4;
+  optional string custom_instructions = 5;
+}
+
+message ReviewChatMessage {
+  enum ReviewChatMessageType {
+    REVIEW_CHAT_MESSAGE_TYPE_UNSPECIFIED = 0;
+    REVIEW_CHAT_MESSAGE_TYPE_HUMAN = 1;
+    REVIEW_CHAT_MESSAGE_TYPE_AI = 2;
+  }
+  string text = 1;
+  ReviewChatMessageType type = 2;
+}
+
+message ReviewChatRequest {
+  string chunk = 1;
+  string file_context = 2;
+  LineRange chunk_range = 3;
+  repeated ReviewChatMessage messages = 4;
+}
+
+message ReviewChatResponse {
+  string text = 1;
+  optional bool should_resolve = 2;
+}
+
+message ReviewBug {
+  string id = 1;
+  optional int32 start_line = 2;
+  optional int32 end_line = 3;
+  optional string description = 4;
+  optional int32 severity = 5;
+  optional string tldr = 6;
+}
+
+message ReviewResponse {
+  string text = 1;
+  optional string prompt = 2;
+  optional string tldr = 3;
+  optional bool is_bug = 4;
+  repeated ReviewBug bugs = 5;
+}
+
+message SlashEditRequest {
+  enum FastApplyModelType {
+    FAST_APPLY_MODEL_TYPE_UNSPECIFIED = 0;
+    FAST_APPLY_MODEL_TYPE_DEFAULT = 1;
+    FAST_APPLY_MODEL_TYPE_DEEPSEEK = 2;
+    FAST_APPLY_MODEL_TYPE_SONNET = 3;
+    FAST_APPLY_MODEL_TYPE_OPUS_DIFF = 4;
+    FAST_APPLY_MODEL_TYPE_SMART_REWRITE = 5;
+    FAST_APPLY_MODEL_TYPE_GPT4 = 6;
+    FAST_APPLY_MODEL_TYPE_GPT4_NOSPEC = 7;
+    FAST_APPLY_MODEL_TYPE_SMART_REWRITE_NOSPEC = 8;
+    FAST_APPLY_MODEL_TYPE_OPUS = 9;
+    FAST_APPLY_MODEL_TYPE_HAIKU = 10;
+    FAST_APPLY_MODEL_TYPE_GPT4O_NOSPEC = 11;
+    FAST_APPLY_MODEL_TYPE_GPT4O_DIFF = 12;
+    FAST_APPLY_MODEL_TYPE_CODESTRAL_REWRITE = 13;
+    FAST_APPLY_MODEL_TYPE_DEEPSEEK_33B = 14;
+    FAST_APPLY_MODEL_TYPE_SONNET_35_DIFF = 15;
+    FAST_APPLY_MODEL_TYPE_SONNET_35_REWRITE = 16;
+    FAST_APPLY_MODEL_TYPE_PROMPTED_DEEPSEEK_V2 = 17;
+    FAST_APPLY_MODEL_TYPE_CODESTRAL_REWRITE_OLD = 18;
+    FAST_APPLY_MODEL_TYPE_CODESTRAL_REWRITE_FP16 = 19;
+    FAST_APPLY_MODEL_TYPE_DEEPSEEK_33B_V2 = 20;
+    FAST_APPLY_MODEL_TYPE_CODESTRAL_V4 = 21;
+    FAST_APPLY_MODEL_TYPE_CODESTRAL_V5 = 22;
+    FAST_APPLY_MODEL_TYPE_CODESTRAL_V6 = 23;
+    FAST_APPLY_MODEL_TYPE_CODESTRAL_V7 = 24;
+  }
   CurrentFileInfo current_file = 2;
   repeated ConversationMessage conversation = 3;
-  repeated LogFile logs = 4;
-  string console_logs = 5;
-  string cursor_version = 6;
-  string os = 7;
-  string proto_url = 8;
-  string failing_requst_id = 9;
-  string connection_error_raw = 10;
-  CmdKDebugInfo debug_info = 12;
-  optional int32 connect_error_code = 13;
-  optional ErrorDetails.Error error_detail_code = 14;
-  optional string error_detail_title = 15;
-  optional string error_detail_detail = 16;
-  repeated BugReportScreenshot binary_screenshots = 17;
+  ExplicitContext explicit_context = 4;
+  ModelDetails model_details = 7;
+  bool is_cmd_i = 8;
+  optional string summary = 11;
+  optional int32 summary_up_until_index = 12;
+  optional bool should_use_turbo_debug_prompt = 13;
+  optional LineRange edit_selection = 14;
+  repeated CurrentFileInfo files = 15;
+  optional string clicked_code_block_contents = 16;
+  optional bool is_an_optimistic_request_for_caching_and_linting = 17;
+  optional string specific_instructions = 18;
+  bool use_fast_apply = 19;
+  FastApplyModelType fast_apply_model_type = 20;
+  optional bool use_chunk_speculation_for_long_files = 25;
+  optional string parent_request_id = 26;
+  optional FastApplySource source = 27;
+  optional bool is_reapply = 28;
+  optional bool willing_to_pay_extra_for_speed = 29;
+  optional int32 attempt_number = 30;
+  optional bool should_throw_timeout_error = 31;
 }
 
-message BugReportScreenshot {
-  bytes data = 1;
-  string mime_type = 2;
+message SlashEditResponse {
+  StreamCmdKResponse cmd_k_response = 1;
 }
 
-message BulkEmbedRequest {
-  repeated string texts = 1;
+message SlashEditPreviousEdit {
+  repeated string original_lines = 1;
+  repeated string new_lines = 2;
+  string relative_workspace_path = 3;
+  LineRange range = 4;
 }
 
-message BulkEmbedResponse {
-  repeated EmbeddingResponse embeddings = 1;
-}
-
-message CachedFileContext {
-  string relative_path = 1;
-  string language = 2;
-  string full_content = 3;
-  int64 last_viewed_timestamp = 4;
-}
-
-message CalculateAutoSelectionRequest {
-  CurrentFileInfo current_file_info = 1;
-  CursorPosition cursor_position = 2;
-  SimpleRange selection_range = 3;
-  ModelDetails model_details = 4;
-  repeated HeuristicsSelection heuristics_selections = 5;
-}
-
-message CalculateAutoSelectionResponse {
-  repeated AutoSelectionResult results = 1;
-}
-
-message ChatSuggestionItem {
-  string text = 1;
-  string reason = 2;
-  string type = 3;
-  string category = 4;
-}
-
-message CheckBugBotPriceRequest {
-  int32 diff_char_len = 1;
-  int32 iterations = 2;
-  ModelDetails model_details = 3;
-  optional string session_id = 4;
-}
-
-message CheckBugBotPriceResponse {
-  double cost = 1;
-  string price_id = 2;
-}
-
-message CheckBugBotTelemetryHealthyRequest {
-  string session_id = 1;
-}
-
-message CheckBugBotTelemetryHealthyResponse {
-  bool is_healthy = 1;
-}
-
-message CheckDoableAsTaskRequest {
-  string model_output = 1;
+message SlashEditFollowUpWithPreviousEditsRequest {
+  repeated ConversationMessage conversation = 1;
   ModelDetails model_details = 2;
+  repeated SlashEditPreviousEdit previous_edits = 3;
 }
 
-message CheckDoableAsTaskResponse {
-  bool doable_as_task = 1;
-}
-
-message CheckFeaturesStatusRequest {
-  repeated string feature_names = 1;
-}
-
-message CheckFeaturesStatusResponse {
-  message FeatureStatus {
-    string feature_name = 1;
-    bool enabled = 2;
+message StreamSlashEditFollowUpWithPreviousEditsResponse {
+  message Chat {
+    string text = 1;
   }
-
-  repeated FeatureStatus feature_statuses = 1;
-}
-
-message CheckFeatureStatusRequest {
-  string feature_name = 1;
-}
-
-message CheckFeatureStatusResponse {
-  bool enabled = 1;
-}
-
-message CheckLongFilesFitResponse {
-  bool did_fit = 1;
-}
-
-message CheckNumberConfigRequest {
-  string key = 1;
-}
-
-message CheckNumberConfigResponse {
-  int32 value = 1;
-}
-
-message CheckNumberConfigsRequest {
-  repeated string config_names = 1;
-}
-
-message CheckNumberConfigsResponse {
-  message Config {
-    string config_name = 1;
-    int32 value = 2;
+  message EditsToUpdate {
+    repeated SlashEditPreviousEdit previous_edits = 1;
   }
-
-  repeated Config configs = 1;
-}
-
-message CheckQueuePositionRequest {
-  string orig_request_id = 1;
-  ModelDetails model_details = 2;
-  string usage_uuid = 3;
-}
-
-message CheckQueuePositionResponse {
-  message CustomLink {
-    string address = 1;
-    string message = 2;
-  }
-
-  message ModelForSlowPoolNudgeData {
-    string model = 1;
-    string message = 2;
-  }
-
-  int32 position = 1;
-  optional int32 seconds_left_to_wait = 2;
-  optional int32 new_queue_position = 7;
-  bool hit_hard_limit = 3;
-  bool could_enable_usage_based_pricing_to_skip = 4;
-  UsageEventDetails usage_event_details = 5;
-  CustomLink custom_link = 6;
-  optional ModelForSlowPoolNudgeData model_for_slow_pool_nudge_data = 8;
-}
-
-message CheckUsageBasedPriceRequest {
-  UsageEventDetails usage_event_details = 1;
-}
-
-message CheckUsageBasedPriceResponse {
-  string markdown_response = 1;
-  int32 cents = 2;
-  string price_id = 3;
-}
-
-message ClientNumericMetric {
-  string metric = 1;
-  double value = 2;
-  optional string session_id = 3;
-  optional string ff_hash = 4;
-  int64 timestamp_ms = 5;
-  optional string client_version = 6;
-  optional string os = 7;
-  optional string enabled_extensions_hash = 8;
-  optional string ff_resolved = 9;
-  optional string extensions_resolved = 10;
-  optional string window_type = 11;
-}
-
-message CodeSearchResult {
-  repeated CodeResult results = 1;
-  repeated File all_files = 2;
-}
-
-message CommitLineRange {
-  int32 start = 1;
-  int32 end = 2;
-  optional int32 absolute_start = 3;
-  optional int32 absolute_end = 4;
-}
-
-message ComposerAutocompleteContext {
-  optional CurrentFileContext current_file = 1;
-  repeated CachedFileContext cached_files = 2;
-  repeated ConversationMessage conversation_messages = 3;
-  optional string visible_viewport_text = 4;
-  repeated string first_user_messages = 5;
-}
-
-message ComposerEnhancerClientMessage {
-  oneof message {
-    ComposerEnhancerRequest request = 1;
-    ComposerEnhancerToolResult tool_result = 2;
+  oneof response {
+    Chat chat = 1;
+    EditsToUpdate edits_to_update = 2;
   }
 }
 
-message ComposerEnhancerRequest {
-  string input_text = 1;
-  optional string composer_id = 2;
+message StreamFastEditRequest {
+  CurrentFileInfo current_file = 1;
+  repeated RepositoryInfo repositories = 3;
+  ExplicitContext explicit_context = 4;
+  optional string workspace_root_path = 5;
+  string query = 6;
+  repeated CodeBlock code_blocks = 7;
+  ModelDetails model_details = 9;
+  repeated string documentation_identifiers = 10;
+  LinterErrors linter_errors = 11;
 }
 
-message ComposerEnhancerResponse {
-  string improved_text = 1;
-  bool is_final = 2;
+message StreamFastEditResponse {
+  int32 line_number = 2;
+  int32 replace_num_lines = 3;
+  string edit_uuid = 5;
+  optional bool done = 4;
+  optional string new_line = 6;
+  bool reset_new_lines = 7;
 }
 
-message ComposerEnhancerServerMessage {
-  oneof message {
-    ComposerEnhancerResponse response = 1;
-    ComposerEnhancerToolCall tool_call = 2;
-  }
+message StreamEditRequest {
+  CurrentFileInfo current_file = 1;
+  repeated ConversationMessage conversation = 2;
+  repeated RepositoryInfo repositories = 3;
+  ExplicitContext explicit_context = 4;
+  optional string workspace_root_path = 5;
+  string query = 6;
+  repeated CodeBlock code_blocks = 7;
+  ModelDetails model_details = 9;
+  repeated string documentation_identifiers = 10;
+  LinterErrors linter_errors = 11;
+  repeated CodeBlock prompt_code_blocks = 12;
+  string session_id = 14;
+  CmdKDebugInfo cmd_k_debug_info = 13;
+  bool fast_mode = 15;
+  StreamEditRequest original_request = 16;
+  repeated ImageProto images = 17;
+  repeated CmdKExternalLink links = 18;
+  repeated CursorRule rules = 19;
 }
 
-message ComposerEnhancerToolCall {
-  string tool_call_id = 1;
-  string tool_name = 2;
-  string tool_args = 3;
-  int32 tool_index = 4;
+message PreloadEditRequest {
+  StreamEditRequest req = 1;
 }
 
-message ComposerEnhancerToolResult {
-  string tool_call_id = 1;
-  string result = 2;
-  bool is_error = 3;
+message PreloadEditResponse {
 }
 
-message ContextItemTokenDetail {
-  string relative_workspace_path = 1;
-  int32 count = 2;
-  int32 line_count = 3;
-}
-
-message ContextOptions {
-  message AllDocumentation {
-    message Documentation {
-      string name = 1;
-      string url = 2;
-      string identifier = 3;
-    }
-
-    repeated Documentation available_docs = 1;
-  }
-
-  message CurrentFileContents {
+message StreamAiLintBugRequest {
+  message CodeChunk {
     string relative_workspace_path = 1;
-    string contents = 2;
-    CursorPosition cursor_position = 3;
-    repeated DataframeInfo dataframes = 4;
-    string language_id = 5;
-    CursorRange selection = 6;
+    int32 start_line_number = 2;
+    repeated string lines = 3;
+    repeated string context_lines_before = 4;
+    repeated string context_lines_after = 5;
   }
-
-  message GlobalContext {
+  message CodeChunkList {
+    repeated CodeChunk chunks = 13;
+    repeated int32 referred_start_lines = 14;
+    repeated int32 referred_end_lines = 15;
   }
-
-  message LinterDiagnostics {
-    message Diagnostic {
-      string message = 1;
-      string source = 2;
-      CursorRange range = 3;
-      string relative_workspace_path = 4;
-    }
-
-    string relative_workspace_path = 1;
-    string contents = 2;
-    repeated Diagnostic diagnostics = 3;
+  message DiscriminatorOptions {
+    bool specific_rules = 1;
+    bool compile_errors = 2;
+    bool change_behavior = 3;
+    bool match_code = 4;
+    bool relevance = 5;
+    bool user_awareness = 6;
   }
-
-  AllDocumentation all_documentation = 1;
-  CurrentFileContents current_file_contents = 2;
-  LinterDiagnostics linter_diagnostics = 3;
-  GlobalContext global_context = 4;
+  repeated CodeChunk chunks_to_analyze = 1;
+  ExplicitContext explicit_context = 4;
+  optional string workspace_root_path = 5;
+  ModelDetails model_details = 9;
+  repeated AiLintBug dismissed_bugs = 10;
+  repeated AiLintBug active_bugs = 11;
+  repeated AiLintRule lint_rules = 12;
+  repeated CodeChunkList clients = 14;
+  repeated LintDiscriminator force_enable_discriminators = 17;
+  repeated LintDiscriminator force_disable_discriminators = 18;
+  repeated LintGenerator force_enable_generators = 19;
+  repeated LintGenerator force_disable_generators = 20;
+  int32 version = 21;
+  optional DiscriminatorOptions discriminator_options = 15;
+  bool debug_mode = 16;
 }
 
-message ContextRerankingRequest {
-  optional CurrentFileInfo current_file = 1;
-  repeated ConversationMessage chat_conversation_history = 2;
-  repeated CppFileDiffHistory cpp_diff_trajectories = 3;
-  repeated ContextRerankingCandidateFile candidate_files = 4;
+message StreamAiLintBugResponse {
+  oneof response {
+    AiLintBug bug = 1;
+    string background_task_uuid = 2;
+  }
 }
 
-message ContextRerankingResponse {
-  repeated float reranking_scores = 1;
+message LogUserLintReplyRequest {
+  string uuid = 1;
+  string user_action = 2;
+  bool debug_mode = 3;
 }
 
-message ContextScoresRequest {
-  string source_range = 1;
-  repeated string method_signatures = 2;
+message LogUserLintReplyResponse {
 }
 
-message ContextScoresResponse {
-  repeated float scores = 1;
+message LogLinterExplicitUserFeedbackRequest {
+  enum LinterUserFeedback {
+    LINTER_USER_FEEDBACK_UNSPECIFIED = 0;
+    LINTER_USER_FEEDBACK_CORRECT = 1;
+    LINTER_USER_FEEDBACK_INCORRECT = 2;
+    LINTER_USER_FEEDBACK_OTHER = 3;
+  }
+  AiLintBug bug = 1;
+  LinterUserFeedback user_feedback = 3;
+  string user_feedback_details = 4;
 }
 
-message CountTokensRequest {
-  repeated ContextItem context_items = 1;
-  string model_name = 2;
+message LogLinterExplicitUserFeedbackResponse {
 }
 
-message CountTokensResponse {
-  int32 count = 1;
-  repeated ContextItemTokenDetail token_details = 2;
-}
-
-message CurrentFileContext {
-  string relative_path = 1;
-  string language = 2;
-  int32 cursor_line = 3;
-  string full_content = 4;
-}
-
-message CurrentFolderFileOrFolder {
-  string name = 1;
-  bool is_folder = 2;
+message StreamNewRuleRequest {
+  string current_rules = 1;
+  string dismissed_bug = 2;
 }
 
 message CursorHelpConversationMessage {
@@ -839,7 +1700,71 @@ message CursorHelpConversationMessage {
   string content = 3;
 }
 
+message StreamAiCursorHelpRequest {
+  repeated CursorHelpConversationMessage messages = 1;
+  string user_os = 2;
+  ModelDetails model_details = 3;
+}
+
+message StreamAiCursorHelpResponse {
+  string text = 1;
+  repeated string actions = 2;
+}
+
+message StreamTerminalAutocompleteRequest {
+  string current_command = 1;
+  repeated string command_history = 2;
+  optional string model_name = 3;
+  repeated CppFileDiffHistory file_diff_histories = 4;
+  optional string git_diff = 5;
+  repeated string commit_history = 6;
+  repeated string past_results = 7;
+}
+
+message PseudocodeTarget {
+  SimpleRange range = 1;
+  string content = 2;
+}
+
+message StreamPseudocodeGeneratorRequest {
+  CurrentFileInfo current_file = 1;
+  PseudocodeTarget target = 2;
+}
+
+message StreamPseudocodeGeneratorResponse {
+  string text = 1;
+}
+
+message StreamPseudocodeMapperRequest {
+  PseudocodeTarget target = 2;
+  string pseudocode = 1;
+}
+
+message StreamPseudocodeMapperResponse {
+  string text = 1;
+}
+
+message StreamTerminalAutocompleteResponse {
+  string text = 1;
+  optional bool done_stream = 2;
+}
+
 message DebugInfo {
+  message Variable {
+    string name = 1;
+    string value = 2;
+    optional string type = 3;
+  }
+  message Scope {
+    string name = 1;
+    repeated Variable variables = 2;
+  }
+  message CallStackFrame {
+    string relative_workspace_path = 1;
+    int32 line_number = 2;
+    string function_name = 3;
+    repeated Scope scopes = 4;
+  }
   message Breakpoint {
     string relative_workspace_path = 1;
     int32 line_number = 2;
@@ -847,312 +1772,9 @@ message DebugInfo {
     repeated string lines_after_breakpoint = 4;
     optional string exception_info = 5;
   }
-
-  message CallStackFrame {
-    string relative_workspace_path = 1;
-    int32 line_number = 2;
-    string function_name = 3;
-    repeated Scope scopes = 4;
-  }
-
-  message Scope {
-    string name = 1;
-    repeated Variable variables = 2;
-  }
-
-  message Variable {
-    string name = 1;
-    string value = 2;
-    optional string type = 3;
-  }
-
   Breakpoint breakpoint = 1;
   repeated CallStackFrame call_stack = 2;
   repeated CodeBlock history = 3;
-}
-
-message DevOnlyGetPastRequestIdsRequest {
-  optional int32 count = 1;
-  optional int32 page = 2;
-}
-
-message DevOnlyGetPastRequestIdsResponse {
-  repeated DevOnlyPastRequest past_requests = 1;
-  int32 total_count = 10;
-  bool has_more = 11;
-}
-
-message DevOnlyPastRequest {
-  string request_id = 1;
-  string date_time = 2;
-  string model_name = 3;
-  string feature_name = 4;
-  string s3_uri = 5;
-  string status = 6;
-  int32 num_prompt_tokens = 7;
-  int32 num_completion_tokens = 8;
-  string api_call_method = 9;
-}
-
-message DocumentationInfo {
-  string doc_identifier = 1;
-  DocumentationMetadata metadata = 2;
-}
-
-message DoThisForMeCheckRequest {
-  string generation_uuid = 1;
-  string completion = 2;
-}
-
-message DoThisForMeCheckResponse {
-  message CreateAction {
-    string relative_workspace_path = 1;
-  }
-
-  message EditAction {
-    string relative_workspace_path = 1;
-  }
-
-  message RunAction {
-    string command = 1;
-  }
-
-  message SkipAction {
-  }
-
-  oneof action {
-    SkipAction skip_action = 1;
-    EditAction edit_action = 2;
-    CreateAction create_action = 3;
-    RunAction run_action = 4;
-  }
-  string reasoning = 5;
-}
-
-message DoThisForMeRequest {
-  string generation_uuid = 1;
-  string completion = 2;
-  DoThisForMeCheckResponse action = 3;
-}
-
-message DoThisForMeResponse {
-  message UpdateStatus {
-    string status = 1;
-  }
-
-  oneof event {
-    UpdateStatus update_status = 1;
-  }
-}
-
-message DoThisForMeResponseWrapped {
-  oneof response {
-    DoThisForMeResponse real_response = 1;
-    string background_task_uuid = 2;
-  }
-}
-
-message EmbeddingResponse {
-  repeated double embedding = 1;
-}
-
-message EvaluatePromptHookRequest {
-  string prompt = 1;
-  google.protobuf.Value hook_input_json = 2;
-  optional string model_name = 3;
-}
-
-message EvaluatePromptHookResponse {
-  bool ok = 1;
-  optional string reason = 2;
-}
-
-message FetchRelevantKnowledgeForConversationRequest {
-  string request_id = 1;
-  repeated ConversationMessage conversation = 2;
-  optional string git_origin = 3;
-  optional int32 limit = 4;
-  repeated string tagged_filenames = 5;
-}
-
-message FetchRelevantKnowledgeForConversationResponse {
-  repeated ConversationMessage.KnowledgeItem knowledge_items = 1;
-}
-
-message FileRangeAnnotations {
-  string file_path = 1;
-  repeated RangeGroup groups = 2;
-}
-
-message FindBugsRequest {
-  CurrentFileInfo current_file = 1;
-  ModelDetails model_details = 2;
-}
-
-message FindBugsResponse {
-  message Bug {
-    string description = 1;
-    int32 line_number = 2;
-    float confidence = 3;
-  }
-
-  optional Bug bug = 1;
-}
-
-message FixMarkersRequest {
-  message Marker {
-    message AncestorTypeDefinition {
-      string name = 1;
-      string relative_workspace_path = 2;
-      int32 start_line = 3;
-      repeated string lines = 4;
-    }
-
-    message ClassInformation {
-      message Constructor {
-        int32 start_line = 1;
-        int32 end_line_inclusive = 2;
-      }
-
-      string class_name = 1;
-      int32 start_line = 2;
-      repeated int32 top_level_lines = 3;
-      repeated string lines = 4;
-      repeated Constructor constructors = 5;
-      string detail = 6;
-    }
-
-    message ContextRange {
-      int32 start_line = 1;
-      int32 end_line_inclusive = 2;
-    }
-
-    message FunctionSignature {
-      message FunctionParameter {
-        string label = 1;
-        string documentation = 2;
-      }
-
-      string label = 1;
-      string documentation = 2;
-      repeated FunctionParameter parameters = 3;
-    }
-
-    message InsertedSymbolType {
-      string symbol_name = 1;
-      string symbol_type = 2;
-      string relative_workspace_path = 3;
-      int32 symbol_line = 4;
-    }
-
-    message QuickFix {
-      message Edit {
-        string relative_workspace_path = 1;
-        int32 start_line = 2;
-        int32 end_line_inclusive = 3;
-        repeated string deleted_lines = 4;
-        repeated string add_lines = 5;
-        int32 snapshot = 6;
-      }
-
-      string message = 1;
-      string kind = 2;
-      bool is_preferred = 3;
-      repeated Edit edits = 4;
-    }
-
-    message RelatedInformation {
-      string message = 1;
-      string relative_workspace_path = 2;
-      repeated string relevant_lines = 3;
-      int32 start_line = 4;
-    }
-
-    repeated string lines = 1;
-    int32 start_line = 2;
-    int32 end_line_inclusive = 3;
-    string message = 4;
-    string relative_workspace_path = 5;
-    repeated RelatedInformation related_information = 6;
-    repeated ContextRange context_ranges = 7;
-    repeated AncestorTypeDefinition ancestor_type_definitions = 8;
-    repeated InsertedSymbolType inserted_symbol_types = 9;
-    repeated QuickFix quick_fixes = 10;
-    int32 start_column = 11;
-    int32 end_column_inclusive = 12;
-    repeated ClassInformation class_information = 13;
-    repeated FunctionSignature function_signatures = 14;
-    int32 snapshot = 15;
-  }
-
-  repeated Marker markers = 1;
-  ModelDetails model_details = 2;
-  int32 iteration_number = 3;
-  string sequence_id = 4;
-  string user_instruction = 5;
-}
-
-message FixMarkersResponse {
-  message Change {
-    int32 start_line = 1;
-    int32 end_line_exclusive = 2;
-    repeated string deleted_lines = 3;
-    repeated string add_lines = 4;
-  }
-
-  string relative_workspace_path = 1;
-  repeated Change changes = 2;
-  bool success = 3;
-  int32 iteration_number = 4;
-}
-
-message FullFileSearchResult {
-  repeated FileResult results = 1;
-}
-
-message GenerateTldrRequest {
-  string text = 1;
-}
-
-message GenerateTldrResponse {
-  string summary = 1;
-  string all = 2;
-}
-
-message GetAtSymbolSuggestionsRequest {
-  CurrentFileInfo current_file_info = 1;
-  repeated AtSymbolDependencyInformation at_symbol_dependencies = 2;
-  repeated AtSymbolOption at_symbol_options = 3;
-  string user_query = 4;
-  ModelDetails model_details = 5;
-}
-
-message GetAtSymbolSuggestionsResponse {
-  repeated int32 indices = 1;
-  string explanation = 2;
-}
-
-message GetBackgroundComposerFeedbackLinkRequest {
-}
-
-message GetBackgroundComposerFeedbackLinkResponse {
-  string url = 1;
-}
-
-message GetBedrockModelsRequest {
-  string access_key = 1;
-  string secret_key = 2;
-  string region = 3;
-}
-
-message GetBedrockModelsResponse {
-  repeated string models = 1;
-  optional string error = 2;
-}
-
-message GetChatPromptResponse {
-  string prompt = 1;
-  int32 token_count = 2;
 }
 
 message GetChatRequest {
@@ -1189,51 +1811,40 @@ message GetChatRequest {
   optional int32 number_of_times_shown_fallback_model_warning = 31;
 }
 
-message GetChatSuggestionsRequest {
-  repeated RecentChat recent_chats = 1;
+message PotentialLocsInitialQueriesRequest {
+  string query = 1;
 }
 
-message GetChatSuggestionsResponse {
-  repeated ChatSuggestionItem suggestions = 1;
+message PotentialLocsInitialQueriesResponse {
+  string hyde_query = 1;
 }
 
-message GetChatTitleRequest {
-  repeated ConversationMessage conversation = 2;
+message PotentialLocsUnderneathRequest {
+  string file = 1;
+  repeated SimplestRange ranges = 2;
+  string query = 3;
 }
 
-message GetChatTitleResponse {
-  string title = 1;
+message PotentialLocsUnderneathResponse {
+  string text = 1;
 }
 
-message GetCodebaseQuestionsResponse {
-  repeated string questions = 1;
+message PotentialLocsRequest {
+  string text = 1;
 }
 
-message GetCompletionRequest {
-  UniqueFileIdentifier file_identifier = 1;
-  CursorPosition cursor_position = 2;
-  SurroundingLines surrounding_lines = 3;
-  ExplicitContext explicit_context = 4;
-  repeated string suggestions_from_editor = 5;
-}
-
-message GetCompletionResponse {
-  string completion = 1;
-  float score = 2;
-  optional string debugging_only_completion_prompt = 3;
-}
-
-message GetComposerAutocompleteRequest {
-  string input_text = 1;
-  optional string composer_id = 2;
-  optional ComposerAutocompleteContext context = 3;
-}
-
-message GetComposerAutocompleteResponse {
-  string suggestion = 1;
+message PotentialLocsResponse {
+  string potential_loc = 1;
 }
 
 message GetComposerChatRequest {
+  message RedDiff {
+    string relative_workspace_path = 1;
+    repeated SimplestRange red_ranges = 2;
+    repeated SimplestRange red_ranges_reversed = 3;
+    string start_hash = 4;
+    string end_hash = 5;
+  }
   message RecentEdits {
     message CodeBlockInfo {
       string relative_workspace_path = 1;
@@ -1242,25 +1853,14 @@ message GetComposerChatRequest {
       optional string generation_uuid = 4;
       optional int32 version = 5;
     }
-
     message FileInfo {
       string relative_workspace_path = 1;
       string content = 2;
     }
-
     repeated CodeBlockInfo code_block_info = 1;
     repeated FileInfo final_file_values = 2;
     optional string edits_belong_to_composer_generation_uuid = 3;
   }
-
-  message RedDiff {
-    string relative_workspace_path = 1;
-    repeated SimplestRange red_ranges = 2;
-    repeated SimplestRange red_ranges_reversed = 3;
-    string start_hash = 4;
-    string end_hash = 5;
-  }
-
   repeated ConversationMessage conversation = 1;
   optional bool allow_long_file_scan = 2;
   ExplicitContext explicit_context = 3;
@@ -1293,6 +1893,936 @@ message GetComposerChatRequest {
   CodeSearchResult uses_codebase_results = 29;
 }
 
+message StreamComposerContextRequest {
+  message CodeContext {
+    repeated CodeBlock chunks = 1;
+    repeated CodeResult scored_chunks = 2;
+  }
+  CurrentFileInfo current_file = 1;
+  repeated ConversationMessage conversation = 2;
+  repeated RepositoryInfo repositories = 3;
+  ExplicitContext explicit_context = 4;
+  optional string workspace_root_path = 5;
+  repeated CodeBlock code_blocks = 6;
+  ModelDetails model_details = 7;
+  repeated string documentation_identifiers = 8;
+  string query = 9;
+  CodeContext code_context = 10;
+  bool rerank_results = 11;
+  LinterErrors linter_errors = 14;
+  optional bool is_bash = 15;
+  bool rerank_results_v2 = 16;
+  string conversation_id = 17;
+  bool can_handle_filenames_after_language_ids = 18;
+  bool long_context_mode = 19;
+  bool is_eval = 20;
+  string request_id = 21;
+  optional int32 desired_max_tokens = 22;
+  optional bool runnable_code_blocks = 23;
+  oneof context_results {
+    FullFileSearchResult file_search_results = 12;
+    CodeSearchResult code_search_results = 13;
+  }
+}
+
+message CheckUsageBasedPriceRequest {
+  UsageEventDetails usage_event_details = 1;
+}
+
+message CheckUsageBasedPriceResponse {
+  string markdown_response = 1;
+  int32 cents = 2;
+  string price_id = 3;
+}
+
+message CheckQueuePositionRequest {
+  string orig_request_id = 1;
+  ModelDetails model_details = 2;
+  string usage_uuid = 3;
+}
+
+message CheckQueuePositionResponse {
+  message CustomLink {
+    string address = 1;
+    string message = 2;
+  }
+  message ModelForSlowPoolNudgeData {
+    string model = 1;
+    string message = 2;
+  }
+  int32 position = 1;
+  optional int32 seconds_left_to_wait = 2;
+  optional int32 new_queue_position = 7;
+  bool hit_hard_limit = 3;
+  bool could_enable_usage_based_pricing_to_skip = 4;
+  UsageEventDetails usage_event_details = 5;
+  CustomLink custom_link = 6;
+  optional ModelForSlowPoolNudgeData model_for_slow_pool_nudge_data = 8;
+}
+
+message IsolatedTreesitterRequest {
+  string file_content = 1;
+  string language_id = 2;
+  string command_id = 3;
+}
+
+message IsolatedTreesitterResponse {
+  message TreeSitterPosition {
+    int32 row = 1;
+    int32 column = 2;
+  }
+  message TreesitterSymbolNameItem {
+    string symbol_name = 1;
+    optional TreeSitterPosition start_position = 2;
+    optional TreeSitterPosition end_position = 3;
+  }
+  repeated TreesitterSymbolNameItem items = 1;
+}
+
+message GetSimplePromptRequest {
+  string query = 1;
+  string answer_placeholder = 2;
+}
+
+message GetSimplePromptResponse {
+  string result = 1;
+}
+
+message SuggestQuickActionsRequest {
+  repeated QuickActionCandidate candidates = 1;
+  string last_user_message = 2;
+  string last_assistant_message = 3;
+  optional int32 max_suggestions = 4;
+  repeated string recently_used_skill_ids = 5;
+  bool include_skills = 6;
+  bool include_text = 7;
+}
+
+message QuickActionCandidate {
+  string id = 1;
+  string description = 2;
+}
+
+message SuggestQuickActionsResponse {
+  repeated SuggestedQuickAction suggestions = 1;
+}
+
+message SuggestedQuickAction {
+  string id = 1;
+  string label = 2;
+  string type = 3;
+}
+
+message GetPassthroughPromptRequest {
+  string query = 1;
+  string model_name = 2;
+}
+
+message GetPassthroughPromptResponse {
+  string result = 1;
+}
+
+message CheckLongFilesFitResponse {
+  bool did_fit = 1;
+}
+
+message GetEvaluationPromptRequest {
+  enum EvaluationPromptType {
+    EVALUATION_PROMPT_TYPE_UNSPECIFIED = 0;
+    EVALUATION_PROMPT_TYPE_GENERATE = 1;
+    EVALUATION_PROMPT_TYPE_CHAT = 2;
+  }
+  enum RerankingStrategy {
+    RERANKING_STRATEGY_UNSPECIFIED = 0;
+    RERANKING_STRATEGY_DISTANCE_ONLY = 1;
+    RERANKING_STRATEGY_GPT4_RELEVANCE = 2;
+  }
+  EvaluationPromptType prompt_type = 1;
+  CurrentFileInfo current_file = 2;
+  string query = 3;
+  string bucket_id = 4;
+  string query_strategy = 5;
+  int32 token_limit = 6;
+  RerankingStrategy reranking_strategy = 7;
+}
+
+message GetEvaluationPromptResponse {
+  string prompt = 1;
+  int32 token_count = 2;
+  int32 estimated_token_count = 3;
+}
+
+message GetChatTitleRequest {
+  repeated ConversationMessage conversation = 2;
+}
+
+message GetChatTitleResponse {
+  string title = 1;
+}
+
+message GetChatPromptResponse {
+  string prompt = 1;
+  int32 token_count = 2;
+}
+
+message ServerTimingInfo {
+  double server_start_time = 1;
+  double server_first_token_time = 2;
+  double server_request_sent_time = 3;
+  double server_end_time = 4;
+}
+
+message StreamChatResponse {
+  message UsedCode {
+    repeated CodeResult code_results = 1;
+  }
+  message ChunkIdentity {
+    string file_name = 1;
+    int32 start_line = 2;
+    int32 end_line = 3;
+    string text = 4;
+    ChunkType chunk_type = 5;
+  }
+  string text = 1;
+  optional string server_bubble_id = 22;
+  optional string debugging_only_chat_prompt = 2;
+  optional int32 debugging_only_token_count = 3;
+  DocumentationCitation document_citation = 4;
+  optional string filled_prompt = 5;
+  optional bool is_big_file = 6;
+  optional string intermediate_text = 7;
+  optional bool is_using_slow_request = 10;
+  optional ChunkIdentity chunk_identity = 8;
+  optional DocsReference docs_reference = 9;
+  optional WebCitation web_citation = 11;
+  optional StatusUpdates status_updates = 12;
+  optional ServerTimingInfo timing_info = 13;
+  optional SymbolLink symbol_link = 14;
+  optional FileLink file_link = 15;
+  optional ConversationSummary conversation_summary = 16;
+  optional ServiceStatusUpdate service_status_update = 17;
+  optional UsedCode used_code = 18;
+  optional bool stop_using_dsv3_agentic_model = 26;
+  optional string usage_uuid = 27;
+}
+
+message WarmComposerCacheResponse {
+  bool did_warm_cache = 1;
+}
+
+message WarmChatCacheRequest {
+  GetChatRequest request = 1;
+}
+
+message WarmChatCacheResponse {
+  bool did_warm_cache = 1;
+}
+
+message SurroundingLines {
+  int32 start_line = 1;
+  repeated string lines = 2;
+}
+
+message GetCompletionRequest {
+  UniqueFileIdentifier file_identifier = 1;
+  CursorPosition cursor_position = 2;
+  SurroundingLines surrounding_lines = 3;
+  ExplicitContext explicit_context = 4;
+  repeated string suggestions_from_editor = 5;
+}
+
+message GetCompletionResponse {
+  string completion = 1;
+  float score = 2;
+  optional string debugging_only_completion_prompt = 3;
+}
+
+message UniqueFileIdentifier {
+  string project_uuid = 1;
+  string relative_path = 2;
+  optional string language_id = 3;
+}
+
+message GetUserInfoRequest {
+}
+
+message UsageData {
+  int32 gpt4_requests = 2;
+  int32 gpt4_max_requests = 3;
+}
+
+message GetUserInfoResponse {
+  string user_id = 1;
+  string jupyter_token = 2;
+  UsageData usage = 3;
+}
+
+message DoThisForMeCheckRequest {
+  string generation_uuid = 1;
+  string completion = 2;
+}
+
+message DoThisForMeCheckResponse {
+  message SkipAction {
+  }
+  message EditAction {
+    string relative_workspace_path = 1;
+  }
+  message CreateAction {
+    string relative_workspace_path = 1;
+  }
+  message RunAction {
+    string command = 1;
+  }
+  string reasoning = 5;
+  oneof action {
+    SkipAction skip_action = 1;
+    EditAction edit_action = 2;
+    CreateAction create_action = 3;
+    RunAction run_action = 4;
+  }
+}
+
+message DoThisForMeRequest {
+  string generation_uuid = 1;
+  string completion = 2;
+  DoThisForMeCheckResponse action = 3;
+}
+
+message DoThisForMeResponse {
+  message UpdateStatus {
+    string status = 1;
+  }
+  oneof event {
+    UpdateStatus update_status = 1;
+  }
+}
+
+message DoThisForMeResponseWrapped {
+  oneof response {
+    DoThisForMeResponse real_response = 1;
+    string background_task_uuid = 2;
+  }
+}
+
+message StreamChatToolformerContinueRequest {
+  string toolformer_session_id = 1;
+  ToolResult tool_result = 2;
+}
+
+message StreamChatToolformerResponse {
+  message Output {
+    string text = 1;
+  }
+  message Thought {
+    string text = 1;
+  }
+  message ToolAction {
+    string user_facing_text = 1;
+    string raw_model_output = 3;
+    ToolCall tool_call = 2;
+    bool more_to_come = 4;
+  }
+  optional string toolformer_session_id = 1;
+  oneof response_type {
+    Output output = 2;
+    ToolAction tool_action = 3;
+    Thought thought = 4;
+  }
+}
+
+message TaskInstruction {
+  message CodeChunk {
+    string relative_workspace_path = 1;
+    int32 start_line_number = 2;
+    repeated string lines = 3;
+  }
+  string text = 1;
+  repeated CodeChunk attached_code_chunks = 2;
+  CurrentFileInfo current_file = 3;
+  repeated RepositoryInfo repositories = 4;
+  ExplicitContext explicit_context = 5;
+}
+
+message TaskUserMessage {
+  message CodeChunk {
+    string relative_workspace_path = 1;
+    int32 start_line_number = 2;
+    repeated string lines = 3;
+  }
+  string text = 1;
+  repeated CodeChunk attached_code_chunks = 2;
+}
+
+message PushAiThoughtRequest {
+  message Metadata {
+    message AcceptedHallucinatedFunctionEvent {
+      string implementation_uuid = 1;
+      string hallucinated_function_uuid = 2;
+      string implementation = 3;
+      string source = 4;
+      string implementation_reqid = 5;
+      string plan_reqid = 6;
+      string reflection_reqid = 7;
+    }
+    oneof event {
+      AcceptedHallucinatedFunctionEvent accepted_hallucinated_function_event = 1;
+    }
+  }
+  string thought = 1;
+  CmdKDebugInfo cmd_k_debug_info = 2;
+  bool automated = 3;
+  optional Metadata metadata = 4;
+}
+
+message PushAiThoughtResponse {
+}
+
+message CheckDoableAsTaskRequest {
+  string model_output = 1;
+  ModelDetails model_details = 2;
+}
+
+message CheckDoableAsTaskResponse {
+  bool doable_as_task = 1;
+}
+
+message InterfaceAgentInitRequest {
+  ModelDetails model_details = 1;
+  bool debugging_only_live_mode = 2;
+  InterfaceAgentClientState interface_agent_client_state = 3;
+}
+
+message InterfaceAgentInitResponse {
+  string task_uuid = 1;
+  string human_readable_title = 2;
+}
+
+message StreamInterfaceAgentStatusRequest {
+  string task_uuid = 1;
+}
+
+message StreamInterfaceAgentStatusResponse {
+  InterfaceAgentStatus status = 1;
+}
+
+message TaskGetInterfaceAgentStatusRequest {
+  InterfaceAgentClientState interface_agent_client_state = 1;
+}
+
+message TaskGetInterfaceAgentStatusResponse {
+  InterfaceAgentStatus status = 1;
+}
+
+message TaskGetInterfaceAgentStatusResponseWrapped {
+  oneof response {
+    TaskGetInterfaceAgentStatusResponse real_response = 1;
+    string background_task_uuid = 2;
+  }
+}
+
+message TaskInitRequest {
+  TaskInstruction instruction = 1;
+  ModelDetails model_details = 2;
+  bool debugging_only_live_mode = 3;
+  optional string engine_id = 4;
+}
+
+message TaskInitResponse {
+  string task_uuid = 1;
+  string human_readable_title = 2;
+}
+
+message TaskStreamLogRequest {
+  string task_uuid = 1;
+  int32 start_sequence_number = 2;
+}
+
+message TaskLogOutput {
+  string text = 1;
+}
+
+message TaskLogToolAction {
+  string user_facing_text = 1;
+  string raw_model_output = 3;
+  ToolCall tool_call = 2;
+}
+
+message TaskLogThought {
+  string text = 1;
+}
+
+message TaskLogToolResult {
+  ToolResult tool_result = 1;
+  int32 action_sequence_number = 2;
+}
+
+message TaskLogItem {
+  int32 sequence_number = 1;
+  bool is_not_done = 2;
+  oneof log_item {
+    TaskLogOutput output = 3;
+    TaskLogToolAction tool_action = 4;
+    TaskLogThought thought = 5;
+    TaskUserMessage user_message = 6;
+    TaskInstruction instruction = 7;
+    TaskLogToolResult tool_result = 8;
+  }
+}
+
+message TaskInfoRequest {
+  string task_uuid = 1;
+}
+
+message TaskPauseRequest {
+  string task_uuid = 1;
+}
+
+message TaskPauseResponse {
+}
+
+message TaskInfoResponse {
+  string human_readable_title = 1;
+  TaskStatus task_status = 2;
+  int32 last_log_sequence_number = 3;
+}
+
+message TaskStreamLogResponse {
+  message InfoUpdate {
+    optional string human_readable_title = 1;
+    optional TaskStatus task_status = 2;
+  }
+  oneof response {
+    TaskLogItem streamed_log_item = 1;
+    InfoUpdate info_update = 2;
+    TaskInfoResponse initial_task_info = 3;
+  }
+}
+
+message TaskProvideResultRequest {
+  string task_uuid = 1;
+  int32 action_sequence_number = 2;
+  ToolResult tool_result = 3;
+}
+
+message TaskProvideResultResponse {
+}
+
+message TaskSendMessageRequest {
+  string task_uuid = 1;
+  TaskUserMessage user_message = 2;
+  bool wants_attention_right_now = 3;
+}
+
+message TaskSendMessageResponse {
+}
+
+message ReportFeedbackRequest {
+  enum FeedbackType {
+    FEEDBACK_TYPE_UNSPECIFIED = 0;
+    FEEDBACK_TYPE_LOW_PRIORITY = 1;
+    FEEDBACK_TYPE_HIGH_PRIORITY = 2;
+  }
+  string feedback = 1;
+  FeedbackType feedback_type = 2;
+}
+
+message ReportFeedbackResponse {
+}
+
+message LogFile {
+  string relative_path_to_cursor_folder = 1;
+  string contents = 2;
+}
+
+message BugReportScreenshot {
+  bytes data = 1;
+  string mime_type = 2;
+}
+
+message BugContext {
+  repeated string screenshots = 1;
+  CurrentFileInfo current_file = 2;
+  repeated ConversationMessage conversation = 3;
+  repeated LogFile logs = 4;
+  string console_logs = 5;
+  string cursor_version = 6;
+  string os = 7;
+  string proto_url = 8;
+  string failing_requst_id = 9;
+  string connection_error_raw = 10;
+  CmdKDebugInfo debug_info = 12;
+  optional int32 connect_error_code = 13;
+  optional ErrorDetails.Error error_detail_code = 14;
+  optional string error_detail_title = 15;
+  optional string error_detail_detail = 16;
+  repeated BugReportScreenshot binary_screenshots = 17;
+}
+
+message ReportBugRequest {
+  enum BugType {
+    BUG_TYPE_UNSPECIFIED = 0;
+    BUG_TYPE_LOW = 1;
+    BUG_TYPE_MEDIUM = 2;
+    BUG_TYPE_URGENT = 3;
+    BUG_TYPE_CRASH = 4;
+    BUG_TYPE_CONNECTION_ERROR = 5;
+    BUG_TYPE_IDEA = 6;
+    BUG_TYPE_MISC_AUTOMATIC_ERROR = 7;
+  }
+  string bug = 1;
+  BugType bug_type = 2;
+  BugContext context = 3;
+  string contact_email = 4;
+}
+
+message ReportBugResponse {
+}
+
+message FixMarkersRequest {
+  message Marker {
+    message RelatedInformation {
+      string message = 1;
+      string relative_workspace_path = 2;
+      repeated string relevant_lines = 3;
+      int32 start_line = 4;
+    }
+    message ContextRange {
+      int32 start_line = 1;
+      int32 end_line_inclusive = 2;
+    }
+    message AncestorTypeDefinition {
+      string name = 1;
+      string relative_workspace_path = 2;
+      int32 start_line = 3;
+      repeated string lines = 4;
+    }
+    message InsertedSymbolType {
+      string symbol_name = 1;
+      string symbol_type = 2;
+      string relative_workspace_path = 3;
+      int32 symbol_line = 4;
+    }
+    message QuickFix {
+      message Edit {
+        string relative_workspace_path = 1;
+        int32 start_line = 2;
+        int32 end_line_inclusive = 3;
+        repeated string deleted_lines = 4;
+        repeated string add_lines = 5;
+        int32 snapshot = 6;
+      }
+      string message = 1;
+      string kind = 2;
+      bool is_preferred = 3;
+      repeated Edit edits = 4;
+    }
+    message ClassInformation {
+      message Constructor {
+        int32 start_line = 1;
+        int32 end_line_inclusive = 2;
+      }
+      string class_name = 1;
+      int32 start_line = 2;
+      repeated int32 top_level_lines = 3;
+      repeated string lines = 4;
+      repeated Constructor constructors = 5;
+      string detail = 6;
+    }
+    message FunctionSignature {
+      message FunctionParameter {
+        string label = 1;
+        string documentation = 2;
+      }
+      string label = 1;
+      string documentation = 2;
+      repeated FunctionParameter parameters = 3;
+    }
+    repeated string lines = 1;
+    int32 start_line = 2;
+    int32 end_line_inclusive = 3;
+    string message = 4;
+    string relative_workspace_path = 5;
+    repeated RelatedInformation related_information = 6;
+    repeated ContextRange context_ranges = 7;
+    repeated AncestorTypeDefinition ancestor_type_definitions = 8;
+    repeated InsertedSymbolType inserted_symbol_types = 9;
+    repeated QuickFix quick_fixes = 10;
+    int32 start_column = 11;
+    int32 end_column_inclusive = 12;
+    repeated ClassInformation class_information = 13;
+    repeated FunctionSignature function_signatures = 14;
+    int32 snapshot = 15;
+  }
+  repeated Marker markers = 1;
+  ModelDetails model_details = 2;
+  int32 iteration_number = 3;
+  string sequence_id = 4;
+  string user_instruction = 5;
+}
+
+message FixMarkersResponse {
+  message Change {
+    int32 start_line = 1;
+    int32 end_line_exclusive = 2;
+    repeated string deleted_lines = 3;
+    repeated string add_lines = 4;
+  }
+  string relative_workspace_path = 1;
+  repeated Change changes = 2;
+  bool success = 3;
+  int32 iteration_number = 4;
+}
+
+message StreamLintRequest {
+  CurrentFileInfo current_file = 1;
+  repeated ConversationMessage conversation = 2;
+  repeated RepositoryInfo repositories = 3;
+  ExplicitContext explicit_context = 4;
+  optional string workspace_root_path = 5;
+  string query = 6;
+  repeated CodeBlock code_blocks = 7;
+  ModelDetails model_details = 9;
+  repeated string documentation_identifiers = 10;
+  repeated string bad_notifications = 11;
+  string lint_rules = 12;
+}
+
+message ReportGroundTruthCandidateRequest {
+  string request_id = 1;
+  int32 time_since_completed_action_ms = 2;
+  FeatureType feature_type = 3;
+  string relative_workspace_path = 4;
+  string contents = 5;
+  LineRange selection_in_question = 6;
+  int32 lines_above_and_below = 7;
+}
+
+message ReportGroundTruthCandidateResponse {
+}
+
+message ReportCmdKFateRequest {
+  enum Fate {
+    FATE_UNSPECIFIED = 0;
+    FATE_CANCELLED = 1;
+    FATE_ACCEPTED = 2;
+    FATE_REJECTED = 3;
+    FATE_FOLLOWED_UP = 4;
+    FATE_REPROMPTED = 5;
+  }
+  string request_id = 1;
+  Fate fate = 2;
+}
+
+message ReportCmdKFateResponse {
+}
+
+message SshConfigPromptProps {
+  string ssh_string = 1;
+}
+
+message GetFilesForComposerRequest {
+  repeated ConversationMessage conversation = 1;
+  repeated CurrentFileInfo files = 2;
+  optional bool rerank_results = 3;
+  optional bool rerank_results_v2 = 6;
+  optional bool long_context_mode = 7;
+  optional bool is_eval = 8;
+  optional string request_id = 9;
+  ModelDetails model_details = 10;
+  oneof context_results {
+    FullFileSearchResult file_search_results = 4;
+    CodeSearchResult code_search_results = 5;
+  }
+}
+
+message GetFilesForComposerResponse {
+  repeated string relative_workspace_paths = 1;
+}
+
+message ComposerEnhancerClientMessage {
+  oneof message {
+    ComposerEnhancerRequest request = 1;
+    ComposerEnhancerToolResult tool_result = 2;
+  }
+}
+
+message ComposerEnhancerServerMessage {
+  oneof message {
+    ComposerEnhancerResponse response = 1;
+    ComposerEnhancerToolCall tool_call = 2;
+  }
+}
+
+message ComposerEnhancerRequest {
+  string input_text = 1;
+  optional string composer_id = 2;
+}
+
+message ComposerEnhancerResponse {
+  string improved_text = 1;
+  bool is_final = 2;
+}
+
+message ComposerEnhancerToolCall {
+  string tool_call_id = 1;
+  string tool_name = 2;
+  string tool_args = 3;
+  int32 tool_index = 4;
+}
+
+message ComposerEnhancerToolResult {
+  string tool_call_id = 1;
+  string result = 2;
+  bool is_error = 3;
+}
+
+message FindBugsRequest {
+  CurrentFileInfo current_file = 1;
+  ModelDetails model_details = 2;
+}
+
+message FindBugsResponse {
+  message Bug {
+    string description = 1;
+    int32 line_number = 2;
+    float confidence = 3;
+  }
+  optional Bug bug = 1;
+}
+
+message WriteGitCommitMessageRequest {
+  repeated string diffs = 1;
+  repeated string previous_commit_messages = 2;
+  ExplicitContext explicit_context = 3;
+  oneof credentials {
+    agent.v1.ApiKeyCredentials api_key_credentials = 4;
+    agent.v1.AzureCredentials azure_credentials = 5;
+    agent.v1.BedrockCredentials bedrock_credentials = 6;
+  }
+}
+
+message WriteGitCommitMessageResponse {
+  string commit_message = 1;
+}
+
+message WriteGitBranchNameRequest {
+  string diffs = 1;
+  optional string context = 2;
+  optional string conversation_id = 3;
+  oneof credentials {
+    agent.v1.ApiKeyCredentials api_key_credentials = 4;
+    agent.v1.AzureCredentials azure_credentials = 5;
+    agent.v1.BedrockCredentials bedrock_credentials = 6;
+  }
+}
+
+message WriteGitBranchNameResponse {
+  string branch_name = 1;
+}
+
+message KeepComposerCacheWarmRequest {
+  GetComposerChatRequest request = 1;
+  string request_id = 2;
+  bool is_composer_visible = 3;
+}
+
+message KeepComposerCacheWarmResponse {
+  bool did_keep_warm = 1;
+}
+
+message GetDiffReviewRequest {
+  message SimpleFileDiff {
+    message Chunk {
+      repeated string old_lines = 1;
+      repeated string new_lines = 2;
+      LineRange old_range = 3;
+      LineRange new_range = 4;
+    }
+    string relative_workspace_path = 1;
+    repeated Chunk chunks = 2;
+  }
+  repeated SimpleFileDiff diffs = 1;
+  optional string model = 2;
+}
+
+message StreamDiffReviewResponse {
+  oneof response {
+    string text = 1;
+    SemanticDiffGroups groups = 2;
+  }
+}
+
+message SemanticDiffGroups {
+  repeated SemanticDiffGroup groups = 1;
+  optional string summary = 2;
+}
+
+message SemanticDiffGroup {
+  string description = 1;
+  repeated SemanticDiffReference diffs = 2;
+  string title = 3;
+}
+
+message SemanticDiffReference {
+  string relative_workspace_path = 1;
+  int32 chunk_index = 2;
+}
+
+message StreamDiffReviewByFileResponse {
+  oneof response {
+    string text = 1;
+    SemanticFileGroups groups = 2;
+  }
+}
+
+message SemanticFileGroups {
+  repeated SemanticFileGroup groups = 1;
+  optional string summary = 2;
+}
+
+message SemanticFileGroup {
+  string title = 1;
+  string description = 2;
+  repeated string files = 3;
+}
+
+message CountTokensRequest {
+  repeated ContextItem context_items = 1;
+  string model_name = 2;
+}
+
+message ContextItemTokenDetail {
+  string relative_workspace_path = 1;
+  int32 count = 2;
+  int32 line_count = 3;
+}
+
+message CountTokensResponse {
+  int32 count = 1;
+  repeated ContextItemTokenDetail token_details = 2;
+}
+
+message GetModelLabelsRequest {
+}
+
+message GetModelLabelsResponse {
+  message ModelLabel {
+    string name = 1;
+    string label = 2;
+    optional string short_label = 3;
+    optional bool supports_agent = 4;
+  }
+  repeated ModelLabel model_labels = 1;
+}
+
+message GetLastDefaultModelNudgeRequest {
+}
+
+message GetLastDefaultModelNudgeResponse {
+  string nudge_date = 1;
+}
+
 message GetDefaultModelNudgeDataRequest {
 }
 
@@ -1301,7 +2831,6 @@ message GetDefaultModelNudgeDataResponse {
     string model_id = 1;
     repeated agent.v1.RequestedModel.ModelParameterValue parameters = 2;
   }
-
   string nudge_date = 1;
   bool should_default_switch_on_new_chat = 2;
   repeated string models_with_no_default_switch = 3;
@@ -1319,620 +2848,61 @@ message GetDefaultModelResponse {
   string next_default_set_date = 4;
 }
 
-message GetDiffReviewRequest {
-  message SimpleFileDiff {
-    message Chunk {
-      repeated string old_lines = 1;
-      repeated string new_lines = 2;
-      LineRange old_range = 3;
-      LineRange new_range = 4;
-    }
-
-    string relative_workspace_path = 1;
-    repeated Chunk chunks = 2;
+message CloudSetupBlockerAction {
+  oneof action {
+    string url = 1;
+    google.protobuf.Empty open_privacy_settings = 2;
+    google.protobuf.Empty open_github_connect = 3;
+    google.protobuf.Empty open_repo_picker = 4;
   }
-
-  repeated SimpleFileDiff diffs = 1;
-  optional string model = 2;
 }
 
-message GetEditorBugbotAutoRunStatusRequest {
-}
-
-message GetEditorBugbotAutoRunStatusResponse {
-  bool should_auto_run = 1;
-}
-
-message GetEffectiveTokenLimitRequest {
-  ModelDetails model_details = 1;
-}
-
-message GetEffectiveTokenLimitResponse {
-  int32 token_limit = 1;
-}
-
-message GetEvaluationPromptRequest {
-  enum EvaluationPromptType {
-    EVALUATION_PROMPT_TYPE_UNSPECIFIED = 0;
-    EVALUATION_PROMPT_TYPE_GENERATE = 1;
-    EVALUATION_PROMPT_TYPE_CHAT = 2;
-  }
-
-  enum RerankingStrategy {
-    RERANKING_STRATEGY_UNSPECIFIED = 0;
-    RERANKING_STRATEGY_DISTANCE_ONLY = 1;
-    RERANKING_STRATEGY_GPT4_RELEVANCE = 2;
-  }
-
-  EvaluationPromptType prompt_type = 1;
-  CurrentFileInfo current_file = 2;
-  string query = 3;
-  string bucket_id = 4;
-  string query_strategy = 5;
-  int32 token_limit = 6;
-  RerankingStrategy reranking_strategy = 7;
-}
-
-message GetEvaluationPromptResponse {
-  string prompt = 1;
-  int32 token_count = 2;
-  int32 estimated_token_count = 3;
-}
-
-message GetFilesForComposerRequest {
-  repeated ConversationMessage conversation = 1;
-  repeated CurrentFileInfo files = 2;
-  optional bool rerank_results = 3;
-  oneof context_results {
-    FullFileSearchResult file_search_results = 4;
-    CodeSearchResult code_search_results = 5;
-  }
-  optional bool rerank_results_v2 = 6;
-  optional bool long_context_mode = 7;
-  optional bool is_eval = 8;
-  optional string request_id = 9;
-  ModelDetails model_details = 10;
-}
-
-message GetFilesForComposerResponse {
-  repeated string relative_workspace_paths = 1;
-}
-
-message GetLastDefaultModelNudgeRequest {
-}
-
-message GetLastDefaultModelNudgeResponse {
-  string nudge_date = 1;
-}
-
-message GetModelLabelsRequest {
-}
-
-message GetModelLabelsResponse {
-  message ModelLabel {
-    string name = 1;
-    string label = 2;
-    optional string short_label = 3;
-    optional bool supports_agent = 4;
-  }
-
-  repeated ModelLabel model_labels = 1;
-}
-
-message GetPassthroughPromptRequest {
-  string query = 1;
-  string model_name = 2;
-}
-
-message GetPassthroughPromptResponse {
-  string result = 1;
-}
-
-message GetSimplePromptRequest {
-  string query = 1;
-  string answer_placeholder = 2;
-}
-
-message GetSimplePromptResponse {
-  string result = 1;
-}
-
-message GetSuggestedBugBotIterationsRequest {
-  int32 diff_char_len = 1;
-  ModelDetails model_details = 2;
-}
-
-message GetSuggestedBugBotIterationsResponse {
-  int32 iterations = 1;
-}
-
-message GetTerminalCompletionRequest {
-  string current_command = 1;
-  repeated string command_history = 2;
-  optional string model_name = 3;
-  repeated CppFileDiffHistory file_diff_histories = 4;
-  optional string git_diff = 5;
-  repeated string commit_history = 6;
-  repeated string past_results = 7;
-  ModelDetails model_details = 8;
-  string user_platform = 9;
-  string current_folder = 10;
-  repeated CurrentFolderFileOrFolder current_folder_structure = 11;
-  repeated File relevant_files = 12;
-}
-
-message GetTerminalCompletionResponse {
-  string command = 1;
-}
-
-message GetThoughtAnnotationRequest {
-  string request_id = 1;
-}
-
-message GetThoughtAnnotationResponse {
-  AiThoughtAnnotation thought_annotation = 1;
-}
-
-message GetUserInfoRequest {
-}
-
-message GetUserInfoResponse {
-  string user_id = 1;
-  string jupyter_token = 2;
-  UsageData usage = 3;
-}
-
-message GetUserInstructionsRequest {
-  repeated RecentChatMessage chats = 1;
-  optional string existing_instructions = 2;
-}
-
-message GetUserInstructionsResponse {
-  string text = 1;
-}
-
-message HealthCheckRequest {
-}
-
-message HealthCheckResponse {
-  enum Status {
-    STATUS_UNSPECIFIED = 0;
-    STATUS_HEALTHY = 1;
-  }
-
-  Status status = 1;
-}
-
-message HeuristicsSelection {
-  enum HeuristicsSelectionType {
-    HEURISTICS_SELECTION_TYPE_UNSPECIFIED = 0;
-    HEURISTICS_SELECTION_TYPE_GROUP = 1;
-    HEURISTICS_SELECTION_TYPE_LINE = 2;
-    HEURISTICS_SELECTION_TYPE_FOLDING = 3;
-  }
-
-  HeuristicsSelectionType type = 1;
-  int32 start_line = 2;
-  int32 end_line = 3;
-}
-
-message InferBackgroundComposerScriptsRequest {
-  message Command {
-    string command = 1;
-    float timestamp = 2;
-    optional string cwd = 3;
-  }
-
-  repeated Command commands = 1;
-}
-
-message InferBackgroundComposerScriptsResponse {
-  message Terminal {
-    string name = 1;
-    string command = 2;
-  }
-
-  string install_script = 1;
-  string start_script = 2;
-  repeated Terminal terminals = 3;
-}
-
-message IntentPredictionRequest {
-  repeated ConversationMessage messages = 1;
-  ContextOptions context_options = 2;
-  ModelDetails model_details = 3;
-}
-
-message IntentPredictionResponse {
-  message ChosenDocumentation {
-    repeated int32 doc_indices = 1;
-    repeated string doc_identifiers = 2;
-    repeated string doc_names = 3;
-  }
-
-  message ChosenFileContents {
-  }
-
-  message ChosenLinterDiagnostics {
-    repeated int32 diagnostic_indices = 1;
-  }
-
-  ChosenDocumentation chosen_documentation = 1;
-  ChosenFileContents chosen_file_contents = 2;
-  ChosenLinterDiagnostics chosen_linter_diagnostics = 3;
-  bool use_global_context = 4;
-  bool use_with_folder_context = 5;
-}
-
-message InterfaceAgentInitRequest {
-  ModelDetails model_details = 1;
-  bool debugging_only_live_mode = 2;
-  InterfaceAgentClientState interface_agent_client_state = 3;
-}
-
-message InterfaceAgentInitResponse {
-  string task_uuid = 1;
-  string human_readable_title = 2;
-}
-
-message IsCursorPredictionEnabledRequest {
-}
-
-message IsCursorPredictionEnabledResponse {
-  bool enabled = 1;
-}
-
-message IsolatedTreesitterRequest {
-  string file_content = 1;
-  string language_id = 2;
-  string command_id = 3;
-}
-
-message IsolatedTreesitterResponse {
-  message TreeSitterPosition {
-    int32 row = 1;
-    int32 column = 2;
-  }
-
-  message TreesitterSymbolNameItem {
-    string symbol_name = 1;
-    optional TreeSitterPosition start_position = 2;
-    optional TreeSitterPosition end_position = 3;
-  }
-
-  repeated TreesitterSymbolNameItem items = 1;
-}
-
-message IsTerminalFinishedRequest {
-  string terminal_content = 1;
-  bool check_for_hangs = 2;
-  optional string chat_request_id = 3;
-  optional string command = 4;
-}
-
-message IsTerminalFinishedResponseV2 {
-  bool is_finished = 1;
-  optional RunTerminalCommandEndedReason ended_reason = 2;
-  optional int32 exit_code = 3;
-  bool is_hanging = 4;
-}
-
-message IterativeSftInferenceConfig {
-  optional double temperature = 1;
-  optional double top_p = 2;
-}
-
-message KeepComposerCacheWarmRequest {
-  GetComposerChatRequest request = 1;
-  string request_id = 2;
-  bool is_composer_visible = 3;
-}
-
-message KeepComposerCacheWarmResponse {
-  bool did_keep_warm = 1;
-}
-
-message KnowledgeBaseAddRequest {
-  string knowledge = 1;
-  string title = 2;
-  string git_origin = 3;
-  optional string composer_id = 4;
-}
-
-message KnowledgeBaseAddResponse {
-  bool success = 1;
-  string id = 2;
-}
-
-message KnowledgeBaseGetRequest {
+message CloudSetupBlocker {
   string id = 1;
+  string icon = 2;
+  CloudSetupBlockerAction action = 3;
+  string cta_label = 4;
+  string checklist_title = 7;
+  string checklist_description = 8;
 }
 
-message KnowledgeBaseGetResponse {
-  message Item {
-    string id = 1;
-    string knowledge = 2;
-    string title = 3;
-    string created_at = 4;
-  }
+message GetCloudSetupBlockersRequest {
+  string selected_target_repo_url = 1;
+}
 
+message GetCloudSetupBlockersResponse {
+  repeated CloudSetupBlocker pending = 1;
+  repeated CloudSetupBlocker completed = 2;
+}
+
+message TestBedrockCredentialsRequest {
+  string access_key = 1;
+  string secret_key = 2;
+  string region = 3;
+  string model_name = 4;
+}
+
+message TestBedrockCredentialsResponse {
   bool success = 1;
-  Item result = 2;
+  optional string error = 2;
 }
 
-message KnowledgeBaseListRequest {
-  optional int32 limit = 1;
-  optional string git_origin = 2;
+message GetBedrockModelsRequest {
+  string access_key = 1;
+  string secret_key = 2;
+  string region = 3;
 }
 
-message KnowledgeBaseListResponse {
-  message Item {
-    string id = 1;
-    string knowledge = 2;
-    string title = 3;
-    string created_at = 4;
-    bool is_generated = 5;
-  }
-
-  bool success = 1;
-  repeated Item all_results = 2;
+message GetBedrockModelsResponse {
+  repeated string models = 1;
+  optional string error = 2;
 }
 
-message KnowledgeBaseRemoveRequest {
-  string id = 1;
-}
-
-message KnowledgeBaseRemoveResponse {
-  bool success = 1;
-}
-
-message KnowledgeBaseUpdateRequest {
-  string id = 1;
-  string knowledge = 2;
-  string title = 3;
-}
-
-message KnowledgeBaseUpdateResponse {
-  bool success = 1;
-}
-
-message LogFile {
-  string relative_path_to_cursor_folder = 1;
-  string contents = 2;
-}
-
-message LogLinterExplicitUserFeedbackRequest {
-  enum LinterUserFeedback {
-    LINTER_USER_FEEDBACK_UNSPECIFIED = 0;
-    LINTER_USER_FEEDBACK_CORRECT = 1;
-    LINTER_USER_FEEDBACK_INCORRECT = 2;
-    LINTER_USER_FEEDBACK_OTHER = 3;
-  }
-
-  AiLintBug bug = 1;
-  LinterUserFeedback user_feedback = 3;
-  string user_feedback_details = 4;
-}
-
-message LogLinterExplicitUserFeedbackResponse {
-}
-
-message LogUserLintReplyRequest {
-  string uuid = 1;
-  string user_action = 2;
-  bool debug_mode = 3;
-}
-
-message LogUserLintReplyResponse {
-}
-
-message ModelParameterDefinition {
-  message BooleanParameterDefinition {
-    message BooleanParameterValue {
-      string value = 1;
-      optional string display_name = 2;
-      optional bool increases_model_cost = 3;
-    }
-
-    repeated BooleanParameterValue values = 1;
-  }
-
-  message EnumParameterDefinition {
-    message EnumParameterValue {
-      string value = 1;
-      optional string display_name = 2;
-      optional bool increases_model_cost = 3;
-    }
-
-    repeated EnumParameterValue values = 1;
-  }
-
-  message ModelParameterType {
-    optional BooleanParameterDefinition boolean_parameter = 1;
-    optional EnumParameterDefinition enum_parameter = 2;
-  }
-
-  string id = 1;
-  string name = 2;
-  optional string markdown_tooltip = 3;
-  ModelParameterType parameter_type = 4;
-  optional bool is_cycleable_by_hotkey = 5;
-}
-
-message ModelQueryRequest {
-  enum QueryType {
-    QUERY_TYPE_UNSPECIFIED = 0;
-    QUERY_TYPE_KEYWORDS = 1;
-    QUERY_TYPE_EMBEDDINGS = 2;
-  }
-
-  CurrentFileInfo current_file = 1;
-  repeated ConversationMessage conversation = 2;
-  repeated RepositoryInfo repositories = 3;
-  ExplicitContext explicit_context = 4;
-  optional string workspace_root_path = 5;
-  repeated CodeBlock code_blocks = 6;
-  ModelDetails model_details = 7;
-  QueryType query_type = 8;
-  RepositoryInfo repository_info = 9;
-  bool faster_and_stupider = 10;
-  bool use_globs = 11;
-}
-
-message ModelQueryResponse {
-  message Query {
-    string query = 1;
-    bool successful_parse = 2;
-    repeated string good_file_extensions = 3;
-    repeated string bad_file_extensions = 4;
-    repeated string good_paths = 5;
-    repeated string bad_paths = 6;
-  }
-
-  repeated Query queries = 1;
-}
-
-message ModelQueryResponseV2 {
-  message QueryItem {
-    oneof partial_query {
-      string text = 1;
-      string glob = 2;
-    }
-    int32 index = 3;
-  }
-
-  oneof query_or_reasoning {
-    QueryItem query = 1;
-    string reasoning = 2;
-  }
-}
-
-message NameTabRequest {
-  repeated ConversationMessage messages = 1;
-  bool is_project = 2;
-}
-
-message NameTabResponse {
-  string name = 1;
-  string reason = 2;
-  string icon = 3;
-}
-
-message PotentialLocsInitialQueriesRequest {
-  string query = 1;
-}
-
-message PotentialLocsInitialQueriesResponse {
-  string hyde_query = 1;
-}
-
-message PotentialLocsRequest {
-  string text = 1;
-}
-
-message PotentialLocsResponse {
-  string potential_loc = 1;
-}
-
-message PotentialLocsUnderneathRequest {
-  string file = 1;
-  repeated SimplestRange ranges = 2;
-  string query = 3;
-}
-
-message PotentialLocsUnderneathResponse {
-  string text = 1;
-}
-
-message PotentiallyGenerateMemoryRequest {
-  string request_id = 1;
-  repeated ConversationMessage conversation = 2;
-  optional string git_upstream_url = 3;
-  string composer_id = 4;
-}
-
-message PotentiallyGenerateMemoryResponse {
-  optional string saved_memory = 1;
-  optional string knowledge_id = 2;
-  optional string title = 3;
-}
-
-message PreloadEditRequest {
-  StreamEditRequest req = 1;
-}
-
-message PreloadEditResponse {
-}
-
-message PrivacyCheckRequest {
-}
-
-message PrivacyCheckResponse {
-  bool is_on_privacy_pod = 1;
-  bool is_ghost_mode_on = 2;
-}
-
-message ProcessMetricsRowRequest {
-  int32 pid = 1;
-  int32 ppid = 2;
-  string name = 3;
-  string extension_id = 4;
-  int64 cpu_time_ms_sample = 5;
-  double sample_avg_mem_mb = 6;
-  double sample_peak_mem_mb = 7;
-  double session_peak_mem_mb = 8;
-  optional string process_name_hash = 9;
-}
-
-message ProcessMetricsV2RowRequest {
-  int32 pid = 1;
-  int32 ppid = 2;
-  string process_name = 3;
-  string extension_id = 4;
-  string process_name_hash = 5;
-  int64 sample_cpu_time_ms = 6;
-  double sample_avg_mem_mb = 7;
-  double sample_peak_mem_mb = 8;
-  double session_peak_mem_mb = 9;
-  double memory_during_sample_peak_mb = 10;
-  double cpu_during_sample_peak_pct = 11;
-}
-
-message PseudocodeTarget {
-  SimpleRange range = 1;
-  string content = 2;
-}
-
-message PullRequestResult {
-  string sha = 1;
-  string full_pr_contents = 2;
-  float score = 3;
-}
-
-message PushAiThoughtRequest {
-  message Metadata {
-    message AcceptedHallucinatedFunctionEvent {
-      string implementation_uuid = 1;
-      string hallucinated_function_uuid = 2;
-      string implementation = 3;
-      string source = 4;
-      string implementation_reqid = 5;
-      string plan_reqid = 6;
-      string reflection_reqid = 7;
-    }
-
-    oneof event {
-      AcceptedHallucinatedFunctionEvent accepted_hallucinated_function_event = 1;
-    }
-  }
-
-  string thought = 1;
-  CmdKDebugInfo cmd_k_debug_info = 2;
-  bool automated = 3;
-  optional Metadata metadata = 4;
-}
-
-message PushAiThoughtResponse {
+message CommitLineRange {
+  int32 start = 1;
+  int32 end = 2;
+  optional int32 absolute_start = 3;
+  optional int32 absolute_end = 4;
 }
 
 message RangeGroup {
@@ -1943,95 +2913,9 @@ message RangeGroup {
   optional string request_id = 5;
 }
 
-message RecentChat {
-  string title = 1;
-  optional int64 timestamp = 2;
-  optional string summary = 3;
-  repeated RecentChatMessage messages = 4;
-  optional string todos = 5;
-}
-
-message RecentChatMessage {
-  string role = 1;
-  string text = 2;
-  string context = 3;
-}
-
-message RecordIdeBugReactionRequest {
-  string bug_id = 1;
-  string reaction = 2;
-}
-
-message RecordIdeBugReactionResponse {
-  bool success = 1;
-}
-
-message ReportAgentFeedbackRequest {
-  enum Sentiment {
-    SENTIMENT_UNSPECIFIED = 0;
-    SENTIMENT_UP = 1;
-    SENTIMENT_DOWN = 2;
-  }
-
-  string request_id = 1;
-  Sentiment sentiment = 2;
-  repeated string categories = 3;
-  optional string comment = 4;
-}
-
-message ReportAgentFeedbackResponse {
-}
-
-message ReportAiCodeChangeMetricsRequest {
-  repeated AiCodeChange changes = 1;
-}
-
-message ReportAiCodeChangeMetricsResponse {
-}
-
-message ReportBugRequest {
-  enum BugType {
-    BUG_TYPE_UNSPECIFIED = 0;
-    BUG_TYPE_LOW = 1;
-    BUG_TYPE_MEDIUM = 2;
-    BUG_TYPE_URGENT = 3;
-    BUG_TYPE_CRASH = 4;
-    BUG_TYPE_CONNECTION_ERROR = 5;
-    BUG_TYPE_IDEA = 6;
-    BUG_TYPE_MISC_AUTOMATIC_ERROR = 7;
-  }
-
-  string bug = 1;
-  BugType bug_type = 2;
-  BugContext context = 3;
-  string contact_email = 4;
-}
-
-message ReportBugResponse {
-}
-
-message ReportClientNumericMetricsRequest {
-  repeated ClientNumericMetric metrics = 1;
-}
-
-message ReportClientNumericMetricsResponse {
-}
-
-message ReportCmdKFateRequest {
-  enum Fate {
-    FATE_UNSPECIFIED = 0;
-    FATE_CANCELLED = 1;
-    FATE_ACCEPTED = 2;
-    FATE_REJECTED = 3;
-    FATE_FOLLOWED_UP = 4;
-    FATE_REPROMPTED = 5;
-  }
-
-  string request_id = 1;
-  Fate fate = 2;
-}
-
-message ReportCmdKFateResponse {
+message FileRangeAnnotations {
+  string file_path = 1;
+  repeated RangeGroup groups = 2;
 }
 
 message ReportCommitAiAnalyticsRequest {
@@ -2057,54 +2941,20 @@ message ReportCommitAiAnalyticsRequest {
 message ReportCommitAiAnalyticsResponse {
 }
 
-message ReportFeedbackRequest {
-  enum FeedbackType {
-    FEEDBACK_TYPE_UNSPECIFIED = 0;
-    FEEDBACK_TYPE_LOW_PRIORITY = 1;
-    FEEDBACK_TYPE_HIGH_PRIORITY = 2;
-  }
-
-  string feedback = 1;
-  FeedbackType feedback_type = 2;
+message ReportAiCodeChangeMetricsRequest {
+  repeated AiCodeChange changes = 1;
 }
 
-message ReportFeedbackResponse {
+message AiCodeChange {
+  string change_id = 1;
+  string source = 2;
+  repeated ScoredAiCodeMetadata metadata = 3;
+  optional string model = 4;
+  int32 total_lines_added = 5;
+  int32 total_lines_deleted = 6;
 }
 
-message ReportGenerationFeedbackRequest {
-  enum FeedbackType {
-    FEEDBACK_TYPE_UNSPECIFIED = 0;
-    FEEDBACK_TYPE_THUMBS_UP = 1;
-    FEEDBACK_TYPE_THUMBS_DOWN = 2;
-    FEEDBACK_TYPE_NEUTRAL = 3;
-    FEEDBACK_TYPE_STARS = 4;
-  }
-
-  FeedbackType feedback_type = 1;
-  string request_id = 2;
-  optional string comment = 3;
-  optional int32 stars_overall = 4;
-  optional int32 stars_speed = 6;
-  optional int32 stars_accuracy = 7;
-  optional int32 stars_style_taste = 8;
-  optional bool never_ask_again = 9;
-  optional bool did_popup = 10;
-}
-
-message ReportGenerationFeedbackResponse {
-}
-
-message ReportGroundTruthCandidateRequest {
-  string request_id = 1;
-  int32 time_since_completed_action_ms = 2;
-  FeatureType feature_type = 3;
-  string relative_workspace_path = 4;
-  string contents = 5;
-  LineRange selection_in_question = 6;
-  int32 lines_above_and_below = 7;
-}
-
-message ReportGroundTruthCandidateResponse {
+message ReportAiCodeChangeMetricsResponse {
 }
 
 message ReportProcessMetricsRequest {
@@ -2121,6 +2971,18 @@ message ReportProcessMetricsRequest {
   optional string client_id = 11;
 }
 
+message ProcessMetricsRowRequest {
+  int32 pid = 1;
+  int32 ppid = 2;
+  string name = 3;
+  string extension_id = 4;
+  int64 cpu_time_ms_sample = 5;
+  double sample_avg_mem_mb = 6;
+  double sample_peak_mem_mb = 7;
+  double session_peak_mem_mb = 8;
+  optional string process_name_hash = 9;
+}
+
 message ReportProcessMetricsResponse {
 }
 
@@ -2135,72 +2997,161 @@ message ReportProcessMetricsV2Request {
   string client_version = 8;
 }
 
+message ProcessMetricsV2RowRequest {
+  int32 pid = 1;
+  int32 ppid = 2;
+  string process_name = 3;
+  string extension_id = 4;
+  string process_name_hash = 5;
+  int64 sample_cpu_time_ms = 6;
+  double sample_avg_mem_mb = 7;
+  double sample_peak_mem_mb = 8;
+  double session_peak_mem_mb = 9;
+  double memory_during_sample_peak_mb = 10;
+  double cpu_during_sample_peak_pct = 11;
+}
+
 message ReportProcessMetricsV2Response {
 }
 
-message RerankerRequest {
-  repeated CodeResult code_results = 1;
-  string query = 2;
-  int32 num_blocks = 3;
-  CurrentFileInfo current_file = 4;
-  repeated ConversationMessage conversation = 5;
-  ApiDetails api_details = 6;
-  oneof context_results {
-    FullFileSearchResult file_search_results = 7;
-    CodeSearchResult code_search_results = 8;
-  }
+message ReportClientNumericMetricsRequest {
+  repeated ClientNumericMetric metrics = 1;
 }
 
-message RerankerResponse {
-  repeated CodeResult results = 1;
+message ClientNumericMetric {
+  string metric = 1;
+  double value = 2;
+  optional string session_id = 3;
+  optional string ff_hash = 4;
+  int64 timestamp_ms = 5;
+  optional string client_version = 6;
+  optional string os = 7;
+  optional string enabled_extensions_hash = 8;
+  optional string ff_resolved = 9;
+  optional string extensions_resolved = 10;
+  optional string window_type = 11;
 }
 
-message ReviewBug {
+message ReportClientNumericMetricsResponse {
+}
+
+message PotentiallyGenerateMemoryRequest {
+  string request_id = 1;
+  repeated ConversationMessage conversation = 2;
+  optional string git_upstream_url = 3;
+  string composer_id = 4;
+}
+
+message PotentiallyGenerateMemoryResponse {
+  optional string saved_memory = 1;
+  optional string knowledge_id = 2;
+  optional string title = 3;
+}
+
+message KnowledgeBaseAddRequest {
+  string knowledge = 1;
+  string title = 2;
+  string git_origin = 3;
+  optional string composer_id = 4;
+}
+
+message KnowledgeBaseAddResponse {
+  bool success = 1;
+  string id = 2;
+}
+
+message KnowledgeBaseRemoveRequest {
   string id = 1;
-  optional int32 start_line = 2;
-  optional int32 end_line = 3;
-  optional string description = 4;
-  optional int32 severity = 5;
-  optional string tldr = 6;
 }
 
-message ReviewChatMessage {
-  enum ReviewChatMessageType {
-    REVIEW_CHAT_MESSAGE_TYPE_UNSPECIFIED = 0;
-    REVIEW_CHAT_MESSAGE_TYPE_HUMAN = 1;
-    REVIEW_CHAT_MESSAGE_TYPE_AI = 2;
+message KnowledgeBaseRemoveResponse {
+  bool success = 1;
+}
+
+message KnowledgeBaseUpdateRequest {
+  string id = 1;
+  string knowledge = 2;
+  string title = 3;
+}
+
+message KnowledgeBaseUpdateResponse {
+  bool success = 1;
+}
+
+message KnowledgeBaseListRequest {
+  optional int32 limit = 1;
+  optional string git_origin = 2;
+}
+
+message KnowledgeBaseListResponse {
+  message Item {
+    string id = 1;
+    string knowledge = 2;
+    string title = 3;
+    string created_at = 4;
+    bool is_generated = 5;
   }
-
-  string text = 1;
-  ReviewChatMessageType type = 2;
+  bool success = 1;
+  repeated Item all_results = 2;
 }
 
-message ReviewChatRequest {
-  string chunk = 1;
-  string file_context = 2;
-  LineRange chunk_range = 3;
-  repeated ReviewChatMessage messages = 4;
+message KnowledgeBaseGetRequest {
+  string id = 1;
 }
 
-message ReviewChatResponse {
-  string text = 1;
-  optional bool should_resolve = 2;
+message KnowledgeBaseGetResponse {
+  message Item {
+    string id = 1;
+    string knowledge = 2;
+    string title = 3;
+    string created_at = 4;
+  }
+  bool success = 1;
+  Item result = 2;
 }
 
-message ReviewRequest {
-  string chunk = 1;
-  string file_context = 2;
-  LineRange chunk_range = 3;
-  optional string diff_string = 4;
-  optional string custom_instructions = 5;
+message FetchRelevantKnowledgeForConversationRequest {
+  string request_id = 1;
+  repeated ConversationMessage conversation = 2;
+  optional string git_origin = 3;
+  optional int32 limit = 4;
+  repeated string tagged_filenames = 5;
 }
 
-message ReviewResponse {
-  string text = 1;
-  optional string prompt = 2;
-  optional string tldr = 3;
-  optional bool is_bug = 4;
-  repeated ReviewBug bugs = 5;
+message FetchRelevantKnowledgeForConversationResponse {
+  repeated ConversationMessage.KnowledgeItem knowledge_items = 1;
+}
+
+message InferBackgroundComposerScriptsRequest {
+  message Command {
+    string command = 1;
+    float timestamp = 2;
+    optional string cwd = 3;
+  }
+  repeated Command commands = 1;
+}
+
+message InferBackgroundComposerScriptsResponse {
+  message Terminal {
+    string name = 1;
+    string command = 2;
+  }
+  string install_script = 1;
+  string start_script = 2;
+  repeated Terminal terminals = 3;
+}
+
+message GetBackgroundComposerFeedbackLinkRequest {
+}
+
+message GetBackgroundComposerFeedbackLinkResponse {
+  string url = 1;
+}
+
+message PullRequestResult {
+  string sha = 1;
+  string full_pr_contents = 2;
+  float score = 3;
 }
 
 message ScoredAiCodeMetadata {
@@ -2211,650 +3162,27 @@ message ScoredAiCodeMetadata {
   optional string file_name = 4;
 }
 
-message SemanticDiffGroup {
-  string description = 1;
-  repeated SemanticDiffReference diffs = 2;
-  string title = 3;
+message IterativeSftInferenceConfig {
+  optional double temperature = 1;
+  optional double top_p = 2;
 }
 
-message SemanticDiffGroups {
-  repeated SemanticDiffGroup groups = 1;
-  optional string summary = 2;
-}
-
-message SemanticDiffReference {
-  string relative_workspace_path = 1;
-  int32 chunk_index = 2;
-}
-
-message SemanticFileGroup {
-  string title = 1;
-  string description = 2;
-  repeated string files = 3;
-}
-
-message SemanticFileGroups {
-  repeated SemanticFileGroup groups = 1;
-  optional string summary = 2;
-}
-
-message ServerTimeRequest {
-}
-
-message ServerTimeResponse {
-  double receive_timestamp = 1;
-  double transmit_timestamp = 2;
-}
-
-message ServerTimingInfo {
-  double server_start_time = 1;
-  double server_first_token_time = 2;
-  double server_request_sent_time = 3;
-  double server_end_time = 4;
-}
-
-message ShowWelcomeScreenRequest {
-}
-
-message ShowWelcomeScreenResponse {
-  repeated string enable_cards = 1;
-}
-
-message SimpleCommitWithDiff {
-  string commit_hash = 1;
-  string diff = 2;
-}
-
-message SlashEditFollowUpWithPreviousEditsRequest {
-  repeated ConversationMessage conversation = 1;
-  ModelDetails model_details = 2;
-  repeated SlashEditPreviousEdit previous_edits = 3;
-}
-
-message SlashEditPreviousEdit {
-  repeated string original_lines = 1;
-  repeated string new_lines = 2;
-  string relative_workspace_path = 3;
-  LineRange range = 4;
-}
-
-message SlashEditRequest {
-  enum FastApplyModelType {
-    FAST_APPLY_MODEL_TYPE_UNSPECIFIED = 0;
-    FAST_APPLY_MODEL_TYPE_DEFAULT = 1;
-    FAST_APPLY_MODEL_TYPE_DEEPSEEK = 2;
-    FAST_APPLY_MODEL_TYPE_SONNET = 3;
-    FAST_APPLY_MODEL_TYPE_OPUS_DIFF = 4;
-    FAST_APPLY_MODEL_TYPE_SMART_REWRITE = 5;
-    FAST_APPLY_MODEL_TYPE_GPT4 = 6;
-    FAST_APPLY_MODEL_TYPE_GPT4_NOSPEC = 7;
-    FAST_APPLY_MODEL_TYPE_SMART_REWRITE_NOSPEC = 8;
-    FAST_APPLY_MODEL_TYPE_OPUS = 9;
-    FAST_APPLY_MODEL_TYPE_HAIKU = 10;
-    FAST_APPLY_MODEL_TYPE_GPT4O_NOSPEC = 11;
-    FAST_APPLY_MODEL_TYPE_GPT4O_DIFF = 12;
-    FAST_APPLY_MODEL_TYPE_CODESTRAL_REWRITE = 13;
-    FAST_APPLY_MODEL_TYPE_DEEPSEEK_33B = 14;
-    FAST_APPLY_MODEL_TYPE_SONNET_35_DIFF = 15;
-    FAST_APPLY_MODEL_TYPE_SONNET_35_REWRITE = 16;
-    FAST_APPLY_MODEL_TYPE_PROMPTED_DEEPSEEK_V2 = 17;
-    FAST_APPLY_MODEL_TYPE_CODESTRAL_REWRITE_OLD = 18;
-    FAST_APPLY_MODEL_TYPE_CODESTRAL_REWRITE_FP16 = 19;
-    FAST_APPLY_MODEL_TYPE_DEEPSEEK_33B_V2 = 20;
-    FAST_APPLY_MODEL_TYPE_CODESTRAL_V4 = 21;
-    FAST_APPLY_MODEL_TYPE_CODESTRAL_V5 = 22;
-    FAST_APPLY_MODEL_TYPE_CODESTRAL_V6 = 23;
-    FAST_APPLY_MODEL_TYPE_CODESTRAL_V7 = 24;
-  }
-
-  CurrentFileInfo current_file = 2;
-  repeated ConversationMessage conversation = 3;
-  ExplicitContext explicit_context = 4;
-  ModelDetails model_details = 7;
-  bool is_cmd_i = 8;
-  optional string summary = 11;
-  optional int32 summary_up_until_index = 12;
-  optional bool should_use_turbo_debug_prompt = 13;
-  optional LineRange edit_selection = 14;
-  repeated CurrentFileInfo files = 15;
-  optional string clicked_code_block_contents = 16;
-  optional bool is_an_optimistic_request_for_caching_and_linting = 17;
-  optional string specific_instructions = 18;
-  bool use_fast_apply = 19;
-  FastApplyModelType fast_apply_model_type = 20;
-  optional bool use_chunk_speculation_for_long_files = 25;
-  optional string parent_request_id = 26;
-  optional FastApplySource source = 27;
-  optional bool is_reapply = 28;
-  optional bool willing_to_pay_extra_for_speed = 29;
-  optional int32 attempt_number = 30;
-  optional bool should_throw_timeout_error = 31;
-}
-
-message SlashEditResponse {
-  StreamCmdKResponse cmd_k_response = 1;
-}
-
-message SshConfigPromptProps {
-  string ssh_string = 1;
-}
-
-message StreamAiCursorHelpRequest {
-  repeated CursorHelpConversationMessage messages = 1;
-  string user_os = 2;
-  ModelDetails model_details = 3;
-}
-
-message StreamAiCursorHelpResponse {
-  string text = 1;
-  repeated string actions = 2;
-}
-
-message StreamAiLintBugRequest {
-  message CodeChunk {
-    string relative_workspace_path = 1;
-    int32 start_line_number = 2;
-    repeated string lines = 3;
-    repeated string context_lines_before = 4;
-    repeated string context_lines_after = 5;
-  }
-
-  message CodeChunkList {
-    repeated CodeChunk chunks = 13;
-    repeated int32 referred_start_lines = 14;
-    repeated int32 referred_end_lines = 15;
-  }
-
-  message DiscriminatorOptions {
-    bool specific_rules = 1;
-    bool compile_errors = 2;
-    bool change_behavior = 3;
-    bool match_code = 4;
-    bool relevance = 5;
-    bool user_awareness = 6;
-  }
-
-  repeated CodeChunk chunks_to_analyze = 1;
-  ExplicitContext explicit_context = 4;
-  optional string workspace_root_path = 5;
-  ModelDetails model_details = 9;
-  repeated AiLintBug dismissed_bugs = 10;
-  repeated AiLintBug active_bugs = 11;
-  repeated AiLintRule lint_rules = 12;
-  repeated CodeChunkList clients = 14;
-  repeated LintDiscriminator force_enable_discriminators = 17;
-  repeated LintDiscriminator force_disable_discriminators = 18;
-  repeated LintGenerator force_enable_generators = 19;
-  repeated LintGenerator force_disable_generators = 20;
-  int32 version = 21;
-  optional DiscriminatorOptions discriminator_options = 15;
-  bool debug_mode = 16;
-}
-
-message StreamAiLintBugResponse {
-  oneof response {
-    AiLintBug bug = 1;
-    string background_task_uuid = 2;
-  }
-}
-
-message StreamBugBotAgenticClientMessage {
-  oneof message {
-    StreamBugBotRequest start = 1;
-    agent.v1.ExecClientMessage exec_client_message = 2;
-    agent.v1.ExecClientControlMessage exec_client_control_message = 3;
-  }
-}
-
-message StreamBugBotAgenticServerMessage {
-  oneof message {
-    StreamBugBotResponse bugbot_response = 1;
-    agent.v1.ExecServerMessage exec_server_message = 2;
-    agent.v1.ExecServerControlMessage exec_server_control_message = 3;
-  }
-}
-
-message StreamBugBotResponse {
-  optional BugReports bug_reports = 1;
-  BugBotStatus status = 2;
-  optional string summary = 3;
-  optional BugbotTrialNotification trial_notification = 4;
-  optional int32 num_turns = 5;
-}
-
-message StreamChatContextRequest {
-  message CodeContext {
-    repeated CodeBlock chunks = 1;
-    repeated CodeResult scored_chunks = 2;
-  }
-
-  CurrentFileInfo current_file = 1;
-  repeated ConversationMessage conversation = 2;
-  repeated RepositoryInfo repositories = 3;
-  ExplicitContext explicit_context = 4;
-  optional string workspace_root_path = 5;
-  repeated CodeBlock code_blocks = 6;
-  ModelDetails model_details = 7;
-  repeated string documentation_identifiers = 8;
-  string query = 9;
-  CodeContext code_context = 10;
-  bool rerank_results = 11;
-  oneof context_results {
-    FullFileSearchResult file_search_results = 12;
-    CodeSearchResult code_search_results = 13;
-  }
-  LinterErrors linter_errors = 14;
-  optional bool is_bash = 15;
-  bool rerank_results_v2 = 16;
-  string conversation_id = 17;
-  bool can_handle_filenames_after_language_ids = 18;
-  bool long_context_mode = 19;
-  bool is_eval = 20;
-  string request_id = 21;
-  optional int32 desired_max_tokens = 22;
-  optional bool runnable_code_blocks = 23;
-}
-
-message StreamChatContextResponse {
-  message ChunkIdentity {
-    string file_name = 1;
-    int32 start_line = 2;
-    int32 end_line = 3;
-    string text = 4;
-    ChunkType chunk_type = 5;
-  }
-
-  message CodeLink {
-    string relative_workspace_path = 1;
-    int32 start_line_number = 2;
-    int32 end_line_number = 3;
-  }
-
-  message UsedCode {
-    repeated CodeResult code_results = 1;
-  }
-
-  string text = 1;
-  optional string debugging_only_chat_prompt = 2;
-  optional int32 debugging_only_token_count = 3;
-  DocumentationCitation document_citation = 4;
-  optional string filled_prompt = 5;
-  UsedCode used_code = 6;
-  CodeLink code_link = 7;
-  optional ChunkIdentity chunk_identity = 8;
-  optional DocsReference docs_reference = 9;
-  optional SymbolLink symbol_link = 10;
-  optional FileLink file_link = 11;
-}
-
-message StreamChatDeepContextRequest {
-  repeated ConversationMessage conversation = 1;
-  ExplicitContext explicit_context = 2;
-  ModelDetails model_details = 3;
-  SearchRepositoryDeepContextResponse context_results = 4;
-  bool rerank_results = 5;
-}
-
-message StreamChatDeepContextResponse {
-  string text = 1;
-}
-
-message StreamChatResponse {
-  message ChunkIdentity {
-    string file_name = 1;
-    int32 start_line = 2;
-    int32 end_line = 3;
-    string text = 4;
-    ChunkType chunk_type = 5;
-  }
-
-  message UsedCode {
-    repeated CodeResult code_results = 1;
-  }
-
-  string text = 1;
-  optional string server_bubble_id = 22;
-  optional string debugging_only_chat_prompt = 2;
-  optional int32 debugging_only_token_count = 3;
-  DocumentationCitation document_citation = 4;
-  optional string filled_prompt = 5;
-  optional bool is_big_file = 6;
-  optional string intermediate_text = 7;
-  optional bool is_using_slow_request = 10;
-  optional ChunkIdentity chunk_identity = 8;
-  optional DocsReference docs_reference = 9;
-  optional WebCitation web_citation = 11;
-  optional StatusUpdates status_updates = 12;
-  optional ServerTimingInfo timing_info = 13;
-  optional SymbolLink symbol_link = 14;
-  optional FileLink file_link = 15;
-  optional ConversationSummary conversation_summary = 16;
-  optional ServiceStatusUpdate service_status_update = 17;
-  optional UsedCode used_code = 18;
-  optional bool stop_using_dsv3_agentic_model = 26;
-  optional string usage_uuid = 27;
-}
-
-message StreamChatToolformerContinueRequest {
-  string toolformer_session_id = 1;
-  ToolResult tool_result = 2;
-}
-
-message StreamChatToolformerResponse {
-  message Output {
-    string text = 1;
-  }
-
-  message Thought {
-    string text = 1;
-  }
-
-  message ToolAction {
-    string user_facing_text = 1;
-    string raw_model_output = 3;
-    ToolCall tool_call = 2;
-    bool more_to_come = 4;
-  }
-
-  optional string toolformer_session_id = 1;
-  oneof response_type {
-    Output output = 2;
-    ToolAction tool_action = 3;
-    Thought thought = 4;
-  }
-}
-
-message StreamComposerContextRequest {
-  message CodeContext {
-    repeated CodeBlock chunks = 1;
-    repeated CodeResult scored_chunks = 2;
-  }
-
-  CurrentFileInfo current_file = 1;
-  repeated ConversationMessage conversation = 2;
-  repeated RepositoryInfo repositories = 3;
-  ExplicitContext explicit_context = 4;
-  optional string workspace_root_path = 5;
-  repeated CodeBlock code_blocks = 6;
-  ModelDetails model_details = 7;
-  repeated string documentation_identifiers = 8;
-  string query = 9;
-  CodeContext code_context = 10;
-  bool rerank_results = 11;
-  oneof context_results {
-    FullFileSearchResult file_search_results = 12;
-    CodeSearchResult code_search_results = 13;
-  }
-  LinterErrors linter_errors = 14;
-  optional bool is_bash = 15;
-  bool rerank_results_v2 = 16;
-  string conversation_id = 17;
-  bool can_handle_filenames_after_language_ids = 18;
-  bool long_context_mode = 19;
-  bool is_eval = 20;
-  string request_id = 21;
-  optional int32 desired_max_tokens = 22;
-  optional bool runnable_code_blocks = 23;
-}
-
-message StreamCursorMotionRequest {
-  CurrentFileInfo current_file_info = 1;
-  SimpleRange selection_range = 2;
-  string instruction = 3;
-  ModelDetails model_details = 4;
-}
-
-message StreamCursorMotionResponse {
-  string text = 1;
-}
-
-message StreamCursorTutorRequest {
-  repeated ConversationMessage conversation = 1;
-  ModelDetails model_details = 2;
-}
-
-message StreamCursorTutorResponse {
-  string text = 1;
-}
-
-message StreamDiffReviewByFileResponse {
-  oneof response {
-    string text = 1;
-    SemanticFileGroups groups = 2;
-  }
-}
-
-message StreamDiffReviewResponse {
-  oneof response {
-    string text = 1;
-    SemanticDiffGroups groups = 2;
-  }
-}
-
-message StreamEditRequest {
-  CurrentFileInfo current_file = 1;
-  repeated ConversationMessage conversation = 2;
-  repeated RepositoryInfo repositories = 3;
-  ExplicitContext explicit_context = 4;
-  optional string workspace_root_path = 5;
-  string query = 6;
-  repeated CodeBlock code_blocks = 7;
-  ModelDetails model_details = 9;
-  repeated string documentation_identifiers = 10;
-  LinterErrors linter_errors = 11;
-  repeated CodeBlock prompt_code_blocks = 12;
-  string session_id = 14;
-  CmdKDebugInfo cmd_k_debug_info = 13;
-  bool fast_mode = 15;
-  StreamEditRequest original_request = 16;
-  repeated ImageProto images = 17;
-  repeated CmdKExternalLink links = 18;
-  repeated CursorRule rules = 19;
-}
-
-message StreamFastEditRequest {
-  CurrentFileInfo current_file = 1;
-  repeated RepositoryInfo repositories = 3;
-  ExplicitContext explicit_context = 4;
-  optional string workspace_root_path = 5;
-  string query = 6;
-  repeated CodeBlock code_blocks = 7;
-  ModelDetails model_details = 9;
-  repeated string documentation_identifiers = 10;
-  LinterErrors linter_errors = 11;
-}
-
-message StreamFastEditResponse {
-  int32 line_number = 2;
-  int32 replace_num_lines = 3;
-  string edit_uuid = 5;
-  optional bool done = 4;
-  optional string new_line = 6;
-  bool reset_new_lines = 7;
-}
-
-message StreamGenerateRequest {
-  CurrentFileInfo current_file = 1;
-  repeated ConversationMessage conversation = 2;
-  repeated RepositoryInfo repositories = 3;
-  ExplicitContext explicit_context = 4;
-  optional string workspace_root_path = 5;
-  string query = 6;
-  repeated CodeBlock code_blocks = 7;
-  ModelDetails model_details = 9;
-  repeated string documentation_identifiers = 10;
-  LinterErrors linter_errors = 11;
-  repeated CodeBlock prompt_code_blocks = 12;
-  string session_id = 14;
-  CmdKDebugInfo cmd_k_debug_info = 13;
-  bool fast_mode = 15;
-  StreamGenerateRequest original_request = 16;
-}
-
-message StreamInterfaceAgentStatusRequest {
-  string task_uuid = 1;
-}
-
-message StreamInterfaceAgentStatusResponse {
-  InterfaceAgentStatus status = 1;
-}
-
-message StreamLintRequest {
-  CurrentFileInfo current_file = 1;
-  repeated ConversationMessage conversation = 2;
-  repeated RepositoryInfo repositories = 3;
-  ExplicitContext explicit_context = 4;
-  optional string workspace_root_path = 5;
-  string query = 6;
-  repeated CodeBlock code_blocks = 7;
-  ModelDetails model_details = 9;
-  repeated string documentation_identifiers = 10;
-  repeated string bad_notifications = 11;
-  string lint_rules = 12;
-}
-
-message StreamNewRuleRequest {
-  string current_rules = 1;
-  string dismissed_bug = 2;
-}
-
-message StreamNextCursorPredictionRequest {
-  message FileVisibleRange {
-    string filename = 1;
-    repeated VisibleRange visible_ranges = 2;
-  }
-
-  message VisibleRange {
-    int32 start_line_number_inclusive = 1;
-    int32 end_line_number_exclusive = 2;
-  }
-
-  CurrentFileInfo current_file = 1;
-  repeated string diff_history = 2;
-  optional string model_name = 3;
-  optional LinterErrors linter_errors = 4;
-  repeated CppContextItem context_items = 13;
-  repeated string diff_history_keys = 5;
-  optional bool give_debug_output = 6;
-  repeated CppFileDiffHistory file_diff_histories = 7;
-  repeated CppFileDiffHistory merged_diff_histories = 8;
-  repeated BlockDiffPatch block_diff_patches = 9;
-  optional bool is_nightly = 10;
-  optional bool is_debug = 11;
-  optional bool immediately_ack = 12;
-  optional bool enable_more_context = 17;
-  repeated CppParameterHint parameter_hints = 14;
-  repeated LspSubgraphFullContext lsp_contexts = 15;
-  optional CppIntentInfo cpp_intent_info = 16;
-  optional string workspace_id = 18;
-  repeated FilesyncUpdateWithModelVersion file_sync_updates = 19;
-  repeated FileVisibleRange file_visible_ranges = 20;
-}
-
-message StreamNextCursorPredictionResponse {
-  oneof response {
-    string text = 1;
-    int32 line_number = 2;
-    bool is_not_in_range = 3;
-    string file_name = 4;
-  }
-}
-
-message StreamPriomptPromptRequest {
-  string prompt_props = 2;
-  string prompt_props_type_name = 3;
-  bool skip_login_check = 5;
-  ModelDetails model_details = 4;
-}
-
-message StreamPriomptPromptResponse {
-  string text = 1;
-}
-
-message StreamPseudocodeGeneratorRequest {
-  CurrentFileInfo current_file = 1;
-  PseudocodeTarget target = 2;
-}
-
-message StreamPseudocodeGeneratorResponse {
-  string text = 1;
-}
-
-message StreamPseudocodeMapperRequest {
-  PseudocodeTarget target = 2;
-  string pseudocode = 1;
-}
-
-message StreamPseudocodeMapperResponse {
-  string text = 1;
-}
-
-message StreamSlashEditFollowUpWithPreviousEditsResponse {
-  message Chat {
-    string text = 1;
-  }
-
-  message EditsToUpdate {
-    repeated SlashEditPreviousEdit previous_edits = 1;
-  }
-
-  oneof response {
-    Chat chat = 1;
-    EditsToUpdate edits_to_update = 2;
-  }
-}
-
-message StreamTerminalAutocompleteRequest {
-  string current_command = 1;
-  repeated string command_history = 2;
-  optional string model_name = 3;
-  repeated CppFileDiffHistory file_diff_histories = 4;
-  optional string git_diff = 5;
-  repeated string commit_history = 6;
-  repeated string past_results = 7;
-}
-
-message StreamTerminalAutocompleteResponse {
-  string text = 1;
-  optional bool done_stream = 2;
-}
-
-message StreamUiBestOfNJudgeClientMessage {
-  oneof message {
-    StreamUiBestOfNJudgeStartRequest start = 1;
-    agent.v1.ExecClientMessage exec_client_message = 2;
-    agent.v1.ExecClientControlMessage exec_client_control_message = 3;
-  }
-}
-
-message StreamUiBestOfNJudgeServerMessage {
-  oneof message {
-    UiBestOfNJudgeFinalResult final_result = 1;
-    agent.v1.ExecServerMessage exec_server_message = 2;
-    agent.v1.ExecServerControlMessage exec_server_control_message = 3;
-  }
-}
-
-message StreamUiBestOfNJudgeStartRequest {
-  string task = 1;
-  repeated UiBestOfNJudgeCandidate candidates = 2;
-}
-
-message StreamWebCmdKV1Request {
-  string relative_workspace_path = 1;
-  string file_contents = 2;
-  string prompt = 3;
-  LineRange selection_range = 4;
-  ModelDetails model_details = 5;
-  repeated ImageProto images = 10;
-}
-
-message StreamWebCmdKV1Response {
-  StreamCmdKResponse cmd_k_response = 1;
+message SttConfig {
+  optional string language = 1;
+  optional bool punctuate = 2;
 }
 
 message SttAudioChunk {
   bytes pcm16 = 1;
+}
+
+message SttControl {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    TYPE_STOP = 1;
+    TYPE_CANCEL = 2;
+  }
+  Type type = 1;
 }
 
 message SttClientMessage {
@@ -2865,302 +3193,9 @@ message SttClientMessage {
   }
 }
 
-message SttConfig {
-  optional string language = 1;
-  optional bool punctuate = 2;
-}
-
-message SttControl {
-  enum Type {
-    TYPE_UNSPECIFIED = 0;
-    TYPE_STOP = 1;
-    TYPE_CANCEL = 2;
-  }
-
-  Type type = 1;
-}
-
 message SttServerMessage {
   string text = 1;
   bool is_final = 2;
-}
-
-message SurroundingLines {
-  int32 start_line = 1;
-  repeated string lines = 2;
-}
-
-message TakeNotesOnCommitDiffRequest {
-  CommitDiffString diff = 1;
-  string commit_hash = 2;
-}
-
-message TakeNotesOnCommitDiffResponse {
-  repeated CommitNoteWithEmbeddings notes = 1;
-}
-
-message TaskGetInterfaceAgentStatusRequest {
-  InterfaceAgentClientState interface_agent_client_state = 1;
-}
-
-message TaskGetInterfaceAgentStatusResponse {
-  InterfaceAgentStatus status = 1;
-}
-
-message TaskGetInterfaceAgentStatusResponseWrapped {
-  oneof response {
-    TaskGetInterfaceAgentStatusResponse real_response = 1;
-    string background_task_uuid = 2;
-  }
-}
-
-message TaskInfoRequest {
-  string task_uuid = 1;
-}
-
-message TaskInfoResponse {
-  string human_readable_title = 1;
-  TaskStatus task_status = 2;
-  int32 last_log_sequence_number = 3;
-}
-
-message TaskInitRequest {
-  TaskInstruction instruction = 1;
-  ModelDetails model_details = 2;
-  bool debugging_only_live_mode = 3;
-  optional string engine_id = 4;
-}
-
-message TaskInitResponse {
-  string task_uuid = 1;
-  string human_readable_title = 2;
-}
-
-message TaskInstruction {
-  message CodeChunk {
-    string relative_workspace_path = 1;
-    int32 start_line_number = 2;
-    repeated string lines = 3;
-  }
-
-  string text = 1;
-  repeated CodeChunk attached_code_chunks = 2;
-  CurrentFileInfo current_file = 3;
-  repeated RepositoryInfo repositories = 4;
-  ExplicitContext explicit_context = 5;
-}
-
-message TaskLogItem {
-  int32 sequence_number = 1;
-  bool is_not_done = 2;
-  oneof log_item {
-    TaskLogOutput output = 3;
-    TaskLogToolAction tool_action = 4;
-    TaskLogThought thought = 5;
-    TaskUserMessage user_message = 6;
-    TaskInstruction instruction = 7;
-    TaskLogToolResult tool_result = 8;
-  }
-}
-
-message TaskLogOutput {
-  string text = 1;
-}
-
-message TaskLogThought {
-  string text = 1;
-}
-
-message TaskLogToolAction {
-  string user_facing_text = 1;
-  string raw_model_output = 3;
-  ToolCall tool_call = 2;
-}
-
-message TaskLogToolResult {
-  ToolResult tool_result = 1;
-  int32 action_sequence_number = 2;
-}
-
-message TaskPauseRequest {
-  string task_uuid = 1;
-}
-
-message TaskPauseResponse {
-}
-
-message TaskProvideResultRequest {
-  string task_uuid = 1;
-  int32 action_sequence_number = 2;
-  ToolResult tool_result = 3;
-}
-
-message TaskProvideResultResponse {
-}
-
-message TaskSendMessageRequest {
-  string task_uuid = 1;
-  TaskUserMessage user_message = 2;
-  bool wants_attention_right_now = 3;
-}
-
-message TaskSendMessageResponse {
-}
-
-message TaskStreamChatContextRequest {
-  CurrentFileInfo current_file = 1;
-  repeated ConversationMessage conversation = 2;
-  repeated RepositoryInfo repositories = 3;
-  ExplicitContext explicit_context = 4;
-  optional string workspace_root_path = 5;
-  repeated CodeBlock code_blocks = 6;
-  ModelDetails model_details = 7;
-  repeated string documentation_identifiers = 8;
-  LinterErrors linter_errors = 14;
-  AdvancedCodebaseContextOptions advanced_codebase_context = 15;
-  optional bool is_eval = 16;
-  string request_id = 17;
-  optional int32 desired_token_limit = 18;
-}
-
-message TaskStreamChatContextResponse {
-  message GatheringFile {
-    string relative_workspace_path = 1;
-    SimpleRange range = 2;
-    int32 step_index = 3;
-    float score = 4;
-  }
-
-  message GatheringStep {
-    string title = 1;
-    int32 index = 2;
-    string query = 3;
-  }
-
-  message Output {
-    string text = 1;
-  }
-
-  message ReasoningStep {
-    string title = 1;
-    int32 index = 2;
-  }
-
-  message ReasoningSubstep {
-    string markdown_explanation = 1;
-    int32 step_index = 2;
-  }
-
-  message RerankingFile {
-    string relative_workspace_path = 1;
-    SimpleRange range = 2;
-    string reason = 3;
-    bool failed = 4;
-    float score = 5;
-    int32 step_index = 6;
-  }
-
-  message RerankingStep {
-    string title = 1;
-    int32 index = 2;
-  }
-
-  oneof response {
-    Output output = 1;
-    GatheringStep gathering_step = 2;
-    GatheringFile gathering_file = 3;
-    RerankingStep reranking_step = 4;
-    RerankingFile reranking_file = 5;
-    ReasoningStep reasoning_step = 6;
-    ReasoningSubstep reasoning_substep = 7;
-  }
-}
-
-message TaskStreamChatContextResponseWrapped {
-  oneof response {
-    TaskStreamChatContextResponse real_response = 1;
-    string background_task_uuid = 2;
-  }
-}
-
-message TaskStreamLogRequest {
-  string task_uuid = 1;
-  int32 start_sequence_number = 2;
-}
-
-message TaskStreamLogResponse {
-  message InfoUpdate {
-    optional string human_readable_title = 1;
-    optional TaskStatus task_status = 2;
-  }
-
-  oneof response {
-    TaskLogItem streamed_log_item = 1;
-    InfoUpdate info_update = 2;
-    TaskInfoResponse initial_task_info = 3;
-  }
-}
-
-message TaskUserMessage {
-  message CodeChunk {
-    string relative_workspace_path = 1;
-    int32 start_line_number = 2;
-    repeated string lines = 3;
-  }
-
-  string text = 1;
-  repeated CodeChunk attached_code_chunks = 2;
-}
-
-message TestBedrockCredentialsRequest {
-  string access_key = 1;
-  string secret_key = 2;
-  string region = 3;
-  string model_name = 4;
-}
-
-message TestBedrockCredentialsResponse {
-  bool success = 1;
-  optional string error = 2;
-}
-
-message TestBidiRequest {
-  string message = 1;
-}
-
-message TestBidiResponse {
-  string message = 1;
-}
-
-message TestModelStatusRequest {
-  string model_name = 1;
-}
-
-message TestModelStatusResponse {
-  string text = 1;
-  float latency = 2;
-  float ttft = 3;
-  float max_time_between_chunks = 4;
-  string server_timing = 5;
-}
-
-message ThrowErrorCheckRequest {
-  ErrorDetails.Error error = 1;
-}
-
-message ThrowErrorCheckResponse {
-}
-
-message TimeLeftHealthCheckResponse {
-  string time_left = 1;
-}
-
-message ToCamelCaseRequest {
-  string text = 1;
-}
-
-message ToCamelCaseResponse {
-  string text = 1;
 }
 
 message TranscribeAudioRequest {
@@ -3174,261 +3209,193 @@ message TranscribeAudioResponse {
   int64 transcription_time_ms = 2;
 }
 
-message TryParseTypeScriptTreeSitterRequest {
-  string workspace_relative_path = 1;
-  string text = 2;
-}
-
-message TryParseTypeScriptTreeSitterResponse {
-  string text = 1;
-}
-
-message UiBestOfNJudgeCandidate {
-  string composer_id = 1;
-  GitDiff diff = 2;
-}
-
-message UiBestOfNJudgeFinalResult {
-  string winner_composer_id = 1;
-  string reasoning = 2;
-}
-
-message UniqueFileIdentifier {
-  string project_uuid = 1;
-  string relative_path = 2;
-  optional string language_id = 3;
-}
-
-message UpdateVscodeProfileRequest {
-  string machine_id = 1;
-  repeated string workspace_extensions = 2;
-  repeated string extensions = 3;
-}
-
-message UpdateVscodeProfileResponse {
-}
-
-message UsageData {
-  int32 gpt4_requests = 2;
-  int32 gpt4_max_requests = 3;
-}
-
-message WarmChatCacheRequest {
-  GetChatRequest request = 1;
-}
-
-message WarmChatCacheResponse {
-  bool did_warm_cache = 1;
-}
-
-message WarmComposerCacheResponse {
-  bool did_warm_cache = 1;
-}
-
-message WriteGitBranchNameRequest {
-  string diffs = 1;
-  optional string context = 2;
-  optional string conversation_id = 3;
-}
-
-message WriteGitBranchNameResponse {
-  string branch_name = 1;
-}
-
-message WriteGitCommitMessageRequest {
-  repeated string diffs = 1;
-  repeated string previous_commit_messages = 2;
-  ExplicitContext explicit_context = 3;
-}
-
-message WriteGitCommitMessageResponse {
-  string commit_message = 1;
-}
-
 service AiService {
-  rpc ServerTime (ServerTimeRequest) returns (ServerTimeResponse);
-  rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse);
-  rpc PrivacyCheck (PrivacyCheckRequest) returns (PrivacyCheckResponse);
-  rpc TimeLeftHealthCheck (HealthCheckRequest) returns (TimeLeftHealthCheckResponse);
-  rpc ThrowErrorCheck (ThrowErrorCheckRequest) returns (ThrowErrorCheckResponse);
-  rpc AvailableModels (AvailableModelsRequest) returns (AvailableModelsResponse);
-  rpc StreamChatTryReallyHard (GetChatRequest) returns (stream StreamChatResponse);
-  rpc RerankDocuments (RerankDocumentsRequest) returns (RerankDocumentsResponse);
-  rpc StreamComposer (GetComposerChatRequest) returns (stream StreamChatResponse);
-  rpc StreamComposerContext (StreamChatContextRequest) returns (stream StreamChatContextResponse);
-  rpc WarmComposerCache (GetComposerChatRequest) returns (WarmComposerCacheResponse);
-  rpc KeepComposerCacheWarm (KeepComposerCacheWarmRequest) returns (KeepComposerCacheWarmResponse);
-  rpc CountTokens (CountTokensRequest) returns (CountTokensResponse);
-  rpc StreamPotentialLocs (PotentialLocsRequest) returns (stream PotentialLocsResponse);
-  rpc StreamPotentialLocsUnderneath (PotentialLocsUnderneathRequest) returns (stream PotentialLocsUnderneathResponse);
-  rpc StreamPotentialLocsInitialQueries (PotentialLocsInitialQueriesRequest) returns (stream PotentialLocsInitialQueriesResponse);
-  rpc GetChatTitle (GetChatTitleRequest) returns (GetChatTitleResponse);
-  rpc GetCompletion (GetCompletionRequest) returns (GetCompletionResponse);
-  rpc IsolatedTreesitter (IsolatedTreesitterRequest) returns (IsolatedTreesitterResponse);
-  rpc GetSimplePrompt (GetSimplePromptRequest) returns (GetSimplePromptResponse);
-  rpc GetPassthroughPrompt (GetPassthroughPromptRequest) returns (GetPassthroughPromptResponse);
-  rpc CheckLongFilesFit (GetChatRequest) returns (CheckLongFilesFitResponse);
-  rpc GetEvaluationPrompt (GetEvaluationPromptRequest) returns (GetEvaluationPromptResponse);
-  rpc GetUserInfo (GetUserInfoRequest) returns (GetUserInfoResponse);
-  rpc StreamChat (GetChatRequest) returns (stream StreamChatResponse);
-  rpc StreamChatWeb (GetChatRequest) returns (stream StreamChatResponse);
-  rpc WarmChatCache (WarmChatCacheRequest) returns (WarmChatCacheResponse);
-  rpc StreamEdit (StreamEditRequest) returns (stream StreamChatResponse);
-  rpc PreloadEdit (PreloadEditRequest) returns (PreloadEditResponse);
-  rpc StreamFastEdit (StreamFastEditRequest) returns (stream StreamFastEditResponse);
-  rpc StreamGenerate (StreamGenerateRequest) returns (stream StreamChatResponse);
-  rpc StreamInlineLongCompletion (StreamInlineLongCompletionRequest) returns (stream StreamChatResponse);
-  rpc SlashEdit (SlashEditRequest) returns (stream SlashEditResponse);
-  rpc SlashEditFollowUpWithPreviousEdits (SlashEditFollowUpWithPreviousEditsRequest) returns (stream StreamSlashEditFollowUpWithPreviousEditsResponse);
-  rpc StreamAiPreviews (StreamAiPreviewsRequest) returns (stream StreamAiPreviewsResponse);
-  rpc ShouldTurnOnCppOnboarding (ShouldTurnOnCppOnboardingRequest) returns (ShouldTurnOnCppOnboardingResponse);
-  rpc GetComposerAutocomplete (GetComposerAutocompleteRequest) returns (GetComposerAutocompleteResponse);
-  rpc StreamReview (ReviewRequest) returns (stream ReviewResponse);
-  rpc StreamReviewChat (ReviewChatRequest) returns (stream ReviewChatResponse);
-  rpc CheckQueuePosition (CheckQueuePositionRequest) returns (CheckQueuePositionResponse);
-  rpc CheckUsageBasedPrice (CheckUsageBasedPriceRequest) returns (CheckUsageBasedPriceResponse);
-  rpc DoThisForMeCheck (DoThisForMeCheckRequest) returns (DoThisForMeCheckResponse);
-  rpc StreamDoThisForMe (DoThisForMeRequest) returns (stream DoThisForMeResponseWrapped);
-  rpc StreamChatToolformer (GetChatRequest) returns (stream StreamChatToolformerResponse);
-  rpc StreamChatToolformerContinue (StreamChatToolformerContinueRequest) returns (stream StreamChatToolformerResponse);
-  rpc PushAiThought (PushAiThoughtRequest) returns (PushAiThoughtResponse);
-  rpc CheckDoableAsTask (CheckDoableAsTaskRequest) returns (CheckDoableAsTaskResponse);
-  rpc ReportGroundTruthCandidate (ReportGroundTruthCandidateRequest) returns (ReportGroundTruthCandidateResponse);
-  rpc ReportCmdKFate (ReportCmdKFateRequest) returns (ReportCmdKFateResponse);
-  rpc ShowWelcomeScreen (ShowWelcomeScreenRequest) returns (ShowWelcomeScreenResponse);
-  rpc InterfaceAgentInit (InterfaceAgentInitRequest) returns (InterfaceAgentInitResponse);
-  rpc StreamInterfaceAgentStatus (StreamInterfaceAgentStatusRequest) returns (stream StreamInterfaceAgentStatusResponse);
-  rpc TaskGetInterfaceAgentStatus (TaskGetInterfaceAgentStatusRequest) returns (stream TaskGetInterfaceAgentStatusResponseWrapped);
-  rpc UpdateVscodeProfile (UpdateVscodeProfileRequest) returns (UpdateVscodeProfileResponse);
-  rpc TaskInit (TaskInitRequest) returns (TaskInitResponse);
-  rpc TaskPause (TaskPauseRequest) returns (TaskPauseResponse);
-  rpc TaskInfo (TaskInfoRequest) returns (TaskInfoResponse);
-  rpc TaskStreamLog (TaskStreamLogRequest) returns (stream TaskStreamLogResponse);
-  rpc TaskSendMessage (TaskSendMessageRequest) returns (TaskSendMessageResponse);
-  rpc TaskProvideResult (TaskProvideResultRequest) returns (TaskProvideResultResponse);
-  rpc CreateExperimentalIndex (CreateExperimentalIndexRequest) returns (CreateExperimentalIndexResponse);
-  rpc ListExperimentalIndexFiles (ListExperimentalIndexFilesRequest) returns (ListExperimentalIndexFilesResponse);
-  rpc ListenExperimentalIndex (ListenExperimentalIndexRequest) returns (stream ListenExperimentalIndexResponse);
-  rpc RegisterFileToIndex (RegisterFileToIndexRequest) returns (RequestReceivedResponse);
-  rpc SetupIndexDependencies (SetupIndexDependenciesRequest) returns (SetupIndexDependenciesResponse);
-  rpc ComputeIndexTopoSort (ComputeIndexTopoSortRequest) returns (ComputeIndexTopoSortResponse);
-  rpc StreamChatDeepContext (StreamChatDeepContextRequest) returns (stream StreamChatDeepContextResponse);
-  rpc ChooseCodeReferences (ChooseCodeReferencesRequest) returns (RequestReceivedResponse);
-  rpc RegisterCodeReferences (RegisterCodeReferencesRequest) returns (RegisterCodeReferencesResponse);
-  rpc ExtractPaths (ExtractPathsRequest) returns (ExtractPathsResponse);
-  rpc SummarizeWithReferences (SummarizeWithReferencesRequest) returns (RequestReceivedResponse);
-  rpc DocumentationQuery (DocumentationQueryRequest) returns (DocumentationQueryResponse);
-  rpc AvailableDocs (AvailableDocsRequest) returns (AvailableDocsResponse);
-  rpc ReportFeedback (ReportFeedbackRequest) returns (ReportFeedbackResponse);
-  rpc ReportBug (ReportBugRequest) returns (ReportBugResponse);
-  rpc StreamChatContext (StreamChatContextRequest) returns (stream StreamChatContextResponse);
-  rpc GenerateTldr (GenerateTldrRequest) returns (GenerateTldrResponse);
-  rpc TaskStreamChatContext (TaskStreamChatContextRequest) returns (stream TaskStreamChatContextResponseWrapped);
-  rpc RerankResults (RerankerRequest) returns (RerankerResponse);
-  rpc ModelQuery (ModelQueryRequest) returns (ModelQueryResponse);
-  rpc ModelQueryV2 (ModelQueryRequest) returns (stream ModelQueryResponseV2);
-  rpc IntentPrediction (IntentPredictionRequest) returns (IntentPredictionResponse);
-  rpc GetChatSuggestions (GetChatSuggestionsRequest) returns (GetChatSuggestionsResponse);
-  rpc GetUserInstructions (GetUserInstructionsRequest) returns (GetUserInstructionsResponse);
-  rpc StreamCursorTutor (StreamCursorTutorRequest) returns (stream StreamCursorTutorResponse);
-  rpc CheckFeatureStatus (CheckFeatureStatusRequest) returns (CheckFeatureStatusResponse);
-  rpc CheckFeaturesStatus (CheckFeaturesStatusRequest) returns (CheckFeaturesStatusResponse);
-  rpc CheckFeatureStatusUnauthenticated (CheckFeatureStatusRequest) returns (CheckFeatureStatusResponse);
-  rpc GetEffectiveTokenLimit (GetEffectiveTokenLimitRequest) returns (GetEffectiveTokenLimitResponse);
-  rpc GetContextScores (ContextScoresRequest) returns (ContextScoresResponse);
-  rpc StreamCpp (StreamCppRequest) returns (stream StreamCppResponse);
-  rpc CppConfig (CppConfigRequest) returns (CppConfigResponse);
-  rpc CppEditHistoryStatus (CppEditHistoryStatusRequest) returns (CppEditHistoryStatusResponse);
-  rpc CppAppend (CppAppendRequest) returns (CppAppendResponse);
-  rpc RefreshTabContext (RefreshTabContextRequest) returns (RefreshTabContextResponse);
-  rpc CheckNumberConfig (CheckNumberConfigRequest) returns (CheckNumberConfigResponse);
-  rpc CheckNumberConfigUnauthenticated (CheckNumberConfigRequest) returns (CheckNumberConfigResponse);
-  rpc CheckNumberConfigs (CheckNumberConfigsRequest) returns (CheckNumberConfigsResponse);
-  rpc StreamTerminalAutocomplete (StreamTerminalAutocompleteRequest) returns (stream StreamTerminalAutocompleteResponse);
-  rpc StreamPseudocodeGenerator (StreamPseudocodeGeneratorRequest) returns (stream StreamPseudocodeGeneratorResponse);
-  rpc StreamPseudocodeMapper (StreamPseudocodeMapperRequest) returns (stream StreamPseudocodeMapperResponse);
-  rpc AcknowledgeGracePeriodDisclaimer (AcknowledgeGracePeriodDisclaimerRequest) returns (AcknowledgeGracePeriodDisclaimerResponse);
-  rpc StreamAiLintBug (StreamAiLintBugRequest) returns (stream StreamAiLintBugResponse);
-  rpc StreamAiCursorHelp (StreamAiCursorHelpRequest) returns (stream StreamAiCursorHelpResponse);
-  rpc LogUserLintReply (LogUserLintReplyRequest) returns (LogUserLintReplyResponse);
-  rpc LogLinterExplicitUserFeedback (LogLinterExplicitUserFeedbackRequest) returns (LogLinterExplicitUserFeedbackResponse);
-  rpc StreamFixMarkers (FixMarkersRequest) returns (stream FixMarkersResponse);
-  rpc ReportInlineAction (ReportInlineActionRequest) returns (ReportInlineActionResponse);
-  rpc StreamPriomptPrompt (StreamPriomptPromptRequest) returns (stream StreamPriomptPromptResponse);
-  rpc StreamLint (StreamLintRequest) returns (stream StreamChatResponse);
-  rpc StreamNewLintRule (StreamNewRuleRequest) returns (stream StreamChatResponse);
-  rpc AiProject (AiProjectRequest) returns (stream AiProjectResponse);
-  rpc ToCamelCase (ToCamelCaseRequest) returns (ToCamelCaseResponse);
-  rpc ReportGenerationFeedback (ReportGenerationFeedbackRequest) returns (ReportGenerationFeedbackResponse);
-  rpc ReportAgentFeedback (ReportAgentFeedbackRequest) returns (ReportAgentFeedbackResponse);
-  rpc GetThoughtAnnotation (GetThoughtAnnotationRequest) returns (GetThoughtAnnotationResponse);
-  rpc StreamWebCmdKV1 (StreamWebCmdKV1Request) returns (stream StreamWebCmdKV1Response);
-  rpc StreamNextCursorPrediction (StreamNextCursorPredictionRequest) returns (stream StreamNextCursorPredictionResponse);
-  rpc IsCursorPredictionEnabled (IsCursorPredictionEnabledRequest) returns (IsCursorPredictionEnabledResponse);
-  rpc GetCppEditClassification (GetCppEditClassificationRequest) returns (GetCppEditClassificationResponse);
-  rpc GetTerminalCompletion (GetTerminalCompletionRequest) returns (GetTerminalCompletionResponse);
-  rpc TakeNotesOnCommitDiff (TakeNotesOnCommitDiffRequest) returns (TakeNotesOnCommitDiffResponse);
-  rpc BulkEmbed (BulkEmbedRequest) returns (BulkEmbedResponse);
-  rpc BackgroundCmdKEval (BackgroundCmdKEvalRequest) returns (stream BackgroundCmdKEvalResponse);
-  rpc BackgroundCmdK (BackgroundCmdKRequest) returns (stream BackgroundCmdKResponse);
-  rpc StreamCursorMotion (StreamCursorMotionRequest) returns (stream StreamCursorMotionResponse);
-  rpc CalculateAutoSelection (CalculateAutoSelectionRequest) returns (CalculateAutoSelectionResponse);
-  rpc GetAtSymbolSuggestions (GetAtSymbolSuggestionsRequest) returns (GetAtSymbolSuggestionsResponse);
-  rpc GetCodebaseQuestions (GetChatRequest) returns (GetCodebaseQuestionsResponse);
-  rpc CppEditHistoryAppend (EditHistoryAppendChangesRequest) returns (EditHistoryAppendChangesResponse);
-  rpc DevOnlyGetPastRequestIds (DevOnlyGetPastRequestIdsRequest) returns (DevOnlyGetPastRequestIdsResponse);
-  rpc GetFilesForComposer (GetFilesForComposerRequest) returns (GetFilesForComposerResponse);
-  rpc TryParseTypeScriptTreeSitter (TryParseTypeScriptTreeSitterRequest) returns (TryParseTypeScriptTreeSitterResponse);
-  rpc NameTab (NameTabRequest) returns (NameTabResponse);
-  rpc IsTerminalFinishedV2 (IsTerminalFinishedRequest) returns (IsTerminalFinishedResponseV2);
-  rpc TestModelStatus (TestModelStatusRequest) returns (TestModelStatusResponse);
-  rpc FindBugs (FindBugsRequest) returns (FindBugsResponse);
-  rpc ContextReranking (ContextRerankingRequest) returns (ContextRerankingResponse);
-  rpc AutoContext (AutoContextRequest) returns (AutoContextResponse);
-  rpc WriteGitCommitMessage (WriteGitCommitMessageRequest) returns (WriteGitCommitMessageResponse);
-  rpc WriteGitBranchName (WriteGitBranchNameRequest) returns (WriteGitBranchNameResponse);
-  rpc StreamBugBot (StreamBugBotRequest) returns (stream StreamBugBotResponse);
-  rpc StreamBugBotAgentic (stream StreamBugBotAgenticClientMessage) returns (stream StreamBugBotAgenticServerMessage);
-  rpc StreamBugBotAgenticSSE (BidiRequestId) returns (stream StreamBugBotAgenticServerMessage);
-  rpc StreamBugBotAgenticPoll (BidiPollRequest) returns (stream BidiPollResponse);
-  rpc StreamUiBestOfNJudge (stream StreamUiBestOfNJudgeClientMessage) returns (stream StreamUiBestOfNJudgeServerMessage);
-  rpc StreamUiBestOfNJudgeSSE (BidiRequestId) returns (stream StreamUiBestOfNJudgeServerMessage);
-  rpc StreamUiBestOfNJudgePoll (BidiPollRequest) returns (stream BidiPollResponse);
-  rpc CheckBugBotPrice (CheckBugBotPriceRequest) returns (CheckBugBotPriceResponse);
-  rpc CheckBugBotTelemetryHealthy (CheckBugBotTelemetryHealthyRequest) returns (CheckBugBotTelemetryHealthyResponse);
-  rpc RecordIdeBugReaction (RecordIdeBugReactionRequest) returns (RecordIdeBugReactionResponse);
-  rpc GetSuggestedBugBotIterations (GetSuggestedBugBotIterationsRequest) returns (GetSuggestedBugBotIterationsResponse);
-  rpc GetEditorBugbotAutoRunStatus (GetEditorBugbotAutoRunStatusRequest) returns (GetEditorBugbotAutoRunStatusResponse);
-  rpc TestBidi (stream TestBidiRequest) returns (stream TestBidiResponse);
-  rpc StreamDiffReview (GetDiffReviewRequest) returns (stream StreamDiffReviewResponse);
-  rpc StreamDiffReviewByFile (GetDiffReviewRequest) returns (stream StreamDiffReviewByFileResponse);
-  rpc GetModelLabels (GetModelLabelsRequest) returns (GetModelLabelsResponse);
-  rpc GetLastDefaultModelNudge (GetLastDefaultModelNudgeRequest) returns (GetLastDefaultModelNudgeResponse);
-  rpc GetDefaultModelNudgeData (GetDefaultModelNudgeDataRequest) returns (GetDefaultModelNudgeDataResponse);
-  rpc GetDefaultModel (GetDefaultModelRequest) returns (GetDefaultModelResponse);
-  rpc ReportCommitAiAnalytics (ReportCommitAiAnalyticsRequest) returns (ReportCommitAiAnalyticsResponse);
-  rpc TestBedrockCredentials (TestBedrockCredentialsRequest) returns (TestBedrockCredentialsResponse);
-  rpc ReportAiCodeChangeMetrics (ReportAiCodeChangeMetricsRequest) returns (ReportAiCodeChangeMetricsResponse);
-  rpc ReportProcessMetrics (ReportProcessMetricsRequest) returns (ReportProcessMetricsResponse);
-  rpc ReportProcessMetricsV2 (ReportProcessMetricsV2Request) returns (ReportProcessMetricsV2Response);
-  rpc ReportClientNumericMetrics (ReportClientNumericMetricsRequest) returns (ReportClientNumericMetricsResponse);
-  rpc PotentiallyGenerateMemory (PotentiallyGenerateMemoryRequest) returns (PotentiallyGenerateMemoryResponse);
-  rpc KnowledgeBaseAdd (KnowledgeBaseAddRequest) returns (KnowledgeBaseAddResponse);
-  rpc KnowledgeBaseList (KnowledgeBaseListRequest) returns (KnowledgeBaseListResponse);
-  rpc KnowledgeBaseRemove (KnowledgeBaseRemoveRequest) returns (KnowledgeBaseRemoveResponse);
-  rpc KnowledgeBaseUpdate (KnowledgeBaseUpdateRequest) returns (KnowledgeBaseUpdateResponse);
-  rpc FetchRelevantKnowledgeForConversation (FetchRelevantKnowledgeForConversationRequest) returns (FetchRelevantKnowledgeForConversationResponse);
-  rpc InferBackgroundComposerScripts (InferBackgroundComposerScriptsRequest) returns (InferBackgroundComposerScriptsResponse);
-  rpc GetBackgroundComposerFeedbackLink (GetBackgroundComposerFeedbackLinkRequest) returns (GetBackgroundComposerFeedbackLinkResponse);
-  rpc GetUsableModels (agent.v1.GetUsableModelsRequest) returns (agent.v1.GetUsableModelsResponse);
-  rpc GetDefaultModelForCli (agent.v1.GetDefaultModelForCliRequest) returns (agent.v1.GetDefaultModelForCliResponse);
-  rpc StreamComposerEnhancer (stream ComposerEnhancerClientMessage) returns (stream ComposerEnhancerServerMessage);
-  rpc StreamComposerEnhancerSSE (BidiRequestId) returns (stream ComposerEnhancerServerMessage);
-  rpc StreamComposerEnhancerPoll (BidiPollRequest) returns (stream BidiPollResponse);
-  rpc StreamStt (stream SttClientMessage) returns (stream SttServerMessage);
-  rpc StreamSttSSE (BidiRequestId) returns (stream SttServerMessage);
-  rpc StreamSttPoll (BidiPollRequest) returns (stream BidiPollResponse);
-  rpc TranscribeAudio (TranscribeAudioRequest) returns (TranscribeAudioResponse);
-  rpc NameAgent (agent.v1.NameAgentRequest) returns (agent.v1.NameAgentResponse);
-  rpc EvaluatePromptHook (EvaluatePromptHookRequest) returns (EvaluatePromptHookResponse);
+  rpc ServerTime(ServerTimeRequest) returns (ServerTimeResponse);
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+  rpc PrivacyCheck(PrivacyCheckRequest) returns (PrivacyCheckResponse);
+  rpc TimeLeftHealthCheck(HealthCheckRequest) returns (TimeLeftHealthCheckResponse);
+  rpc ThrowErrorCheck(ThrowErrorCheckRequest) returns (ThrowErrorCheckResponse);
+  rpc AvailableModels(AvailableModelsRequest) returns (AvailableModelsResponse);
+  rpc StreamChatTryReallyHard(GetChatRequest) returns (stream StreamChatResponse);
+  rpc RerankDocuments(RerankDocumentsRequest) returns (RerankDocumentsResponse);
+  rpc StreamComposer(GetComposerChatRequest) returns (stream StreamChatResponse);
+  rpc StreamComposerContext(StreamChatContextRequest) returns (stream StreamChatContextResponse);
+  rpc WarmComposerCache(GetComposerChatRequest) returns (WarmComposerCacheResponse);
+  rpc KeepComposerCacheWarm(KeepComposerCacheWarmRequest) returns (KeepComposerCacheWarmResponse);
+  rpc CountTokens(CountTokensRequest) returns (CountTokensResponse);
+  rpc StreamPotentialLocs(PotentialLocsRequest) returns (stream PotentialLocsResponse);
+  rpc StreamPotentialLocsUnderneath(PotentialLocsUnderneathRequest) returns (stream PotentialLocsUnderneathResponse);
+  rpc StreamPotentialLocsInitialQueries(PotentialLocsInitialQueriesRequest) returns (stream PotentialLocsInitialQueriesResponse);
+  rpc GetChatTitle(GetChatTitleRequest) returns (GetChatTitleResponse);
+  rpc GetCompletion(GetCompletionRequest) returns (GetCompletionResponse);
+  rpc IsolatedTreesitter(IsolatedTreesitterRequest) returns (IsolatedTreesitterResponse);
+  rpc GetSimplePrompt(GetSimplePromptRequest) returns (GetSimplePromptResponse);
+  rpc GetPassthroughPrompt(GetPassthroughPromptRequest) returns (GetPassthroughPromptResponse);
+  rpc SuggestQuickActions(SuggestQuickActionsRequest) returns (SuggestQuickActionsResponse);
+  rpc CheckLongFilesFit(GetChatRequest) returns (CheckLongFilesFitResponse);
+  rpc GetEvaluationPrompt(GetEvaluationPromptRequest) returns (GetEvaluationPromptResponse);
+  rpc GetUserInfo(GetUserInfoRequest) returns (GetUserInfoResponse);
+  rpc StreamChat(GetChatRequest) returns (stream StreamChatResponse);
+  rpc StreamChatWeb(GetChatRequest) returns (stream StreamChatResponse);
+  rpc WarmChatCache(WarmChatCacheRequest) returns (WarmChatCacheResponse);
+  rpc StreamEdit(StreamEditRequest) returns (stream StreamChatResponse);
+  rpc PreloadEdit(PreloadEditRequest) returns (PreloadEditResponse);
+  rpc StreamFastEdit(StreamFastEditRequest) returns (stream StreamFastEditResponse);
+  rpc StreamGenerate(StreamGenerateRequest) returns (stream StreamChatResponse);
+  rpc StreamInlineLongCompletion(StreamInlineLongCompletionRequest) returns (stream StreamChatResponse);
+  rpc SlashEdit(SlashEditRequest) returns (stream SlashEditResponse);
+  rpc SlashEditFollowUpWithPreviousEdits(SlashEditFollowUpWithPreviousEditsRequest) returns (stream StreamSlashEditFollowUpWithPreviousEditsResponse);
+  rpc StreamAiPreviews(StreamAiPreviewsRequest) returns (stream StreamAiPreviewsResponse);
+  rpc ShouldTurnOnCppOnboarding(ShouldTurnOnCppOnboardingRequest) returns (ShouldTurnOnCppOnboardingResponse);
+  rpc GetComposerAutocomplete(GetComposerAutocompleteRequest) returns (GetComposerAutocompleteResponse);
+  rpc StreamReview(ReviewRequest) returns (stream ReviewResponse);
+  rpc StreamReviewChat(ReviewChatRequest) returns (stream ReviewChatResponse);
+  rpc CheckQueuePosition(CheckQueuePositionRequest) returns (CheckQueuePositionResponse);
+  rpc CheckUsageBasedPrice(CheckUsageBasedPriceRequest) returns (CheckUsageBasedPriceResponse);
+  rpc DoThisForMeCheck(DoThisForMeCheckRequest) returns (DoThisForMeCheckResponse);
+  rpc StreamDoThisForMe(DoThisForMeRequest) returns (stream DoThisForMeResponseWrapped);
+  rpc StreamChatToolformer(GetChatRequest) returns (stream StreamChatToolformerResponse);
+  rpc StreamChatToolformerContinue(StreamChatToolformerContinueRequest) returns (stream StreamChatToolformerResponse);
+  rpc PushAiThought(PushAiThoughtRequest) returns (PushAiThoughtResponse);
+  rpc CheckDoableAsTask(CheckDoableAsTaskRequest) returns (CheckDoableAsTaskResponse);
+  rpc ReportGroundTruthCandidate(ReportGroundTruthCandidateRequest) returns (ReportGroundTruthCandidateResponse);
+  rpc ReportCmdKFate(ReportCmdKFateRequest) returns (ReportCmdKFateResponse);
+  rpc ShowWelcomeScreen(ShowWelcomeScreenRequest) returns (ShowWelcomeScreenResponse);
+  rpc InterfaceAgentInit(InterfaceAgentInitRequest) returns (InterfaceAgentInitResponse);
+  rpc StreamInterfaceAgentStatus(StreamInterfaceAgentStatusRequest) returns (stream StreamInterfaceAgentStatusResponse);
+  rpc TaskGetInterfaceAgentStatus(TaskGetInterfaceAgentStatusRequest) returns (stream TaskGetInterfaceAgentStatusResponseWrapped);
+  rpc UpdateVscodeProfile(UpdateVscodeProfileRequest) returns (UpdateVscodeProfileResponse);
+  rpc TaskInit(TaskInitRequest) returns (TaskInitResponse);
+  rpc TaskPause(TaskPauseRequest) returns (TaskPauseResponse);
+  rpc TaskInfo(TaskInfoRequest) returns (TaskInfoResponse);
+  rpc TaskStreamLog(TaskStreamLogRequest) returns (stream TaskStreamLogResponse);
+  rpc TaskSendMessage(TaskSendMessageRequest) returns (TaskSendMessageResponse);
+  rpc TaskProvideResult(TaskProvideResultRequest) returns (TaskProvideResultResponse);
+  rpc CreateExperimentalIndex(CreateExperimentalIndexRequest) returns (CreateExperimentalIndexResponse);
+  rpc ListExperimentalIndexFiles(ListExperimentalIndexFilesRequest) returns (ListExperimentalIndexFilesResponse);
+  rpc ListenExperimentalIndex(ListenExperimentalIndexRequest) returns (stream ListenExperimentalIndexResponse);
+  rpc RegisterFileToIndex(RegisterFileToIndexRequest) returns (RequestReceivedResponse);
+  rpc SetupIndexDependencies(SetupIndexDependenciesRequest) returns (SetupIndexDependenciesResponse);
+  rpc ComputeIndexTopoSort(ComputeIndexTopoSortRequest) returns (ComputeIndexTopoSortResponse);
+  rpc StreamChatDeepContext(StreamChatDeepContextRequest) returns (stream StreamChatDeepContextResponse);
+  rpc ChooseCodeReferences(ChooseCodeReferencesRequest) returns (RequestReceivedResponse);
+  rpc RegisterCodeReferences(RegisterCodeReferencesRequest) returns (RegisterCodeReferencesResponse);
+  rpc ExtractPaths(ExtractPathsRequest) returns (ExtractPathsResponse);
+  rpc SummarizeWithReferences(SummarizeWithReferencesRequest) returns (RequestReceivedResponse);
+  rpc DocumentationQuery(DocumentationQueryRequest) returns (DocumentationQueryResponse);
+  rpc AvailableDocs(AvailableDocsRequest) returns (AvailableDocsResponse);
+  rpc ReportFeedback(ReportFeedbackRequest) returns (ReportFeedbackResponse);
+  rpc ReportBug(ReportBugRequest) returns (ReportBugResponse);
+  rpc StreamChatContext(StreamChatContextRequest) returns (stream StreamChatContextResponse);
+  rpc GenerateTldr(GenerateTldrRequest) returns (GenerateTldrResponse);
+  rpc TaskStreamChatContext(TaskStreamChatContextRequest) returns (stream TaskStreamChatContextResponseWrapped);
+  rpc RerankResults(RerankerRequest) returns (RerankerResponse);
+  rpc ModelQuery(ModelQueryRequest) returns (ModelQueryResponse);
+  rpc ModelQueryV2(ModelQueryRequest) returns (stream ModelQueryResponseV2);
+  rpc IntentPrediction(IntentPredictionRequest) returns (IntentPredictionResponse);
+  rpc GetChatSuggestions(GetChatSuggestionsRequest) returns (GetChatSuggestionsResponse);
+  rpc GetUserInstructions(GetUserInstructionsRequest) returns (GetUserInstructionsResponse);
+  rpc StreamCursorTutor(StreamCursorTutorRequest) returns (stream StreamCursorTutorResponse);
+  rpc CheckFeatureStatus(CheckFeatureStatusRequest) returns (CheckFeatureStatusResponse);
+  rpc CheckFeaturesStatus(CheckFeaturesStatusRequest) returns (CheckFeaturesStatusResponse);
+  rpc CheckFeatureStatusUnauthenticated(CheckFeatureStatusRequest) returns (CheckFeatureStatusResponse);
+  rpc GetEffectiveTokenLimit(GetEffectiveTokenLimitRequest) returns (GetEffectiveTokenLimitResponse);
+  rpc GetContextScores(ContextScoresRequest) returns (ContextScoresResponse);
+  rpc StreamCpp(StreamCppRequest) returns (stream StreamCppResponse);
+  rpc CppConfig(CppConfigRequest) returns (CppConfigResponse);
+  rpc CppEditHistoryStatus(CppEditHistoryStatusRequest) returns (CppEditHistoryStatusResponse);
+  rpc CppAppend(CppAppendRequest) returns (CppAppendResponse);
+  rpc RefreshTabContext(RefreshTabContextRequest) returns (RefreshTabContextResponse);
+  rpc CheckNumberConfig(CheckNumberConfigRequest) returns (CheckNumberConfigResponse);
+  rpc CheckNumberConfigUnauthenticated(CheckNumberConfigRequest) returns (CheckNumberConfigResponse);
+  rpc CheckNumberConfigs(CheckNumberConfigsRequest) returns (CheckNumberConfigsResponse);
+  rpc StreamTerminalAutocomplete(StreamTerminalAutocompleteRequest) returns (stream StreamTerminalAutocompleteResponse);
+  rpc StreamPseudocodeGenerator(StreamPseudocodeGeneratorRequest) returns (stream StreamPseudocodeGeneratorResponse);
+  rpc StreamPseudocodeMapper(StreamPseudocodeMapperRequest) returns (stream StreamPseudocodeMapperResponse);
+  rpc AcknowledgeGracePeriodDisclaimer(AcknowledgeGracePeriodDisclaimerRequest) returns (AcknowledgeGracePeriodDisclaimerResponse);
+  rpc StreamAiLintBug(StreamAiLintBugRequest) returns (stream StreamAiLintBugResponse);
+  rpc StreamAiCursorHelp(StreamAiCursorHelpRequest) returns (stream StreamAiCursorHelpResponse);
+  rpc LogUserLintReply(LogUserLintReplyRequest) returns (LogUserLintReplyResponse);
+  rpc LogLinterExplicitUserFeedback(LogLinterExplicitUserFeedbackRequest) returns (LogLinterExplicitUserFeedbackResponse);
+  rpc StreamFixMarkers(FixMarkersRequest) returns (stream FixMarkersResponse);
+  rpc ReportInlineAction(ReportInlineActionRequest) returns (ReportInlineActionResponse);
+  rpc StreamPriomptPrompt(StreamPriomptPromptRequest) returns (stream StreamPriomptPromptResponse);
+  rpc StreamLint(StreamLintRequest) returns (stream StreamChatResponse);
+  rpc StreamNewLintRule(StreamNewRuleRequest) returns (stream StreamChatResponse);
+  rpc AiProject(AiProjectRequest) returns (stream AiProjectResponse);
+  rpc ToCamelCase(ToCamelCaseRequest) returns (ToCamelCaseResponse);
+  rpc ReportGenerationFeedback(ReportGenerationFeedbackRequest) returns (ReportGenerationFeedbackResponse);
+  rpc ReportAgentFeedback(ReportAgentFeedbackRequest) returns (ReportAgentFeedbackResponse);
+  rpc ReportAgentMessageFeedback(ReportAgentMessageFeedbackRequest) returns (ReportAgentMessageFeedbackResponse);
+  rpc GetThoughtAnnotation(GetThoughtAnnotationRequest) returns (GetThoughtAnnotationResponse);
+  rpc StreamWebCmdKV1(StreamWebCmdKV1Request) returns (stream StreamWebCmdKV1Response);
+  rpc StreamNextCursorPrediction(StreamNextCursorPredictionRequest) returns (stream StreamNextCursorPredictionResponse);
+  rpc IsCursorPredictionEnabled(IsCursorPredictionEnabledRequest) returns (IsCursorPredictionEnabledResponse);
+  rpc GetCppEditClassification(GetCppEditClassificationRequest) returns (GetCppEditClassificationResponse);
+  rpc GetTerminalCompletion(GetTerminalCompletionRequest) returns (GetTerminalCompletionResponse);
+  rpc TakeNotesOnCommitDiff(TakeNotesOnCommitDiffRequest) returns (TakeNotesOnCommitDiffResponse);
+  rpc BulkEmbed(BulkEmbedRequest) returns (BulkEmbedResponse);
+  rpc BackgroundCmdKEval(BackgroundCmdKEvalRequest) returns (stream BackgroundCmdKEvalResponse);
+  rpc BackgroundCmdK(BackgroundCmdKRequest) returns (stream BackgroundCmdKResponse);
+  rpc StreamCursorMotion(StreamCursorMotionRequest) returns (stream StreamCursorMotionResponse);
+  rpc CalculateAutoSelection(CalculateAutoSelectionRequest) returns (CalculateAutoSelectionResponse);
+  rpc GetAtSymbolSuggestions(GetAtSymbolSuggestionsRequest) returns (GetAtSymbolSuggestionsResponse);
+  rpc GetCodebaseQuestions(GetChatRequest) returns (GetCodebaseQuestionsResponse);
+  rpc CppEditHistoryAppend(EditHistoryAppendChangesRequest) returns (EditHistoryAppendChangesResponse);
+  rpc DevOnlyGetPastRequestIds(DevOnlyGetPastRequestIdsRequest) returns (DevOnlyGetPastRequestIdsResponse);
+  rpc GetFilesForComposer(GetFilesForComposerRequest) returns (GetFilesForComposerResponse);
+  rpc TryParseTypeScriptTreeSitter(TryParseTypeScriptTreeSitterRequest) returns (TryParseTypeScriptTreeSitterResponse);
+  rpc NameTab(NameTabRequest) returns (NameTabResponse);
+  rpc IsTerminalFinishedV2(IsTerminalFinishedRequest) returns (IsTerminalFinishedResponseV2);
+  rpc TestModelStatus(TestModelStatusRequest) returns (TestModelStatusResponse);
+  rpc FindBugs(FindBugsRequest) returns (FindBugsResponse);
+  rpc ContextReranking(ContextRerankingRequest) returns (ContextRerankingResponse);
+  rpc AutoContext(AutoContextRequest) returns (AutoContextResponse);
+  rpc WriteGitCommitMessage(WriteGitCommitMessageRequest) returns (WriteGitCommitMessageResponse);
+  rpc WriteGitBranchName(WriteGitBranchNameRequest) returns (WriteGitBranchNameResponse);
+  rpc StreamBugBot(StreamBugBotRequest) returns (stream StreamBugBotResponse);
+  rpc StreamBugBotAgentic(stream StreamBugBotAgenticClientMessage) returns (stream StreamBugBotAgenticServerMessage);
+  rpc StreamBugBotAgenticSSE(BidiRequestId) returns (stream StreamBugBotAgenticServerMessage);
+  rpc StreamBugBotAgenticPoll(BidiPollRequest) returns (stream BidiPollResponse);
+  rpc StreamUiBestOfNJudge(stream StreamUiBestOfNJudgeClientMessage) returns (stream StreamUiBestOfNJudgeServerMessage);
+  rpc StreamUiBestOfNJudgeSSE(BidiRequestId) returns (stream StreamUiBestOfNJudgeServerMessage);
+  rpc StreamUiBestOfNJudgePoll(BidiPollRequest) returns (stream BidiPollResponse);
+  rpc CheckBugBotPrice(CheckBugBotPriceRequest) returns (CheckBugBotPriceResponse);
+  rpc CheckBugBotTelemetryHealthy(CheckBugBotTelemetryHealthyRequest) returns (CheckBugBotTelemetryHealthyResponse);
+  rpc RecordIdeBugReaction(RecordIdeBugReactionRequest) returns (RecordIdeBugReactionResponse);
+  rpc GetSuggestedBugBotIterations(GetSuggestedBugBotIterationsRequest) returns (GetSuggestedBugBotIterationsResponse);
+  rpc GetEditorBugbotAutoRunStatus(GetEditorBugbotAutoRunStatusRequest) returns (GetEditorBugbotAutoRunStatusResponse);
+  rpc TestBidi(stream TestBidiRequest) returns (stream TestBidiResponse);
+  rpc StreamDiffReview(GetDiffReviewRequest) returns (stream StreamDiffReviewResponse);
+  rpc StreamDiffReviewByFile(GetDiffReviewRequest) returns (stream StreamDiffReviewByFileResponse);
+  rpc GetModelLabels(GetModelLabelsRequest) returns (GetModelLabelsResponse);
+  rpc GetLastDefaultModelNudge(GetLastDefaultModelNudgeRequest) returns (GetLastDefaultModelNudgeResponse);
+  rpc GetDefaultModelNudgeData(GetDefaultModelNudgeDataRequest) returns (GetDefaultModelNudgeDataResponse);
+  rpc GetDefaultModel(GetDefaultModelRequest) returns (GetDefaultModelResponse);
+  rpc ReportCommitAiAnalytics(ReportCommitAiAnalyticsRequest) returns (ReportCommitAiAnalyticsResponse);
+  rpc TestBedrockCredentials(TestBedrockCredentialsRequest) returns (TestBedrockCredentialsResponse);
+  rpc ReportAiCodeChangeMetrics(ReportAiCodeChangeMetricsRequest) returns (ReportAiCodeChangeMetricsResponse);
+  rpc ReportProcessMetrics(ReportProcessMetricsRequest) returns (ReportProcessMetricsResponse);
+  rpc ReportProcessMetricsV2(ReportProcessMetricsV2Request) returns (ReportProcessMetricsV2Response);
+  rpc ReportClientNumericMetrics(ReportClientNumericMetricsRequest) returns (ReportClientNumericMetricsResponse);
+  rpc PotentiallyGenerateMemory(PotentiallyGenerateMemoryRequest) returns (PotentiallyGenerateMemoryResponse);
+  rpc KnowledgeBaseAdd(KnowledgeBaseAddRequest) returns (KnowledgeBaseAddResponse);
+  rpc KnowledgeBaseList(KnowledgeBaseListRequest) returns (KnowledgeBaseListResponse);
+  rpc KnowledgeBaseRemove(KnowledgeBaseRemoveRequest) returns (KnowledgeBaseRemoveResponse);
+  rpc KnowledgeBaseUpdate(KnowledgeBaseUpdateRequest) returns (KnowledgeBaseUpdateResponse);
+  rpc FetchRelevantKnowledgeForConversation(FetchRelevantKnowledgeForConversationRequest) returns (FetchRelevantKnowledgeForConversationResponse);
+  rpc InferBackgroundComposerScripts(InferBackgroundComposerScriptsRequest) returns (InferBackgroundComposerScriptsResponse);
+  rpc GetBackgroundComposerFeedbackLink(GetBackgroundComposerFeedbackLinkRequest) returns (GetBackgroundComposerFeedbackLinkResponse);
+  rpc GetUsableModels(agent.v1.GetUsableModelsRequest) returns (agent.v1.GetUsableModelsResponse);
+  rpc GetDefaultModelForCli(agent.v1.GetDefaultModelForCliRequest) returns (agent.v1.GetDefaultModelForCliResponse);
+  rpc StreamComposerEnhancer(stream ComposerEnhancerClientMessage) returns (stream ComposerEnhancerServerMessage);
+  rpc StreamComposerEnhancerSSE(BidiRequestId) returns (stream ComposerEnhancerServerMessage);
+  rpc StreamComposerEnhancerPoll(BidiPollRequest) returns (stream BidiPollResponse);
+  rpc StreamStt(stream SttClientMessage) returns (stream SttServerMessage);
+  rpc StreamSttSSE(BidiRequestId) returns (stream SttServerMessage);
+  rpc StreamSttPoll(BidiPollRequest) returns (stream BidiPollResponse);
+  rpc TranscribeAudio(TranscribeAudioRequest) returns (TranscribeAudioResponse);
+  rpc NameAgent(agent.v1.NameAgentRequest) returns (agent.v1.NameAgentResponse);
+  rpc EvaluatePromptHook(EvaluatePromptHookRequest) returns (EvaluatePromptHookResponse);
+  rpc GetCloudSetupBlockers(GetCloudSetupBlockersRequest) returns (GetCloudSetupBlockersResponse);
 }

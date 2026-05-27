@@ -12,36 +12,9 @@ enum DiagnosticSeverity {
   DIAGNOSTIC_SEVERITY_HINT = 4;
 }
 
-message Diagnostic {
-  DiagnosticSeverity severity = 1;
-  Range range = 2;
-  string message = 3;
-  string source = 4;
-  string code = 5;
-  bool is_stale = 6;
-}
-
 message DiagnosticsArgs {
   string path = 1;
   string tool_call_id = 2;
-}
-
-message DiagnosticsError {
-  string path = 1;
-  string error = 2;
-}
-
-message DiagnosticsFileNotFound {
-  string path = 1;
-}
-
-message DiagnosticsPermissionDenied {
-  string path = 1;
-}
-
-message DiagnosticsRejected {
-  string path = 1;
-  string reason = 2;
 }
 
 message DiagnosticsResult {
@@ -58,4 +31,31 @@ message DiagnosticsSuccess {
   string path = 1;
   repeated Diagnostic diagnostics = 2;
   int32 total_diagnostics = 3;
+}
+
+message Diagnostic {
+  DiagnosticSeverity severity = 1;
+  Range range = 2;
+  string message = 3;
+  string source = 4;
+  string code = 5;
+  bool is_stale = 6;
+}
+
+message DiagnosticsError {
+  string path = 1;
+  string error = 2;
+}
+
+message DiagnosticsRejected {
+  string path = 1;
+  string reason = 2;
+}
+
+message DiagnosticsFileNotFound {
+  string path = 1;
+}
+
+message DiagnosticsPermissionDenied {
+  string path = 1;
 }

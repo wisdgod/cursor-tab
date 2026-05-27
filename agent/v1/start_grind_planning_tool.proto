@@ -7,10 +7,6 @@ message StartGrindPlanningArgs {
   string tool_call_id = 2;
 }
 
-message StartGrindPlanningError {
-  string error = 1;
-}
-
 message StartGrindPlanningResult {
   oneof result {
     StartGrindPlanningSuccess success = 1;
@@ -19,6 +15,10 @@ message StartGrindPlanningResult {
 }
 
 message StartGrindPlanningSuccess {
+}
+
+message StartGrindPlanningError {
+  string error = 1;
 }
 
 message StartGrindPlanningToolCall {

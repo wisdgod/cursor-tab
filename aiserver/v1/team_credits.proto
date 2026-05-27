@@ -2,14 +2,6 @@ syntax = "proto3";
 
 package aiserver.v1;
 
-message ClearTeamCreditsRequest {
-  int32 team_id = 1;
-}
-
-message ClearTeamCreditsResponse {
-  bool success = 1;
-}
-
 message GetTeamCreditsRequest {
   int32 team_id = 1;
 }
@@ -31,8 +23,16 @@ message SetTeamCreditsResponse {
   bool success = 1;
 }
 
+message ClearTeamCreditsRequest {
+  int32 team_id = 1;
+}
+
+message ClearTeamCreditsResponse {
+  bool success = 1;
+}
+
 service TeamCreditsService {
-  rpc GetTeamCredits (GetTeamCreditsRequest) returns (GetTeamCreditsResponse);
-  rpc SetTeamCredits (SetTeamCreditsRequest) returns (SetTeamCreditsResponse);
-  rpc ClearTeamCredits (ClearTeamCreditsRequest) returns (ClearTeamCreditsResponse);
+  rpc GetTeamCredits(GetTeamCreditsRequest) returns (GetTeamCreditsResponse);
+  rpc SetTeamCredits(SetTeamCreditsRequest) returns (SetTeamCreditsResponse);
+  rpc ClearTeamCredits(ClearTeamCreditsRequest) returns (ClearTeamCreditsResponse);
 }

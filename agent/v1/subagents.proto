@@ -15,21 +15,6 @@ enum TaskMode {
   TASK_MODE_PLAN = 2;
 }
 
-message CustomSubagent {
-  string full_path = 1;
-  string name = 2;
-  string description = 3;
-  repeated string tools = 4;
-  string model = 5;
-  string prompt = 6;
-  CustomSubagentPermissionMode permission_mode = 7;
-  bool is_background = 8;
-  optional string plugin = 9;
-  optional string marketplace = 10;
-  optional string plugin_id = 11;
-  optional string marketplace_id = 12;
-}
-
 message SubagentType {
   oneof type {
     SubagentTypeUnspecified unspecified = 1;
@@ -43,26 +28,14 @@ message SubagentType {
     SubagentTypeVmSetupHelper vm_setup_helper = 9;
     SubagentTypeDebug debug = 10;
     SubagentTypeCursorGuide cursor_guide = 11;
+    SubagentTypeWatchVideo watch_video = 12;
   }
 }
 
-message SubagentTypeBash {
-}
-
-message SubagentTypeBrowserUse {
+message SubagentTypeUnspecified {
 }
 
 message SubagentTypeComputerUse {
-}
-
-message SubagentTypeCursorGuide {
-}
-
-message SubagentTypeCustom {
-  string name = 1;
-}
-
-message SubagentTypeDebug {
 }
 
 message SubagentTypeExplore {
@@ -71,11 +44,44 @@ message SubagentTypeExplore {
 message SubagentTypeMediaReview {
 }
 
+message SubagentTypeBash {
+}
+
 message SubagentTypeShell {
 }
 
-message SubagentTypeUnspecified {
+message SubagentTypeBrowserUse {
 }
 
 message SubagentTypeVmSetupHelper {
+}
+
+message SubagentTypeDebug {
+}
+
+message SubagentTypeCursorGuide {
+}
+
+message SubagentTypeWatchVideo {
+}
+
+message SubagentTypeCustom {
+  string name = 1;
+}
+
+message CustomSubagent {
+  string full_path = 1;
+  string name = 2;
+  string description = 3;
+  repeated string tools = 4;
+  string model = 5;
+  string prompt = 6;
+  CustomSubagentPermissionMode permission_mode = 7;
+  bool is_background = 8;
+  optional string plugin = 9;
+  optional string marketplace = 10;
+  optional string plugin_id = 11;
+  optional string marketplace_id = 12;
+  bool force_default_model = 13;
+  optional string source = 14;
 }

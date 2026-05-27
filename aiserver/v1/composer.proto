@@ -4,36 +4,6 @@ package aiserver.v1;
 
 import "aiserver/v1/utils.proto";
 
-message ComposerCapabilityContext {
-  message GithubPRContext {
-    string title = 1;
-    string description = 2;
-    string comments = 3;
-    optional string ci_failures = 4;
-  }
-
-  message MicrosoftTeamsIntegrationContext {
-    string thread = 1;
-    optional string channel_name = 2;
-    optional string team_name = 3;
-    optional string channel_description = 4;
-    optional string team_description = 5;
-  }
-
-  message SlackIntegrationContext {
-    string thread = 1;
-    optional string channel_name = 2;
-    optional string channel_purpose = 3;
-    optional string channel_topic = 4;
-  }
-
-  oneof data {
-    SlackIntegrationContext slack_integration = 27;
-    GithubPRContext github_pr = 28;
-    MicrosoftTeamsIntegrationContext microsoft_teams_integration = 29;
-  }
-}
-
 message ComposerCapabilityRequest {
   enum ComposerCapabilityType {
     COMPOSER_CAPABILITY_TYPE_UNSPECIFIED = 0;
@@ -73,7 +43,6 @@ message ComposerCapabilityRequest {
     COMPOSER_CAPABILITY_TYPE_SPEC = 34;
     COMPOSER_CAPABILITY_TYPE_BROWSER_AGENT = 35;
   }
-
   enum ToolType {
     TOOL_TYPE_UNSPECIFIED = 0;
     TOOL_TYPE_ADD_FILE_TO_CONTEXT = 1;
@@ -81,32 +50,40 @@ message ComposerCapabilityRequest {
     TOOL_TYPE_REMOVE_FILE_FROM_CONTEXT = 4;
     TOOL_TYPE_SEMANTIC_SEARCH_CODEBASE = 5;
   }
-
-  message AutoContextCapability {
-    optional string custom_instructions = 1;
-    repeated string additional_files = 2;
+  message ToolSchema {
+    ToolType type = 1;
+    string name = 2;
+    map<string, SchemaProperty> properties = 3;
+    repeated string required = 4;
   }
-
-  message ContextPickingCapability {
+  message SchemaProperty {
+    string type = 1;
+    optional string description = 2;
+  }
+  message LoopOnLintsCapability {
+    repeated LinterErrors linter_errors = 1;
+    optional string custom_instructions = 2;
+  }
+  message LoopOnTestsCapability {
+    repeated string test_names = 1;
+    optional string custom_instructions = 2;
+  }
+  message MegaPlannerCapability {
     optional string custom_instructions = 1;
-    repeated string potential_context_files = 2;
-    repeated CodeChunk potential_context_code_chunks = 3;
+  }
+  message LoopOnCommandCapability {
+    string command = 1;
+    optional string custom_instructions = 2;
+    optional string output = 3;
+    optional int32 exit_code = 4;
+  }
+  message ToolCallCapability {
+    optional string custom_instructions = 1;
+    repeated ToolSchema tool_schemas = 2;
+    repeated string relevant_files = 3;
     repeated string files_in_context = 4;
+    repeated string semantic_search_files = 5;
   }
-
-  message ContextPlannerCapability {
-    optional string custom_instructions = 1;
-    repeated CodeChunk attached_code_chunks = 2;
-  }
-
-  message CursorRulesCapability {
-    optional string custom_instructions = 1;
-  }
-
-  message DecomposerCapability {
-    optional string custom_instructions = 1;
-  }
-
   message DiffReviewCapability {
     message SimpleFileDiff {
       message Chunk {
@@ -115,65 +92,39 @@ message ComposerCapabilityRequest {
         LineRange old_range = 3;
         LineRange new_range = 4;
       }
-
       string relative_workspace_path = 1;
       repeated Chunk chunks = 3;
     }
-
     optional string custom_instructions = 1;
     repeated SimpleFileDiff diffs = 2;
   }
-
+  message DecomposerCapability {
+    optional string custom_instructions = 1;
+  }
+  message ContextPickingCapability {
+    optional string custom_instructions = 1;
+    repeated string potential_context_files = 2;
+    repeated CodeChunk potential_context_code_chunks = 3;
+    repeated string files_in_context = 4;
+  }
   message EditTrailCapability {
     optional string custom_instructions = 1;
   }
-
-  message LoopOnCommandCapability {
-    string command = 1;
-    optional string custom_instructions = 2;
-    optional string output = 3;
-    optional int32 exit_code = 4;
-  }
-
-  message LoopOnLintsCapability {
-    repeated LinterErrors linter_errors = 1;
-    optional string custom_instructions = 2;
-  }
-
-  message LoopOnTestsCapability {
-    repeated string test_names = 1;
-    optional string custom_instructions = 2;
-  }
-
-  message MegaPlannerCapability {
+  message AutoContextCapability {
     optional string custom_instructions = 1;
+    repeated string additional_files = 2;
   }
-
+  message ContextPlannerCapability {
+    optional string custom_instructions = 1;
+    repeated CodeChunk attached_code_chunks = 2;
+  }
   message RememberThisCapability {
     optional string custom_instructions = 1;
     string memory = 2;
   }
-
-  message SchemaProperty {
-    string type = 1;
-    optional string description = 2;
-  }
-
-  message ToolCallCapability {
+  message CursorRulesCapability {
     optional string custom_instructions = 1;
-    repeated ToolSchema tool_schemas = 2;
-    repeated string relevant_files = 3;
-    repeated string files_in_context = 4;
-    repeated string semantic_search_files = 5;
   }
-
-  message ToolSchema {
-    ToolType type = 1;
-    string name = 2;
-    map<string, aiserver.v1.ComposerCapabilityRequest.SchemaProperty> properties = 3;
-    repeated string required = 4;
-  }
-
   ComposerCapabilityType type = 1;
   oneof data {
     LoopOnLintsCapability loop_on_lints = 2;
@@ -189,5 +140,32 @@ message ComposerCapabilityRequest {
     RememberThisCapability remember_this = 12;
     DecomposerCapability decomposer = 13;
     CursorRulesCapability cursor_rules = 14;
+  }
+}
+
+message ComposerCapabilityContext {
+  message SlackIntegrationContext {
+    string thread = 1;
+    optional string channel_name = 2;
+    optional string channel_purpose = 3;
+    optional string channel_topic = 4;
+  }
+  message MicrosoftTeamsIntegrationContext {
+    string thread = 1;
+    optional string channel_name = 2;
+    optional string team_name = 3;
+    optional string channel_description = 4;
+    optional string team_description = 5;
+  }
+  message GithubPRContext {
+    string title = 1;
+    string description = 2;
+    string comments = 3;
+    optional string ci_failures = 4;
+  }
+  oneof data {
+    SlackIntegrationContext slack_integration = 27;
+    GithubPRContext github_pr = 28;
+    MicrosoftTeamsIntegrationContext microsoft_teams_integration = 29;
   }
 }

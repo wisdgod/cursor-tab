@@ -7,59 +7,6 @@ import "aiserver/v1/context.proto";
 import "aiserver/v1/cpp.proto";
 import "aiserver/v1/utils.proto";
 
-message CmdKLegacyContext {
-  ExplicitContext explicit_context = 4;
-  repeated CodeBlock prompt_code_blocks = 12;
-  repeated string documentation_identifiers = 10;
-}
-
-message CmdKOptions {
-  ModelDetails model_details = 3;
-  bool chat_mode = 1;
-  bool ada_cmd_k_context = 2;
-  optional bool use_reranker = 4;
-  optional bool use_web = 5;
-  optional bool request_is_for_caching = 6;
-}
-
-message CmdKPreviousEdit {
-  repeated string original_lines = 1;
-  repeated string new_lines = 2;
-  string relative_path = 3;
-  repeated string extra_context_above = 4;
-  repeated string extra_context_below = 5;
-}
-
-message CmdKUpcomingEdit {
-  repeated string original_lines = 1;
-  string relative_path = 3;
-  repeated string extra_context_above = 4;
-  repeated string extra_context_below = 5;
-}
-
-message GetRelevantChunksRequest {
-  repeated CodeBlock code_blocks = 1;
-  CmdKOptions cmd_k_options = 2;
-  repeated PotentiallyCachedContextItem context_items = 3;
-  string session_id = 4;
-  CmdKLegacyContext legacy_context = 5;
-}
-
-message GetRelevantChunksResponse {
-  message ChainOfThoughtStream {
-    string text = 1;
-  }
-
-  message CodeBlocks {
-    repeated CodeBlock code_blocks = 1;
-  }
-
-  oneof response {
-    CodeBlocks code_blocks = 1;
-    ChainOfThoughtStream chain_of_thought_stream = 2;
-  }
-}
-
 message RerankCmdKContextRequest {
   repeated PotentiallyCachedContextItem context_items = 1;
   CmdKLegacyContext legacy_context = 3;
@@ -67,11 +14,11 @@ message RerankCmdKContextRequest {
 }
 
 message RerankCmdKContextResponse {
+  optional bool did_call = 3;
   oneof response {
     ContextStatusUpdate context_status_update = 1;
     MissingContextItems missing_context_items = 2;
   }
-  optional bool did_call = 3;
 }
 
 message RerankTerminalCmdKContextRequest {
@@ -86,84 +33,35 @@ message RerankTerminalCmdKContextResponse {
   }
 }
 
-message StreamCmdKRequest {
-  message BranchDiff {
-    message FileDiff {
-      string file_name = 1;
-      string diff = 2;
-      bool too_big = 3;
-    }
-
-    repeated FileDiff file_diffs = 1;
-    repeated Commit commits = 2;
-  }
-
-  repeated PotentiallyCachedContextItem context_items = 1;
-  CmdKOptions cmd_k_options = 2;
-  CmdKDebugInfo cmd_k_debug_info = 4;
-  string session_id = 6;
-  CmdKLegacyContext legacy_context = 5;
-  optional CmdKPreviousEdit previous_edit = 7;
-  repeated CmdKPreviousEdit previous_edits = 8;
-  repeated CmdKUpcomingEdit upcoming_edits = 12;
-  optional bool use_big_cmdk_for_multi_file_edit = 9;
-  repeated ImageProto images = 10;
-  repeated CmdKExternalLink links = 11;
-  repeated CppFileDiffHistory diff_history = 13;
-  optional BranchDiff diff_to_base_branch = 14;
-  optional TimingInfo timing_info = 15;
-  repeated CursorRule rules = 16;
+message TerminalCmdKOptions {
+  ModelDetails model_details = 3;
+  bool chat_mode = 1;
+  bool ada_cmd_k_context = 2;
+  optional bool use_web = 4;
 }
 
-message StreamCmdKResponse {
-  message Chat {
-    string text = 1;
-  }
-
-  message EditEnd {
-    int32 end_line_number_exclusive = 1;
-    int32 edit_id = 2;
-    optional string file_path = 3;
-  }
-
-  message EditStart {
-    int32 start_line_number = 1;
-    int32 edit_id = 2;
-    optional int32 max_end_line_number_exclusive = 3;
-    optional string file_path = 4;
-  }
-
-  message EditStream {
-    string text = 1;
-    int32 edit_id = 2;
-    optional string file_path = 3;
-  }
-
-  message StatusUpdate {
-    repeated string messages = 1;
-  }
-
-  oneof response {
-    EditStart edit_start = 1;
-    EditStream edit_stream = 2;
-    EditEnd edit_end = 3;
-    Chat chat = 4;
-    StatusUpdate status_update = 5;
-  }
+message CmdKOptions {
+  ModelDetails model_details = 3;
+  bool chat_mode = 1;
+  bool ada_cmd_k_context = 2;
+  optional bool use_reranker = 4;
+  optional bool use_web = 5;
+  optional bool request_is_for_caching = 6;
 }
 
-message StreamCmdKResponseContextWrapped {
-  oneof response {
-    StreamCmdKResponse real_response = 1;
-    ContextStatusUpdate context_status_update = 2;
-    MissingContextItems missing_context_items = 3;
-  }
+message CmdKUpcomingEdit {
+  repeated string original_lines = 1;
+  string relative_path = 3;
+  repeated string extra_context_above = 4;
+  repeated string extra_context_below = 5;
 }
 
-message StreamGetRelevantChunksResponseContextWrapped {
-  oneof response {
-    GetRelevantChunksResponse real_response = 1;
-  }
+message CmdKPreviousEdit {
+  repeated string original_lines = 1;
+  repeated string new_lines = 2;
+  string relative_path = 3;
+  repeated string extra_context_above = 4;
+  repeated string extra_context_below = 5;
 }
 
 message StreamHypermodeRequest {
@@ -183,6 +81,38 @@ message StreamHypermodeRequest {
   optional TimingInfo timing_info = 15;
 }
 
+message StreamCmdKRequest {
+  message BranchDiff {
+    message FileDiff {
+      string file_name = 1;
+      string diff = 2;
+      bool too_big = 3;
+    }
+    repeated FileDiff file_diffs = 1;
+    repeated Commit commits = 2;
+  }
+  repeated PotentiallyCachedContextItem context_items = 1;
+  CmdKOptions cmd_k_options = 2;
+  CmdKDebugInfo cmd_k_debug_info = 4;
+  string session_id = 6;
+  CmdKLegacyContext legacy_context = 5;
+  optional CmdKPreviousEdit previous_edit = 7;
+  repeated CmdKPreviousEdit previous_edits = 8;
+  repeated CmdKUpcomingEdit upcoming_edits = 12;
+  optional bool use_big_cmdk_for_multi_file_edit = 9;
+  repeated ImageProto images = 10;
+  repeated CmdKExternalLink links = 11;
+  repeated CppFileDiffHistory diff_history = 13;
+  optional BranchDiff diff_to_base_branch = 14;
+  optional TimingInfo timing_info = 15;
+  repeated CursorRule rules = 16;
+}
+
+message TimingInfo {
+  double user_input_time = 1;
+  double stream_cmdk_time = 2;
+}
+
 message StreamTerminalCmdKRequest {
   repeated PotentiallyCachedContextItem context_items = 1;
   TerminalCmdKOptions cmd_k_options = 2;
@@ -190,23 +120,17 @@ message StreamTerminalCmdKRequest {
   CmdKLegacyContext legacy_context = 5;
 }
 
-message StreamTerminalCmdKResponse {
-  message Chat {
-    string text = 1;
-  }
+message CmdKLegacyContext {
+  ExplicitContext explicit_context = 4;
+  repeated CodeBlock prompt_code_blocks = 12;
+  repeated string documentation_identifiers = 10;
+}
 
-  message StatusUpdate {
-    repeated string messages = 1;
-  }
-
-  message TerminalCommand {
-    string partial_command = 1;
-  }
-
+message StreamCmdKResponseContextWrapped {
   oneof response {
-    TerminalCommand terminal_command = 1;
-    Chat chat = 4;
-    StatusUpdate status_update = 5;
+    StreamCmdKResponse real_response = 1;
+    ContextStatusUpdate context_status_update = 2;
+    MissingContextItems missing_context_items = 3;
   }
 }
 
@@ -218,23 +142,87 @@ message StreamTerminalCmdKResponseContextWrapped {
   }
 }
 
-message TerminalCmdKOptions {
-  ModelDetails model_details = 3;
-  bool chat_mode = 1;
-  bool ada_cmd_k_context = 2;
-  optional bool use_web = 4;
+message StreamTerminalCmdKResponse {
+  message TerminalCommand {
+    string partial_command = 1;
+  }
+  message Chat {
+    string text = 1;
+  }
+  message StatusUpdate {
+    repeated string messages = 1;
+  }
+  oneof response {
+    TerminalCommand terminal_command = 1;
+    Chat chat = 4;
+    StatusUpdate status_update = 5;
+  }
 }
 
-message TimingInfo {
-  double user_input_time = 1;
-  double stream_cmdk_time = 2;
+message StreamCmdKResponse {
+  message EditStart {
+    int32 start_line_number = 1;
+    int32 edit_id = 2;
+    optional int32 max_end_line_number_exclusive = 3;
+    optional string file_path = 4;
+  }
+  message EditStream {
+    string text = 1;
+    int32 edit_id = 2;
+    optional string file_path = 3;
+  }
+  message EditEnd {
+    int32 end_line_number_exclusive = 1;
+    int32 edit_id = 2;
+    optional string file_path = 3;
+  }
+  message Chat {
+    string text = 1;
+  }
+  message StatusUpdate {
+    repeated string messages = 1;
+  }
+  oneof response {
+    EditStart edit_start = 1;
+    EditStream edit_stream = 2;
+    EditEnd edit_end = 3;
+    Chat chat = 4;
+    StatusUpdate status_update = 5;
+  }
+}
+
+message GetRelevantChunksRequest {
+  repeated CodeBlock code_blocks = 1;
+  CmdKOptions cmd_k_options = 2;
+  repeated PotentiallyCachedContextItem context_items = 3;
+  string session_id = 4;
+  CmdKLegacyContext legacy_context = 5;
+}
+
+message StreamGetRelevantChunksResponseContextWrapped {
+  oneof response {
+    GetRelevantChunksResponse real_response = 1;
+  }
+}
+
+message GetRelevantChunksResponse {
+  message ChainOfThoughtStream {
+    string text = 1;
+  }
+  message CodeBlocks {
+    repeated CodeBlock code_blocks = 1;
+  }
+  oneof response {
+    CodeBlocks code_blocks = 1;
+    ChainOfThoughtStream chain_of_thought_stream = 2;
+  }
 }
 
 service CmdKService {
-  rpc StreamCmdK (StreamCmdKRequest) returns (stream StreamCmdKResponseContextWrapped);
-  rpc StreamHypermode (StreamHypermodeRequest) returns (stream StreamCmdKResponseContextWrapped);
-  rpc RerankCmdKContext (RerankCmdKContextRequest) returns (RerankCmdKContextResponse);
-  rpc StreamTerminalCmdK (StreamTerminalCmdKRequest) returns (stream StreamTerminalCmdKResponseContextWrapped);
-  rpc RerankTerminalCmdKContext (RerankTerminalCmdKContextRequest) returns (RerankTerminalCmdKContextResponse);
-  rpc GetRelevantChunks (GetRelevantChunksRequest) returns (stream StreamGetRelevantChunksResponseContextWrapped);
+  rpc StreamCmdK(StreamCmdKRequest) returns (stream StreamCmdKResponseContextWrapped);
+  rpc StreamHypermode(StreamHypermodeRequest) returns (stream StreamCmdKResponseContextWrapped);
+  rpc RerankCmdKContext(RerankCmdKContextRequest) returns (RerankCmdKContextResponse);
+  rpc StreamTerminalCmdK(StreamTerminalCmdKRequest) returns (stream StreamTerminalCmdKResponseContextWrapped);
+  rpc RerankTerminalCmdKContext(RerankTerminalCmdKContextRequest) returns (RerankTerminalCmdKContextResponse);
+  rpc GetRelevantChunks(GetRelevantChunksRequest) returns (stream StreamGetRelevantChunksResponseContextWrapped);
 }

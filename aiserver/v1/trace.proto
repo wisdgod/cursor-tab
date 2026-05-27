@@ -5,5 +5,5 @@ package aiserver.v1;
 import "aiserver/v1/telemetry.proto";
 
 service TraceService {
-  rpc SubmitSpans (SubmitSpansRequest) returns (SubmitSpansResponse);
+  rpc SubmitSpans(SubmitSpansRequest) returns (SubmitSpansResponse);
 }

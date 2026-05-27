@@ -9,31 +9,15 @@ enum SubAgent {
   SUB_AGENT_PROGRAMMER_AGENT = 3;
 }
 
-message AskOracleRequest {
-  string answer = 1;
-}
-
-message AskOracleResponse {
-  string question = 1;
-  SubAgent original_sub_agent = 2;
-}
-
-message AskUserRequest {
-  string answer = 1;
-}
-
-message AskUserResponse {
-  string question = 1;
-}
-
-message AutopilotActionRequest {
-  oneof type {
-    TerminalCommandRequest terminal_command = 1;
-    WebSearchRequest web_search = 2;
-    AskUserRequest ask_user = 3;
-    AskOracleRequest ask_oracle = 4;
-    FileEditRequest file_edit = 5;
-    OpenFileRequest open_file = 6;
+message AutopilotResponse {
+  oneof response {
+    AutopilotActionResponse action = 1;
+    AutopilotDone done = 2;
+    AutopilotStreamThought stream_thought = 3;
+    AutopilotStartSubAgent start_sub_agent = 4;
+    AutopilotDoneSubAgent done_sub_agent = 5;
+    RawResponse raw_response = 10;
+    AutopilotPaused paused = 11;
   }
 }
 
@@ -48,29 +32,7 @@ message AutopilotActionResponse {
   }
 }
 
-message AutopilotContinue {
-}
-
-message AutopilotDone {
-}
-
-message AutopilotDoneSubAgent {
-  string response = 1;
-}
-
-message AutopilotError {
-  string error = 1;
-}
-
-message AutopilotFile {
-  string absolute_path = 1;
-  string content = 2;
-}
-
-message AutopilotPause {
-}
-
-message AutopilotPaused {
+message RawResponse {
   string response = 1;
 }
 
@@ -89,38 +51,24 @@ message AutopilotRequest {
   }
 }
 
-message AutopilotResponse {
-  oneof response {
-    AutopilotActionResponse action = 1;
-    AutopilotDone done = 2;
-    AutopilotStreamThought stream_thought = 3;
-    AutopilotStartSubAgent start_sub_agent = 4;
-    AutopilotDoneSubAgent done_sub_agent = 5;
-    RawResponse raw_response = 10;
-    AutopilotPaused paused = 11;
+message AutopilotFile {
+  string absolute_path = 1;
+  string content = 2;
+}
+
+message AutopilotActionRequest {
+  oneof type {
+    TerminalCommandRequest terminal_command = 1;
+    WebSearchRequest web_search = 2;
+    AskUserRequest ask_user = 3;
+    AskOracleRequest ask_oracle = 4;
+    FileEditRequest file_edit = 5;
+    OpenFileRequest open_file = 6;
   }
 }
 
-message AutopilotStart {
-  string task = 1;
-}
-
-message AutopilotStartSubAgent {
-  string task = 1;
-  SubAgent sub_agent = 2;
-}
-
-message AutopilotStreamThought {
-  string thought = 1;
-}
-
-message FileEditRequest {
-  string diff = 1;
-}
-
-message FileEditResponse {
-  string absolute_path = 1;
-  string query = 2;
+message AutopilotError {
+  string error = 1;
 }
 
 message OpenFileRequest {
@@ -132,8 +80,38 @@ message OpenFileResponse {
   string absolute_path = 1;
 }
 
-message RawResponse {
-  string response = 1;
+message FileEditRequest {
+  string diff = 1;
+}
+
+message FileEditResponse {
+  string absolute_path = 1;
+  string query = 2;
+}
+
+message AskOracleRequest {
+  string answer = 1;
+}
+
+message AskOracleResponse {
+  string question = 1;
+  SubAgent original_sub_agent = 2;
+}
+
+message AskUserRequest {
+  string answer = 1;
+}
+
+message AskUserResponse {
+  string question = 1;
+}
+
+message WebSearchRequest {
+  string query = 1;
+}
+
+message WebSearchResponse {
+  string answer = 1;
 }
 
 message TerminalCommandRequest {
@@ -146,14 +124,36 @@ message TerminalCommandResponse {
   optional bool is_run_server = 3;
 }
 
-message WebSearchRequest {
-  string query = 1;
+message AutopilotPaused {
+  string response = 1;
 }
 
-message WebSearchResponse {
-  string answer = 1;
+message AutopilotPause {
+}
+
+message AutopilotStart {
+  string task = 1;
+}
+
+message AutopilotContinue {
+}
+
+message AutopilotDone {
+}
+
+message AutopilotDoneSubAgent {
+  string response = 1;
+}
+
+message AutopilotStartSubAgent {
+  string task = 1;
+  SubAgent sub_agent = 2;
+}
+
+message AutopilotStreamThought {
+  string thought = 1;
 }
 
 service AutopilotService {
-  rpc StreamAutopilot (AutopilotRequest) returns (stream AutopilotResponse);
+  rpc StreamAutopilot(AutopilotRequest) returns (stream AutopilotResponse);
 }

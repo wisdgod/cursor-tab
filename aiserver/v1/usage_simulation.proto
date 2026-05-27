@@ -26,30 +26,6 @@ enum ScenarioType {
   SCENARIO_TYPE_POOLED_LIMIT = 8;
 }
 
-message AddSyntheticUsageRequest {
-  int32 user_id = 1;
-  string model = 2;
-  int32 input_tokens = 3;
-  int32 output_tokens = 4;
-  int32 cache_read_tokens = 5;
-  int32 cache_write_tokens = 6;
-  optional int64 revenue_milli_cents = 7;
-}
-
-message AddSyntheticUsageResponse {
-  bool success = 1;
-  string usage_uuid = 2;
-  string message = 3;
-}
-
-message ClearSimulationRequest {
-  int32 user_id = 1;
-}
-
-message ClearSimulationResponse {
-  bool success = 1;
-}
-
 message GetAllSimulationsRequest {
 }
 
@@ -65,12 +41,6 @@ message GetSimulationResponse {
   SimulationData simulation = 1;
 }
 
-message ScenarioConfig {
-  PlanType plan = 1;
-  ScenarioType scenario = 2;
-  optional bool can_edit_limit = 3;
-}
-
 message SetSimulationRequest {
   int32 user_id = 1;
   ScenarioConfig config = 2;
@@ -78,6 +48,20 @@ message SetSimulationRequest {
 
 message SetSimulationResponse {
   bool success = 1;
+}
+
+message ClearSimulationRequest {
+  int32 user_id = 1;
+}
+
+message ClearSimulationResponse {
+  bool success = 1;
+}
+
+message ScenarioConfig {
+  PlanType plan = 1;
+  ScenarioType scenario = 2;
+  optional bool can_edit_limit = 3;
 }
 
 message SimulationData {
@@ -96,10 +80,26 @@ message SimulationWithUser {
   SimulationData simulation = 6;
 }
 
+message AddSyntheticUsageRequest {
+  int32 user_id = 1;
+  string model = 2;
+  int32 input_tokens = 3;
+  int32 output_tokens = 4;
+  int32 cache_read_tokens = 5;
+  int32 cache_write_tokens = 6;
+  optional int64 revenue_milli_cents = 7;
+}
+
+message AddSyntheticUsageResponse {
+  bool success = 1;
+  string usage_uuid = 2;
+  string message = 3;
+}
+
 service UsageSimulationService {
-  rpc GetSimulation (GetSimulationRequest) returns (GetSimulationResponse);
-  rpc SetSimulation (SetSimulationRequest) returns (SetSimulationResponse);
-  rpc ClearSimulation (ClearSimulationRequest) returns (ClearSimulationResponse);
-  rpc GetAllSimulations (GetAllSimulationsRequest) returns (GetAllSimulationsResponse);
-  rpc AddSyntheticUsage (AddSyntheticUsageRequest) returns (AddSyntheticUsageResponse);
+  rpc GetSimulation(GetSimulationRequest) returns (GetSimulationResponse);
+  rpc SetSimulation(SetSimulationRequest) returns (SetSimulationResponse);
+  rpc ClearSimulation(ClearSimulationRequest) returns (ClearSimulationResponse);
+  rpc GetAllSimulations(GetAllSimulationsRequest) returns (GetAllSimulationsResponse);
+  rpc AddSyntheticUsage(AddSyntheticUsageRequest) returns (AddSyntheticUsageResponse);
 }

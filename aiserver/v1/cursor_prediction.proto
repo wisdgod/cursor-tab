@@ -5,22 +5,21 @@ package aiserver.v1;
 message CursorPredictionConfigRequest {
 }
 
-message CursorPredictionConfigResponse {
-  enum Heuristic {
-    HEURISTIC_UNSPECIFIED = 0;
-    HEURISTIC_DISABLE_IN_LAST_CPP_SUGGESTION = 1;
-  }
-
-  repeated CursorPredictionModel models = 1;
-  string default_model = 2;
-  repeated Heuristic heuristics = 3;
-}
-
 message CursorPredictionModel {
   string name = 1;
   int32 radius = 2;
 }
 
+message CursorPredictionConfigResponse {
+  enum Heuristic {
+    HEURISTIC_UNSPECIFIED = 0;
+    HEURISTIC_DISABLE_IN_LAST_CPP_SUGGESTION = 1;
+  }
+  repeated CursorPredictionModel models = 1;
+  string default_model = 2;
+  repeated Heuristic heuristics = 3;
+}
+
 service CursorPredictionService {
-  rpc CursorPredictionConfig (CursorPredictionConfigRequest) returns (CursorPredictionConfigResponse);
+  rpc CursorPredictionConfig(CursorPredictionConfigRequest) returns (CursorPredictionConfigResponse);
 }

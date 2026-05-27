@@ -10,10 +10,44 @@ import "agent/v1/mcp.proto";
 import "agent/v1/repo.proto";
 import "agent/v1/subagents.proto";
 
-message DebugModeConfig {
-  string log_path = 1;
-  string server_endpoint = 2;
-  string session_id = 3;
+message RequestContextArgs {
+  optional string notes_session_id = 2;
+  optional string workspace_id = 3;
+  optional string read_only_pinned_tree_sha = 4;
+  optional string read_only_plugin_cache_root = 5;
+}
+
+message RequestContextResult {
+  oneof result {
+    RequestContextSuccess success = 1;
+    RequestContextError error = 2;
+    RequestContextRejected rejected = 3;
+  }
+}
+
+message RequestContextSuccess {
+  RequestContext request_context = 1;
+}
+
+message RequestContextError {
+  string error = 1;
+}
+
+message RequestContextRejected {
+  string reason = 1;
+}
+
+message ImageProto {
+  message Dimension {
+    int32 width = 1;
+    int32 height = 2;
+  }
+  bytes data = 1;
+  string uuid = 2;
+  string path = 3;
+  Dimension dimension = 4;
+  optional string task_specific_description = 6;
+  string mime_type = 7;
 }
 
 message GitRepoInfo {
@@ -24,41 +58,56 @@ message GitRepoInfo {
   optional bool previous_branch_is_ancestor = 5;
 }
 
+message RequestContextEnv {
+  string os_version = 1;
+  repeated string workspace_paths = 2;
+  string shell = 3;
+  bool sandbox_enabled = 5;
+  string terminals_folder = 7;
+  string agent_shared_notes_folder = 8;
+  string agent_conversation_notes_folder = 9;
+  string time_zone = 10;
+  string project_folder = 11;
+  string agent_transcripts_folder = 12;
+  optional string artifacts_folder = 13;
+  optional bool sandbox_supported = 14;
+  optional bool sandbox_network_has_defaults = 16;
+  repeated string sandbox_network_explicit_allowlist = 17;
+  optional bool secret_redaction_enabled = 18;
+  optional bool computer_use_supported = 19;
+  optional bool is_working_dir_home_dir = 20;
+  optional string process_working_directory = 21;
+  optional bool smart_mode_classifier_auto_mode_enabled = 22;
+  optional string dev_force_next_smart_mode_classifier_block_token = 23;
+}
+
+message UserGitContext {
+  optional string username = 1;
+  optional string email = 2;
+}
+
+message DebugModeConfig {
+  string log_path = 1;
+  string server_endpoint = 2;
+  string session_id = 3;
+}
+
+message SkillDescriptor {
+  string name = 1;
+  string description = 2;
+  string folder_path = 3;
+  bool enabled = 4;
+  optional string parse_error = 5;
+  string readme_file_path = 6;
+  PackageType package_type = 7;
+}
+
+message SkillOptions {
+  repeated SkillDescriptor skill_descriptors = 1;
+}
+
 message HooksConfigInfo {
   repeated string configured_steps = 1;
-}
-
-message ImageProto {
-  message Dimension {
-    int32 width = 1;
-    int32 height = 2;
-  }
-
-  bytes data = 1;
-  string uuid = 2;
-  string path = 3;
-  Dimension dimension = 4;
-  optional string task_specific_description = 6;
-  string mime_type = 7;
-}
-
-message MatchedInstalledPlugin {
-  string display_name = 1;
-  string description = 2;
-  string matched_keyword = 3;
-  repeated RecentlyAddedPlugin.CapabilityDescriptor skills = 4;
-  repeated RecentlyAddedPlugin.CapabilityDescriptor subagents = 5;
-  repeated RecentlyAddedPlugin.CapabilityDescriptor hooks = 6;
-  repeated RecentlyAddedPlugin.CapabilityDescriptor rules = 7;
-  repeated RecentlyAddedPlugin.CapabilityDescriptor commands = 8;
-  repeated string mcp_servers = 9;
-}
-
-message PrecomputedHumanChange {
-  string path = 1;
-  repeated PrecomputedHumanChangeRenderedDiff rendered_diffs = 2;
-  bool is_new_file = 3;
-  bool is_deleted_file = 4;
 }
 
 message PrecomputedHumanChangeRenderedDiff {
@@ -70,20 +119,11 @@ message PrecomputedHumanChangeRenderedDiff {
   repeated string after_context_lines = 6;
 }
 
-message RecentlyAddedPlugin {
-  message CapabilityDescriptor {
-    string name = 1;
-    string description = 2;
-  }
-
-  string display_name = 1;
-  string description = 2;
-  repeated CapabilityDescriptor skills = 3;
-  repeated CapabilityDescriptor subagents = 4;
-  repeated CapabilityDescriptor hooks = 5;
-  repeated CapabilityDescriptor rules = 6;
-  repeated CapabilityDescriptor commands = 7;
-  repeated string mcp_servers = 8;
+message PrecomputedHumanChange {
+  string path = 1;
+  repeated PrecomputedHumanChangeRenderedDiff rendered_diffs = 2;
+  bool is_new_file = 3;
+  bool is_deleted_file = 4;
 }
 
 message RequestContext {
@@ -120,69 +160,38 @@ message RequestContext {
   optional bool mcp_info_complete = 36;
   repeated CursorRule non_file_rules = 37;
   optional MatchedInstalledPlugin matched_installed_plugin = 38;
+  optional bool rules_info_complete = 39;
+  optional bool env_info_complete = 40;
+  optional bool repository_info_complete = 41;
+  optional bool custom_subagents_info_complete = 42;
+  optional bool agent_skills_info_complete = 43;
+  optional bool mcp_file_system_info_complete = 44;
+  optional bool git_status_info_complete = 45;
 }
 
-message RequestContextArgs {
-  optional string notes_session_id = 2;
-  optional string workspace_id = 3;
-}
-
-message RequestContextEnv {
-  string os_version = 1;
-  repeated string workspace_paths = 2;
-  string shell = 3;
-  bool sandbox_enabled = 5;
-  string terminals_folder = 7;
-  string agent_shared_notes_folder = 8;
-  string agent_conversation_notes_folder = 9;
-  string time_zone = 10;
-  string project_folder = 11;
-  string agent_transcripts_folder = 12;
-  optional string artifacts_folder = 13;
-  optional bool sandbox_supported = 14;
-  optional bool sandbox_network_has_defaults = 16;
-  repeated string sandbox_network_explicit_allowlist = 17;
-  optional bool secret_redaction_enabled = 18;
-  optional bool computer_use_supported = 19;
-  optional bool is_working_dir_home_dir = 20;
-  optional string process_working_directory = 21;
-}
-
-message RequestContextError {
-  string error = 1;
-}
-
-message RequestContextRejected {
-  string reason = 1;
-}
-
-message RequestContextResult {
-  oneof result {
-    RequestContextSuccess success = 1;
-    RequestContextError error = 2;
-    RequestContextRejected rejected = 3;
+message RecentlyAddedPlugin {
+  message CapabilityDescriptor {
+    string name = 1;
+    string description = 2;
   }
-}
-
-message RequestContextSuccess {
-  RequestContext request_context = 1;
-}
-
-message SkillDescriptor {
-  string name = 1;
+  string display_name = 1;
   string description = 2;
-  string folder_path = 3;
-  bool enabled = 4;
-  optional string parse_error = 5;
-  string readme_file_path = 6;
-  PackageType package_type = 7;
+  repeated CapabilityDescriptor skills = 3;
+  repeated CapabilityDescriptor subagents = 4;
+  repeated CapabilityDescriptor hooks = 5;
+  repeated CapabilityDescriptor rules = 6;
+  repeated CapabilityDescriptor commands = 7;
+  repeated string mcp_servers = 8;
 }
 
-message SkillOptions {
-  repeated SkillDescriptor skill_descriptors = 1;
-}
-
-message UserGitContext {
-  optional string username = 1;
-  optional string email = 2;
+message MatchedInstalledPlugin {
+  string display_name = 1;
+  string description = 2;
+  string matched_keyword = 3;
+  repeated RecentlyAddedPlugin.CapabilityDescriptor skills = 4;
+  repeated RecentlyAddedPlugin.CapabilityDescriptor subagents = 5;
+  repeated RecentlyAddedPlugin.CapabilityDescriptor hooks = 6;
+  repeated RecentlyAddedPlugin.CapabilityDescriptor rules = 7;
+  repeated RecentlyAddedPlugin.CapabilityDescriptor commands = 8;
+  repeated string mcp_servers = 9;
 }

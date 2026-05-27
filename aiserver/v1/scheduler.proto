@@ -2,12 +2,6 @@ syntax = "proto3";
 
 package aiserver.v1;
 
-enum ProviderErrorType {
-  PROVIDER_ERROR_TYPE_UNSPECIFIED = 0;
-  PROVIDER_ERROR_TYPE_RATE_LIMIT = 1;
-  PROVIDER_ERROR_TYPE_SERVER = 2;
-}
-
 enum RateLimitReason {
   RATE_LIMIT_REASON_UNSPECIFIED = 0;
   RATE_LIMIT_REASON_TIMEOUT = 1;
@@ -16,6 +10,13 @@ enum RateLimitReason {
   RATE_LIMIT_REASON_QUEUE_FULL = 4;
   RATE_LIMIT_REASON_CONNECTION_ERROR = 5;
   RATE_LIMIT_REASON_DEPLOYMENT_DISABLED = 6;
+}
+
+enum ProviderErrorType {
+  PROVIDER_ERROR_TYPE_UNSPECIFIED = 0;
+  PROVIDER_ERROR_TYPE_RATE_LIMIT = 1;
+  PROVIDER_ERROR_TYPE_SERVER = 2;
+  PROVIDER_ERROR_TYPE_TIMEOUT = 3;
 }
 
 message AcquireRequest {
@@ -31,39 +32,7 @@ message AcquireRequest {
 message AcquireResponse {
   bool granted = 1;
   RateLimitReason reason = 2;
-}
-
-message DeploymentConfig {
-  RateLimits limits = 1;
-  RampConfig ramp = 2;
-  int64 max_input_tokens_per_request = 3;
-  int64 max_output_tokens_per_request = 4;
-}
-
-message DeploymentDemand {
-  string provider = 1;
-  string deployment = 2;
-  repeated WorkloadDemand workloads = 3;
-  string model = 4;
-}
-
-message ModelConfig {
-  map<string, aiserver.v1.DeploymentConfig> deployments = 1;
-}
-
-message ProviderConfig {
-  map<string, aiserver.v1.ModelConfig> models = 1;
-}
-
-message RampConfig {
-  bool enabled = 1;
-  double max_multiplier = 2;
-  int64 window_minutes = 3;
-}
-
-message RateLimits {
-  int64 tpm_max = 1;
-  int64 rpm_max = 2;
+  int32 replay_count = 3;
 }
 
 message ReportUsageRequest {
@@ -84,60 +53,7 @@ message ReportUsageRequest {
 message ReportUsageResponse {
 }
 
-message SchedulerConfig {
-  int64 tick_ms = 1;
-  map<string, aiserver.v1.ProviderConfig> providers = 2;
-  map<string, aiserver.v1.WorkloadConfig> workloads = 3;
-}
-
-message SchedulerStreamRequest {
-  string scheduler_id = 1;
-  repeated DeploymentDemand demands = 2;
-  repeated UsageReport usage_reports = 3;
-}
-
-message SchedulerStreamResponse {
-  repeated WorkloadGrant grants = 1;
-}
-
-message UsageReport {
-  string provider = 1;
-  string model = 2;
-  string deployment = 3;
-  string workload_id = 4;
-  int64 input_tokens = 5;
-  int64 output_tokens = 6;
-  bool success = 7;
-  ProviderErrorType provider_error_type = 8;
-}
-
-message WorkloadConfig {
-  int32 priority = 1;
-  int32 weight = 2;
-  bool disabled = 3;
-}
-
-message WorkloadDemand {
-  string workload_id = 1;
-  int64 tokens = 2;
-  int64 requests = 3;
-  int64 input_tokens = 4;
-  int64 output_tokens = 5;
-}
-
-message WorkloadGrant {
-  string provider = 1;
-  string deployment = 2;
-  string workload_id = 3;
-  int64 tokens = 4;
-  int64 requests = 5;
-  int64 expires_at_ms = 6;
-  int64 input_tokens = 7;
-  int64 output_tokens = 8;
-  string model = 9;
-}
-
 service SchedulerService {
-  rpc Acquire (AcquireRequest) returns (AcquireResponse);
-  rpc ReportUsage (ReportUsageRequest) returns (ReportUsageResponse);
+  rpc Acquire(AcquireRequest) returns (AcquireResponse);
+  rpc ReportUsage(ReportUsageRequest) returns (ReportUsageResponse);
 }

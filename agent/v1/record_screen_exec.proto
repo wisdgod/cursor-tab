@@ -20,13 +20,6 @@ message RecordScreenArgs {
   optional string save_as_filename = 3;
 }
 
-message RecordScreenDiscardSuccess {
-}
-
-message RecordScreenFailure {
-  string error = 1;
-}
-
 message RecordScreenResult {
   oneof result {
     RecordScreenStartSuccess start_success = 1;
@@ -36,13 +29,20 @@ message RecordScreenResult {
   }
 }
 
+message RecordScreenStartSuccess {
+  bool was_prior_recording_cancelled = 1;
+  bool was_save_as_filename_ignored = 2;
+}
+
 message RecordScreenSaveSuccess {
   string path = 1;
   int64 recording_duration_ms = 2;
   optional RequestedFilePathRejectedReason requested_file_path_rejected_reason = 3;
 }
 
-message RecordScreenStartSuccess {
-  bool was_prior_recording_cancelled = 1;
-  bool was_save_as_filename_ignored = 2;
+message RecordScreenDiscardSuccess {
+}
+
+message RecordScreenFailure {
+  string error = 1;
 }

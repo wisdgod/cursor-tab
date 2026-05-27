@@ -10,17 +10,17 @@ message ShellToolCall {
   optional string description = 3;
 }
 
-message ShellToolCallDelta {
-  oneof delta {
-    ShellToolCallStdoutDelta stdout = 1;
-    ShellToolCallStderrDelta stderr = 2;
-  }
+message ShellToolCallStdoutDelta {
+  string content = 1;
 }
 
 message ShellToolCallStderrDelta {
   string content = 1;
 }
 
-message ShellToolCallStdoutDelta {
-  string content = 1;
+message ShellToolCallDelta {
+  oneof delta {
+    ShellToolCallStdoutDelta stdout = 1;
+    ShellToolCallStderrDelta stderr = 2;
+  }
 }

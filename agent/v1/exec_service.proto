@@ -12,5 +12,5 @@ message ExecStreamElement {
 }
 
 service ExecService {
-  rpc Exec (ExecServerMessage) returns (stream ExecStreamElement);
+  rpc Exec(ExecServerMessage) returns (stream ExecStreamElement);
 }

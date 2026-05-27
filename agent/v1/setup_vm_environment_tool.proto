@@ -5,6 +5,7 @@ package agent.v1;
 message SetupVmEnvironmentArgs {
   string install_command = 2;
   string start_command = 3;
+  string dockerfile_contents = 4;
 }
 
 message SetupVmEnvironmentResult {

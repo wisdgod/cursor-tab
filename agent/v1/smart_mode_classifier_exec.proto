@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "google/protobuf/struct.proto";
+
+enum SmartModeClassifierDecision {
+  SMART_MODE_CLASSIFIER_DECISION_UNSPECIFIED = 0;
+  SMART_MODE_CLASSIFIER_DECISION_ALLOW = 1;
+  SMART_MODE_CLASSIFIER_DECISION_BLOCK = 2;
+}
+
+message SmartModeClassifierConversationMessage {
+  string role = 1;
+  string content = 2;
+}
+
+message SmartModeClassifierArgs {
+  string tool_call_id = 1;
+  optional string parent_conversation_id = 2;
+  SmartModeRiskTarget target = 3;
+  repeated SmartModeClassifierConversationMessage conversation_context = 4;
+}
+
+message SmartModeRiskTarget {
+  string action = 1;
+  google.protobuf.Struct arguments = 2;
+}
+
+message SmartModeClassifierResult {
+  oneof result {
+    SmartModeClassifierSuccess success = 1;
+    SmartModeClassifierError error = 2;
+  }
+}
+
+message SmartModeClassifierSuccess {
+  SmartModeClassifierDecision decision = 1;
+  optional string block_reason = 2;
+}
+
+message SmartModeClassifierError {
+  string error = 1;
+}

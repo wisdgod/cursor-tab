@@ -11,15 +11,16 @@ enum TmuxSessionKind {
   TMUX_SESSION_KIND_AGENT_INTERACTIVE = 3;
 }
 
-message AttachTmuxSessionRequest {
+message TmuxSession {
   string session_id = 1;
-  uint32 cols = 2;
-  uint32 rows = 3;
-}
-
-message AttachTmuxSessionResponse {
-  string pty_id = 1;
-  TmuxSession session = 2;
+  string session_name = 2;
+  string display_name = 3;
+  TmuxSessionKind kind = 4;
+  string cwd = 5;
+  string shell = 6;
+  repeated string process_args = 7;
+  int64 created_at_unix_ms = 8;
+  uint32 attached_client_count = 9;
 }
 
 message CreateTmuxSessionRequest {
@@ -35,6 +36,13 @@ message CreateTmuxSessionResponse {
   TmuxSession session = 1;
 }
 
+message ListTmuxSessionsRequest {
+}
+
+message ListTmuxSessionsResponse {
+  repeated TmuxSession sessions = 1;
+}
+
 message KillTmuxSessionRequest {
   string session_id = 1;
 }
@@ -43,28 +51,20 @@ message KillTmuxSessionResponse {
   bool success = 1;
 }
 
-message ListTmuxSessionsRequest {
-}
-
-message ListTmuxSessionsResponse {
-  repeated TmuxSession sessions = 1;
-}
-
-message TmuxSession {
+message AttachTmuxSessionRequest {
   string session_id = 1;
-  string session_name = 2;
-  string display_name = 3;
-  TmuxSessionKind kind = 4;
-  string cwd = 5;
-  string shell = 6;
-  repeated string process_args = 7;
-  int64 created_at_unix_ms = 8;
-  uint32 attached_client_count = 9;
+  uint32 cols = 2;
+  uint32 rows = 3;
+}
+
+message AttachTmuxSessionResponse {
+  string pty_id = 1;
+  TmuxSession session = 2;
 }
 
 service TmuxSessionService {
-  rpc CreateSession (CreateTmuxSessionRequest) returns (CreateTmuxSessionResponse);
-  rpc ListSessions (ListTmuxSessionsRequest) returns (ListTmuxSessionsResponse);
-  rpc KillSession (KillTmuxSessionRequest) returns (KillTmuxSessionResponse);
-  rpc AttachSession (AttachTmuxSessionRequest) returns (AttachTmuxSessionResponse);
+  rpc CreateSession(CreateTmuxSessionRequest) returns (CreateTmuxSessionResponse);
+  rpc ListSessions(ListTmuxSessionsRequest) returns (ListTmuxSessionsResponse);
+  rpc KillSession(KillTmuxSessionRequest) returns (KillTmuxSessionResponse);
+  rpc AttachSession(AttachTmuxSessionRequest) returns (AttachTmuxSessionResponse);
 }

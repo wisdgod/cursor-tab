@@ -13,6 +13,10 @@ message ReportBugArgs {
   string rationale = 8;
 }
 
+message ReportBugSuccess {
+  string output = 1;
+}
+
 message ReportBugError {
   string error_message = 1;
 }
@@ -22,10 +26,6 @@ message ReportBugResult {
     ReportBugSuccess success = 1;
     ReportBugError error = 2;
   }
-}
-
-message ReportBugSuccess {
-  string output = 1;
 }
 
 message ReportBugToolCall {

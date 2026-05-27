@@ -2,19 +2,22 @@ syntax = "proto3";
 
 package agent.v1;
 
-message AskQuestionArgs {
-  message Option {
-    string id = 1;
-    string label = 2;
-  }
+message AskQuestionToolCall {
+  AskQuestionArgs args = 1;
+  AskQuestionResult result = 2;
+}
 
+message AskQuestionArgs {
   message Question {
     string id = 1;
     string prompt = 2;
     repeated Option options = 3;
     bool allow_multiple = 4;
   }
-
+  message Option {
+    string id = 1;
+    string label = 2;
+  }
   string title = 1;
   repeated Question questions = 2;
   bool run_async = 5;
@@ -22,14 +25,6 @@ message AskQuestionArgs {
 }
 
 message AskQuestionAsync {
-}
-
-message AskQuestionError {
-  string error_message = 1;
-}
-
-message AskQuestionRejected {
-  string reason = 1;
 }
 
 message AskQuestionResult {
@@ -47,11 +42,13 @@ message AskQuestionSuccess {
     repeated string selected_option_ids = 2;
     string freeform_text = 3;
   }
-
   repeated Answer answers = 1;
 }
 
-message AskQuestionToolCall {
-  AskQuestionArgs args = 1;
-  AskQuestionResult result = 2;
+message AskQuestionError {
+  string error_message = 1;
+}
+
+message AskQuestionRejected {
+  string reason = 1;
 }

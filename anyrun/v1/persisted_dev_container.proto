@@ -4,51 +4,61 @@ package anyrun.v1;
 
 import "anyrun/v1/common.proto";
 
-message DaemonCommandHandlerPersistentState {
-  int64 vpid = 1;
-  optional string last_event_id = 2;
+message PersistedGitRepoSource {
+  string cache_uri = 1;
+  bytes commit_hash = 2;
 }
 
-message DockerContainerPersistentState {
-  string id = 1;
-  string name = 2;
-  bool stopped = 3;
-  bool removed = 4;
-  bool leaked = 5;
-  optional uint64 post_pause_unpause_delay_ms = 6;
-}
-
-message DockerDevContainerPersistentState {
+message PersistedTarRepoSource {
   string name = 1;
-  DockerContainerPersistentState container = 2;
-  RuntimeStatePersistentState runtime_state = 3;
-  ImageMetadata image_metadata = 4;
-  NetworkInfo network_info = 5;
-  optional string user = 6;
-  string shell = 7;
-  uint32 daemon_port = 8;
-  WorkspaceConfig workspace = 9;
-  bool v2_hydrated = 10;
 }
 
-message IsoDevContainerMetadata {
+message PersistedLocalRepoSource {
+  string path = 1;
+}
+
+message PersistedTarGzipUrlSource {
   string name = 1;
-  DockerDevContainerPersistentState persistent_state = 2;
-  IsoEnvConfig env_config = 3;
 }
 
-message IsoEnvConfig {
-  uint32 vcpu_count = 1;
-  uint32 mem_size_mib = 2;
-  optional uint32 swap_size_mib = 3;
-  optional uint32 rootfs_size_mib = 4;
+message PersistedNoopSource {
 }
 
-message NetworkInfo {
-  string ip_address = 1;
+message PersistedMultiSourceEntry {
+  string relative_path = 1;
+  oneof source {
+    PersistedGitRepoSource git = 2;
+    PersistedTarRepoSource tar = 3;
+    PersistedLocalRepoSource local = 4;
+    PersistedTarGzipUrlSource tar_gzip_url = 5;
+    PersistedNoopSource noop = 6;
+  }
+}
+
+message PersistedMultiSource {
+  repeated PersistedMultiSourceEntry sources = 1;
+}
+
+message PersistedExternalSnapshot {
+  string snapshot_id = 1;
+}
+
+message PersistedEnvVar {
+  string name = 1;
+  string value = 2;
 }
 
 message PersistedDevContainerConfig {
+  repeated DevContainerExecCommand prepare_commands = 10;
+  repeated DevContainerExecCommand install_commands = 11;
+  repeated DevContainerExecCommand verify_commands = 19;
+  repeated DevContainerExecCommand start_commands = 12;
+  repeated PersistedEnvVar env = 13;
+  repeated PortDefinition ports = 14;
+  string shell = 15;
+  optional string user = 16;
+  optional bool privileged = 17;
+  optional bool build_container = 22;
   oneof source {
     PersistedGitRepoSource git = 1;
     PersistedTarRepoSource tar = 2;
@@ -69,64 +79,54 @@ message PersistedDevContainerConfig {
     string workspace_path = 8;
     string workdir_relative_path = 9;
   }
-  repeated DevContainerExecCommand prepare_commands = 10;
-  repeated DevContainerExecCommand install_commands = 11;
-  repeated DevContainerExecCommand verify_commands = 19;
-  repeated DevContainerExecCommand start_commands = 12;
-  repeated PersistedEnvVar env = 13;
-  repeated PortDefinition ports = 14;
-  string shell = 15;
-  optional string user = 16;
-  optional bool privileged = 17;
-  optional bool build_container = 22;
 }
 
-message PersistedEnvVar {
+message IsoDevContainerMetadata {
   string name = 1;
-  string value = 2;
+  DockerDevContainerPersistentState persistent_state = 2;
+  IsoEnvConfig env_config = 3;
 }
 
-message PersistedExternalSnapshot {
-  string snapshot_id = 1;
+message IsoEnvConfig {
+  uint32 vcpu_count = 1;
+  uint32 mem_size_mib = 2;
+  optional uint32 swap_size_mib = 3;
+  optional uint32 rootfs_size_mib = 4;
 }
 
-message PersistedGitRepoSource {
-  string cache_uri = 1;
-  bytes commit_hash = 2;
-}
-
-message PersistedLocalRepoSource {
-  string path = 1;
-}
-
-message PersistedMultiSource {
-  repeated PersistedMultiSourceEntry sources = 1;
-}
-
-message PersistedMultiSourceEntry {
-  string relative_path = 1;
-  oneof source {
-    PersistedGitRepoSource git = 2;
-    PersistedTarRepoSource tar = 3;
-    PersistedLocalRepoSource local = 4;
-    PersistedTarGzipUrlSource tar_gzip_url = 5;
-    PersistedNoopSource noop = 6;
-  }
-}
-
-message PersistedNoopSource {
-}
-
-message PersistedTarGzipUrlSource {
+message DockerDevContainerPersistentState {
   string name = 1;
+  DockerContainerPersistentState container = 2;
+  RuntimeStatePersistentState runtime_state = 3;
+  ImageMetadata image_metadata = 4;
+  NetworkInfo network_info = 5;
+  optional string user = 6;
+  string shell = 7;
+  uint32 daemon_port = 8;
+  WorkspaceConfig workspace = 9;
+  bool v2_hydrated = 10;
 }
 
-message PersistedTarRepoSource {
-  string name = 1;
+message DockerContainerPersistentState {
+  string id = 1;
+  string name = 2;
+  bool stopped = 3;
+  bool removed = 4;
+  bool leaked = 5;
+  optional uint64 post_pause_unpause_delay_ms = 6;
 }
 
 message RuntimeStatePersistentState {
-  map<string, anyrun.v1.DaemonCommandHandlerPersistentState> command_handlers = 1;
+  map<string, DaemonCommandHandlerPersistentState> command_handlers = 1;
+}
+
+message DaemonCommandHandlerPersistentState {
+  int64 vpid = 1;
+  optional string last_event_id = 2;
+}
+
+message NetworkInfo {
+  string ip_address = 1;
 }
 
 message WorkspaceConfig {

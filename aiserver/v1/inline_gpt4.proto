@@ -15,11 +15,9 @@ message StreamInlineLongCompletionRequest {
       CONTEXT_TYPE_UNSPECIFIED = 0;
       CONTEXT_TYPE_RECENT_LOCATIONS = 1;
     }
-
     ContextType context_type = 1;
     repeated CodeBlock blocks = 2;
   }
-
   CurrentFileInfo current_file = 1;
   repeated RepositoryInfo repositories = 6;
   repeated ContextBlock context_blocks = 7;

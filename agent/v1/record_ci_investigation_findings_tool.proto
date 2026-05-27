@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message RecordCiInvestigationFinding {
+  string check_name = 1;
+  optional string details_url = 2;
+  string tldr = 3;
+  optional string root_cause = 4;
+  optional string failing_signal = 5;
+  optional string suggested_next_step = 6;
+  optional string diff_relation = 7;
+  optional string diff_relation_evidence = 8;
+  optional string flake_assessment = 9;
+  optional string flake_evidence = 10;
+  optional bool rerun_available = 11;
+  optional string rerun_evidence = 12;
+  optional string recommended_action = 13;
+  optional string recommended_action_evidence = 14;
+  optional string confidence = 15;
+}
+
+message RecordCiInvestigationOverall {
+  string summary = 1;
+  repeated string themes = 2;
+  optional string recommended_action = 3;
+  optional string recommended_action_evidence = 4;
+  repeated string check_keys = 5;
+}
+
+message RecordCiInvestigationFindingsArgs {
+  repeated RecordCiInvestigationFinding findings = 1;
+  optional RecordCiInvestigationOverall overall = 2;
+  string tool_call_id = 3;
+}
+
+message RecordCiInvestigationFindingsSuccess {
+  string message = 1;
+}
+
+message RecordCiInvestigationFindingsError {
+  string error = 1;
+}
+
+message RecordCiInvestigationFindingsResult {
+  oneof result {
+    RecordCiInvestigationFindingsSuccess success = 1;
+    RecordCiInvestigationFindingsError error = 2;
+  }
+}
+
+message RecordCiInvestigationFindingsToolCall {
+  RecordCiInvestigationFindingsArgs args = 1;
+  RecordCiInvestigationFindingsResult result = 2;
+}

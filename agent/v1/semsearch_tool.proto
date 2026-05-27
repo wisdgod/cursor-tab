@@ -4,19 +4,15 @@ package agent.v1;
 
 import "aiserver/v1/repository.proto";
 
-message SemSearchToolArgs {
-  string query = 1;
-  repeated string target_directories = 2;
-  string explanation = 3;
-}
-
 message SemSearchToolCall {
   SemSearchToolArgs args = 1;
   SemSearchToolResult result = 2;
 }
 
-message SemSearchToolError {
-  string error_message = 1;
+message SemSearchToolArgs {
+  string query = 1;
+  repeated string target_directories = 2;
+  string explanation = 3;
 }
 
 message SemSearchToolResult {
@@ -29,4 +25,8 @@ message SemSearchToolResult {
 message SemSearchToolSuccess {
   string results = 1;
   repeated aiserver.v1.CodeResult code_results = 2;
+}
+
+message SemSearchToolError {
+  string error_message = 1;
 }

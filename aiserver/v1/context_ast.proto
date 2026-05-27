@@ -2,16 +2,22 @@ syntax = "proto3";
 
 package aiserver.v1;
 
+message ContextAST {
+  repeated ContainerTree files = 1;
+}
+
 message ContainerTree {
   string relative_workspace_path = 1;
   repeated ContainerTreeNode nodes = 2;
 }
 
 message ContainerTreeNode {
-  message Blob {
-    optional string value = 1;
+  message Symbol {
+    string doc_string = 1;
+    string value = 2;
+    repeated Reference references = 6;
+    double score = 7;
   }
-
   message Container {
     string doc_string = 1;
     string header = 2;
@@ -20,26 +26,16 @@ message ContainerTreeNode {
     repeated Reference references = 6;
     double score = 7;
   }
-
+  message Blob {
+    optional string value = 1;
+  }
   message Reference {
     string value = 1;
     string relative_workspace_path = 2;
   }
-
-  message Symbol {
-    string doc_string = 1;
-    string value = 2;
-    repeated Reference references = 6;
-    double score = 7;
-  }
-
   oneof node {
     Container container = 1;
     Blob blob = 2;
     Symbol symbol = 3;
   }
-}
-
-message ContextAST {
-  repeated ContainerTree files = 1;
 }

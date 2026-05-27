@@ -26,6 +26,77 @@ enum LintGenerator {
   LINT_GENERATOR_SIMPLE_LINT_RULES = 4;
 }
 
+message LintExplanationRequest {
+  string relative_file_path = 1;
+  LintChunk chunk = 2;
+  string line_selection = 3;
+  int32 token_start_index = 4;
+  int32 token_end_index = 5;
+  string likely_alternate_token = 6;
+  int32 line_chunk_index_zero_based = 7;
+}
+
+message LintExplanationResponse {
+  string explanation = 1;
+}
+
+message LintExplanationResponse2 {
+  string orig_line = 1;
+  string new_line = 2;
+}
+
+message LintChunk {
+  string chunk_contents = 2;
+  int32 start_line_number = 3;
+  int32 num_remaining_lines = 4;
+}
+
+message LintChunkRequest {
+  string relative_file_path = 1;
+  LintChunk chunk = 2;
+  optional bool use_speculative_linter = 3;
+}
+
+message LintChunkResponse {
+  repeated TokenIndex chunk_tokens = 1;
+}
+
+message LintFimChunkRequest {
+  string relative_file_path = 1;
+  LintChunk prefix = 2;
+  LintChunk suffix = 3;
+  LintChunk middle = 4;
+}
+
+message LintFimChunkResponse {
+  repeated TokenIndex middle_chunk_tokens = 1;
+}
+
+message LintFileRequest {
+  string relative_file_path = 1;
+  string file_contents = 2;
+}
+
+message TokensWithLogprobs {
+  string token = 1;
+  float log_probability = 2;
+}
+
+message TokenIndex {
+  repeated TokensWithLogprobs tokens_with_logprobs = 1;
+  string actual_token = 2;
+}
+
+message LintFileResponse {
+  repeated TokenIndex tokens = 1;
+}
+
+message LintDiscriminatorResult {
+  LintDiscriminator discriminator = 1;
+  bool allow = 2;
+  string reasoning = 3;
+}
+
 message AiLintBug {
   string relative_workspace_path = 1;
   string uuid = 8;
@@ -38,6 +109,15 @@ message AiLintBug {
   LintGenerator generator = 9;
   repeated LintDiscriminatorResult discriminator_results = 10;
   LogprobsLintPayload logprobs_payload = 11;
+}
+
+message LogprobsLintPayload {
+  string chunk = 1;
+  string problematic_line = 2;
+  int32 start_col = 3;
+  int32 end_col = 4;
+  string most_likely_replace = 5;
+  int32 line_chunk_index_zero_based = 6;
 }
 
 message AiLintInlineSuggestion {
@@ -59,90 +139,10 @@ message AiLintRule {
   string text = 1;
 }
 
-message LintChunk {
-  string chunk_contents = 2;
-  int32 start_line_number = 3;
-  int32 num_remaining_lines = 4;
-}
-
-message LintChunkRequest {
-  string relative_file_path = 1;
-  LintChunk chunk = 2;
-  optional bool use_speculative_linter = 3;
-}
-
-message LintChunkResponse {
-  repeated TokenIndex chunk_tokens = 1;
-}
-
-message LintDiscriminatorResult {
-  LintDiscriminator discriminator = 1;
-  bool allow = 2;
-  string reasoning = 3;
-}
-
-message LintExplanationRequest {
-  string relative_file_path = 1;
-  LintChunk chunk = 2;
-  string line_selection = 3;
-  int32 token_start_index = 4;
-  int32 token_end_index = 5;
-  string likely_alternate_token = 6;
-  int32 line_chunk_index_zero_based = 7;
-}
-
-message LintExplanationResponse {
-  string explanation = 1;
-}
-
-message LintExplanationResponse2 {
-  string orig_line = 1;
-  string new_line = 2;
-}
-
-message LintFileRequest {
-  string relative_file_path = 1;
-  string file_contents = 2;
-}
-
-message LintFileResponse {
-  repeated TokenIndex tokens = 1;
-}
-
-message LintFimChunkRequest {
-  string relative_file_path = 1;
-  LintChunk prefix = 2;
-  LintChunk suffix = 3;
-  LintChunk middle = 4;
-}
-
-message LintFimChunkResponse {
-  repeated TokenIndex middle_chunk_tokens = 1;
-}
-
-message LogprobsLintPayload {
-  string chunk = 1;
-  string problematic_line = 2;
-  int32 start_col = 3;
-  int32 end_col = 4;
-  string most_likely_replace = 5;
-  int32 line_chunk_index_zero_based = 6;
-}
-
-message TokenIndex {
-  repeated TokensWithLogprobs tokens_with_logprobs = 1;
-  string actual_token = 2;
-}
-
-message TokensWithLogprobs {
-  string token = 1;
-  float log_probability = 2;
-}
-
 service LinterService {
-  rpc LintFile (LintFileRequest) returns (LintFileResponse);
-  rpc LintChunk (LintChunkRequest) returns (LintChunkResponse);
-  rpc LintFimChunk (LintFimChunkRequest) returns (LintFimChunkResponse);
-  rpc LintExplanation (LintExplanationRequest) returns (stream LintExplanationResponse);
-  rpc LintExplanation2 (LintExplanationRequest) returns (LintExplanationResponse2);
+  rpc LintFile(LintFileRequest) returns (LintFileResponse);
+  rpc LintChunk(LintChunkRequest) returns (LintChunkResponse);
+  rpc LintFimChunk(LintFimChunkRequest) returns (LintFimChunkResponse);
+  rpc LintExplanation(LintExplanationRequest) returns (stream LintExplanationResponse);
+  rpc LintExplanation2(LintExplanationRequest) returns (LintExplanationResponse2);
 }

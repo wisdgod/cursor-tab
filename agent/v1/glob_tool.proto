@@ -7,20 +7,15 @@ message GlobToolArgs {
   string glob_pattern = 2;
 }
 
-message GlobToolCall {
-  GlobToolArgs args = 1;
-  GlobToolResult result = 2;
-}
-
-message GlobToolError {
-  string error = 1;
-}
-
 message GlobToolResult {
   oneof result {
     GlobToolSuccess success = 1;
     GlobToolError error = 2;
   }
+}
+
+message GlobToolError {
+  string error = 1;
 }
 
 message GlobToolSuccess {
@@ -30,4 +25,9 @@ message GlobToolSuccess {
   int32 total_files = 4;
   bool client_truncated = 5;
   bool ripgrep_truncated = 6;
+}
+
+message GlobToolCall {
+  GlobToolArgs args = 1;
+  GlobToolResult result = 2;
 }

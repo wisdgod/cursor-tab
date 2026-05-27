@@ -2,23 +2,22 @@ syntax = "proto3";
 
 package agent.v1;
 
+message NetworkPolicyLoggingConfig {
+  optional string decision_log_path = 1;
+  optional string log_format = 2;
+}
+
 message NetworkPolicy {
   enum DefaultAction {
     DEFAULT_ACTION_UNSPECIFIED = 0;
     DEFAULT_ACTION_ALLOW = 1;
     DEFAULT_ACTION_DENY = 2;
   }
-
   optional uint32 version = 1;
   optional DefaultAction default_action = 2;
   repeated string deny = 3;
   repeated string allow = 4;
   optional NetworkPolicyLoggingConfig logging = 5;
-}
-
-message NetworkPolicyLoggingConfig {
-  optional string decision_log_path = 1;
-  optional string log_format = 2;
 }
 
 message SandboxPolicy {
@@ -28,7 +27,6 @@ message SandboxPolicy {
     TYPE_WORKSPACE_READWRITE = 2;
     TYPE_WORKSPACE_READONLY = 3;
   }
-
   Type type = 1;
   optional bool network_access = 2;
   repeated string additional_readwrite_paths = 3;

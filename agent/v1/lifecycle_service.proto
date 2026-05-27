@@ -2,18 +2,21 @@ syntax = "proto3";
 
 package agent.v1;
 
-import "agent/v1/worker_bridge.proto";
+message Empty {
+}
 
-enum EntryType {
-  ENTRY_TYPE_UNSPECIFIED = 0;
-  ENTRY_TYPE_FILE = 1;
-  ENTRY_TYPE_DIRECTORY = 2;
-  ENTRY_TYPE_SYMLINK = 3;
+message ClaimWorkerRequest {
+  string http_mcp_config_json = 1;
+  string mcp_config_json = 2;
+  string bc_id = 3;
+}
+
+message ReleaseWorkerRequest {
 }
 
 service LifecycleService {
-  rpc ResetInstance (Empty) returns (Empty);
-  rpc RenewInstance (Empty) returns (Empty);
-  rpc ClaimWorker (ClaimWorkerRequest) returns (Empty);
-  rpc ReleaseWorker (ReleaseWorkerRequest) returns (Empty);
+  rpc ResetInstance(Empty) returns (Empty);
+  rpc RenewInstance(Empty) returns (Empty);
+  rpc ClaimWorker(ClaimWorkerRequest) returns (Empty);
+  rpc ReleaseWorker(ReleaseWorkerRequest) returns (Empty);
 }

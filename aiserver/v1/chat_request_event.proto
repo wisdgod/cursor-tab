@@ -13,11 +13,26 @@ enum ChatRequestEventType {
   CHAT_REQUEST_EVENT_TYPE_END_STREAMING = 4;
   CHAT_REQUEST_EVENT_TYPE_TOOL_CALL_START = 5;
   CHAT_REQUEST_EVENT_TYPE_TOOL_CALL_END = 6;
-  CHAT_REQUEST_EVENT_TYPE_REQUEST_END = 7;
   CHAT_REQUEST_EVENT_TYPE_TOOL_CALL_STREAM_FINISHED = 8;
+  CHAT_REQUEST_EVENT_TYPE_REQUEST_END = 7;
   CHAT_REQUEST_EVENT_TYPE_PARALLEL_TOOL_CALL_START = 9;
   CHAT_REQUEST_EVENT_TYPE_PARALLEL_TOOL_CALL_END = 10;
   CHAT_REQUEST_EVENT_TYPE_STREAM_STATE_CHANGE = 11;
+}
+
+message SubmitChatRequestEventsV2Request {
+  string session_id = 1;
+  repeated ChatRequestTelemetryEventV2 events = 2;
+  string client_version = 3;
+  string client_commit = 4;
+  map<string, string> platform_tags = 5;
+  optional string window_type = 6;
+}
+
+message SubmitChatRequestEventsV2Response {
+  bool success = 1;
+  optional string error_message = 2;
+  int32 events_processed = 3;
 }
 
 message ChatRequestTelemetryEventV2 {
@@ -46,25 +61,10 @@ message ChatRequestTelemetryEventV2 {
   optional bool is_dev = 23;
 }
 
-message SubmitChatRequestEventsV2Request {
-  string session_id = 1;
-  repeated ChatRequestTelemetryEventV2 events = 2;
-  string client_version = 3;
-  string client_commit = 4;
-  map<string, string> platform_tags = 5;
-  optional string window_type = 6;
-}
-
-message SubmitChatRequestEventsV2Response {
-  bool success = 1;
-  optional string error_message = 2;
-  int32 events_processed = 3;
-}
-
 service ChatRequestEventService {
-  rpc SubmitChatRequestEvents (SubmitChatRequestEventsRequest) returns (SubmitChatRequestEventsResponse);
+  rpc SubmitChatRequestEvents(SubmitChatRequestEventsRequest) returns (SubmitChatRequestEventsResponse);
 }
 
 service ChatRequestEventV2Service {
-  rpc SubmitChatRequestEventsV2 (SubmitChatRequestEventsV2Request) returns (SubmitChatRequestEventsV2Response);
+  rpc SubmitChatRequestEventsV2(SubmitChatRequestEventsV2Request) returns (SubmitChatRequestEventsV2Response);
 }

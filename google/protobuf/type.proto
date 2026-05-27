@@ -11,29 +11,17 @@ enum Syntax {
   SYNTAX_EDITIONS = 2;
 }
 
-message Enum {
+message Type {
   string name = 1;
-  repeated EnumValue enumvalue = 2;
-  repeated Option options = 3;
-  SourceContext source_context = 4;
-  Syntax syntax = 5;
-  string edition = 6;
-}
-
-message EnumValue {
-  string name = 1;
-  int32 number = 2;
-  repeated Option options = 3;
+  repeated Field fields = 2;
+  repeated string oneofs = 3;
+  repeated Option options = 4;
+  SourceContext source_context = 5;
+  Syntax syntax = 6;
+  string edition = 7;
 }
 
 message Field {
-  enum Cardinality {
-    CARDINALITY_UNKNOWN = 0;
-    CARDINALITY_OPTIONAL = 1;
-    CARDINALITY_REQUIRED = 2;
-    CARDINALITY_REPEATED = 3;
-  }
-
   enum Kind {
     TYPE_UNKNOWN = 0;
     TYPE_DOUBLE = 1;
@@ -55,7 +43,12 @@ message Field {
     TYPE_SINT32 = 17;
     TYPE_SINT64 = 18;
   }
-
+  enum Cardinality {
+    CARDINALITY_UNKNOWN = 0;
+    CARDINALITY_OPTIONAL = 1;
+    CARDINALITY_REQUIRED = 2;
+    CARDINALITY_REPEATED = 3;
+  }
   Kind kind = 1;
   Cardinality cardinality = 2;
   int32 number = 3;
@@ -68,17 +61,22 @@ message Field {
   string default_value = 11;
 }
 
+message Enum {
+  string name = 1;
+  repeated EnumValue enumvalue = 2;
+  repeated Option options = 3;
+  SourceContext source_context = 4;
+  Syntax syntax = 5;
+  string edition = 6;
+}
+
+message EnumValue {
+  string name = 1;
+  int32 number = 2;
+  repeated Option options = 3;
+}
+
 message Option {
   string name = 1;
   Any value = 2;
-}
-
-message Type {
-  string name = 1;
-  repeated Field fields = 2;
-  repeated string oneofs = 3;
-  repeated Option options = 4;
-  SourceContext source_context = 5;
-  Syntax syntax = 6;
-  string edition = 7;
 }

@@ -4,95 +4,24 @@ package anyrun.v1;
 
 import "google/protobuf/empty.proto";
 
+enum PrivateWorkerWaitReason {
+  PRIVATE_WORKER_WAIT_REASON_UNSPECIFIED = 0;
+  PRIVATE_WORKER_WAIT_REASON_NO_CONNECTED_WORKERS = 1;
+  PRIVATE_WORKER_WAIT_REASON_LABEL_MISMATCH = 2;
+  PRIVATE_WORKER_WAIT_REASON_OWNER_FILTERED = 3;
+  PRIVATE_WORKER_WAIT_REASON_SHARED_ASSIGNMENT_FILTERED = 4;
+  PRIVATE_WORKER_WAIT_REASON_ALL_BUSY = 5;
+}
+
 enum ClonePurpose {
   CLONE_PURPOSE_UNSPECIFIED = 0;
   CLONE_PURPOSE_DOCKER_BUILD = 1;
   CLONE_PURPOSE_WORKSPACE_SETUP = 2;
 }
 
-message BuildStatusLine {
-  uint32 stream_id = 1;
-  string timestamp = 2;
-  string content = 3;
-}
-
-message BuildStepStarted {
-  uint32 stream_id = 1;
-  uint32 step = 2;
-  uint32 total_steps = 3;
-  string command = 4;
-}
-
-message CloneCompleted {
-  ClonePurpose purpose = 1;
-}
-
-message CloneStarted {
-  ClonePurpose purpose = 1;
-}
-
-message FeatureExitCode {
-  string feature_id = 1;
-  int64 exit_code = 2;
-}
-
-message FeatureOutput {
-  string feature_id = 1;
-  string output = 2;
-}
-
-message HydrationProgress {
-  uint64 transferred = 1;
-  uint64 total = 2;
-}
-
-message ImagePullCompleted {
-  string image_name = 1;
-  string pull_id = 2;
-}
-
-message ImagePullLayerUpdate {
-  string image_name = 1;
-  string pull_id = 2;
-  string layer_id = 3;
-  oneof status {
-    bool pulling_fs_layer = 4;
-    bool waiting = 5;
-    bool verifying_checksum = 6;
-    bool download_complete = 7;
-    bool pull_complete = 8;
-    ProgressDetail downloading = 9;
-    ProgressDetail extracting = 10;
-    string other = 11;
-  }
-}
-
-message ImagePullStarted {
-  string image_name = 1;
-  string pull_id = 2;
-}
-
-message ImagePullStatusUpdate {
-  string image_name = 1;
-  string pull_id = 2;
-  string status = 3;
-}
-
-message InstallCommand {
-  string name = 1;
-  string command = 2;
-  optional string user = 3;
-  bool is_system = 4;
-  bool failure_tolerant = 5;
-}
-
-message InternalBuildMessage {
-  uint32 stream_id = 1;
-  string content = 2;
-}
-
-message PodErrorEvent {
-  string error_message = 1;
+message PodIdentity {
+  string tenant_id = 1;
+  string pod_id = 2;
 }
 
 message PodEvent {
@@ -154,9 +83,79 @@ message PodEvent {
   }
 }
 
-message PodIdentity {
-  string tenant_id = 1;
-  string pod_id = 2;
+message SpanStarted {
+  string span_id = 1;
+  string name = 2;
+  optional string parent_span_id = 3;
+  optional string href = 5;
+}
+
+message SpanEnded {
+  string span_id = 1;
+}
+
+message WaitingForWorkerStatus {
+  int32 retry_count = 1;
+  int32 max_retries = 2;
+  PrivateWorkerWaitReason wait_reason = 3;
+}
+
+message HydrationProgress {
+  uint64 transferred = 1;
+  uint64 total = 2;
+}
+
+message PodErrorEvent {
+  string error_message = 1;
+}
+
+message FeatureOutput {
+  string feature_id = 1;
+  string output = 2;
+}
+
+message FeatureExitCode {
+  string feature_id = 1;
+  int64 exit_code = 2;
+}
+
+message BuildStepStarted {
+  uint32 stream_id = 1;
+  uint32 step = 2;
+  uint32 total_steps = 3;
+  string command = 4;
+}
+
+message BuildStatusLine {
+  uint32 stream_id = 1;
+  string timestamp = 2;
+  string content = 3;
+}
+
+message InternalBuildMessage {
+  uint32 stream_id = 1;
+  string content = 2;
+}
+
+message ImagePullStarted {
+  string image_name = 1;
+  string pull_id = 2;
+}
+
+message ImagePullLayerUpdate {
+  string image_name = 1;
+  string pull_id = 2;
+  string layer_id = 3;
+  oneof status {
+    bool pulling_fs_layer = 4;
+    bool waiting = 5;
+    bool verifying_checksum = 6;
+    bool download_complete = 7;
+    bool pull_complete = 8;
+    ProgressDetail downloading = 9;
+    ProgressDetail extracting = 10;
+    string other = 11;
+  }
 }
 
 message ProgressDetail {
@@ -164,18 +163,29 @@ message ProgressDetail {
   uint64 total = 2;
 }
 
-message SpanEnded {
-  string span_id = 1;
+message ImagePullStatusUpdate {
+  string image_name = 1;
+  string pull_id = 2;
+  string status = 3;
 }
 
-message SpanStarted {
-  string span_id = 1;
-  string name = 2;
-  optional string parent_span_id = 3;
-  optional uint32 turn_index = 4;
+message ImagePullCompleted {
+  string image_name = 1;
+  string pull_id = 2;
 }
 
-message WaitingForWorkerStatus {
-  int32 retry_count = 1;
-  int32 max_retries = 2;
+message InstallCommand {
+  string name = 1;
+  string command = 2;
+  optional string user = 3;
+  bool is_system = 4;
+  bool failure_tolerant = 5;
+}
+
+message CloneStarted {
+  ClonePurpose purpose = 1;
+}
+
+message CloneCompleted {
+  ClonePurpose purpose = 1;
 }

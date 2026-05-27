@@ -2,10 +2,9 @@ syntax = "proto3";
 
 package agent.v1;
 
-message OutputLocation {
-  string file_path = 1;
-  int64 size_bytes = 2;
-  int64 line_count = 3;
+message Range {
+  Position start = 1;
+  Position end = 2;
 }
 
 message Position {
@@ -13,7 +12,13 @@ message Position {
   uint32 column = 2;
 }
 
-message Range {
-  Position start = 1;
-  Position end = 2;
+message OutputLocation {
+  string file_path = 1;
+  int64 size_bytes = 2;
+  int64 line_count = 3;
+}
+
+message SmartModeApproval {
+  string request_id = 1;
+  string reason = 2;
 }

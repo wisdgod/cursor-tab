@@ -23,6 +23,10 @@ message ReportBugfixResultsArgs {
   repeated BugfixResultItem results = 2;
 }
 
+message ReportBugfixResultsSuccess {
+  repeated BugfixResultItem results = 1;
+}
+
 message ReportBugfixResultsError {
   string error = 1;
 }
@@ -32,10 +36,6 @@ message ReportBugfixResultsResult {
     ReportBugfixResultsSuccess success = 1;
     ReportBugfixResultsError error = 2;
   }
-}
-
-message ReportBugfixResultsSuccess {
-  repeated BugfixResultItem results = 1;
 }
 
 message ReportBugfixResultsToolCall {

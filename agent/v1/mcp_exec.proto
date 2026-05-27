@@ -6,64 +6,15 @@ import "agent/v1/mcp.proto";
 import "agent/v1/utils.proto";
 import "google/protobuf/struct.proto";
 
-message ListMcpResourcesError {
-  string error = 1;
-}
-
-message ListMcpResourcesExecArgs {
-  optional string server = 1;
-}
-
-message ListMcpResourcesExecResult {
-  message McpResource {
-    string uri = 1;
-    optional string name = 2;
-    optional string description = 3;
-    optional string mime_type = 4;
-    string server = 5;
-    map<string, string> annotations = 6;
-  }
-
-  oneof result {
-    ListMcpResourcesSuccess success = 1;
-    ListMcpResourcesError error = 2;
-    ListMcpResourcesRejected rejected = 3;
-  }
-}
-
-message ListMcpResourcesRejected {
-  string reason = 1;
-}
-
-message ListMcpResourcesSuccess {
-  repeated ListMcpResourcesExecResult.McpResource resources = 1;
-}
-
 message McpArgs {
   string name = 1;
   map<string, google.protobuf.Value> args = 2;
   string tool_call_id = 3;
   string provider_identifier = 4;
   string tool_name = 5;
-}
-
-message McpError {
-  string error = 1;
-}
-
-message McpImageContent {
-  bytes data = 1;
-  string mime_type = 2;
-}
-
-message McpPermissionDenied {
-  string error = 1;
-  bool is_readonly = 2;
-}
-
-message McpRejected {
-  string reason = 1;
-  bool is_readonly = 2;
+  optional SmartModeApproval smart_mode_approval = 6;
+  bool smart_mode_approval_only = 7;
+  bool skip_approval = 8;
 }
 
 message McpResult {
@@ -74,7 +25,16 @@ message McpResult {
     McpPermissionDenied permission_denied = 4;
     McpToolNotFound tool_not_found = 5;
     McpServerNotFound server_not_found = 6;
+    McpApproved approved = 7;
   }
+}
+
+message McpApproved {
+}
+
+message McpToolNotFound {
+  string name = 1;
+  repeated string available_tools = 2;
 }
 
 message McpServerNotFound {
@@ -82,8 +42,41 @@ message McpServerNotFound {
   repeated string available_servers = 2;
 }
 
-message McpStateError {
+message McpTextContent {
+  string text = 1;
+  optional OutputLocation output_location = 2;
+}
+
+message McpImageContent {
+  bytes data = 1;
+  string mime_type = 2;
+}
+
+message McpToolResultContentItem {
+  oneof content {
+    McpTextContent text = 1;
+    McpImageContent image = 2;
+  }
+}
+
+message McpSuccess {
+  repeated McpToolResultContentItem content = 1;
+  bool is_error = 2;
+  google.protobuf.Struct structured_content = 3;
+}
+
+message McpError {
   string error = 1;
+}
+
+message McpRejected {
+  string reason = 1;
+  bool is_readonly = 2;
+}
+
+message McpPermissionDenied {
+  string error = 1;
+  bool is_readonly = 2;
 }
 
 message McpStateExecArgs {
@@ -95,10 +88,6 @@ message McpStateExecResult {
     McpStateError error = 2;
     McpStateRejected rejected = 3;
   }
-}
-
-message McpStateRejected {
-  string reason = 1;
 }
 
 message McpStateServer {
@@ -115,32 +104,44 @@ message McpStateSuccess {
   repeated McpStateServer servers = 1;
 }
 
-message McpSuccess {
-  repeated McpToolResultContentItem content = 1;
-  bool is_error = 2;
-  google.protobuf.Struct structured_content = 3;
+message McpStateError {
+  string error = 1;
 }
 
-message McpTextContent {
-  string text = 1;
-  optional OutputLocation output_location = 2;
+message McpStateRejected {
+  string reason = 1;
 }
 
-message McpToolNotFound {
-  string name = 1;
-  repeated string available_tools = 2;
+message ListMcpResourcesExecArgs {
+  optional string server = 1;
 }
 
-message McpToolResultContentItem {
-  oneof content {
-    McpTextContent text = 1;
-    McpImageContent image = 2;
+message ListMcpResourcesExecResult {
+  message McpResource {
+    string uri = 1;
+    optional string name = 2;
+    optional string description = 3;
+    optional string mime_type = 4;
+    string server = 5;
+    map<string, string> annotations = 6;
+  }
+  oneof result {
+    ListMcpResourcesSuccess success = 1;
+    ListMcpResourcesError error = 2;
+    ListMcpResourcesRejected rejected = 3;
   }
 }
 
-message ReadMcpResourceError {
-  string uri = 1;
-  string error = 2;
+message ListMcpResourcesSuccess {
+  repeated ListMcpResourcesExecResult.McpResource resources = 1;
+}
+
+message ListMcpResourcesError {
+  string error = 1;
+}
+
+message ListMcpResourcesRejected {
+  string reason = 1;
 }
 
 message ReadMcpResourceExecArgs {
@@ -158,8 +159,22 @@ message ReadMcpResourceExecResult {
   }
 }
 
-message ReadMcpResourceNotFound {
+message ReadMcpResourceSuccess {
   string uri = 1;
+  optional string name = 2;
+  optional string description = 3;
+  optional string mime_type = 4;
+  map<string, string> annotations = 7;
+  optional string download_path = 8;
+  oneof content {
+    string text = 5;
+    bytes blob = 6;
+  }
+}
+
+message ReadMcpResourceError {
+  string uri = 1;
+  string error = 2;
 }
 
 message ReadMcpResourceRejected {
@@ -167,15 +182,6 @@ message ReadMcpResourceRejected {
   string reason = 2;
 }
 
-message ReadMcpResourceSuccess {
+message ReadMcpResourceNotFound {
   string uri = 1;
-  optional string name = 2;
-  optional string description = 3;
-  optional string mime_type = 4;
-  oneof content {
-    string text = 5;
-    bytes blob = 6;
-  }
-  map<string, string> annotations = 7;
-  optional string download_path = 8;
 }

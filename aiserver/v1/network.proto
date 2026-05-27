@@ -16,6 +16,6 @@ message IsConnectedResponse {
 }
 
 service NetworkService {
-  rpc GetPublicIp (GetPublicIpRequest) returns (GetPublicIpResponse);
-  rpc IsConnected (IsConnectedRequest) returns (IsConnectedResponse);
+  rpc GetPublicIp(GetPublicIpRequest) returns (GetPublicIpResponse);
+  rpc IsConnected(IsConnectedRequest) returns (IsConnectedResponse);
 }

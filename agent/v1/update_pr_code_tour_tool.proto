@@ -7,10 +7,6 @@ message UpdatePrCodeTourArgs {
   string tool_call_id = 2;
 }
 
-message UpdatePrCodeTourError {
-  string error = 1;
-}
-
 message UpdatePrCodeTourResult {
   oneof result {
     UpdatePrCodeTourSuccess success = 1;
@@ -21,6 +17,10 @@ message UpdatePrCodeTourResult {
 message UpdatePrCodeTourSuccess {
   string revision_id = 1;
   string message = 2;
+}
+
+message UpdatePrCodeTourError {
+  string error = 1;
 }
 
 message UpdatePrCodeTourToolCall {

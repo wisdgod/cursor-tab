@@ -8,30 +8,6 @@ message GenerateImageArgs {
   repeated string reference_image_paths = 5;
 }
 
-message GenerateImageError {
-  string error = 1;
-}
-
-message GenerateImageRequestQuery {
-  GenerateImageArgs args = 1;
-  string tool_call_id = 2;
-}
-
-message GenerateImageRequestResponse {
-  message Approved {
-    string description = 1;
-  }
-
-  message Rejected {
-    string reason = 1;
-  }
-
-  oneof result {
-    Approved approved = 1;
-    Rejected rejected = 2;
-  }
-}
-
 message GenerateImageResult {
   oneof result {
     GenerateImageSuccess success = 1;
@@ -44,7 +20,29 @@ message GenerateImageSuccess {
   string image_data = 2;
 }
 
+message GenerateImageError {
+  string error = 1;
+}
+
 message GenerateImageToolCall {
   GenerateImageArgs args = 1;
   GenerateImageResult result = 2;
+}
+
+message GenerateImageRequestQuery {
+  GenerateImageArgs args = 1;
+  string tool_call_id = 2;
+}
+
+message GenerateImageRequestResponse {
+  message Approved {
+    string description = 1;
+  }
+  message Rejected {
+    string reason = 1;
+  }
+  oneof result {
+    Approved approved = 1;
+    Rejected rejected = 2;
+  }
 }

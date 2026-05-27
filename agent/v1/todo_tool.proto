@@ -10,32 +10,6 @@ enum TodoStatus {
   TODO_STATUS_CANCELLED = 4;
 }
 
-message ReadTodosArgs {
-  repeated TodoStatus status_filter = 1;
-  repeated string id_filter = 2;
-}
-
-message ReadTodosError {
-  string error = 1;
-}
-
-message ReadTodosResult {
-  oneof result {
-    ReadTodosSuccess success = 1;
-    ReadTodosError error = 2;
-  }
-}
-
-message ReadTodosSuccess {
-  repeated TodoItem todos = 1;
-  int32 total_count = 2;
-}
-
-message ReadTodosToolCall {
-  ReadTodosArgs args = 1;
-  ReadTodosResult result = 2;
-}
-
 message TodoItem {
   string id = 1;
   string content = 2;
@@ -45,13 +19,14 @@ message TodoItem {
   repeated string dependencies = 6;
 }
 
+message UpdateTodosToolCall {
+  UpdateTodosArgs args = 1;
+  UpdateTodosResult result = 2;
+}
+
 message UpdateTodosArgs {
   repeated TodoItem todos = 1;
   bool merge = 2;
-}
-
-message UpdateTodosError {
-  string error = 1;
 }
 
 message UpdateTodosResult {
@@ -67,7 +42,32 @@ message UpdateTodosSuccess {
   bool was_merge = 3;
 }
 
-message UpdateTodosToolCall {
-  UpdateTodosArgs args = 1;
-  UpdateTodosResult result = 2;
+message UpdateTodosError {
+  string error = 1;
+}
+
+message ReadTodosToolCall {
+  ReadTodosArgs args = 1;
+  ReadTodosResult result = 2;
+}
+
+message ReadTodosArgs {
+  repeated TodoStatus status_filter = 1;
+  repeated string id_filter = 2;
+}
+
+message ReadTodosResult {
+  oneof result {
+    ReadTodosSuccess success = 1;
+    ReadTodosError error = 2;
+  }
+}
+
+message ReadTodosSuccess {
+  repeated TodoItem todos = 1;
+  int32 total_count = 2;
+}
+
+message ReadTodosError {
+  string error = 1;
 }

@@ -7,38 +7,6 @@ message WebSearchArgs {
   string tool_call_id = 2;
 }
 
-message WebSearchError {
-  string error = 1;
-}
-
-message WebSearchReference {
-  string title = 1;
-  string url = 2;
-  string chunk = 3;
-}
-
-message WebSearchRejected {
-  string reason = 1;
-}
-
-message WebSearchRequestQuery {
-  WebSearchArgs args = 1;
-}
-
-message WebSearchRequestResponse {
-  message Approved {
-  }
-
-  message Rejected {
-    string reason = 1;
-  }
-
-  oneof result {
-    Approved approved = 1;
-    Rejected rejected = 2;
-  }
-}
-
 message WebSearchResult {
   oneof result {
     WebSearchSuccess success = 1;
@@ -51,7 +19,37 @@ message WebSearchSuccess {
   repeated WebSearchReference references = 1;
 }
 
+message WebSearchError {
+  string error = 1;
+}
+
+message WebSearchRejected {
+  string reason = 1;
+}
+
+message WebSearchReference {
+  string title = 1;
+  string url = 2;
+  string chunk = 3;
+}
+
 message WebSearchToolCall {
   WebSearchArgs args = 1;
   WebSearchResult result = 2;
+}
+
+message WebSearchRequestQuery {
+  WebSearchArgs args = 1;
+}
+
+message WebSearchRequestResponse {
+  message Approved {
+  }
+  message Rejected {
+    string reason = 1;
+  }
+  oneof result {
+    Approved approved = 1;
+    Rejected rejected = 2;
+  }
 }

@@ -23,21 +23,31 @@ message GrepArgs {
   optional int32 offset = 16;
 }
 
-message GrepContentMatch {
-  int32 line_number = 1;
-  string content = 2;
-  bool content_truncated = 3;
-  bool is_context_line = 4;
+message GrepResult {
+  oneof result {
+    GrepSuccess success = 1;
+    GrepError error = 2;
+  }
 }
 
-message GrepContentResult {
-  repeated GrepFileMatch matches = 1;
-  int32 total_lines = 2;
-  int32 total_matched_lines = 3;
-  bool client_truncated = 4;
-  bool ripgrep_truncated = 5;
-  optional int32 head_limit_applied = 6;
-  optional int32 offset_applied = 7;
+message GrepError {
+  string error = 1;
+}
+
+message GrepSuccess {
+  string pattern = 1;
+  string path = 2;
+  string output_mode = 3;
+  map<string, GrepUnionResult> workspace_results = 4;
+  optional GrepUnionResult active_editor_result = 5;
+}
+
+message GrepUnionResult {
+  oneof result {
+    GrepCountResult count = 1;
+    GrepFilesResult files = 2;
+    GrepContentResult content = 3;
+  }
 }
 
 message GrepCountResult {
@@ -50,18 +60,9 @@ message GrepCountResult {
   optional int32 offset_applied = 7;
 }
 
-message GrepError {
-  string error = 1;
-}
-
 message GrepFileCount {
   string file = 1;
   int32 count = 2;
-}
-
-message GrepFileMatch {
-  string file = 1;
-  repeated GrepContentMatch matches = 2;
 }
 
 message GrepFilesResult {
@@ -73,29 +74,28 @@ message GrepFilesResult {
   optional int32 offset_applied = 6;
 }
 
-message GrepResult {
-  oneof result {
-    GrepSuccess success = 1;
-    GrepError error = 2;
-  }
+message GrepContentResult {
+  repeated GrepFileMatch matches = 1;
+  int32 total_lines = 2;
+  int32 total_matched_lines = 3;
+  bool client_truncated = 4;
+  bool ripgrep_truncated = 5;
+  optional int32 head_limit_applied = 6;
+  optional int32 offset_applied = 7;
+}
+
+message GrepFileMatch {
+  string file = 1;
+  repeated GrepContentMatch matches = 2;
+}
+
+message GrepContentMatch {
+  int32 line_number = 1;
+  string content = 2;
+  bool content_truncated = 3;
+  bool is_context_line = 4;
 }
 
 message GrepStream {
   string pattern = 1;
-}
-
-message GrepSuccess {
-  string pattern = 1;
-  string path = 2;
-  string output_mode = 3;
-  map<string, agent.v1.GrepUnionResult> workspace_results = 4;
-  optional GrepUnionResult active_editor_result = 5;
-}
-
-message GrepUnionResult {
-  oneof result {
-    GrepCountResult count = 1;
-    GrepFilesResult files = 2;
-    GrepContentResult content = 3;
-  }
 }

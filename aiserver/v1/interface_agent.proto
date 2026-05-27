@@ -21,7 +21,6 @@ message InterfaceAgentStatus {
     STATUS_SUCCESS = 3;
     STATUS_FAILURE = 4;
   }
-
   Status validate_configuration = 1;
   Status stub_new_function = 2;
   Status verify_spec = 3;

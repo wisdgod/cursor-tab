@@ -7,10 +7,6 @@ message StartGrindExecutionArgs {
   string tool_call_id = 2;
 }
 
-message StartGrindExecutionError {
-  string error = 1;
-}
-
 message StartGrindExecutionResult {
   oneof result {
     StartGrindExecutionSuccess success = 1;
@@ -19,6 +15,10 @@ message StartGrindExecutionResult {
 }
 
 message StartGrindExecutionSuccess {
+}
+
+message StartGrindExecutionError {
+  string error = 1;
 }
 
 message StartGrindExecutionToolCall {

@@ -10,6 +10,9 @@ enum CodebaseKind {
   CODEBASE_KIND_GIT_LINKED_WORKTREE_SUBDIRECTORY = 4;
   CODEBASE_KIND_PLAIN_DIRECTORY = 5;
   CODEBASE_KIND_DOT_CURSOR = 6;
+  CODEBASE_KIND_DOT_CLAUDE = 7;
+  CODEBASE_KIND_DOT_CODEX = 8;
+  CODEBASE_KIND_DOT_AGENTS = 9;
 }
 
 enum CodebaseSnapshotReason {
@@ -17,82 +20,6 @@ enum CodebaseSnapshotReason {
   CODEBASE_SNAPSHOT_REASON_MANUAL = 1;
   CODEBASE_SNAPSHOT_REASON_AGENT_REQUEST_START = 2;
   CODEBASE_SNAPSHOT_REASON_AGENT_REQUEST_END = 3;
-}
-
-message CompletePackfileUploadRequest {
-  string codebase_uuid = 1;
-  string upload_uuid = 2;
-  PackfileUploadCompletion completion = 3;
-}
-
-message CompletePackfileUploadResponse {
-}
-
-message CreatePackfileUploadRequest {
-  string codebase_uuid = 1;
-  PackfileMetadata packfile = 2;
-}
-
-message CreatePackfileUploadResponse {
-  message AlreadyUploaded {
-  }
-
-  message UploadRequired {
-    string upload_uuid = 1;
-    PackfileUploadMethod method = 2;
-  }
-
-  oneof result {
-    UploadRequired upload_required = 1;
-    AlreadyUploaded already_uploaded = 2;
-  }
-}
-
-message GetCodebaseSnapshotStatusRequest {
-  string codebase_uuid = 1;
-  string commit_hash = 2;
-}
-
-message GetCodebaseSnapshotStatusResponse {
-  message Incomplete {
-  }
-
-  message Pending {
-  }
-
-  message Verified {
-  }
-
-  oneof status {
-    Pending pending = 1;
-    Verified verified = 2;
-    Incomplete incomplete = 3;
-  }
-}
-
-message PackfileMetadata {
-  string pack_id = 1;
-  string content_sha256 = 2;
-  uint64 size_bytes = 3;
-}
-
-message PackfileUploadCompletion {
-  message DirectChunkedUpload {
-  }
-
-  oneof completion {
-    DirectChunkedUpload direct_chunked_upload = 1;
-  }
-}
-
-message PackfileUploadMethod {
-  message DirectChunkedUpload {
-    uint64 chunk_size_bytes = 1;
-  }
-
-  oneof method {
-    DirectChunkedUpload direct_chunked_upload = 1;
-  }
 }
 
 message RegisterCodebaseRequest {
@@ -114,6 +41,75 @@ message RegisterCodebaseSnapshotRequest {
 message RegisterCodebaseSnapshotResponse {
 }
 
+message GetCodebaseSnapshotStatusRequest {
+  string codebase_uuid = 1;
+  string commit_hash = 2;
+}
+
+message GetCodebaseSnapshotStatusResponse {
+  message Pending {
+  }
+  message Verified {
+  }
+  message Incomplete {
+  }
+  oneof status {
+    Pending pending = 1;
+    Verified verified = 2;
+    Incomplete incomplete = 3;
+  }
+}
+
+message PackfileMetadata {
+  string pack_id = 1;
+  string content_sha256 = 2;
+  uint64 size_bytes = 3;
+}
+
+message PackfileUploadMethod {
+  message DirectChunkedUpload {
+    uint64 chunk_size_bytes = 1;
+  }
+  oneof method {
+    DirectChunkedUpload direct_chunked_upload = 1;
+  }
+}
+
+message CreatePackfileUploadRequest {
+  string codebase_uuid = 1;
+  PackfileMetadata packfile = 2;
+}
+
+message CreatePackfileUploadResponse {
+  message UploadRequired {
+    string upload_uuid = 1;
+    PackfileUploadMethod method = 2;
+  }
+  message AlreadyUploaded {
+  }
+  oneof result {
+    UploadRequired upload_required = 1;
+    AlreadyUploaded already_uploaded = 2;
+  }
+}
+
+message PackfileUploadCompletion {
+  message DirectChunkedUpload {
+  }
+  oneof completion {
+    DirectChunkedUpload direct_chunked_upload = 1;
+  }
+}
+
+message CompletePackfileUploadRequest {
+  string codebase_uuid = 1;
+  string upload_uuid = 2;
+  PackfileUploadCompletion completion = 3;
+}
+
+message CompletePackfileUploadResponse {
+}
+
 message UploadPackfileChunkRequest {
   string codebase_uuid = 1;
   string upload_uuid = 2;
@@ -125,10 +121,10 @@ message UploadPackfileChunkResponse {
 }
 
 service CodebaseSnapshotService {
-  rpc RegisterCodebase (RegisterCodebaseRequest) returns (RegisterCodebaseResponse);
-  rpc RegisterCodebaseSnapshot (RegisterCodebaseSnapshotRequest) returns (RegisterCodebaseSnapshotResponse);
-  rpc GetCodebaseSnapshotStatus (GetCodebaseSnapshotStatusRequest) returns (GetCodebaseSnapshotStatusResponse);
-  rpc CreatePackfileUpload (CreatePackfileUploadRequest) returns (CreatePackfileUploadResponse);
-  rpc CompletePackfileUpload (CompletePackfileUploadRequest) returns (CompletePackfileUploadResponse);
-  rpc UploadPackfileChunk (UploadPackfileChunkRequest) returns (UploadPackfileChunkResponse);
+  rpc RegisterCodebase(RegisterCodebaseRequest) returns (RegisterCodebaseResponse);
+  rpc RegisterCodebaseSnapshot(RegisterCodebaseSnapshotRequest) returns (RegisterCodebaseSnapshotResponse);
+  rpc GetCodebaseSnapshotStatus(GetCodebaseSnapshotStatusRequest) returns (GetCodebaseSnapshotStatusResponse);
+  rpc CreatePackfileUpload(CreatePackfileUploadRequest) returns (CreatePackfileUploadResponse);
+  rpc CompletePackfileUpload(CompletePackfileUploadRequest) returns (CompletePackfileUploadResponse);
+  rpc UploadPackfileChunk(UploadPackfileChunkRequest) returns (UploadPackfileChunkResponse);
 }

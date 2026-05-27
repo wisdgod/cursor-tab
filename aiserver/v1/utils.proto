@@ -2,6 +2,22 @@ syntax = "proto3";
 
 package aiserver.v1;
 
+enum LintSeverity {
+  LINT_SEVERITY_UNSPECIFIED = 0;
+  LINT_SEVERITY_ERROR = 1;
+  LINT_SEVERITY_WARNING = 2;
+  LINT_SEVERITY_INFO = 3;
+  LINT_SEVERITY_HINT = 4;
+  LINT_SEVERITY_AI = 5;
+}
+
+enum FeatureType {
+  FEATURE_TYPE_UNSPECIFIED = 0;
+  FEATURE_TYPE_EDIT = 1;
+  FEATURE_TYPE_GENERATE = 2;
+  FEATURE_TYPE_INLINE_LONG_COMPLETION = 3;
+}
+
 enum EmbeddingModel {
   EMBEDDING_MODEL_UNSPECIFIED = 0;
   EMBEDDING_MODEL_VOYAGE_CODE_2 = 1;
@@ -12,86 +28,153 @@ enum EmbeddingModel {
   EMBEDDING_MODEL_QWEN_1_5B_0618_FP8_MM_CUSTOM = 6;
 }
 
-enum FeatureType {
-  FEATURE_TYPE_UNSPECIFIED = 0;
-  FEATURE_TYPE_EDIT = 1;
-  FEATURE_TYPE_GENERATE = 2;
-  FEATURE_TYPE_INLINE_LONG_COMPLETION = 3;
+message CursorPosition {
+  int32 line = 1;
+  int32 column = 2;
 }
 
-enum LintSeverity {
-  LINT_SEVERITY_UNSPECIFIED = 0;
-  LINT_SEVERITY_ERROR = 1;
-  LINT_SEVERITY_WARNING = 2;
-  LINT_SEVERITY_INFO = 3;
-  LINT_SEVERITY_HINT = 4;
-  LINT_SEVERITY_AI = 5;
+message VscodeOSStatistics {
+  double totalmem = 1;
+  double freemem = 2;
+  repeated double loadavg = 3;
 }
 
-message AzureState {
-  string api_key = 1;
-  string base_url = 2;
-  string deployment = 3;
-  bool use_azure = 4;
+message VscodeOSProperties {
+  string type = 1;
+  string release = 2;
+  string arch = 3;
+  string platform = 4;
+  repeated VscodeCPUProperties cpus = 5;
 }
 
-message BedrockState {
-  string access_key = 1;
-  string secret_key = 2;
-  string region = 3;
-  bool use_bedrock = 4;
-  string session_token = 5;
+message VscodeCPUProperties {
+  string model = 1;
+  double speed = 2;
 }
 
-message BM25Chunk {
-  string content = 1;
+message EnvironmentInfo {
+  optional string exthost_platform = 1;
+  optional string exthost_arch = 2;
+  optional string exthost_release = 3;
+  optional string exthost_shell = 4;
+  optional string local_timestamp = 5;
+  repeated string workspace_uris = 6;
+  optional string cursor_version = 7;
+  optional bool is_remote = 8;
+  optional string local_os_type = 9;
+  optional string home_directory = 10;
+  optional string local_timezone = 11;
+}
+
+message SelectionWithOrientation {
+  int32 selection_start_line_number = 1;
+  int32 selection_start_column = 2;
+  int32 position_line_number = 3;
+  int32 position_column = 4;
+}
+
+message GetDiffRequest {
+  enum OutputFormat {
+    OUTPUT_FORMAT_UNSPECIFIED = 0;
+    OUTPUT_FORMAT_NAME_STATUS = 1;
+    OUTPUT_FORMAT_NAME_STATUS_AND_NUMSTAT = 2;
+    OUTPUT_FORMAT_FILE_DIFFS = 3;
+    OUTPUT_FORMAT_DIFFS_WITH_BEFORE_AND_AFTER = 4;
+  }
+  string cwd = 1;
+  string ref = 2;
+  string base_ref = 3;
+  bool merge_base = 4;
+  repeated string target_paths = 5;
+  optional int32 unified_context_lines = 6;
+  int32 max_untracked_files = 7;
+  int32 submodule_recurse_depth = 9;
+  bool include_space_changes = 10;
+  bool committed_only = 11;
+  optional OutputFormat output_format = 8;
+}
+
+message GetDiffResponse {
+  message SubmoduleDiff {
+    string relative_path = 1;
+    GitDiff diff = 2;
+    bool errored = 3;
+  }
+  GitDiff diff = 1;
+  repeated SubmoduleDiff submodule_diffs = 2;
+}
+
+message SimplestRange {
+  int32 start_line = 1;
+  int32 end_line_inclusive = 2;
+}
+
+message ComputeLinesDiffOriginalAndModified {
+  repeated string original = 1;
+  repeated string modified = 2;
+}
+
+message GitDiff {
+  enum DiffType {
+    DIFF_TYPE_UNSPECIFIED = 0;
+    DIFF_TYPE_DIFF_TO_HEAD = 1;
+    DIFF_TYPE_DIFF_FROM_BRANCH_TO_MAIN = 2;
+  }
+  repeated FileDiff diffs = 1;
+  DiffType diff_type = 2;
+}
+
+message FileDiff {
+  message Chunk {
+    string content = 1;
+    repeated string lines = 2;
+    int32 old_start = 3;
+    int32 old_lines = 4;
+    int32 new_start = 5;
+    int32 new_lines = 6;
+  }
+  int32 added = 4;
+  int32 removed = 5;
+  string from = 1;
+  string to = 2;
+  repeated Chunk chunks = 3;
+  optional string before_file_contents = 6;
+  optional string after_file_contents = 7;
+  optional bool is_generated = 8;
+}
+
+message SimpleRange {
+  int32 start_line_number = 1;
+  int32 start_column = 2;
+  int32 end_line_number_inclusive = 3;
+  int32 end_column = 4;
+}
+
+message SimpleFileChunk {
+  string relative_workspace_path = 1;
   SimplestRange range = 2;
-  int32 score = 3;
-  string relative_path = 4;
-}
-
-message ChatExternalLink {
-  string url = 1;
-  string uuid = 2;
-  optional string pdf_content = 3;
-  optional bool is_pdf = 4;
-  optional string filename = 5;
-}
-
-message ChatQuote {
-  string markdown = 1;
-  string bubble_id = 2;
-  int32 section_index = 3;
-}
-
-message ClientAction {
-  string command_id = 1;
-  map<string, string> args = 2;
+  string chunk_hash = 3;
 }
 
 message CmdKDebugInfo {
-  message CppFileDiffHistory {
-    string file_name = 1;
-    repeated string diff_history = 2;
+  message UnsavedFiles {
+    string relative_workspace_path = 1;
+    string contents = 2;
   }
-
   message OpenEditor {
     string relative_workspace_path = 1;
     int32 editor_group_index = 2;
     int32 editor_group_id = 3;
     bool is_active = 4;
   }
-
+  message CppFileDiffHistory {
+    string file_name = 1;
+    repeated string diff_history = 2;
+  }
   message PastThought {
     string text = 1;
     double time_in_unix_seconds = 2;
   }
-
-  message UnsavedFiles {
-    string relative_workspace_path = 1;
-    string contents = 2;
-  }
-
   string remote_url = 1;
   string commit_id = 2;
   string git_patch = 3;
@@ -108,16 +191,26 @@ message CmdKDebugInfo {
   string base_branch_commit_id = 14;
 }
 
-message CmdKExternalLink {
-  string url = 1;
-  string uuid = 2;
+message LineRange {
+  int32 start_line_number = 1;
+  int32 end_line_number_inclusive = 2;
+}
+
+message CursorRange {
+  CursorPosition start_position = 1;
+  CursorPosition end_position = 2;
+}
+
+message DetailedLine {
+  string text = 1;
+  float line_number = 2;
+  bool is_signature = 3;
 }
 
 message CodeBlock {
   message Signatures {
     repeated CursorRange ranges = 1;
   }
-
   string relative_workspace_path = 1;
   optional string file_contents = 2;
   optional int32 file_contents_length = 9;
@@ -130,74 +223,57 @@ message CodeBlock {
   FileGit file_git_context = 10;
 }
 
-message CodeChunk {
-  enum Intent {
-    INTENT_UNSPECIFIED = 0;
-    INTENT_COMPOSER_FILE = 1;
-    INTENT_COMPRESSED_COMPOSER_FILE = 2;
-  }
+message GitCommit {
+  string commit = 1;
+  string author = 2;
+  string date = 3;
+  string message = 4;
+}
 
-  enum SummarizationStrategy {
-    SUMMARIZATION_STRATEGY_NONE_UNSPECIFIED = 0;
-    SUMMARIZATION_STRATEGY_SUMMARIZED = 1;
-    SUMMARIZATION_STRATEGY_EMBEDDED = 2;
-  }
+message FileGit {
+  repeated GitCommit commits = 1;
+}
 
+message File {
   string relative_workspace_path = 1;
-  int32 start_line_number = 2;
-  repeated string lines = 3;
-  optional SummarizationStrategy summarization_strategy = 4;
-  string language_identifier = 5;
-  optional Intent intent = 6;
-  optional bool is_final_version = 7;
-  optional bool is_first_version = 8;
+  string contents = 2;
+  FileGit file_git_context = 3;
 }
 
-message CommitDiffString {
-  string diff = 1;
+message Diagnostic {
+  enum DiagnosticSeverity {
+    DIAGNOSTIC_SEVERITY_UNSPECIFIED = 0;
+    DIAGNOSTIC_SEVERITY_ERROR = 1;
+    DIAGNOSTIC_SEVERITY_WARNING = 2;
+    DIAGNOSTIC_SEVERITY_INFORMATION = 3;
+    DIAGNOSTIC_SEVERITY_HINT = 4;
+  }
+  message RelatedInformation {
+    string message = 1;
+    CursorRange range = 2;
+  }
+  string message = 1;
+  CursorRange range = 2;
+  DiagnosticSeverity severity = 3;
+  repeated RelatedInformation related_information = 4;
 }
 
-message CommitNote {
-  string note = 1;
-  string commit_hash = 2;
+message Lint {
+  string message = 1;
+  SimpleRange range = 2;
+  LintSeverity severity = 3;
 }
 
-message CommitNoteWithEmbeddings {
-  string note = 1;
-  string commit_hash = 2;
-  repeated double embeddings = 3;
-}
-
-message ComposerExternalLink {
-  string url = 1;
-  string uuid = 2;
-  optional string pdf_content = 3;
-  optional bool is_pdf = 4;
-  optional string filename = 5;
-}
-
-message ComputeLinesDiffOriginalAndModified {
-  repeated string original = 1;
-  repeated string modified = 2;
-}
-
-message ConfigureSpendLimitAction {
-  string confirm_label = 1;
-}
-
-message CrossExtHostHeader {
-  string key = 1;
-  string value = 2;
-}
-
-message CrossExtHostHeaders {
-  repeated CrossExtHostHeader headers = 1;
+message BM25Chunk {
+  string content = 1;
+  SimplestRange range = 2;
+  int32 score = 3;
+  string relative_path = 4;
 }
 
 message CurrentFileInfo {
   message NotebookCell {
   }
-
   string relative_workspace_path = 1;
   string contents = 2;
   bool rely_on_filesync = 18;
@@ -218,14 +294,67 @@ message CurrentFileInfo {
   optional string line_ending = 20;
 }
 
-message CursorPosition {
-  int32 line = 1;
-  int32 column = 2;
+message AzureState {
+  string api_key = 1;
+  string base_url = 2;
+  string deployment = 3;
+  bool use_azure = 4;
 }
 
-message CursorRange {
-  CursorPosition start_position = 1;
-  CursorPosition end_position = 2;
+message BedrockState {
+  string access_key = 1;
+  string secret_key = 2;
+  string region = 3;
+  bool use_bedrock = 4;
+  string session_token = 5;
+}
+
+message ModelDetails {
+  optional string model_name = 1;
+  optional string api_key = 2;
+  optional bool enable_ghost_mode = 3;
+  optional AzureState azure_state = 4;
+  optional bool enable_slow_pool = 5;
+  optional string openai_api_base_url = 6;
+  optional BedrockState bedrock_state = 7;
+  optional bool max_mode = 8;
+}
+
+message ModelInfo {
+  string model_name = 1;
+}
+
+message DataframeInfo {
+  message Column {
+    string key = 1;
+    string type = 2;
+  }
+  string name = 1;
+  string shape = 2;
+  int32 data_dimensionality = 3;
+  repeated Column columns = 6;
+  int32 row_count = 7;
+  string index_column = 8;
+}
+
+message LinterError {
+  string message = 1;
+  CursorRange range = 2;
+  optional string source = 3;
+  repeated Diagnostic.RelatedInformation related_information = 4;
+  optional Diagnostic.DiagnosticSeverity severity = 5;
+  optional bool is_stale = 6;
+}
+
+message LinterErrors {
+  string relative_workspace_path = 1;
+  repeated LinterError errors = 2;
+  string file_contents = 3;
+}
+
+message LinterErrorsWithoutFileContents {
+  string relative_workspace_path = 1;
+  repeated LinterError errors = 2;
 }
 
 message CursorRule {
@@ -242,63 +371,29 @@ message CursorRule {
   optional string marketplace = 11;
 }
 
-message CustomErrorDetails {
-  string title = 1;
-  string detail = 2;
-  optional bool allow_command_links_potentially_unsafe_please_only_use_for_handwritten_trusted_markdown = 3;
-  optional bool is_retryable = 4;
-  optional bool show_request_id = 5;
-  optional bool should_show_immediate_error = 6;
-  repeated ErrorButton buttons = 8;
-  map<string, string> additional_info = 7;
-  repeated PlanChoice plan_choices = 9;
-  optional ErrorAnalyticsMetadata analytics_metadata = 10;
+message ExplicitContext {
+  string context = 1;
+  optional string repo_context = 2;
+  repeated CursorRule rules = 3;
+  optional string mode_specific_context = 4;
+  repeated MCPInstructions mcp_instructions = 5;
 }
 
-message DashboardAction {
-  string action = 1;
-  map<string, string> args = 2;
-  optional string success_message = 3;
+message MCPInstructions {
+  string server_name = 1;
+  string server_identifier = 2;
+  string instructions = 3;
 }
 
-message DataframeInfo {
-  message Column {
-    string key = 1;
-    string type = 2;
+message PureMessage {
+  enum MessageType {
+    MESSAGE_TYPE_UNSPECIFIED = 0;
+    MESSAGE_TYPE_SYSTEM = 1;
+    MESSAGE_TYPE_USER = 2;
+    MESSAGE_TYPE_ASSISTANT = 3;
   }
-
-  string name = 1;
-  string shape = 2;
-  int32 data_dimensionality = 3;
-  repeated Column columns = 6;
-  int32 row_count = 7;
-  string index_column = 8;
-}
-
-message DetailedLine {
-  string text = 1;
-  float line_number = 2;
-  bool is_signature = 3;
-}
-
-message Diagnostic {
-  enum DiagnosticSeverity {
-    DIAGNOSTIC_SEVERITY_UNSPECIFIED = 0;
-    DIAGNOSTIC_SEVERITY_ERROR = 1;
-    DIAGNOSTIC_SEVERITY_WARNING = 2;
-    DIAGNOSTIC_SEVERITY_INFORMATION = 3;
-    DIAGNOSTIC_SEVERITY_HINT = 4;
-  }
-
-  message RelatedInformation {
-    string message = 1;
-    CursorRange range = 2;
-  }
-
-  string message = 1;
-  CursorRange range = 2;
-  DiagnosticSeverity severity = 3;
-  repeated RelatedInformation related_information = 4;
+  MessageType message_type = 1;
+  string content = 2;
 }
 
 message DocumentSymbol {
@@ -331,14 +426,12 @@ message DocumentSymbol {
     SYMBOL_KIND_OPERATOR = 25;
     SYMBOL_KIND_TYPE_PARAMETER = 26;
   }
-
   message Range {
     int32 start_line_number = 1;
     int32 start_column = 2;
     int32 end_line_number = 3;
     int32 end_column = 4;
   }
-
   string name = 1;
   string detail = 2;
   SymbolKind kind = 3;
@@ -348,6 +441,19 @@ message DocumentSymbol {
   repeated DocumentSymbol children = 8;
 }
 
+message HoverDetails {
+  string code_details = 1;
+  repeated string markdown_blocks = 2;
+}
+
+message UriComponents {
+  string scheme = 1;
+  optional string authority = 2;
+  optional string path = 3;
+  optional string query = 4;
+  optional string fragment = 5;
+}
+
 message DocumentSymbolWithText {
   DocumentSymbol symbol = 1;
   string relative_workspace_path = 2;
@@ -355,61 +461,33 @@ message DocumentSymbolWithText {
   UriComponents uri_components = 4;
 }
 
-message EnvironmentInfo {
-  optional string exthost_platform = 1;
-  optional string exthost_arch = 2;
-  optional string exthost_release = 3;
-  optional string exthost_shell = 4;
-  optional string local_timestamp = 5;
-  repeated string workspace_uris = 6;
-  optional string cursor_version = 7;
-  optional bool is_remote = 8;
-  optional string local_os_type = 9;
-  optional string home_directory = 10;
-  optional string local_timezone = 11;
-}
-
-message ErrorAnalyticsMetadata {
-  optional string action_required = 1;
-}
-
-message ErrorButton {
-  string label = 1;
-  oneof action {
-    UpgradeAction upgrade = 2;
-    SwitchModelAction switch_model = 3;
-    ConfigureSpendLimitAction configure_spend_limit = 4;
-    UrlAction url = 5;
-    UpgradeChoice upgrade_choice = 6;
-    DashboardAction dashboard_action = 7;
-    ReloadWindowAction reload_window = 8;
-    ClientAction client_action = 9;
-  }
-}
-
 message ErrorDetails {
   enum Error {
     ERROR_UNSPECIFIED = 0;
     ERROR_BAD_API_KEY = 1;
+    ERROR_BAD_USER_API_KEY = 42;
     ERROR_NOT_LOGGED_IN = 2;
     ERROR_INVALID_AUTH_ID = 3;
     ERROR_NOT_HIGH_ENOUGH_PERMISSIONS = 4;
+    ERROR_AGENT_REQUIRES_LOGIN = 18;
     ERROR_BAD_MODEL_NAME = 5;
+    ERROR_NOT_FOUND = 39;
+    ERROR_DEPRECATED = 40;
     ERROR_USER_NOT_FOUND = 6;
     ERROR_FREE_USER_RATE_LIMIT_EXCEEDED = 7;
     ERROR_PRO_USER_RATE_LIMIT_EXCEEDED = 8;
     ERROR_FREE_USER_USAGE_LIMIT = 9;
     ERROR_PRO_USER_USAGE_LIMIT = 10;
+    ERROR_RESOURCE_EXHAUSTED = 41;
     ERROR_AUTH_TOKEN_NOT_FOUND = 11;
     ERROR_AUTH_TOKEN_EXPIRED = 12;
     ERROR_OPENAI = 13;
     ERROR_OPENAI_RATE_LIMIT_EXCEEDED = 14;
-    ERROR_AGENT_REQUIRES_LOGIN = 18;
     ERROR_MAX_TOKENS = 20;
-    ERROR_USER_ABORTED_REQUEST = 21;
-    ERROR_GENERIC_RATE_LIMIT_EXCEEDED = 22;
     ERROR_PRO_USER_ONLY = 23;
+    ERROR_USER_ABORTED_REQUEST = 21;
     ERROR_TIMEOUT = 25;
+    ERROR_GENERIC_RATE_LIMIT_EXCEEDED = 22;
     ERROR_GPT_4_VISION_PREVIEW_RATE_LIMIT = 28;
     ERROR_CUSTOM_MESSAGE = 29;
     ERROR_OUTDATED_CLIENT = 30;
@@ -420,10 +498,6 @@ message ErrorDetails {
     ERROR_BAD_REQUEST = 36;
     ERROR_REPOSITORY_SERVICE_REPOSITORY_IS_NOT_INITIALIZED = 37;
     ERROR_UNAUTHORIZED = 38;
-    ERROR_NOT_FOUND = 39;
-    ERROR_DEPRECATED = 40;
-    ERROR_RESOURCE_EXHAUSTED = 41;
-    ERROR_BAD_USER_API_KEY = 42;
     ERROR_CONVERSATION_TOO_LONG = 43;
     ERROR_USAGE_PRICING_REQUIRED = 44;
     ERROR_USAGE_PRICING_REQUIRED_CHANGEABLE = 45;
@@ -444,176 +518,29 @@ message ErrorDetails {
     ERROR_MAX_MODE_REQUIRED = 60;
     ERROR_MODEL_NO_LONGER_SUPPORTED = 61;
     ERROR_PRICING_WARNING = 62;
+    ERROR_SLOW_POOL = 63;
+    ERROR_UNSUPPORTED_REGION = 64;
   }
-
   Error error = 1;
   CustomErrorDetails details = 2;
   optional bool is_expected = 3;
 }
 
-message ExplicitContext {
-  string context = 1;
-  optional string repo_context = 2;
-  repeated CursorRule rules = 3;
-  optional string mode_specific_context = 4;
-  repeated MCPInstructions mcp_instructions = 5;
+message CustomErrorDetails {
+  string title = 1;
+  string detail = 2;
+  optional bool allow_command_links_potentially_unsafe_please_only_use_for_handwritten_trusted_markdown = 3;
+  optional bool is_retryable = 4;
+  optional bool show_request_id = 5;
+  optional bool should_show_immediate_error = 6;
+  repeated ErrorButton buttons = 8;
+  map<string, string> additional_info = 7;
+  repeated PlanChoice plan_choices = 9;
+  optional ErrorAnalyticsMetadata analytics_metadata = 10;
 }
 
-message File {
-  string relative_workspace_path = 1;
-  string contents = 2;
-  FileGit file_git_context = 3;
-}
-
-message FileDiff {
-  message Chunk {
-    string content = 1;
-    repeated string lines = 2;
-    int32 old_start = 3;
-    int32 old_lines = 4;
-    int32 new_start = 5;
-    int32 new_lines = 6;
-  }
-
-  int32 added = 4;
-  int32 removed = 5;
-  string from = 1;
-  string to = 2;
-  repeated Chunk chunks = 3;
-  optional string before_file_contents = 6;
-  optional string after_file_contents = 7;
-  optional bool is_generated = 8;
-}
-
-message FileGit {
-  repeated GitCommit commits = 1;
-}
-
-message FullCommitNotes {
-  repeated CommitNote notes = 1;
-  string commit_hash = 2;
-  string repo_url = 3;
-  string files_changed_relative_path = 4;
-}
-
-message GetDiffRequest {
-  enum OutputFormat {
-    OUTPUT_FORMAT_UNSPECIFIED = 0;
-    OUTPUT_FORMAT_NAME_STATUS = 1;
-    OUTPUT_FORMAT_NAME_STATUS_AND_NUMSTAT = 2;
-    OUTPUT_FORMAT_FILE_DIFFS = 3;
-    OUTPUT_FORMAT_DIFFS_WITH_BEFORE_AND_AFTER = 4;
-  }
-
-  string cwd = 1;
-  string ref = 2;
-  string base_ref = 3;
-  bool merge_base = 4;
-  repeated string target_paths = 5;
-  optional int32 unified_context_lines = 6;
-  int32 max_untracked_files = 7;
-  int32 submodule_recurse_depth = 9;
-  bool include_space_changes = 10;
-  bool committed_only = 11;
-  optional OutputFormat output_format = 8;
-}
-
-message GetDiffResponse {
-  message SubmoduleDiff {
-    string relative_path = 1;
-    GitDiff diff = 2;
-    bool errored = 3;
-  }
-
-  GitDiff diff = 1;
-  repeated SubmoduleDiff submodule_diffs = 2;
-}
-
-message GitCommit {
-  string commit = 1;
-  string author = 2;
-  string date = 3;
-  string message = 4;
-}
-
-message GitDiff {
-  enum DiffType {
-    DIFF_TYPE_UNSPECIFIED = 0;
-    DIFF_TYPE_DIFF_TO_HEAD = 1;
-    DIFF_TYPE_DIFF_FROM_BRANCH_TO_MAIN = 2;
-  }
-
-  repeated FileDiff diffs = 1;
-  DiffType diff_type = 2;
-}
-
-message HoverDetails {
-  string code_details = 1;
-  repeated string markdown_blocks = 2;
-}
-
-message ImageProto {
-  message Dimension {
-    int32 width = 1;
-    int32 height = 2;
-  }
-
-  bytes data = 1;
-  Dimension dimension = 2;
-  string uuid = 3;
-  optional string task_specific_description = 4;
-}
-
-message LineRange {
-  int32 start_line_number = 1;
-  int32 end_line_number_inclusive = 2;
-}
-
-message Lint {
-  string message = 1;
-  SimpleRange range = 2;
-  LintSeverity severity = 3;
-}
-
-message LinterError {
-  string message = 1;
-  CursorRange range = 2;
-  optional string source = 3;
-  repeated Diagnostic.RelatedInformation related_information = 4;
-  optional Diagnostic.DiagnosticSeverity severity = 5;
-  optional bool is_stale = 6;
-}
-
-message LinterErrors {
-  string relative_workspace_path = 1;
-  repeated LinterError errors = 2;
-  string file_contents = 3;
-}
-
-message LinterErrorsWithoutFileContents {
-  string relative_workspace_path = 1;
-  repeated LinterError errors = 2;
-}
-
-message MCPInstructions {
-  string server_name = 1;
-  string server_identifier = 2;
-  string instructions = 3;
-}
-
-message ModelDetails {
-  optional string model_name = 1;
-  optional string api_key = 2;
-  optional bool enable_ghost_mode = 3;
-  optional AzureState azure_state = 4;
-  optional bool enable_slow_pool = 5;
-  optional string openai_api_base_url = 6;
-  optional BedrockState bedrock_state = 7;
-  optional bool max_mode = 8;
-}
-
-message ModelInfo {
-  string model_name = 1;
+message ErrorAnalyticsMetadata {
+  optional string action_required = 1;
 }
 
 message PlanChoice {
@@ -623,16 +550,151 @@ message PlanChoice {
   string value = 4;
 }
 
-message PureMessage {
-  enum MessageType {
-    MESSAGE_TYPE_UNSPECIFIED = 0;
-    MESSAGE_TYPE_SYSTEM = 1;
-    MESSAGE_TYPE_USER = 2;
-    MESSAGE_TYPE_ASSISTANT = 3;
+message ErrorButton {
+  string label = 1;
+  oneof action {
+    UpgradeAction upgrade = 2;
+    SwitchModelAction switch_model = 3;
+    ConfigureSpendLimitAction configure_spend_limit = 4;
+    UrlAction url = 5;
+    UpgradeChoice upgrade_choice = 6;
+    DashboardAction dashboard_action = 7;
+    ReloadWindowAction reload_window = 8;
+    ClientAction client_action = 9;
   }
+}
 
-  MessageType message_type = 1;
-  string content = 2;
+message ClientAction {
+  string command_id = 1;
+  map<string, string> args = 2;
+}
+
+message ReloadWindowAction {
+}
+
+message DashboardAction {
+  string action = 1;
+  map<string, string> args = 2;
+  optional string success_message = 3;
+}
+
+message UpgradeChoice {
+}
+
+message UpgradeAction {
+  string membership_to_upgrade_to = 1;
+  optional bool try_immediate_upgrade = 2;
+  optional bool allow_trial = 3;
+}
+
+message SwitchModelAction {
+  optional string suggested_model = 1;
+}
+
+message ConfigureSpendLimitAction {
+  string confirm_label = 1;
+}
+
+message UrlAction {
+  string url = 1;
+}
+
+message ImageProto {
+  message Dimension {
+    int32 width = 1;
+    int32 height = 2;
+  }
+  bytes data = 1;
+  Dimension dimension = 2;
+  string uuid = 3;
+  optional string task_specific_description = 4;
+}
+
+message ChatQuote {
+  string markdown = 1;
+  string bubble_id = 2;
+  int32 section_index = 3;
+}
+
+message ChatExternalLink {
+  string url = 1;
+  string uuid = 2;
+  optional string pdf_content = 3;
+  optional bool is_pdf = 4;
+  optional string filename = 5;
+}
+
+message ComposerExternalLink {
+  string url = 1;
+  string uuid = 2;
+  optional string pdf_content = 3;
+  optional bool is_pdf = 4;
+  optional string filename = 5;
+}
+
+message CmdKExternalLink {
+  string url = 1;
+  string uuid = 2;
+}
+
+message CommitNote {
+  string note = 1;
+  string commit_hash = 2;
+}
+
+message CommitNoteWithEmbeddings {
+  string note = 1;
+  string commit_hash = 2;
+  repeated double embeddings = 3;
+}
+
+message CommitDiffString {
+  string diff = 1;
+}
+
+message FullCommitNotes {
+  repeated CommitNote notes = 1;
+  string commit_hash = 2;
+  string repo_url = 3;
+  string files_changed_relative_path = 4;
+}
+
+message CrossExtHostHeader {
+  string key = 1;
+  string value = 2;
+}
+
+message CrossExtHostHeaders {
+  repeated CrossExtHostHeader headers = 1;
+}
+
+message SimpleUnaryCrossExtensionHostMessage {
+  bytes message = 1;
+  CrossExtHostHeaders header = 2;
+  CrossExtHostHeaders trailer = 3;
+  bool is_error = 4;
+  string connect_error = 5;
+}
+
+message CodeChunk {
+  enum Intent {
+    INTENT_UNSPECIFIED = 0;
+    INTENT_COMPOSER_FILE = 1;
+    INTENT_COMPRESSED_COMPOSER_FILE = 2;
+  }
+  enum SummarizationStrategy {
+    SUMMARIZATION_STRATEGY_NONE_UNSPECIFIED = 0;
+    SUMMARIZATION_STRATEGY_SUMMARIZED = 1;
+    SUMMARIZATION_STRATEGY_EMBEDDED = 2;
+  }
+  string relative_workspace_path = 1;
+  int32 start_line_number = 2;
+  repeated string lines = 3;
+  optional SummarizationStrategy summarization_strategy = 4;
+  string language_identifier = 5;
+  optional Intent intent = 6;
+  optional bool is_final_version = 7;
+  optional bool is_first_version = 8;
 }
 
 message RCPCallFrame {
@@ -642,8 +704,9 @@ message RCPCallFrame {
   optional int32 column_number = 4;
 }
 
-message RCPChatMessage {
-  string text = 1;
+message RCPStackTrace {
+  repeated RCPCallFrame call_frames = 1;
+  optional string raw_stack_trace = 2;
 }
 
 message RCPLogEntry {
@@ -656,19 +719,6 @@ message RCPLogEntry {
   optional string object_data_json = 7;
 }
 
-message RCPMessage {
-  oneof message {
-    RCPLogEntry console = 1;
-    RCPUIElementPicked ui_element_picked = 2;
-    RCPChatMessage chat_message = 3;
-  }
-}
-
-message RCPStackTrace {
-  repeated RCPCallFrame call_frames = 1;
-  optional string raw_stack_trace = 2;
-}
-
 message RCPUIElementPicked {
   string element = 1;
   string xpath = 2;
@@ -678,82 +728,14 @@ message RCPUIElementPicked {
   optional string component_props_json = 6;
 }
 
-message ReloadWindowAction {
+message RCPChatMessage {
+  string text = 1;
 }
 
-message SelectionWithOrientation {
-  int32 selection_start_line_number = 1;
-  int32 selection_start_column = 2;
-  int32 position_line_number = 3;
-  int32 position_column = 4;
-}
-
-message SimpleFileChunk {
-  string relative_workspace_path = 1;
-  SimplestRange range = 2;
-  string chunk_hash = 3;
-}
-
-message SimpleRange {
-  int32 start_line_number = 1;
-  int32 start_column = 2;
-  int32 end_line_number_inclusive = 3;
-  int32 end_column = 4;
-}
-
-message SimplestRange {
-  int32 start_line = 1;
-  int32 end_line_inclusive = 2;
-}
-
-message SimpleUnaryCrossExtensionHostMessage {
-  bytes message = 1;
-  CrossExtHostHeaders header = 2;
-  CrossExtHostHeaders trailer = 3;
-  bool is_error = 4;
-  string connect_error = 5;
-}
-
-message SwitchModelAction {
-  optional string suggested_model = 1;
-}
-
-message UpgradeAction {
-  string membership_to_upgrade_to = 1;
-  optional bool try_immediate_upgrade = 2;
-  optional bool allow_trial = 3;
-}
-
-message UpgradeChoice {
-}
-
-message UriComponents {
-  string scheme = 1;
-  optional string authority = 2;
-  optional string path = 3;
-  optional string query = 4;
-  optional string fragment = 5;
-}
-
-message UrlAction {
-  string url = 1;
-}
-
-message VscodeCPUProperties {
-  string model = 1;
-  double speed = 2;
-}
-
-message VscodeOSProperties {
-  string type = 1;
-  string release = 2;
-  string arch = 3;
-  string platform = 4;
-  repeated VscodeCPUProperties cpus = 5;
-}
-
-message VscodeOSStatistics {
-  double totalmem = 1;
-  double freemem = 2;
-  repeated double loadavg = 3;
+message RCPMessage {
+  oneof message {
+    RCPLogEntry console = 1;
+    RCPUIElementPicked ui_element_picked = 2;
+    RCPChatMessage chat_message = 3;
+  }
 }

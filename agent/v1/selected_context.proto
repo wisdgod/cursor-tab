@@ -14,11 +14,66 @@ enum SelectedPluginCapabilityType {
   SELECTED_PLUGIN_CAPABILITY_TYPE_SUBAGENT = 3;
 }
 
-message CallFrame {
-  optional string function_name = 1;
-  optional string url = 2;
-  optional int32 line_number = 3;
-  optional int32 column_number = 4;
+message SelectedImage {
+  message BlobIdWithData {
+    bytes blob_id = 1;
+    bytes data = 2;
+  }
+  message Dimension {
+    int32 width = 1;
+    int32 height = 2;
+  }
+  string uuid = 2;
+  string path = 3;
+  Dimension dimension = 4;
+  string mime_type = 7;
+  oneof data_or_blob_id {
+    bytes blob_id = 1;
+    bytes data = 8;
+    BlobIdWithData blob_id_with_data = 9;
+  }
+}
+
+message SelectedDocument {
+  message BlobIdWithData {
+    bytes blob_id = 1;
+    bytes data = 2;
+  }
+  string uuid = 2;
+  string filename = 3;
+  string mime_type = 4;
+  string path = 7;
+  oneof data_or_blob_id {
+    bytes blob_id = 1;
+    bytes data = 8;
+    BlobIdWithData blob_id_with_data = 9;
+  }
+}
+
+message SelectedVideo {
+  message BlobIdWithData {
+    bytes blob_id = 1;
+    bytes data = 2;
+  }
+  message SignedUrl {
+    string url = 1;
+    string key = 2;
+    int64 expires_at_unix_ms = 3;
+    int64 refresh_after_unix_ms = 4;
+    string conversation_id = 5;
+  }
+  string uuid = 2;
+  string path = 3;
+  optional float fps = 4;
+  string mime_type = 7;
+  string filename = 10;
+  bool materialize_to_filesystem = 12;
+  oneof data_or_blob_id {
+    bytes blob_id = 1;
+    bytes data = 8;
+    BlobIdWithData blob_id_with_data = 9;
+    SignedUrl signed_url = 11;
+  }
 }
 
 message ExtraContextEntry {
@@ -28,64 +83,109 @@ message ExtraContextEntry {
   }
 }
 
-message InvocationContext {
-  message GithubPR {
-    string title = 1;
-    string description = 2;
-    string comments = 3;
-    optional string ci_failures = 4;
-  }
+message SelectedFile {
+  string content = 1;
+  string path = 2;
+  optional string relative_path = 3;
+}
 
-  message IdeState {
-    message File {
-      message CursorPosition {
-        int32 line = 1;
-        string text = 2;
-      }
+message SelectedCodeSelection {
+  string content = 1;
+  string path = 2;
+  optional string relative_path = 3;
+  Range range = 4;
+}
 
-      string path = 1;
-      optional string relative_path = 2;
-      optional CursorPosition cursor_position = 3;
-      int32 total_lines = 4;
-      optional string active_command = 5;
-    }
+message SelectedTerminal {
+  string content = 1;
+  optional string title = 2;
+  optional string path = 3;
+}
 
-    message ViewedPullRequest {
-      int32 number = 1;
-      string url = 2;
-      optional string title = 3;
-      optional string folder_path = 4;
-      optional string summary_json = 5;
-      optional string description = 6;
-    }
+message SelectedTerminalSelection {
+  string content = 1;
+  optional string title = 2;
+  optional string path = 3;
+  Range range = 4;
+}
 
-    repeated File visible_files = 1;
-    repeated File recently_viewed_files = 2;
-    repeated ViewedPullRequest currently_viewed_prs = 3;
-  }
+message SelectedFolder {
+  string path = 1;
+  optional string relative_path = 2;
+  LsDirectoryTreeNode directory_tree = 3;
+}
 
-  message MicrosoftTeamsThread {
-    string thread = 1;
-    optional string channel_name = 2;
-    optional string team_name = 3;
-    optional string channel_description = 4;
-    optional string team_description = 5;
-  }
+message SelectedExternalLink {
+  string url = 1;
+  string uuid = 2;
+  optional string pdf_content = 3;
+  optional bool is_pdf = 4;
+  optional string filename = 5;
+  optional bytes blob_id = 6;
+}
 
-  message SlackThread {
-    string thread = 1;
-    optional string channel_name = 2;
-    optional string channel_purpose = 3;
-    optional string channel_topic = 4;
-  }
+message SelectedCursorRule {
+  CursorRule rule = 1;
+}
 
-  oneof data {
-    SlackThread slack_thread = 1;
-    GithubPR github_pr = 2;
-    IdeState ide_state = 3;
-    MicrosoftTeamsThread microsoft_teams_thread = 4;
-    bytes blob_id = 10;
-  }
+message SelectedGitDiff {
+  string content = 1;
+  int32 full_content_length_char_count = 2;
+}
+
+message SelectedGitDiffFromBranchToMain {
+  string content = 1;
+  int32 full_content_length_char_count = 2;
+}
+
+message SelectedGitCommit {
+  string sha = 1;
+  string message = 2;
+  optional string description = 3;
+  string diff = 4;
+}
+
+message SelectedPullRequest {
+  int32 number = 1;
+  string url = 2;
+  optional string title = 3;
+  string folder_path = 4;
+  optional string summary_json = 5;
+  optional string description = 6;
+  optional bytes blob_id = 7;
+}
+
+message SelectedGitPRDiffSelection {
+  string pr_url = 1;
+  string file_path = 2;
+  int32 start_line = 3;
+  int32 end_line = 4;
+  optional string diff_content = 5;
+  optional bytes blob_id = 6;
+}
+
+message SelectedPluginCapabilityRef {
+  string plugin_id = 1;
+  SelectedPluginCapabilityType capability_type = 2;
+  string source_path = 3;
+  string snapshot_token = 4;
+  optional string resolved_commit_sha = 5;
+}
+
+message SelectedCursorCommand {
+  string name = 1;
+  string content = 2;
+  optional SelectedPluginCapabilityRef plugin_capability = 3;
+}
+
+message SelectedDocumentation {
+  string doc_id = 1;
+  string name = 2;
+}
+
+message SelectedPastChat {
+  string agent_id = 1;
+  string name = 2;
 }
 
 message RecentAgent {
@@ -98,25 +198,45 @@ message RecentAgentsContext {
   repeated RecentAgent recent_agents = 1;
 }
 
-message SelectedAgenticGitAction {
-  oneof params {
-    SelectedAgenticGitActionCommitParams commit_params = 2;
-    SelectedAgenticGitActionCommitParams commit_and_push_params = 6;
-    SelectedAgenticGitActionPushParams push_params = 3;
-    SelectedAgenticGitActionPushParams create_pr_params = 7;
-    SelectedAgenticGitActionCommitParams create_pr_with_changes_params = 8;
-    SelectedAgenticGitActionFixMergeConflictsParams fix_merge_conflicts_params = 4;
-    SelectedAgenticGitActionBabysitPrInCloudParams babysit_pr_in_cloud_params = 11;
-    SelectedAgenticGitActionCommitParams create_branch_and_commit_params = 12;
-    SelectedAgenticGitActionCommitParams create_branch_commit_and_push_params = 13;
-  }
-  optional SelectedGitBranchContext branch_context = 5;
-  optional string path_to_template_file = 9;
-  optional string path_to_template_dir = 10;
+message CallFrame {
+  optional string function_name = 1;
+  optional string url = 2;
+  optional int32 line_number = 3;
+  optional int32 column_number = 4;
 }
 
-message SelectedAgenticGitActionBabysitPrInCloudParams {
-  optional string base_branch = 1;
+message StackTrace {
+  repeated CallFrame call_frames = 1;
+  optional string raw_stack_trace = 2;
+}
+
+message SelectedConsoleLog {
+  string message = 1;
+  double timestamp = 2;
+  string level = 3;
+  string client_name = 4;
+  string session_id = 5;
+  optional StackTrace stack_trace = 6;
+  optional string object_data_json = 7;
+}
+
+message SelectedUIElement {
+  string element = 1;
+  string xpath = 2;
+  string text_content = 3;
+  string extra = 4;
+  optional string component = 5;
+  optional string component_props_json = 6;
+}
+
+message SelectedSubagent {
+  string name = 1;
+}
+
+message SelectedBrowser {
+  string browser_id = 1;
+  string url = 2;
+  optional string page_title = 3;
 }
 
 message SelectedAgenticGitActionCommitParams {
@@ -128,8 +248,9 @@ message SelectedAgenticGitActionCommitParams {
   repeated SelectedAgenticGitFileWithStatus files_to_exclude_from_commit_with_status = 6;
 }
 
-message SelectedAgenticGitActionFixMergeConflictsParams {
-  optional string base_branch = 1;
+message SelectedAgenticGitFileWithStatus {
+  string path = 1;
+  optional string status = 2;
 }
 
 message SelectedAgenticGitActionPushParams {
@@ -137,32 +258,46 @@ message SelectedAgenticGitActionPushParams {
   optional bool create_pr_draft = 2;
 }
 
-message SelectedAgenticGitFileWithStatus {
-  string path = 1;
-  optional string status = 2;
+message SelectedAgenticGitActionFixMergeConflictsParams {
+  optional string base_branch = 1;
 }
 
-message SelectedBrowser {
-  string browser_id = 1;
-  string url = 2;
-  optional string page_title = 3;
+message SelectedAgenticGitActionBabysitPrInCloudParams {
+  optional string base_branch = 1;
 }
 
-message SelectedCodeSelection {
-  string content = 1;
-  string path = 2;
-  optional string relative_path = 3;
-  Range range = 4;
+message SelectedAgenticGitActionUpdateBranchParams {
+  optional string base_branch = 1;
 }
 
-message SelectedConsoleLog {
-  string message = 1;
-  double timestamp = 2;
-  string level = 3;
-  string client_name = 4;
-  string session_id = 5;
-  optional StackTrace stack_trace = 6;
-  optional string object_data_json = 7;
+message SelectedAgenticGitActionPullLocallyParams {
+  string remote_branch = 1;
+}
+
+message SelectedAgenticGitAction {
+  optional SelectedGitBranchContext branch_context = 5;
+  optional string path_to_template_file = 9;
+  optional string path_to_template_dir = 10;
+  oneof params {
+    SelectedAgenticGitActionCommitParams commit_params = 2;
+    SelectedAgenticGitActionCommitParams commit_and_push_params = 6;
+    SelectedAgenticGitActionPushParams push_params = 3;
+    SelectedAgenticGitActionPushParams create_pr_params = 7;
+    SelectedAgenticGitActionCommitParams create_pr_with_changes_params = 8;
+    SelectedAgenticGitActionFixMergeConflictsParams fix_merge_conflicts_params = 4;
+    SelectedAgenticGitActionBabysitPrInCloudParams babysit_pr_in_cloud_params = 11;
+    SelectedAgenticGitActionPullLocallyParams apply_locally_params = 14;
+    SelectedAgenticGitActionPullLocallyParams checkout_branch_params = 15;
+    SelectedAgenticGitActionCommitParams create_branch_and_commit_params = 12;
+    SelectedAgenticGitActionCommitParams create_branch_commit_and_push_params = 13;
+    SelectedAgenticGitActionUpdateBranchParams update_branch_params = 16;
+  }
+}
+
+message SelectedGitBranchContext {
+  optional string current_branch = 1;
+  optional string base_branch = 2;
+  optional string agent_branch_prefix = 3;
 }
 
 message SelectedContext {
@@ -196,179 +331,55 @@ message SelectedContext {
   optional SelectedAgenticGitAction selected_agentic_git_action = 34;
 }
 
-message SelectedCursorCommand {
-  string name = 1;
-  string content = 2;
-  optional SelectedPluginCapabilityRef plugin_capability = 3;
-}
-
-message SelectedCursorRule {
-  CursorRule rule = 1;
-}
-
-message SelectedDocument {
-  message BlobIdWithData {
-    bytes blob_id = 1;
-    bytes data = 2;
+message InvocationContext {
+  message SlackThread {
+    string thread = 1;
+    optional string channel_name = 2;
+    optional string channel_purpose = 3;
+    optional string channel_topic = 4;
   }
-
-  oneof data_or_blob_id {
-    bytes blob_id = 1;
-    bytes data = 8;
-    BlobIdWithData blob_id_with_data = 9;
+  message MicrosoftTeamsThread {
+    string thread = 1;
+    optional string channel_name = 2;
+    optional string team_name = 3;
+    optional string channel_description = 4;
+    optional string team_description = 5;
   }
-  string uuid = 2;
-  string filename = 3;
-  string mime_type = 4;
-}
-
-message SelectedDocumentation {
-  string doc_id = 1;
-  string name = 2;
-}
-
-message SelectedExternalLink {
-  string url = 1;
-  string uuid = 2;
-  optional string pdf_content = 3;
-  optional bool is_pdf = 4;
-  optional string filename = 5;
-  optional bytes blob_id = 6;
-}
-
-message SelectedFile {
-  string content = 1;
-  string path = 2;
-  optional string relative_path = 3;
-}
-
-message SelectedFolder {
-  string path = 1;
-  optional string relative_path = 2;
-  LsDirectoryTreeNode directory_tree = 3;
-}
-
-message SelectedGitBranchContext {
-  optional string current_branch = 1;
-  optional string base_branch = 2;
-  optional string agent_branch_prefix = 3;
-}
-
-message SelectedGitCommit {
-  string sha = 1;
-  string message = 2;
-  optional string description = 3;
-  string diff = 4;
-}
-
-message SelectedGitDiff {
-  string content = 1;
-  int32 full_content_length_char_count = 2;
-}
-
-message SelectedGitDiffFromBranchToMain {
-  string content = 1;
-  int32 full_content_length_char_count = 2;
-}
-
-message SelectedGitPRDiffSelection {
-  string pr_url = 1;
-  string file_path = 2;
-  int32 start_line = 3;
-  int32 end_line = 4;
-  optional string diff_content = 5;
-  optional bytes blob_id = 6;
-}
-
-message SelectedImage {
-  message BlobIdWithData {
-    bytes blob_id = 1;
-    bytes data = 2;
+  message GithubPR {
+    string title = 1;
+    string description = 2;
+    string comments = 3;
+    optional string ci_failures = 4;
   }
-
-  message Dimension {
-    int32 width = 1;
-    int32 height = 2;
+  message IdeState {
+    message File {
+      message CursorPosition {
+        int32 line = 1;
+        string text = 2;
+      }
+      string path = 1;
+      optional string relative_path = 2;
+      optional CursorPosition cursor_position = 3;
+      int32 total_lines = 4;
+      optional string active_command = 5;
+    }
+    message ViewedPullRequest {
+      int32 number = 1;
+      string url = 2;
+      optional string title = 3;
+      optional string folder_path = 4;
+      optional string summary_json = 5;
+      optional string description = 6;
+    }
+    repeated File visible_files = 1;
+    repeated File recently_viewed_files = 2;
+    repeated ViewedPullRequest currently_viewed_prs = 3;
   }
-
-  oneof data_or_blob_id {
-    bytes blob_id = 1;
-    bytes data = 8;
-    BlobIdWithData blob_id_with_data = 9;
+  oneof data {
+    SlackThread slack_thread = 1;
+    GithubPR github_pr = 2;
+    IdeState ide_state = 3;
+    MicrosoftTeamsThread microsoft_teams_thread = 4;
+    bytes blob_id = 10;
   }
-  string uuid = 2;
-  string path = 3;
-  Dimension dimension = 4;
-  string mime_type = 7;
-}
-
-message SelectedPastChat {
-  string agent_id = 1;
-  string name = 2;
-}
-
-message SelectedPluginCapabilityRef {
-  string plugin_id = 1;
-  SelectedPluginCapabilityType capability_type = 2;
-  string source_path = 3;
-  string snapshot_token = 4;
-  optional string resolved_commit_sha = 5;
-}
-
-message SelectedPullRequest {
-  int32 number = 1;
-  string url = 2;
-  optional string title = 3;
-  string folder_path = 4;
-  optional string summary_json = 5;
-  optional string description = 6;
-  optional bytes blob_id = 7;
-}
-
-message SelectedSubagent {
-  string name = 1;
-}
-
-message SelectedTerminal {
-  string content = 1;
-  optional string title = 2;
-  optional string path = 3;
-}
-
-message SelectedTerminalSelection {
-  string content = 1;
-  optional string title = 2;
-  optional string path = 3;
-  Range range = 4;
-}
-
-message SelectedUIElement {
-  string element = 1;
-  string xpath = 2;
-  string text_content = 3;
-  string extra = 4;
-  optional string component = 5;
-  optional string component_props_json = 6;
-}
-
-message SelectedVideo {
-  message BlobIdWithData {
-    bytes blob_id = 1;
-    bytes data = 2;
-  }
-
-  oneof data_or_blob_id {
-    bytes blob_id = 1;
-    bytes data = 8;
-    BlobIdWithData blob_id_with_data = 9;
-  }
-  string uuid = 2;
-  string path = 3;
-  optional float fps = 4;
-  string mime_type = 7;
-}
-
-message StackTrace {
-  repeated CallFrame call_frames = 1;
-  optional string raw_stack_trace = 2;
 }

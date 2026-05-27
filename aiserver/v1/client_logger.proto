@@ -17,6 +17,6 @@ message LogWhenTabTurnsOffResponse {
 }
 
 service ClientLoggerService {
-  rpc GetDebuggingDataUploadUrl (GetDebuggingDataUploadUrlRequest) returns (GetDebuggingDataUploadUrlResponse);
-  rpc LogWhenTabTurnsOff (LogWhenTabTurnsOffRequest) returns (LogWhenTabTurnsOffResponse);
+  rpc GetDebuggingDataUploadUrl(GetDebuggingDataUploadUrlRequest) returns (GetDebuggingDataUploadUrlResponse);
+  rpc LogWhenTabTurnsOff(LogWhenTabTurnsOffRequest) returns (LogWhenTabTurnsOffResponse);
 }

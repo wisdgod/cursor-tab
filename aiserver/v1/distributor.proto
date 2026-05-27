@@ -4,6 +4,56 @@ package aiserver.v1;
 
 import "aiserver/v1/scheduler.proto";
 
+message SchedulerStreamRequest {
+  string scheduler_id = 1;
+  repeated DeploymentDemand demands = 2;
+  repeated UsageReport usage_reports = 3;
+}
+
+message SchedulerStreamResponse {
+  repeated WorkloadGrant grants = 1;
+}
+
+message DeploymentDemand {
+  string provider = 1;
+  string deployment = 2;
+  repeated WorkloadDemand workloads = 3;
+  string model = 4;
+}
+
+message WorkloadDemand {
+  string workload_id = 1;
+  int64 tokens = 2;
+  int64 requests = 3;
+  int64 input_tokens = 4;
+  int64 output_tokens = 5;
+}
+
+message WorkloadGrant {
+  string provider = 1;
+  string deployment = 2;
+  string workload_id = 3;
+  int64 tokens = 4;
+  int64 requests = 5;
+  int64 expires_at_ms = 6;
+  int64 input_tokens = 7;
+  int64 output_tokens = 8;
+  string model = 9;
+  int64 replay_requests = 10;
+  int64 max_replay_count_per_request = 11;
+}
+
+message UsageReport {
+  string provider = 1;
+  string model = 2;
+  string deployment = 3;
+  string workload_id = 4;
+  int64 input_tokens = 5;
+  int64 output_tokens = 6;
+  bool success = 7;
+  ProviderErrorType provider_error_type = 8;
+}
+
 service DistributorService {
-  rpc SchedulerStream (stream SchedulerStreamRequest) returns (stream SchedulerStreamResponse);
+  rpc SchedulerStream(stream SchedulerStreamRequest) returns (stream SchedulerStreamResponse);
 }

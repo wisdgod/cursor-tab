@@ -6,12 +6,8 @@ enum NullValue {
   NULL_VALUE = 0;
 }
 
-message ListValue {
-  repeated Value values = 1;
-}
-
 message Struct {
-  map<string, google.protobuf.Value> fields = 1;
+  map<string, Value> fields = 1;
 }
 
 message Value {
@@ -23,4 +19,8 @@ message Value {
     Struct struct_value = 5;
     ListValue list_value = 6;
   }
+}
+
+message ListValue {
+  repeated Value values = 1;
 }

@@ -11,10 +11,6 @@ message ReflectArgs {
   string tool_call_id = 6;
 }
 
-message ReflectError {
-  string error = 1;
-}
-
 message ReflectResult {
   oneof result {
     ReflectSuccess success = 1;
@@ -23,6 +19,10 @@ message ReflectResult {
 }
 
 message ReflectSuccess {
+}
+
+message ReflectError {
+  string error = 1;
 }
 
 message ReflectToolCall {

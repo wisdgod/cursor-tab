@@ -6,161 +6,95 @@ import "aiserver/v1/cpp.proto";
 import "aiserver/v1/lsp_subgraph.proto";
 import "aiserver/v1/utils.proto";
 
-message ContextIntent {
-  enum Type {
-    TYPE_UNSPECIFIED = 0;
-    TYPE_USER_ADDED = 1;
-    TYPE_AUTOMATIC = 2;
-  }
-
-  message ChatHistory {
-  }
-
-  message CmdKCurrentFile {
-  }
-
-  message CmdKDefinitions {
-  }
-
-  message CmdKQueryEtc {
-  }
-
-  message CodebaseChunks {
-  }
-
-  message CodeSelection {
-    string relative_workspace_path = 1;
-    SimpleRange potentially_out_of_date_range = 2;
-    string text = 3;
-  }
-
-  message CommitNotes {
-  }
-
-  message CustomInstructions {
-  }
-
-  message DiffHistory {
-  }
-
-  message Documentation {
-    string documentation_identifier = 1;
-  }
-
-  message File {
-    enum Mode {
-      MODE_UNSPECIFIED = 0;
-      MODE_FULL = 1;
-      MODE_OUTLINE = 2;
-      MODE_CHUNKS = 3;
-    }
-
-    string relative_workspace_path = 1;
-    Mode mode = 2;
-  }
-
-  message Lints {
-    message CmdKScope {
-    }
-
-    message FileScope {
-      string relative_workspace_path = 1;
-      optional LineRange filter_range = 2;
-    }
-
-    oneof scope {
-      CmdKScope cmdk_scope = 1;
-      FileScope file_scope = 2;
-    }
-    repeated LintSeverity filter_to_severities = 3;
-  }
-
-  message LspSubgraph {
-  }
-
-  message PastCmdkConversationsInDiffSessions {
-  }
-
-  message RecentLocations {
-    optional double timestamp = 2;
-  }
-
-  message Symbol {
-    DocumentSymbol symbol = 1;
-    string relative_workspace_path = 2;
-  }
-
-  message TerminalCmdKDefaults {
-  }
-
-  message TerminalHistory {
-    int32 instance_id = 1;
-    bool active_for_cmd_k = 2;
-    optional bool use_active_instance_as_fallback = 3;
-  }
-
-  message VisibleTabs {
-  }
-
-  Type type = 1;
-  string uuid = 15;
-  oneof intent {
-    File file = 2;
-    CodeSelection code_selection = 3;
-    Lints lints = 5;
-    RecentLocations recent_locations = 6;
-    CmdKCurrentFile cmd_k_current_file = 8;
-    CmdKQueryEtc cmd_k_query_etc = 9;
-    TerminalCmdKDefaults terminal_cmd_k_defaults = 14;
-    CmdKDefinitions cmd_k_definitions = 10;
-    Documentation documentation = 11;
-    CustomInstructions custom_instructions = 12;
-    ChatHistory chat_history = 13;
-    TerminalHistory terminal_history = 16;
-    VisibleTabs visible_tabs = 17;
-    LspSubgraph lsp_subgraph = 18;
-    CommitNotes commit_notes = 19;
-    DiffHistory diff_history = 20;
-    PastCmdkConversationsInDiffSessions past_cmdk_messages_in_diff_sessions = 21;
+message PotentiallyCachedContextItem {
+  oneof item {
+    ContextItem context_item = 1;
+    string context_item_hash = 2;
   }
 }
 
-message ContextItem {
-  message ChatHistory {
-    string user_message = 1;
-    string assistant_response = 2;
-    ContextItem.ChatHistory chat_history = 3;
-    bool active_for_cmd_k = 4;
-    optional int64 timestamp = 5;
-    optional double timestamp_double = 6;
-  }
+message ContextStatusUpdate {
+  repeated ContextItemStatus context_item_statuses = 1;
+}
 
-  message CmdKImmediateContext {
+message MissingContextItems {
+  repeated string missing_context_item_hashes = 2;
+}
+
+message ContextItemStatus {
+  enum PostGenerationEvaluation {
+    POST_GENERATION_EVALUATION_UNSPECIFIED = 0;
+    POST_GENERATION_EVALUATION_USEFUL = 1;
+    POST_GENERATION_EVALUATION_USELESS = 2;
+  }
+  string context_item_hash = 1;
+  bool shown_to_the_model = 2;
+  float score = 3;
+  float percentage_of_available_space = 4;
+  PostGenerationEvaluation post_generation_evaluation = 5;
+}
+
+message ContextItem {
+  message FileChunk {
+    string relative_workspace_path = 1;
+    string chunk_contents = 2;
+    int32 start_line_number = 3;
+  }
+  message SparseFileChunk {
     message Line {
       string line = 1;
       int32 line_number = 2;
     }
-
     string relative_workspace_path = 1;
     repeated Line lines = 2;
     int32 total_number_of_lines_in_file = 3;
     optional int32 cell_number = 4;
   }
-
+  message OutlineChunk {
+    string relative_workspace_path = 1;
+    string contents = 2;
+    LineRange full_range = 3;
+  }
+  message CmdKSelection {
+    repeated string lines = 1;
+    int32 start_line_number = 2;
+  }
+  message FileDiffHistory {
+    CppFileDiffHistory cpp_file_diff_history = 1;
+    int32 how_many_diffs_ago = 2;
+    bool is_very_recent = 3;
+  }
+  message CmdKImmediateContext {
+    message Line {
+      string line = 1;
+      int32 line_number = 2;
+    }
+    string relative_workspace_path = 1;
+    repeated Line lines = 2;
+    int32 total_number_of_lines_in_file = 3;
+    optional int32 cell_number = 4;
+  }
   message CmdKQuery {
     string query = 1;
   }
-
+  message TerminalCmdKQuery {
+    string query = 1;
+  }
+  message TerminalCmdKQueryHistory {
+    TerminalCmdKQuery query = 1;
+    TerminalCmdKQueryHistory query_history = 2;
+    repeated string context_item_hashes = 5;
+    string suggested_command = 6;
+  }
   message CmdKQueryHistory {
     CmdKQuery query = 1;
     CmdKImmediateContext immediate_context = 2;
     CmdKSelection selection = 3;
-    ContextItem.CmdKQueryHistory query_history = 4;
+    CmdKQueryHistory query_history = 4;
     repeated string context_item_hashes = 5;
     optional int64 timestamp = 6;
     optional double timestamp_double = 7;
   }
-
   message CmdKQueryHistoryInDiffSession {
     message PastCmdKQueryInDiffSession {
       CmdKQuery query = 1;
@@ -170,101 +104,17 @@ message ContextItem {
       optional double timestamp_for_diff_interleaving = 7;
       optional string request_id = 8;
     }
-
     repeated PastCmdKQueryInDiffSession past_cmdk_queries = 1;
     double curr_timestamp_double = 3;
   }
-
-  message CmdKSelection {
-    repeated string lines = 1;
-    int32 start_line_number = 2;
+  message ChatHistory {
+    string user_message = 1;
+    string assistant_response = 2;
+    ChatHistory chat_history = 3;
+    bool active_for_cmd_k = 4;
+    optional int64 timestamp = 5;
+    optional double timestamp_double = 6;
   }
-
-  message CommitNoteChunk {
-    string note = 1;
-  }
-
-  message CustomInstructions {
-    string instructions = 1;
-  }
-
-  message DocumentationChunk {
-    string doc_name = 1;
-    string page_url = 2;
-    string documentation_chunk = 3;
-    float score = 4;
-  }
-
-  message FileChunk {
-    string relative_workspace_path = 1;
-    string chunk_contents = 2;
-    int32 start_line_number = 3;
-  }
-
-  message FileDiffHistory {
-    CppFileDiffHistory cpp_file_diff_history = 1;
-    int32 how_many_diffs_ago = 2;
-    bool is_very_recent = 3;
-  }
-
-  message GoToDefinitionResult {
-    string relative_workspace_path = 1;
-    string line = 2;
-    int32 line_number = 3;
-    int32 column_number = 4;
-    FileChunk definition_chunk = 5;
-  }
-
-  message Lints {
-    message Line {
-      string line = 1;
-      int32 line_number = 2;
-    }
-
-    string relative_workspace_path = 1;
-    repeated Lint lints = 2;
-    repeated Line context_lines = 3;
-  }
-
-  message LspSubgraphChunk {
-    LspSubgraphFullContext lsp_subgraph_full_context = 1;
-  }
-
-  message NotebookCellOutput {
-    string relative_workspace_path = 1;
-    string cell_output = 2;
-    int32 cell_number = 3;
-  }
-
-  message OutlineChunk {
-    string relative_workspace_path = 1;
-    string contents = 2;
-    LineRange full_range = 3;
-  }
-
-  message SparseFileChunk {
-    message Line {
-      string line = 1;
-      int32 line_number = 2;
-    }
-
-    string relative_workspace_path = 1;
-    repeated Line lines = 2;
-    int32 total_number_of_lines_in_file = 3;
-    optional int32 cell_number = 4;
-  }
-
-  message TerminalCmdKQuery {
-    string query = 1;
-  }
-
-  message TerminalCmdKQueryHistory {
-    TerminalCmdKQuery query = 1;
-    ContextItem.TerminalCmdKQueryHistory query_history = 2;
-    repeated string context_item_hashes = 5;
-    string suggested_command = 6;
-  }
-
   message TerminalHistory {
     string history = 1;
     string cwd_full = 5;
@@ -273,7 +123,42 @@ message ContextItem {
     optional int64 timestamp = 7;
     optional double timestamp_double = 8;
   }
-
+  message CustomInstructions {
+    string instructions = 1;
+  }
+  message GoToDefinitionResult {
+    string relative_workspace_path = 1;
+    string line = 2;
+    int32 line_number = 3;
+    int32 column_number = 4;
+    FileChunk definition_chunk = 5;
+  }
+  message DocumentationChunk {
+    string doc_name = 1;
+    string page_url = 2;
+    string documentation_chunk = 3;
+    float score = 4;
+  }
+  message Lints {
+    message Line {
+      string line = 1;
+      int32 line_number = 2;
+    }
+    string relative_workspace_path = 1;
+    repeated Lint lints = 2;
+    repeated Line context_lines = 3;
+  }
+  message NotebookCellOutput {
+    string relative_workspace_path = 1;
+    string cell_output = 2;
+    int32 cell_number = 3;
+  }
+  message LspSubgraphChunk {
+    LspSubgraphFullContext lsp_subgraph_full_context = 1;
+  }
+  message CommitNoteChunk {
+    string note = 1;
+  }
   ContextIntent intent = 1;
   oneof item {
     FileChunk file_chunk = 2;
@@ -300,31 +185,98 @@ message ContextItem {
   }
 }
 
-message ContextItemStatus {
-  enum PostGenerationEvaluation {
-    POST_GENERATION_EVALUATION_UNSPECIFIED = 0;
-    POST_GENERATION_EVALUATION_USEFUL = 1;
-    POST_GENERATION_EVALUATION_USELESS = 2;
+message ContextIntent {
+  enum Type {
+    TYPE_UNSPECIFIED = 0;
+    TYPE_USER_ADDED = 1;
+    TYPE_AUTOMATIC = 2;
   }
-
-  string context_item_hash = 1;
-  bool shown_to_the_model = 2;
-  float score = 3;
-  float percentage_of_available_space = 4;
-  PostGenerationEvaluation post_generation_evaluation = 5;
-}
-
-message ContextStatusUpdate {
-  repeated ContextItemStatus context_item_statuses = 1;
-}
-
-message MissingContextItems {
-  repeated string missing_context_item_hashes = 2;
-}
-
-message PotentiallyCachedContextItem {
-  oneof item {
-    ContextItem context_item = 1;
-    string context_item_hash = 2;
+  message Documentation {
+    string documentation_identifier = 1;
+  }
+  message File {
+    enum Mode {
+      MODE_UNSPECIFIED = 0;
+      MODE_FULL = 1;
+      MODE_OUTLINE = 2;
+      MODE_CHUNKS = 3;
+    }
+    string relative_workspace_path = 1;
+    Mode mode = 2;
+  }
+  message CodeSelection {
+    string relative_workspace_path = 1;
+    SimpleRange potentially_out_of_date_range = 2;
+    string text = 3;
+  }
+  message Symbol {
+    DocumentSymbol symbol = 1;
+    string relative_workspace_path = 2;
+  }
+  message CommitNotes {
+  }
+  message Lints {
+    message CmdKScope {
+    }
+    message FileScope {
+      string relative_workspace_path = 1;
+      optional LineRange filter_range = 2;
+    }
+    repeated LintSeverity filter_to_severities = 3;
+    oneof scope {
+      CmdKScope cmdk_scope = 1;
+      FileScope file_scope = 2;
+    }
+  }
+  message RecentLocations {
+    optional double timestamp = 2;
+  }
+  message PastCmdkConversationsInDiffSessions {
+  }
+  message VisibleTabs {
+  }
+  message CodebaseChunks {
+  }
+  message CmdKCurrentFile {
+  }
+  message CmdKQueryEtc {
+  }
+  message CustomInstructions {
+  }
+  message CmdKDefinitions {
+  }
+  message ChatHistory {
+  }
+  message DiffHistory {
+  }
+  message TerminalCmdKDefaults {
+  }
+  message TerminalHistory {
+    int32 instance_id = 1;
+    bool active_for_cmd_k = 2;
+    optional bool use_active_instance_as_fallback = 3;
+  }
+  message LspSubgraph {
+  }
+  Type type = 1;
+  string uuid = 15;
+  oneof intent {
+    File file = 2;
+    CodeSelection code_selection = 3;
+    Lints lints = 5;
+    RecentLocations recent_locations = 6;
+    CmdKCurrentFile cmd_k_current_file = 8;
+    CmdKQueryEtc cmd_k_query_etc = 9;
+    TerminalCmdKDefaults terminal_cmd_k_defaults = 14;
+    CmdKDefinitions cmd_k_definitions = 10;
+    Documentation documentation = 11;
+    CustomInstructions custom_instructions = 12;
+    ChatHistory chat_history = 13;
+    TerminalHistory terminal_history = 16;
+    VisibleTabs visible_tabs = 17;
+    LspSubgraph lsp_subgraph = 18;
+    CommitNotes commit_notes = 19;
+    DiffHistory diff_history = 20;
+    PastCmdkConversationsInDiffSessions past_cmdk_messages_in_diff_sessions = 21;
   }
 }

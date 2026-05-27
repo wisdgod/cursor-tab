@@ -8,6 +8,29 @@ enum CursorRuleSource {
   CURSOR_RULE_SOURCE_USER = 2;
 }
 
+message CursorRuleTypeGlobal {
+}
+
+message CursorRuleTypeFileGlobs {
+  repeated string globs = 1;
+}
+
+message CursorRuleTypeAgentFetched {
+  string description = 1;
+}
+
+message CursorRuleTypeManuallyAttached {
+}
+
+message CursorRuleType {
+  oneof type {
+    CursorRuleTypeGlobal global = 1;
+    CursorRuleTypeFileGlobs file_globbed = 2;
+    CursorRuleTypeAgentFetched agent_fetched = 3;
+    CursorRuleTypeManuallyAttached manually_attached = 4;
+  }
+}
+
 message CursorRule {
   string full_path = 1;
   string content = 2;
@@ -21,27 +44,4 @@ message CursorRule {
   optional string marketplace = 10;
   optional string plugin_id = 11;
   optional string marketplace_id = 12;
-}
-
-message CursorRuleType {
-  oneof type {
-    CursorRuleTypeGlobal global = 1;
-    CursorRuleTypeFileGlobs file_globbed = 2;
-    CursorRuleTypeAgentFetched agent_fetched = 3;
-    CursorRuleTypeManuallyAttached manually_attached = 4;
-  }
-}
-
-message CursorRuleTypeAgentFetched {
-  string description = 1;
-}
-
-message CursorRuleTypeFileGlobs {
-  repeated string globs = 1;
-}
-
-message CursorRuleTypeGlobal {
-}
-
-message CursorRuleTypeManuallyAttached {
 }

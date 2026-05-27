@@ -17,57 +17,9 @@ message AiProjectAgentInitRequest {
   string prompt = 2;
 }
 
-message AiProjectAgentPlanRequest {
-  ModelDetails model_details = 1;
-  repeated PureMessage previous_messages = 3;
-}
-
-message AiProjectAgentPlanResponse {
-  oneof response {
-    string thought = 1;
-    string output = 2;
-    MessagePayload message_payload = 3;
-  }
-}
-
-message AiProjectAgentWriteCode {
-  string code = 2;
-  string path = 3;
-  MessagePayload message_payload = 4;
-}
-
-message AiProjectBreakdownFeedbackRequest {
-  ModelDetails model_details = 1;
-  repeated PureMessage previous_messages = 2;
-  string feedback_or_progress = 3;
-  bool force_move_to_next_step = 4;
-}
-
-message AiProjectBreakdownFeedbackResponse {
-  oneof response {
-    AiProjectBreakdownResponse revised_breakdown = 1;
-    bool repeat_feedback = 2;
-  }
-}
-
-message AiProjectBreakdownRequest {
-  ModelDetails model_details = 1;
-  string description = 2;
-  string spec = 3;
-}
-
-message AiProjectBreakdownResponse {
-  message Step {
-    int32 step_number = 1;
-    string step_description = 2;
-    AiProjectStepType step_type = 3;
-  }
-
-  oneof response {
-    string thought = 1;
-    Step step = 2;
-    MessagePayload message_payload = 3;
-  }
+message MessagePayload {
+  string full_user_message = 1;
+  string full_bot_message = 2;
 }
 
 message AiProjectClarification {
@@ -91,6 +43,19 @@ message AiProjectClarificationResponse {
   }
 }
 
+message AiProjectAgentPlanRequest {
+  ModelDetails model_details = 1;
+  repeated PureMessage previous_messages = 3;
+}
+
+message AiProjectAgentPlanResponse {
+  oneof response {
+    string thought = 1;
+    string output = 2;
+    MessagePayload message_payload = 3;
+  }
+}
+
 message AiProjectPlanFeedbackRequest {
   ModelDetails model_details = 1;
   repeated PureMessage previous_messages = 2;
@@ -105,12 +70,96 @@ message AiProjectPlanFeedbackResponse {
   }
 }
 
+message AiProjectBreakdownRequest {
+  ModelDetails model_details = 1;
+  string description = 2;
+  string spec = 3;
+}
+
+message AiProjectBreakdownResponse {
+  message Step {
+    int32 step_number = 1;
+    string step_description = 2;
+    AiProjectStepType step_type = 3;
+  }
+  oneof response {
+    string thought = 1;
+    Step step = 2;
+    MessagePayload message_payload = 3;
+  }
+}
+
+message AiProjectBreakdownFeedbackRequest {
+  ModelDetails model_details = 1;
+  repeated PureMessage previous_messages = 2;
+  string feedback_or_progress = 3;
+  bool force_move_to_next_step = 4;
+}
+
+message AiProjectBreakdownFeedbackResponse {
+  oneof response {
+    AiProjectBreakdownResponse revised_breakdown = 1;
+    bool repeat_feedback = 2;
+  }
+}
+
+message AiProjectStepRequest {
+  ModelDetails model_details = 1;
+  string step_description = 2;
+  string project_plan = 3;
+  repeated string project_breakdown = 4;
+  AiProjectStepType step_type = 5;
+  ShellType shell_type = 6;
+}
+
+message AiProjectStepResponse {
+  message WriteCode {
+    string filename = 1;
+  }
+  message ReviseCode {
+    string thought = 1;
+  }
+  message RunTerm {
+    string command_batch_uuid = 1;
+    string command = 2;
+    string response = 3;
+    string text = 4;
+  }
+  message CreatingFiles {
+    oneof payload {
+      string filename = 1;
+      string directory = 2;
+    }
+  }
+  message StepPayload {
+    oneof payload {
+      WriteCode write_code = 5;
+      RunTerm run_term = 6;
+      CreatingFiles creating_files = 7;
+      ReviseCode revise_code = 8;
+    }
+  }
+  AiProjectStepType step_type = 4;
+  oneof response {
+    string thought = 1;
+    string output = 2;
+    MessagePayload message_payload = 3;
+    StepPayload step_payload = 5;
+  }
+}
+
+message AiProjectStepResponseWrapped {
+  oneof response {
+    AiProjectStepResponse real_response = 1;
+    string background_task_uuid = 2;
+  }
+}
+
 message AiProjectStepFeedbackRequest {
   message ModifyCodePayload {
     repeated string files_to_modify = 1;
     string feedback_text = 2;
   }
-
   ModelDetails model_details = 1;
   string step_description = 2;
   string project_plan = 3;
@@ -138,78 +187,13 @@ message AiProjectStepFeedbackResponseWrapped {
   }
 }
 
-message AiProjectStepRequest {
-  ModelDetails model_details = 1;
-  string step_description = 2;
-  string project_plan = 3;
-  repeated string project_breakdown = 4;
-  AiProjectStepType step_type = 5;
-  ShellType shell_type = 6;
-}
-
-message AiProjectStepResponse {
-  message CreatingFiles {
-    oneof payload {
-      string filename = 1;
-      string directory = 2;
-    }
-  }
-
-  message Nothing {
-  }
-
-  message ReviseCode {
-    string thought = 1;
-  }
-
-  message RunTerm {
-    string command_batch_uuid = 1;
-    string command = 2;
-    string response = 3;
-    string text = 4;
-  }
-
-  message StepPayload {
-    oneof payload {
-      WriteCode write_code = 5;
-      RunTerm run_term = 6;
-      CreatingFiles creating_files = 7;
-      ReviseCode revise_code = 8;
-    }
-  }
-
-  message WriteCode {
-    string filename = 1;
-  }
-
-  oneof response {
-    string thought = 1;
-    string output = 2;
-    MessagePayload message_payload = 3;
-    StepPayload step_payload = 5;
-  }
-  AiProjectStepType step_type = 4;
-}
-
-message AiProjectStepResponseWrapped {
-  oneof response {
-    AiProjectStepResponse real_response = 1;
-    string background_task_uuid = 2;
-  }
-}
-
-message MessagePayload {
-  string full_user_message = 1;
-  string full_bot_message = 2;
-}
-
 service AiProjectService {
-  rpc AiProjectAgentInit (AiProjectAgentInitRequest) returns (stream AiProjectClarificationResponse);
-  rpc AiProjectClarification (AiProjectClarificationRequest) returns (stream AiProjectClarificationResponse);
-  rpc AiProjectPlan (AiProjectAgentPlanRequest) returns (stream AiProjectAgentPlanResponse);
-  rpc AiProjectPlanFeedback (AiProjectPlanFeedbackRequest) returns (stream AiProjectPlanFeedbackResponse);
-  rpc AiProjectBreakdown (AiProjectBreakdownRequest) returns (stream AiProjectBreakdownResponse);
-  rpc AiProjectBreakdownFeedback (AiProjectBreakdownFeedbackRequest) returns (stream AiProjectBreakdownFeedbackResponse);
-  rpc AiProjectStep (AiProjectStepRequest) returns (stream AiProjectStepResponseWrapped);
-  rpc AiProjectStepFeedback (AiProjectStepFeedbackRequest) returns (stream AiProjectStepFeedbackResponseWrapped);
+  rpc AiProjectAgentInit(AiProjectAgentInitRequest) returns (stream AiProjectClarificationResponse);
+  rpc AiProjectClarification(AiProjectClarificationRequest) returns (stream AiProjectClarificationResponse);
+  rpc AiProjectPlan(AiProjectAgentPlanRequest) returns (stream AiProjectAgentPlanResponse);
+  rpc AiProjectPlanFeedback(AiProjectPlanFeedbackRequest) returns (stream AiProjectPlanFeedbackResponse);
+  rpc AiProjectBreakdown(AiProjectBreakdownRequest) returns (stream AiProjectBreakdownResponse);
+  rpc AiProjectBreakdownFeedback(AiProjectBreakdownFeedbackRequest) returns (stream AiProjectBreakdownFeedbackResponse);
+  rpc AiProjectStep(AiProjectStepRequest) returns (stream AiProjectStepResponseWrapped);
+  rpc AiProjectStepFeedback(AiProjectStepFeedbackRequest) returns (stream AiProjectStepFeedbackResponseWrapped);
 }

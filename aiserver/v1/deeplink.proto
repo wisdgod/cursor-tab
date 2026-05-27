@@ -18,14 +18,6 @@ message CreateDeeplinkResponse {
   string url = 1;
 }
 
-message DeeplinkMetadata {
-  string id = 1;
-  DeeplinkType type = 2;
-  bool is_public = 3;
-  string created_by = 4;
-  int64 created_at = 5;
-}
-
 message GetDeeplinkDataRequest {
   string deeplink_id = 1;
   string encryption_key = 2;
@@ -43,13 +35,21 @@ message ListDeeplinksRequest {
   string page_token = 2;
 }
 
+message DeeplinkMetadata {
+  string id = 1;
+  DeeplinkType type = 2;
+  bool is_public = 3;
+  string created_by = 4;
+  int64 created_at = 5;
+}
+
 message ListDeeplinksResponse {
   repeated DeeplinkMetadata deeplinks = 1;
   string next_page_token = 2;
 }
 
 service DeeplinkService {
-  rpc CreateDeeplink (CreateDeeplinkRequest) returns (CreateDeeplinkResponse);
-  rpc GetDeeplinkData (GetDeeplinkDataRequest) returns (GetDeeplinkDataResponse);
-  rpc ListDeeplinks (ListDeeplinksRequest) returns (ListDeeplinksResponse);
+  rpc CreateDeeplink(CreateDeeplinkRequest) returns (CreateDeeplinkResponse);
+  rpc GetDeeplinkData(GetDeeplinkDataRequest) returns (GetDeeplinkDataResponse);
+  rpc ListDeeplinks(ListDeeplinksRequest) returns (ListDeeplinksResponse);
 }

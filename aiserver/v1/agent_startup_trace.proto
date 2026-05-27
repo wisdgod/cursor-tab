@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message AgentStartupTraceEvent {
+  message ContextLink {
+    string name = 1;
+    string href = 2;
+  }
+  message SpanStarted {
+    string span_id = 1;
+    string name = 2;
+    optional string parent_span_id = 3;
+    optional string href = 4;
+    optional string temporal_run_id = 5;
+    optional string temporal_activity_id = 6;
+  }
+  message SpanEnded {
+    string span_id = 1;
+  }
+  message UserAction {
+    uint32 turn_index = 1;
+  }
+  message TurnClose {
+    uint32 turn_index = 1;
+  }
+  uint64 creation_timestamp_ms = 1;
+  oneof payload {
+    SpanStarted span_started = 2;
+    SpanEnded span_ended = 3;
+    UserAction user_action = 4;
+    TurnClose turn_close = 5;
+    ContextLink context_link = 6;
+  }
+}

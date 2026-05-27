@@ -8,6 +8,10 @@ message BlameByFilePathArgs {
   optional int32 end_line = 3;
 }
 
+message BlameByFilePathSuccess {
+  string content = 1;
+}
+
 message BlameByFilePathError {
   string error_message = 1;
 }
@@ -17,10 +21,6 @@ message BlameByFilePathResult {
     BlameByFilePathSuccess success = 1;
     BlameByFilePathError error = 2;
   }
-}
-
-message BlameByFilePathSuccess {
-  string content = 1;
 }
 
 message BlameByFilePathToolCall {

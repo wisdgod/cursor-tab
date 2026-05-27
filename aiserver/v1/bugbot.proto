@@ -14,16 +14,17 @@ enum BugbotDeeplinkEventKind {
   BUGBOT_DEEPLINK_EVENT_KIND_HANDLED_FIX_IN_WEB = 5;
 }
 
-message BugBotDiscriminatorPromptProps {
-  StreamBugBotRequest req = 1;
-  BugReport bug = 2;
-  string date = 3;
-  string seed = 4;
+enum BugbotFeedbackReaction {
+  BUGBOT_FEEDBACK_REACTION_UNSPECIFIED = 0;
+  BUGBOT_FEEDBACK_REACTION_THUMBS_UP = 1;
+  BUGBOT_FEEDBACK_REACTION_THUMBS_DOWN = 2;
 }
 
-message BugBotDiscriminatorTrainingPromptProps {
-  BugBotDiscriminatorPromptProps props = 1;
-  bool is_real_bug = 2;
+enum BugBotRunStatus {
+  BUG_BOT_RUN_STATUS_UNSPECIFIED = 0;
+  BUG_BOT_RUN_STATUS_NO_RUN = 1;
+  BUG_BOT_RUN_STATUS_IN_PROGRESS = 2;
+  BUG_BOT_RUN_STATUS_COMPLETED = 3;
 }
 
 message BugLocation {
@@ -50,97 +51,11 @@ message BugReports {
   repeated BugReport bug_reports = 1;
 }
 
-message FileAndOutline {
-  CodeBlock file = 1;
-  optional string outline = 2;
-}
-
-message GetEncryptedBugDataMultipleRequest {
-  string redis_key = 1;
-  string encryption_key = 2;
-}
-
-message GetEncryptedBugDataMultipleResponse {
-  repeated BugReport bug_reports = 1;
-}
-
-message GetEncryptedBugDataRequest {
-  string redis_key = 1;
-  string encryption_key = 2;
-}
-
-message GetEncryptedBugDataResponse {
-  BugReport bug_report = 1;
-}
-
-message GetProUserTrialEndRequest {
-  int32 user_id = 1;
-}
-
-message GetProUserTrialEndResponse {
-  optional google.protobuf.Timestamp trial_end_date = 1;
-}
-
-message GetRepoNodeIdRequest {
-  string owner = 1;
-  string repo_name = 2;
-}
-
-message GetRepoNodeIdResponse {
-  string node_id = 1;
-}
-
-message GetTeamTrialEndRequest {
-  int32 team_id = 1;
-}
-
-message GetTeamTrialEndResponse {
-  optional google.protobuf.Timestamp trial_end_date = 1;
-}
-
-message LogDeeplinkEventRequest {
-  int32 user_id = 1;
-  string bug_id = 2;
-  optional int64 comment_id = 3;
-  BugbotDeeplinkEventKind event = 4;
-}
-
-message LogDeeplinkEventResponse {
-  bool success = 1;
-}
-
-message RunBugBotPromptProps {
-  StreamBugBotRequest req = 1;
-  string seed = 2;
-  string date = 3;
-  repeated FileAndOutline context_files = 4;
-  optional string file_content_source = 5;
-}
-
-message SetProUserTrialEndRequest {
-  int32 user_id = 1;
-  optional google.protobuf.Timestamp trial_end_date = 2;
-}
-
-message SetProUserTrialEndResponse {
-  bool success = 1;
-}
-
-message SetTeamTrialEndRequest {
-  int32 team_id = 1;
-  optional google.protobuf.Timestamp trial_end_date = 2;
-}
-
-message SetTeamTrialEndResponse {
-  bool success = 1;
-}
-
 message StreamBugBotRequest {
   message Range {
     int32 start_line = 1;
     int32 end_line_inclusive = 2;
   }
-
   GitDiff git_diff = 1;
   repeated CodeBlock context_files = 13;
   ModelDetails model_details = 2;
@@ -157,16 +72,136 @@ message StreamBugBotRequest {
   optional bool deep_review = 14;
 }
 
-service BugbotAdminService {
-  rpc GetTeamTrialEnd (GetTeamTrialEndRequest) returns (GetTeamTrialEndResponse);
-  rpc SetTeamTrialEnd (SetTeamTrialEndRequest) returns (SetTeamTrialEndResponse);
-  rpc GetProUserTrialEnd (GetProUserTrialEndRequest) returns (GetProUserTrialEndResponse);
-  rpc SetProUserTrialEnd (SetProUserTrialEndRequest) returns (SetProUserTrialEndResponse);
-  rpc GetRepoNodeId (GetRepoNodeIdRequest) returns (GetRepoNodeIdResponse);
+message FileAndOutline {
+  CodeBlock file = 1;
+  optional string outline = 2;
+}
+
+message RunBugBotPromptProps {
+  StreamBugBotRequest req = 1;
+  string seed = 2;
+  string date = 3;
+  repeated FileAndOutline context_files = 4;
+  optional string file_content_source = 5;
+}
+
+message BugBotDiscriminatorPromptProps {
+  StreamBugBotRequest req = 1;
+  BugReport bug = 2;
+  string date = 3;
+  string seed = 4;
+}
+
+message BugBotDiscriminatorTrainingPromptProps {
+  BugBotDiscriminatorPromptProps props = 1;
+  bool is_real_bug = 2;
+}
+
+message LogDeeplinkEventRequest {
+  int32 user_id = 1;
+  string bug_id = 2;
+  optional int64 comment_id = 3;
+  BugbotDeeplinkEventKind event = 4;
+}
+
+message LogDeeplinkEventResponse {
+  bool success = 1;
+}
+
+message GetEncryptedBugDataRequest {
+  string redis_key = 1;
+  string encryption_key = 2;
+}
+
+message GetEncryptedBugDataResponse {
+  BugReport bug_report = 1;
+}
+
+message GetEncryptedBugDataMultipleRequest {
+  string redis_key = 1;
+  string encryption_key = 2;
+}
+
+message GetEncryptedBugDataMultipleResponse {
+  repeated BugReport bug_reports = 1;
+}
+
+message AddBugbotFeedbackRequest {
+  int64 comment_id = 1;
+  BugbotFeedbackReaction reaction = 2;
+  optional string feedback = 3;
+}
+
+message AddBugbotFeedbackResponse {
+  int64 id = 1;
+}
+
+message GetBugBotRunEtaRequest {
+  string repository_owner = 1;
+  string repository_name = 2;
+  int32 pr_number = 3;
+}
+
+message GetBugBotRunEtaResponse {
+  BugBotRunStatus status = 1;
+  optional int64 estimated_completion_time_ms = 2;
+}
+
+message GetTeamTrialEndRequest {
+  int32 team_id = 1;
+}
+
+message GetTeamTrialEndResponse {
+  optional google.protobuf.Timestamp trial_end_date = 1;
+}
+
+message SetTeamTrialEndRequest {
+  int32 team_id = 1;
+  optional google.protobuf.Timestamp trial_end_date = 2;
+}
+
+message SetTeamTrialEndResponse {
+  bool success = 1;
+}
+
+message GetProUserTrialEndRequest {
+  int32 user_id = 1;
+}
+
+message GetProUserTrialEndResponse {
+  optional google.protobuf.Timestamp trial_end_date = 1;
+}
+
+message SetProUserTrialEndRequest {
+  int32 user_id = 1;
+  optional google.protobuf.Timestamp trial_end_date = 2;
+}
+
+message SetProUserTrialEndResponse {
+  bool success = 1;
+}
+
+message GetRepoNodeIdRequest {
+  string owner = 1;
+  string repo_name = 2;
+}
+
+message GetRepoNodeIdResponse {
+  string node_id = 1;
 }
 
 service BugbotService {
-  rpc LogDeeplinkEvent (LogDeeplinkEventRequest) returns (LogDeeplinkEventResponse);
-  rpc GetEncryptedBugData (GetEncryptedBugDataRequest) returns (GetEncryptedBugDataResponse);
-  rpc GetEncryptedBugDataMultiple (GetEncryptedBugDataMultipleRequest) returns (GetEncryptedBugDataMultipleResponse);
+  rpc LogDeeplinkEvent(LogDeeplinkEventRequest) returns (LogDeeplinkEventResponse);
+  rpc GetEncryptedBugData(GetEncryptedBugDataRequest) returns (GetEncryptedBugDataResponse);
+  rpc GetEncryptedBugDataMultiple(GetEncryptedBugDataMultipleRequest) returns (GetEncryptedBugDataMultipleResponse);
+  rpc AddBugbotFeedback(AddBugbotFeedbackRequest) returns (AddBugbotFeedbackResponse);
+  rpc GetBugBotRunEta(GetBugBotRunEtaRequest) returns (GetBugBotRunEtaResponse);
+}
+
+service BugbotAdminService {
+  rpc GetTeamTrialEnd(GetTeamTrialEndRequest) returns (GetTeamTrialEndResponse);
+  rpc SetTeamTrialEnd(SetTeamTrialEndRequest) returns (SetTeamTrialEndResponse);
+  rpc GetProUserTrialEnd(GetProUserTrialEndRequest) returns (GetProUserTrialEndResponse);
+  rpc SetProUserTrialEnd(SetProUserTrialEndRequest) returns (SetProUserTrialEndResponse);
+  rpc GetRepoNodeId(GetRepoNodeIdRequest) returns (GetRepoNodeIdResponse);
 }

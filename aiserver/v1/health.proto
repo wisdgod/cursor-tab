@@ -17,11 +17,11 @@ message HealthResponse {
 }
 
 service HealthService {
-  rpc Ping (HealthRequest) returns (HealthResponse);
-  rpc Unary (HealthEmptyRequest) returns (HealthResponse);
-  rpc Stream (HealthRequest) returns (stream HealthResponse);
-  rpc StreamSSE (HealthRequest) returns (stream HealthResponse);
-  rpc StreamBidi (stream HealthRequest) returns (stream HealthResponse);
-  rpc StreamBidiSSE (BidiRequestId) returns (stream HealthResponse);
-  rpc StreamBidiPoll (BidiPollRequest) returns (stream BidiPollResponse);
+  rpc Ping(HealthRequest) returns (HealthResponse);
+  rpc Unary(HealthEmptyRequest) returns (HealthResponse);
+  rpc Stream(HealthRequest) returns (stream HealthResponse);
+  rpc StreamSSE(HealthRequest) returns (stream HealthResponse);
+  rpc StreamBidi(stream HealthRequest) returns (stream HealthResponse);
+  rpc StreamBidiSSE(BidiRequestId) returns (stream HealthResponse);
+  rpc StreamBidiPoll(BidiPollRequest) returns (stream BidiPollResponse);
 }
