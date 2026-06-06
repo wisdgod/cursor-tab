@@ -463,17 +463,6 @@ message CalculateAutoSelectionResponse {
   repeated AutoSelectionResult results = 1;
 }
 
-message StreamCursorMotionRequest {
-  CurrentFileInfo current_file_info = 1;
-  SimpleRange selection_range = 2;
-  string instruction = 3;
-  ModelDetails model_details = 4;
-}
-
-message StreamCursorMotionResponse {
-  string text = 1;
-}
-
 message BackgroundCmdKRequest {
   enum Type {
     TYPE_UNSPECIFIED = 0;
@@ -765,11 +754,17 @@ message ReportAgentFeedbackRequest {
     SENTIMENT_UP = 1;
     SENTIMENT_DOWN = 2;
   }
+  enum Source {
+    SOURCE_UNSPECIFIED = 0;
+    SOURCE_IDE = 1;
+    SOURCE_GLASS = 2;
+  }
   string request_id = 1;
   Sentiment sentiment = 2;
   repeated string categories = 3;
   optional string comment = 4;
   optional string canonical_model_name = 5;
+  optional Source source = 6;
 }
 
 message ReportAgentFeedbackResponse {
@@ -1218,6 +1213,7 @@ message AvailableModelsRequest {
   optional bool for_automations = 9;
   optional AvailableModelsScope scope = 10;
   optional bool use_react_model_picker = 11;
+  optional bool use_cloud_agent_effort_modes = 12;
 }
 
 message AvailableModelsResponse {
@@ -1292,6 +1288,9 @@ message AvailableModelsResponse {
     optional bool visible_in_routed_model_view = 40;
     optional string vendor_name = 41;
     optional ModelVendor vendor = 42;
+    optional bool default_disabled_in_admin_allowlist = 43;
+    repeated CloudAgentEffortMode cloud_agent_effort_modes = 44;
+    optional bool supports_smart_mode_classifier = 45;
   }
   message ModelVariantConfig {
     repeated agent.v1.RequestedModel.ModelParameterValue parameter_values = 1;
@@ -1375,6 +1374,8 @@ message ModelParameterDefinition {
       string value = 1;
       optional string display_name = 2;
       optional bool increases_model_cost = 3;
+      optional bool default_blocked_in_admin_allowlist = 4;
+      optional bool hide_from_user_picker_when_admin_blocked = 5;
     }
     repeated BooleanParameterValue values = 1;
   }
@@ -2995,6 +2996,7 @@ message ReportProcessMetricsV2Request {
   string os = 6;
   string arch = 7;
   string client_version = 8;
+  string origin = 9;
 }
 
 message ProcessMetricsV2RowRequest {
@@ -3337,7 +3339,6 @@ service AiService {
   rpc BulkEmbed(BulkEmbedRequest) returns (BulkEmbedResponse);
   rpc BackgroundCmdKEval(BackgroundCmdKEvalRequest) returns (stream BackgroundCmdKEvalResponse);
   rpc BackgroundCmdK(BackgroundCmdKRequest) returns (stream BackgroundCmdKResponse);
-  rpc StreamCursorMotion(StreamCursorMotionRequest) returns (stream StreamCursorMotionResponse);
   rpc CalculateAutoSelection(CalculateAutoSelectionRequest) returns (CalculateAutoSelectionResponse);
   rpc GetAtSymbolSuggestions(GetAtSymbolSuggestionsRequest) returns (GetAtSymbolSuggestionsResponse);
   rpc GetCodebaseQuestions(GetChatRequest) returns (GetCodebaseQuestionsResponse);

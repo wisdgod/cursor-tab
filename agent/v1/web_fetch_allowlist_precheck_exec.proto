@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message WebFetchAllowlistPrecheckArgs {
+  string url = 1;
+  optional string tool_call_id = 2;
+}
+
+message WebFetchAllowlistPrecheckResult {
+  bool allowlisted = 1;
+}

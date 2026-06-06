@@ -14,6 +14,7 @@ enum EvalRunStatus {
   EVAL_RUN_STATUS_FINISHED = 3;
   EVAL_RUN_STATUS_FAILED = 4;
   EVAL_RUN_STATUS_KILLED = 5;
+  EVAL_RUN_STATUS_JOB_TIMEOUT = 8;
 }
 
 enum EvalRolloutStatus {
@@ -23,6 +24,13 @@ enum EvalRolloutStatus {
   EVAL_ROLLOUT_STATUS_FINISHED = 3;
   EVAL_ROLLOUT_STATUS_FAILED = 4;
   EVAL_ROLLOUT_STATUS_KILLED = 5;
+  EVAL_ROLLOUT_STATUS_JOB_TIMEOUT = 6;
+}
+
+enum EvalKillReason {
+  EVAL_KILL_REASON_UNSPECIFIED = 0;
+  EVAL_KILL_REASON_USER_KILL = 1;
+  EVAL_KILL_REASON_JOB_TIMEOUT = 2;
 }
 
 enum RlEvalJobDbStatus {
@@ -47,6 +55,37 @@ enum RlEvalStepDbStatus {
   RL_EVAL_STEP_DB_STATUS_WAITING_ON_DEPLOYMENT_REPLICAS = 7;
   RL_EVAL_STEP_DB_STATUS_SYNCING_WEIGHTS = 8;
   RL_EVAL_STEP_DB_STATUS_WAITING_ON_LEASE = 9;
+}
+
+enum DataOpsJobDbStatus {
+  DATA_OPS_JOB_DB_STATUS_UNSPECIFIED = 0;
+  DATA_OPS_JOB_DB_STATUS_PENDING = 1;
+  DATA_OPS_JOB_DB_STATUS_BUILDING = 2;
+  DATA_OPS_JOB_DB_STATUS_RUNNING_FINALIZE = 3;
+  DATA_OPS_JOB_DB_STATUS_RUNNING_SYNC_INDEX = 4;
+  DATA_OPS_JOB_DB_STATUS_RUNNING_ROLLOUT = 5;
+  DATA_OPS_JOB_DB_STATUS_COMPUTING_STATS = 6;
+  DATA_OPS_JOB_DB_STATUS_FINISHED = 7;
+  DATA_OPS_JOB_DB_STATUS_FAILED = 8;
+  DATA_OPS_JOB_DB_STATUS_CANCELED = 9;
+}
+
+enum DataOpsPhase {
+  DATA_OPS_PHASE_UNSPECIFIED = 0;
+  DATA_OPS_PHASE_FINALIZE = 1;
+  DATA_OPS_PHASE_SYNC_INDEX = 2;
+  DATA_OPS_PHASE_ROLLOUT = 3;
+  DATA_OPS_PHASE_STATS = 4;
+}
+
+enum DataOpsStepDbStatus {
+  DATA_OPS_STEP_DB_STATUS_UNSPECIFIED = 0;
+  DATA_OPS_STEP_DB_STATUS_PENDING = 1;
+  DATA_OPS_STEP_DB_STATUS_RUNNING = 2;
+  DATA_OPS_STEP_DB_STATUS_FINISHED = 3;
+  DATA_OPS_STEP_DB_STATUS_FAILED = 4;
+  DATA_OPS_STEP_DB_STATUS_SKIPPED = 5;
+  DATA_OPS_STEP_DB_STATUS_CANCELED = 6;
 }
 
 message EvalSummary {
@@ -246,6 +285,7 @@ message HeartbeatResponse {
 
 message RequestKillRequest {
   string run_id = 1;
+  EvalKillReason reason = 2;
 }
 
 message RequestKillResponse {
@@ -255,6 +295,15 @@ message RequestKillResponse {
 message SetRayJobNameRequest {
   string run_id = 1;
   string ray_job_name = 2;
+}
+
+message GetRunKillStatusRequest {
+  string run_id = 1;
+}
+
+message GetRunKillStatusResponse {
+  bool kill_requested = 1;
+  optional string cleanup_reason = 2;
 }
 
 message SetRayJobNameResponse {
@@ -441,6 +490,100 @@ message UpdateRlEvalStepDatasetEvalResponse {
   bool ok = 1;
 }
 
+message DataOpsJobStepRecord {
+  string id = 1;
+  DataOpsPhase phase = 2;
+  DataOpsStepDbStatus status = 3;
+  optional string ray_job_name = 4;
+  optional string ray_job_namespace = 5;
+  optional google.protobuf.Timestamp started_at = 6;
+  optional google.protobuf.Timestamp finished_at = 7;
+}
+
+message DataOpsJobRecord {
+  string id = 1;
+  DataOpsJobDbStatus status = 2;
+  string training_set = 3;
+  string dataset_name = 4;
+  string input_s3_uri = 5;
+  optional google.protobuf.Struct params_snapshot = 6;
+  string everysphere_branch = 7;
+  optional string everysphere_commit = 8;
+  optional string buildkite_build_id = 9;
+  optional int32 buildkite_build_number = 10;
+  optional string buildkite_build_url = 11;
+  optional string finalized_train_s3_uri = 12;
+  optional string finalized_eval_s3_uri = 13;
+  optional string manifest_s3_uri = 14;
+  optional string stats_s3_uri = 15;
+  optional string config_block_s3_uri = 16;
+  optional string error_message = 17;
+  optional string created_by = 18;
+  google.protobuf.Timestamp created_at = 19;
+  optional google.protobuf.Timestamp started_at = 20;
+  optional google.protobuf.Timestamp finished_at = 21;
+  repeated string tags = 22;
+  optional string folder = 23;
+  repeated DataOpsJobStepRecord steps = 24;
+}
+
+message UpdateDataOpsJobRequest {
+  string job_id = 1;
+  optional DataOpsJobDbStatus status = 2;
+  optional google.protobuf.Timestamp started_at = 3;
+  optional google.protobuf.Timestamp finished_at = 4;
+  optional string buildkite_build_id = 5;
+  optional int32 buildkite_build_number = 6;
+  optional string buildkite_build_url = 7;
+  optional string finalized_train_s3_uri = 8;
+  optional string finalized_eval_s3_uri = 9;
+  optional string manifest_s3_uri = 10;
+  optional string stats_s3_uri = 11;
+  optional string config_block_s3_uri = 12;
+  optional string error_message = 13;
+}
+
+message UpdateDataOpsJobResponse {
+  bool ok = 1;
+}
+
+message GetDataOpsJobRequest {
+  string job_id = 1;
+}
+
+message GetDataOpsJobResponse {
+  DataOpsJobRecord job = 1;
+}
+
+message ListDataOpsJobsRequest {
+  optional int32 limit = 1;
+  optional string cursor = 2;
+  optional DataOpsJobDbStatus status = 3;
+  optional string training_set = 4;
+  optional string created_by = 5;
+  optional bool include_hidden = 6;
+}
+
+message ListDataOpsJobsResponse {
+  repeated DataOpsJobRecord jobs = 1;
+  optional string next_cursor = 2;
+}
+
+message UpsertDataOpsJobStepRequest {
+  string job_id = 1;
+  DataOpsPhase phase = 2;
+  optional DataOpsStepDbStatus status = 3;
+  optional string ray_job_name = 4;
+  optional string ray_job_namespace = 5;
+  optional google.protobuf.Timestamp started_at = 6;
+  optional google.protobuf.Timestamp finished_at = 7;
+}
+
+message UpsertDataOpsJobStepResponse {
+  bool ok = 1;
+  string step_id = 2;
+}
+
 service EvalTrackingService {
   rpc CreateEval(CreateEvalRequest) returns (CreateEvalResponse);
   rpc GetEvalByName(GetEvalByNameRequest) returns (GetEvalByNameResponse);
@@ -455,6 +598,7 @@ service EvalTrackingService {
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
   rpc RequestKill(RequestKillRequest) returns (RequestKillResponse);
   rpc SetRayJobName(SetRayJobNameRequest) returns (SetRayJobNameResponse);
+  rpc GetRunKillStatus(GetRunKillStatusRequest) returns (GetRunKillStatusResponse);
   rpc CreateEvalCronJob(CreateEvalCronJobRequest) returns (CreateEvalCronJobResponse);
   rpc GetEvalCronJobByName(GetEvalCronJobByNameRequest) returns (GetEvalCronJobByNameResponse);
   rpc ListEvalCronJobs(ListEvalCronJobsRequest) returns (ListEvalCronJobsResponse);
@@ -466,4 +610,8 @@ service EvalTrackingService {
   rpc UpsertRlEvalJobStep(UpsertRlEvalJobStepRequest) returns (UpsertRlEvalJobStepResponse);
   rpc SetEvalRunRlEvalJobStep(SetEvalRunRlEvalJobStepRequest) returns (SetEvalRunRlEvalJobStepResponse);
   rpc UpdateRlEvalStepDatasetEval(UpdateRlEvalStepDatasetEvalRequest) returns (UpdateRlEvalStepDatasetEvalResponse);
+  rpc UpdateDataOpsJob(UpdateDataOpsJobRequest) returns (UpdateDataOpsJobResponse);
+  rpc GetDataOpsJob(GetDataOpsJobRequest) returns (GetDataOpsJobResponse);
+  rpc ListDataOpsJobs(ListDataOpsJobsRequest) returns (ListDataOpsJobsResponse);
+  rpc UpsertDataOpsJobStep(UpsertDataOpsJobStepRequest) returns (UpsertDataOpsJobStepResponse);
 }

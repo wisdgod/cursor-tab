@@ -41,6 +41,12 @@ enum PromptEffortLevel {
   PROMPT_EFFORT_LEVEL_HARD = 10;
 }
 
+enum PromptRunMode {
+  PROMPT_RUN_MODE_UNSPECIFIED = 0;
+  PROMPT_RUN_MODE_SAME_CHAT = 1;
+  PROMPT_RUN_MODE_NEW_AGENT = 2;
+}
+
 enum GitPullRequestAction {
   GIT_PULL_REQUEST_ACTION_UNSPECIFIED = 0;
   GIT_PULL_REQUEST_ACTION_OPENED = 1;
@@ -85,6 +91,7 @@ enum PlatformTriggerType {
   PLATFORM_TRIGGER_TYPE_SENTRY = 8;
   PLATFORM_TRIGGER_TYPE_MICROSOFT_TEAMS = 9;
   PLATFORM_TRIGGER_TYPE_MICROSOFT_TEAMS_CHANNEL_CREATED = 10;
+  PLATFORM_TRIGGER_TYPE_SLACK_REACTION_ADDED = 11;
 }
 
 enum AutomationRunListKind {
@@ -123,6 +130,13 @@ enum AutomationRunFailureCode {
   AUTOMATION_RUN_FAILURE_CODE_MODEL_BLOCKED = 12;
   AUTOMATION_RUN_FAILURE_CODE_PRIVATE_WORKERS_DISABLED = 13;
   AUTOMATION_RUN_FAILURE_CODE_PRIVATE_WORKER_RESOURCE_EXHAUSTED = 14;
+  AUTOMATION_RUN_FAILURE_CODE_GITHUB_IP_ALLOWLIST = 15;
+}
+
+enum AutomationRunRetryIneligibleReason {
+  AUTOMATION_RUN_RETRY_INELIGIBLE_REASON_UNSPECIFIED = 0;
+  AUTOMATION_RUN_RETRY_INELIGIBLE_REASON_LAUNCH_CONTEXT_MISSING = 1;
+  AUTOMATION_RUN_RETRY_INELIGIBLE_REASON_PERMISSION_DENIED = 2;
 }
 
 message Trigger {
@@ -138,6 +152,7 @@ message Trigger {
     SentryTrigger sentry = 15;
     MicrosoftTeamsTrigger microsoft_teams_trigger = 16;
     MicrosoftTeamsChannelCreatedTrigger microsoft_teams_channel_created = 17;
+    SlackReactionAddedTrigger slack_reaction_added = 18;
   }
 }
 
@@ -198,6 +213,10 @@ message Workflow {
 message Prompt {
   string prompt = 1;
   PromptEffortLevel effort_level = 2;
+  optional string model = 3;
+  optional bool is_filter = 4;
+  optional PromptRunMode run_mode = 5;
+  optional bool suppress_slack_reaction = 6;
 }
 
 message GitConfig {
@@ -274,6 +293,13 @@ message SlackTrigger {
 
 message SlackChannelCreatedTrigger {
   string channel_name_contains = 1;
+}
+
+message SlackReactionAddedTrigger {
+  string channel = 1;
+  string emoji_name = 3;
+  repeated string channels = 5;
+  bool block_unauthenticated_slack_users = 6;
 }
 
 message LinearTrigger {
@@ -598,6 +624,7 @@ message CreateAutomationRequest {
   optional bool hidden = 7;
   optional int32 team_id = 8;
   AutomationCreationSource creation_source = 9;
+  optional bool enabled = 10;
 }
 
 message CreateAutomationResponse {
@@ -680,6 +707,7 @@ message TestAutomationRequest {
     SentrySamplePayload sentry = 15;
     MicrosoftTeamsSamplePayload microsoft_teams = 16;
     MicrosoftTeamsChannelCreatedSamplePayload microsoft_teams_channel_created = 17;
+    SlackReactionAddedSamplePayload slack_reaction_added = 18;
   }
 }
 
@@ -714,6 +742,11 @@ message CICompletedSamplePayload {
 
 message SlackChannelCreatedSamplePayload {
   string channel_name = 1;
+}
+
+message SlackReactionAddedSamplePayload {
+  string emoji_name = 1;
+  string message = 2;
 }
 
 message WebhookSamplePayload {
@@ -761,6 +794,7 @@ message Automation {
   optional string deploy_last_apply_error = 14;
   optional string managed_type = 15;
   optional bool hidden = 16;
+  optional string template_id = 17;
 }
 
 message AutomationWithOwner {
@@ -821,6 +855,7 @@ message TestAutomationFilterRequest {
     SentrySamplePayload sentry = 15;
     MicrosoftTeamsSamplePayload microsoft_teams = 16;
     MicrosoftTeamsChannelCreatedSamplePayload microsoft_teams_channel_created = 17;
+    SlackReactionAddedSamplePayload slack_reaction_added = 18;
   }
 }
 
@@ -892,6 +927,9 @@ message AutomationRun {
   optional AutomationFilterDecision filter_decision = 16;
   optional string filter_rationale = 17;
   optional string filter_error_message = 18;
+  bool can_retry = 19;
+  optional string retry_ineligible_reason = 20;
+  optional AutomationRunRetryIneligibleReason retry_ineligible_reason_code = 21;
 }
 
 message GetRunSummaryRequest {
@@ -943,6 +981,15 @@ message CancelAllAutomationRunsRequest {
 message CancelAllAutomationRunsResponse {
   int32 cancelled_count = 1;
   string message = 2;
+}
+
+message RetryAutomationRunRequest {
+  string run_uuid = 1;
+}
+
+message RetryAutomationRunResponse {
+  string background_composer_id = 1;
+  string run_uuid = 2;
 }
 
 message WorkflowTemplate {
@@ -1024,6 +1071,7 @@ message CreateWorkflowFromTemplateResponse {
 
 message ValidateAutomationToolsRequest {
   string prompt = 1;
+  repeated string trigger_types = 2;
 }
 
 message ValidateAutomationToolsResponse {
@@ -1135,6 +1183,7 @@ service AutomationsService {
   rpc GetSecuritybotResolutionStats(GetSecuritybotResolutionStatsRequest) returns (GetSecuritybotResolutionStatsResponse);
   rpc CancelAutomationRun(CancelAutomationRunRequest) returns (CancelAutomationRunResponse);
   rpc CancelAllAutomationRuns(CancelAllAutomationRunsRequest) returns (CancelAllAutomationRunsResponse);
+  rpc RetryAutomationRun(RetryAutomationRunRequest) returns (RetryAutomationRunResponse);
   rpc ListAutomationMemories(ListAutomationMemoriesRequest) returns (ListAutomationMemoriesResponse);
   rpc GetAutomationMemory(GetAutomationMemoryRequest) returns (GetAutomationMemoryResponse);
   rpc UpdateAutomationMemory(UpdateAutomationMemoryRequest) returns (UpdateAutomationMemoryResponse);

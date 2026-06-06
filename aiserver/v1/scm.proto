@@ -134,6 +134,8 @@ message PRCheckStatus {
   int32 skipped_count = 6;
   int32 total_count = 7;
   repeated PRCheck checks = 8;
+  optional int32 required_failure_count = 9;
+  optional int32 required_pending_count = 10;
 }
 
 message PRCheckAnnotation {
@@ -158,6 +160,7 @@ message PRCheck {
   optional string rerun_disabled_reason = 10;
   repeated PRCheckAnnotation annotations = 11;
   bool annotations_truncated = 12;
+  bool is_required = 13;
 }
 
 message GetSCMPullRequestCommitsRequest {

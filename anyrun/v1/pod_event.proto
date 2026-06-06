@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package anyrun.v1;
 
+import "anyrun/v1/pod_daemon.proto";
 import "google/protobuf/empty.proto";
 
 enum PrivateWorkerWaitReason {
@@ -80,7 +81,21 @@ message PodEvent {
     WaitingForWorkerStatus waiting_for_worker = 54;
     SpanStarted span_started = 55;
     SpanEnded span_ended = 56;
+    LifecycleProcessRestarted lifecycle_process_restarted = 57;
+    LifecycleProcessExited lifecycle_process_exited = 58;
   }
+}
+
+message LifecycleProcessRestarted {
+  uint32 attempt = 1;
+  int32 previous_exit_code = 2;
+  RestartReason reason = 3;
+  string command_name = 4;
+}
+
+message LifecycleProcessExited {
+  int32 exit_code = 1;
+  string command_name = 2;
 }
 
 message SpanStarted {

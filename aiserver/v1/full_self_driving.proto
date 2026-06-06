@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package aiserver.v1;
 
+import "agent/v1/agent_skills.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -19,6 +20,12 @@ enum FullSelfDrivingRunSuggestionState {
   FULL_SELF_DRIVING_RUN_SUGGESTION_STATE_NOT_SUGGEST_MODE = 4;
 }
 
+enum FullSelfDrivingCloudCommandAction {
+  FULL_SELF_DRIVING_CLOUD_COMMAND_ACTION_UNSPECIFIED = 0;
+  FULL_SELF_DRIVING_CLOUD_COMMAND_ACTION_SPAWNED = 1;
+  FULL_SELF_DRIVING_CLOUD_COMMAND_ACTION_FOLLOWED_UP = 2;
+}
+
 message SetFullSelfDrivingConfigRequest {
   string pr_url = 1;
   bool enabled = 2;
@@ -28,6 +35,7 @@ message SetFullSelfDrivingConfigRequest {
 message SetFullSelfDrivingConfigResponse {
   bool enabled = 1;
   FullSelfDrivingMode mode = 2;
+  string spawned_bc_id = 3;
 }
 
 message GetFullSelfDrivingConfigRequest {
@@ -66,6 +74,7 @@ message ListFullSelfDrivingFindingsRequest {
   string bc_id = 2;
   optional int32 limit = 3;
   bool include_superseded = 4;
+  repeated string kinds = 5;
 }
 
 message FullSelfDrivingFinding {
@@ -81,10 +90,85 @@ message FullSelfDrivingFinding {
   google.protobuf.Struct payload = 10;
   string superseded_by_stable_key = 11;
   string superseded_reason = 12;
+  string dismissed_reason = 13;
+  string kind = 14;
+  string action = 15;
 }
 
 message ListFullSelfDrivingFindingsResponse {
   repeated FullSelfDrivingFinding findings = 1;
+}
+
+message FullSelfDrivingOutputInput {
+  string stable_key = 1;
+  string kind = 2;
+  string status = 3;
+  string title = 4;
+  string body = 5;
+  string severity = 6;
+  string action = 7;
+  google.protobuf.Struct payload = 8;
+}
+
+message RecordFullSelfDrivingOutputsRequest {
+  string pr_url = 1;
+  string bc_id = 2;
+  repeated FullSelfDrivingOutputInput outputs = 3;
+}
+
+message RecordFullSelfDrivingOutputsResponse {
+  repeated FullSelfDrivingFinding findings = 1;
+}
+
+message UpdateFullSelfDrivingOutputRequest {
+  string pr_url = 1;
+  string bc_id = 2;
+  string stable_key = 3;
+  optional string title = 4;
+  optional string body = 5;
+  optional string status = 6;
+  optional string severity = 7;
+  optional bool clear_severity = 8;
+  optional string action = 9;
+  optional bool clear_action = 10;
+  google.protobuf.Struct payload = 11;
+}
+
+message UpdateFullSelfDrivingOutputResponse {
+  FullSelfDrivingFinding finding = 1;
+}
+
+message SupersedeFullSelfDrivingOutputRequest {
+  string pr_url = 1;
+  string bc_id = 2;
+  string stable_key = 3;
+  optional string replacement_stable_key = 4;
+  optional string reason = 5;
+}
+
+message SupersedeFullSelfDrivingOutputResponse {
+  FullSelfDrivingFinding finding = 1;
+}
+
+message DismissFullSelfDrivingOutputRequest {
+  string pr_url = 1;
+  string bc_id = 2;
+  string stable_key = 3;
+  optional string reason = 4;
+}
+
+message DismissFullSelfDrivingOutputResponse {
+  FullSelfDrivingFinding finding = 1;
+}
+
+message UndoFullSelfDrivingOutputRequest {
+  string pr_url = 1;
+  string bc_id = 2;
+  string stable_key = 3;
+}
+
+message UndoFullSelfDrivingOutputResponse {
+  FullSelfDrivingFinding finding = 1;
 }
 
 message GetFullSelfDrivingRunSuggestionRequest {
@@ -111,6 +195,70 @@ message ApplyFullSelfDrivingSuggestionResponse {
   string new_pr_head_sha = 1;
 }
 
+message UpdateFullSelfDrivingFindingStatusRequest {
+  string pr_url = 1;
+  string bc_id = 2;
+  string stable_key = 3;
+  string status = 4;
+}
+
+message UpdateFullSelfDrivingFindingStatusResponse {
+  FullSelfDrivingFinding finding = 1;
+}
+
+message RunFullSelfDrivingWorkflowSuggestionRequest {
+  string pr_url = 1;
+  string bc_id = 2;
+  string stable_key = 3;
+}
+
+message RunFullSelfDrivingWorkflowSuggestionResponse {
+  string bc_id = 1;
+  bool spawned_new_run = 2;
+}
+
+message BuildFullSelfDrivingTriageContextRequest {
+  string pr_url = 1;
+  string trigger_description = 2;
+  optional string event_name = 3;
+  FullSelfDrivingMode mode = 4;
+  optional string bc_id = 5;
+  bool fetch_ci_log_excerpts = 6;
+}
+
+message BuildFullSelfDrivingTriageContextResponse {
+  string triage_json = 1;
+}
+
+message PrepareLocalFullSelfDrivingRunRequest {
+  string pr_url = 1;
+  FullSelfDrivingMode mode = 2;
+  optional string trigger_description = 3;
+}
+
+message PrepareLocalFullSelfDrivingRunResponse {
+  string local_run_id = 1;
+  string prompt = 2;
+  string triage_context_json = 3;
+  FullSelfDrivingMode mode = 4;
+  string model_id = 5;
+  repeated string skill_ids = 6;
+  repeated agent.v1.AgentSkill skills = 7;
+}
+
+message RunFullSelfDrivingCloudCommandRequest {
+  string pr_url = 1;
+  FullSelfDrivingMode mode = 2;
+  optional string user_instructions = 3;
+  optional string trigger_description = 4;
+}
+
+message RunFullSelfDrivingCloudCommandResponse {
+  string bc_id = 1;
+  FullSelfDrivingCloudCommandAction action = 2;
+  FullSelfDrivingMode mode = 3;
+}
+
 service FullSelfDrivingService {
   rpc SetFullSelfDrivingConfig(SetFullSelfDrivingConfigRequest) returns (SetFullSelfDrivingConfigResponse);
   rpc GetFullSelfDrivingConfig(GetFullSelfDrivingConfigRequest) returns (GetFullSelfDrivingConfigResponse);
@@ -118,4 +266,14 @@ service FullSelfDrivingService {
   rpc GetFullSelfDrivingRunSuggestion(GetFullSelfDrivingRunSuggestionRequest) returns (GetFullSelfDrivingRunSuggestionResponse);
   rpc ApplyFullSelfDrivingSuggestion(ApplyFullSelfDrivingSuggestionRequest) returns (ApplyFullSelfDrivingSuggestionResponse);
   rpc ListFullSelfDrivingFindings(ListFullSelfDrivingFindingsRequest) returns (ListFullSelfDrivingFindingsResponse);
+  rpc RecordFullSelfDrivingOutputs(RecordFullSelfDrivingOutputsRequest) returns (RecordFullSelfDrivingOutputsResponse);
+  rpc UpdateFullSelfDrivingOutput(UpdateFullSelfDrivingOutputRequest) returns (UpdateFullSelfDrivingOutputResponse);
+  rpc SupersedeFullSelfDrivingOutput(SupersedeFullSelfDrivingOutputRequest) returns (SupersedeFullSelfDrivingOutputResponse);
+  rpc DismissFullSelfDrivingOutput(DismissFullSelfDrivingOutputRequest) returns (DismissFullSelfDrivingOutputResponse);
+  rpc UndoFullSelfDrivingOutput(UndoFullSelfDrivingOutputRequest) returns (UndoFullSelfDrivingOutputResponse);
+  rpc UpdateFullSelfDrivingFindingStatus(UpdateFullSelfDrivingFindingStatusRequest) returns (UpdateFullSelfDrivingFindingStatusResponse);
+  rpc RunFullSelfDrivingWorkflowSuggestion(RunFullSelfDrivingWorkflowSuggestionRequest) returns (RunFullSelfDrivingWorkflowSuggestionResponse);
+  rpc BuildFullSelfDrivingTriageContext(BuildFullSelfDrivingTriageContextRequest) returns (BuildFullSelfDrivingTriageContextResponse);
+  rpc PrepareLocalFullSelfDrivingRun(PrepareLocalFullSelfDrivingRunRequest) returns (PrepareLocalFullSelfDrivingRunResponse);
+  rpc RunFullSelfDrivingCloudCommand(RunFullSelfDrivingCloudCommandRequest) returns (RunFullSelfDrivingCloudCommandResponse);
 }

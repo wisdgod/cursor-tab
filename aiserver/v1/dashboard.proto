@@ -77,6 +77,20 @@ enum TeamMemberBillingTier {
   TEAM_MEMBER_BILLING_TIER_TIER_2000 = 2;
 }
 
+enum ContactImportProvider {
+  CONTACT_IMPORT_PROVIDER_UNSPECIFIED = 0;
+  CONTACT_IMPORT_PROVIDER_SLACK = 1;
+  CONTACT_IMPORT_PROVIDER_GOOGLE = 2;
+}
+
+enum ContactImportSyncRunStatus {
+  CONTACT_IMPORT_SYNC_RUN_STATUS_UNSPECIFIED = 0;
+  CONTACT_IMPORT_SYNC_RUN_STATUS_IN_PROGRESS = 1;
+  CONTACT_IMPORT_SYNC_RUN_STATUS_ACTIVE = 2;
+  CONTACT_IMPORT_SYNC_RUN_STATUS_SUPERSEDED = 3;
+  CONTACT_IMPORT_SYNC_RUN_STATUS_FAILED = 4;
+}
+
 enum ProtectedGitProvider {
   PROTECTED_GIT_PROVIDER_UNSPECIFIED = 0;
   PROTECTED_GIT_PROVIDER_GITHUB = 1;
@@ -155,6 +169,12 @@ enum TrialType {
   TRIAL_TYPE_TOKEN = 2;
 }
 
+enum FreeTrialCodePurpose {
+  FREE_TRIAL_CODE_PURPOSE_UNSPECIFIED = 0;
+  FREE_TRIAL_CODE_PURPOSE_FREE_TRIAL = 1;
+  FREE_TRIAL_CODE_PURPOSE_ORG_INVITE = 2;
+}
+
 enum AllowlistConfig {
   ALLOWLIST_CONFIG_UNSPECIFIED = 0;
   ALLOWLIST_CONFIG_ALLOWLIST = 1;
@@ -212,6 +232,12 @@ enum LinearIssuesOrderBy {
   LINEAR_ISSUES_ORDER_BY_UNSPECIFIED = 0;
   LINEAR_ISSUES_ORDER_BY_UPDATED_AT = 1;
   LINEAR_ISSUES_ORDER_BY_CREATED_AT = 2;
+}
+
+enum SlackRoutingRuleTargetType {
+  SLACK_ROUTING_RULE_TARGET_TYPE_UNSPECIFIED = 0;
+  SLACK_ROUTING_RULE_TARGET_TYPE_REPOSITORY = 1;
+  SLACK_ROUTING_RULE_TARGET_TYPE_ENVIRONMENT = 2;
 }
 
 enum GroupType {
@@ -288,6 +314,12 @@ enum GlobalCommandSurface {
   GLOBAL_COMMAND_SURFACE_CLASSIC = 1;
   GLOBAL_COMMAND_SURFACE_GLASS = 2;
   GLOBAL_COMMAND_SURFACE_CLI = 3;
+}
+
+enum DiamondToBugbotMigrationMode {
+  DIAMOND_TO_BUGBOT_MIGRATION_MODE_UNSPECIFIED = 0;
+  DIAMOND_TO_BUGBOT_MIGRATION_MODE_DRY_RUN = 1;
+  DIAMOND_TO_BUGBOT_MIGRATION_MODE_APPLY = 2;
 }
 
 enum SharedConversationVisibility {
@@ -373,6 +405,10 @@ message ConnectGithubCallbackResponse {
   string confirmation_code = 3;
   string github_login = 4;
   bool pending_approval = 5;
+  string github_user_node_id = 6;
+  string github_user_database_id = 7;
+  string github_name = 8;
+  string github_avatar_url = 9;
 }
 
 message PrepareGithubConnectFlowRequest {
@@ -582,6 +618,7 @@ message DeleteAccountResponse {
 }
 
 message GetMeRequest {
+  optional int32 team_id = 1;
 }
 
 message GetMeResponse {
@@ -599,6 +636,7 @@ message GetMeResponse {
   optional string country = 12;
   optional string profile_picture_url = 13;
   optional bool cursor_review_onboarding_use_cursor_github_app = 14;
+  optional int64 organization_id = 15;
 }
 
 message GetAgenticOnboardingConfigRequest {
@@ -623,6 +661,9 @@ message GetUserOrganizationsResponse {
     int32 team_id = 1;
     string team_name = 2;
     string team_slug = 3;
+    optional int64 team_organization_membership_created_at_ms = 4;
+    optional TeamRole viewer_team_role = 5;
+    optional int64 team_deleted_at_ms = 6;
   }
   message Organization {
     string organization_id = 1;
@@ -664,6 +705,82 @@ message GetOrganizationMembersResponse {
   repeated OrganizationMember members = 1;
   int32 total_members = 2;
   int32 total_pages = 3;
+}
+
+message OrganizationIdentityProviderUsedByTeam {
+  string team_public_id = 1;
+  string team_name = 2;
+}
+
+message OrganizationIdentityProviderSsoSettings {
+  bool connected = 1;
+  string summary = 2;
+  string manage_link = 3;
+}
+
+message OrganizationIdentityProviderDomains {
+  repeated string verified = 1;
+  repeated string pending = 2;
+  string verify_link = 3;
+}
+
+message OrganizationIdentityProviderScimSettings {
+  bool connected = 1;
+  string summary = 2;
+  string manage_link = 3;
+}
+
+message OrganizationIdentityProviderDomainJoinSettings {
+  bool enabled = 1;
+  repeated string allowed_domains = 2;
+}
+
+message OrganizationIdentityProvider {
+  string public_id = 1;
+  bool is_default = 2;
+  string status = 3;
+  repeated OrganizationIdentityProviderUsedByTeam used_by_teams = 4;
+  string description = 5;
+  OrganizationIdentityProviderSsoSettings sso = 6;
+  OrganizationIdentityProviderDomains domains = 7;
+  OrganizationIdentityProviderScimSettings scim = 8;
+  OrganizationIdentityProviderDomainJoinSettings domain_join = 9;
+}
+
+message ListOrganizationIdentityProvidersRequest {
+  string organization_id = 1;
+}
+
+message ListOrganizationIdentityProvidersResponse {
+  repeated OrganizationIdentityProvider providers = 1;
+}
+
+message UpdateOrganizationIdentityProviderSsoSettingsRequest {
+  string organization_id = 1;
+  string identity_provider_public_id = 2;
+  bool allow_sso = 3;
+}
+
+message SetOrganizationIdentityProviderAllowDomainJoinRequest {
+  string organization_id = 1;
+  string identity_provider_public_id = 2;
+  bool allow_domain_join = 3;
+}
+
+message AddOrganizationIdentityProviderDomainJoinRequest {
+  string organization_id = 1;
+  string identity_provider_public_id = 2;
+  string domain = 3;
+}
+
+message RemoveOrganizationIdentityProviderDomainJoinRequest {
+  string organization_id = 1;
+  string identity_provider_public_id = 2;
+  string domain = 3;
+}
+
+message UpdateOrganizationIdentityProviderResponse {
+  OrganizationIdentityProvider provider = 1;
 }
 
 message MoveOrganizationMemberToTeamRequest {
@@ -1329,6 +1446,17 @@ message CreateTeamWithFreeTrialResponse {
   int32 team_id = 1;
 }
 
+message CreateTeamWithOrgRequest {
+  string name = 1;
+  string invite_code = 2;
+  optional bool privacy_mode_forced = 3;
+}
+
+message CreateTeamWithOrgResponse {
+  int32 team_id = 1;
+  int64 org_id = 2;
+}
+
 message GetPricingHistoryRequest {
 }
 
@@ -1528,6 +1656,10 @@ message Team {
   optional int64 customer_balance_cents = 28;
   bool scim_require_user_directory = 29;
   bool self_serve_tiered_pricing_enabled = 30;
+  bool new_member_usage_promo_eligible = 31;
+  optional string ant_user_profile_id = 32;
+  bool ant_cyber_approved = 33;
+  optional int64 deleted_at_ms = 34;
 }
 
 message GetTeamsRequest {
@@ -1709,7 +1841,6 @@ message GetTeamMembersResponse {
 
 message GetTeamInviteLinkRequest {
   int32 team_id = 1;
-  optional int32 valid_for_seconds = 2;
   optional bool create_if_missing = 3;
   optional TeamMemberBillingTier billing_tier = 4;
   optional TeamRole role = 5;
@@ -1731,12 +1862,103 @@ message SendTeamInviteResponse {
   int64 valid_until = 1;
 }
 
+message ContactImportConnectionSummary {
+  int64 connection_id = 1;
+  ContactImportProvider provider = 2;
+  string provider_account_id = 3;
+  optional string provider_workspace_id = 4;
+  optional string provider_account_email = 5;
+  optional int64 last_synced_at_ms = 6;
+  optional ContactImportSyncRunStatus latest_sync_status = 7;
+  optional int32 latest_sync_total_contacts = 8;
+  optional int64 latest_sync_completed_at_ms = 9;
+}
+
+message ListContactImportConnectionsRequest {
+}
+
+message ListContactImportConnectionsResponse {
+  repeated ContactImportConnectionSummary connections = 1;
+}
+
+message GetGoogleContactImportAuthUrlRequest {
+}
+
+message GetGoogleContactImportAuthUrlResponse {
+  string auth_url = 1;
+  string csrf_token = 2;
+}
+
+message ConnectGoogleContactImportCallbackRequest {
+  string code = 1;
+  string state = 2;
+}
+
+message ConnectGoogleContactImportCallbackResponse {
+  int64 connection_id = 1;
+  int64 sync_run_id = 2;
+  int32 total_contacts = 3;
+}
+
+message ContactImportContactRow {
+  int64 contact_id = 1;
+  string provider_contact_id = 2;
+  optional string display_name = 3;
+  optional string given_name = 4;
+  optional string family_name = 5;
+  optional string primary_email = 6;
+  optional string normalized_email = 7;
+  optional string photo_url = 8;
+}
+
+message ListContactImportContactsRequest {
+  int64 connection_id = 1;
+  optional int32 limit = 2;
+  optional string normalized_email_query = 3;
+  optional int64 after_contact_id = 4;
+}
+
+message ListContactImportContactsResponse {
+  repeated ContactImportContactRow contacts = 1;
+  int32 total_count = 2;
+}
+
+message GetContactImportAvatarRequest {
+  int64 contact_id = 1;
+}
+
+message GetContactImportAvatarResponse {
+  bytes bytes = 1;
+  string content_type = 2;
+  string etag = 3;
+}
+
+message DisconnectContactImportConnectionRequest {
+  int64 connection_id = 1;
+}
+
+message DisconnectContactImportConnectionResponse {
+  bool success = 1;
+}
+
 message AcceptInviteRequest {
   string invite_code = 1;
 }
 
 message AcceptInviteResponse {
   int32 team_id = 1;
+}
+
+message GetTeamInviteMetadataRequest {
+  string invite_code = 1;
+}
+
+message GetTeamInviteMetadataResponse {
+  int32 team_id = 1;
+  string team_name = 2;
+  string inviter_name = 3;
+  string inviter_email = 4;
+  bool invitee_email_matches_authenticated_user = 5;
 }
 
 message CreateTeamApiKeyRequest {
@@ -2022,6 +2244,16 @@ message RemoveMemberRequest {
 
 message RemoveMemberResponse {
   bool has_billing_cycle_usage = 1;
+}
+
+message GetMemberRemovalInsightsRequest {
+  int32 team_id = 1;
+  int32 user_id = 2;
+}
+
+message GetMemberRemovalInsightsResponse {
+  optional int64 last_active_at = 1;
+  optional int32 accepted_generated_lines_last_30_days = 2;
 }
 
 message ChangeSeatRequest {
@@ -2403,6 +2635,13 @@ message AutoRunControls {
   repeated string mcp_tool_allowlist = 7;
   AutoRunSandboxingControls sandboxing_controls = 8;
   bool browser_protection = 9;
+  optional bool enable_smart_auto = 10;
+  optional bool enable_allowlist_mode = 11;
+}
+
+message AutoReviewInstructions {
+  repeated string allow_instructions = 1;
+  repeated string block_instructions = 2;
 }
 
 message CursorIgnoreControls {
@@ -2419,6 +2658,11 @@ message AllowedMCPConfiguration {
   optional bool disable_all = 1;
   repeated AllowedMCPServer allowed_mcp_servers = 2;
   optional bool require_mcp_servers_in_team_network_allowlist = 3;
+  optional bool allow_user_override_mcp_servers = 4;
+  optional bool allow_user_override_mcp_tools = 5;
+  optional bool enable_mcp_network_controls = 6;
+  repeated string mcp_network_allowlist = 7;
+  optional bool enable_mcp_tool_controls = 8;
 }
 
 message FirstPartyPluginConfiguration {
@@ -2468,6 +2712,7 @@ message DataRetentionPolicy {
 message CliSettings {
   repeated string allowlist = 1;
   AllowlistConfig allowlist_config = 2;
+  bool disable_headless = 3;
 }
 
 message BrowserAccessControl {
@@ -2543,6 +2788,10 @@ message CursorBlameSettings {
 
 message ExtensionSigningSettings {
   bool verification_enabled = 1;
+}
+
+message ExtensionInstallCooldownSettings {
+  int32 cooldown_hours = 1;
 }
 
 message AttributionControls {
@@ -2653,8 +2902,14 @@ message GetTeamAdminSettingsResponse {
   optional BrowserSettings browser_settings = 38;
   repeated string cloud_agent_egress_allowlist = 39;
   optional bool mirror_sandbox_allowlist_for_egress = 40;
+  AutoReviewInstructions auto_review = 49;
   optional string remote_permissions_file_path = 41;
+  repeated string remote_permissions_file_paths = 46;
+  repeated string local_permissions_file_path = 45;
+  optional bool permissions_file_overrides_auto_run = 47;
   optional SharedCanvasSettings shared_canvas_settings = 42;
+  optional int32 invite_link_max_ttl_seconds = 43;
+  optional ExtensionInstallCooldownSettings extension_install_cooldown_settings = 48;
 }
 
 message GetBaseTeamAdminSettingsRequest {
@@ -2704,15 +2959,29 @@ message UpdateTeamAdminSettingsRequest {
   optional BrowserSettings browser_settings = 39;
   repeated string cloud_agent_egress_allowlist = 40;
   optional bool mirror_sandbox_allowlist_for_egress = 41;
+  AutoReviewInstructions auto_review = 49;
   optional string remote_permissions_file_path = 42;
+  repeated string remote_permissions_file_paths = 46;
+  repeated string local_permissions_file_path = 45;
+  optional bool permissions_file_overrides_auto_run = 47;
   optional SharedCanvasSettings shared_canvas_settings = 43;
+  optional ExtensionInstallCooldownSettings extension_install_cooldown_settings = 48;
 }
 
 message UpdateTeamAdminSettingsResponse {
 }
 
+message UpdateTeamInviteLinkTTLSettingRequest {
+  int32 team_id = 1;
+  int32 invite_link_max_ttl_seconds = 2;
+}
+
+message UpdateTeamInviteLinkTTLSettingResponse {
+}
+
 message CreateTeamFreeTrialCodeRequest {
   optional TrialType trial_type = 1;
+  optional FreeTrialCodePurpose code_purpose = 2;
 }
 
 message CreateTeamFreeTrialCodeResponse {
@@ -3060,6 +3329,15 @@ message ValidateBedrockIamRoleResponse {
   string error_message = 2;
 }
 
+message CreateAnthropicCyberEnrollmentUrlRequest {
+  int32 team_id = 1;
+}
+
+message CreateAnthropicCyberEnrollmentUrlResponse {
+  string enrollment_url = 1;
+  string user_profile_id = 2;
+}
+
 message DeleteBedrockIamRoleRequest {
   int32 team_id = 1;
 }
@@ -3106,6 +3384,7 @@ message GetTeamSpendResponse {
     optional double auto_percent_used = 15;
     optional double api_percent_used = 16;
     optional double total_percent_used = 17;
+    optional int64 usage_promo_expires_at = 18;
   }
   repeated TeamMemberSpend team_member_spend = 1;
   int64 subscription_cycle_start = 2;
@@ -3517,6 +3796,7 @@ message GetUserReviewRequestsResponse {
 }
 
 message GetBugbotUserSettingsRequest {
+  optional int32 team_id = 1;
 }
 
 message GetBugbotUserSettingsResponse {
@@ -3533,6 +3813,8 @@ message GetBugbotUserSettingsResponse {
   optional bool installation_default_is_pr_summary_enabled = 11;
   BugbotAutofixMode installation_default_bugbot_autofix_mode = 12;
   repeated string installation_default_bugbot_autofix_severity_filter = 13;
+  optional bool is_incremental_review_enabled = 14;
+  optional bool team_default_is_incremental_review_enabled = 15;
 }
 
 message UpdateBugbotUserSettingsRequest {
@@ -3545,6 +3827,7 @@ message UpdateBugbotUserSettingsRequest {
   bool enable_vm_run = 7;
   bool fail_github_action_on_bugbot_findings = 8;
   repeated string bugbot_autofix_severity_filter = 9;
+  optional bool is_incremental_review_enabled = 10;
 }
 
 message UpdateBugbotUserSettingsResponse {
@@ -3557,18 +3840,27 @@ message GetFullSelfDrivingUserSettingsResponse {
   FullSelfDrivingMode default_mode = 1;
   bool only_cloud_agent_prs = 2;
   bool globally_disabled = 3;
+  bool auto_create_on_first_pr_push = 4;
+  bool slack_notifications_enabled = 5;
+  optional string fsd_slack_channel_id = 6;
 }
 
 message UpdateFullSelfDrivingUserSettingsRequest {
   optional FullSelfDrivingMode default_mode = 1;
   optional bool only_cloud_agent_prs = 2;
   optional bool globally_disabled = 3;
+  optional bool auto_create_on_first_pr_push = 4;
+  optional bool slack_notifications_enabled = 5;
+  optional string fsd_slack_channel_id = 6;
 }
 
 message UpdateFullSelfDrivingUserSettingsResponse {
   FullSelfDrivingMode default_mode = 1;
   bool only_cloud_agent_prs = 2;
   bool globally_disabled = 3;
+  bool auto_create_on_first_pr_push = 4;
+  bool slack_notifications_enabled = 5;
+  optional string fsd_slack_channel_id = 6;
 }
 
 message FullSelfDrivingRepoSetting {
@@ -3603,6 +3895,7 @@ message FullSelfDrivingTeamSettings {
   FullSelfDrivingMode default_mode = 2;
   bool only_cloud_agent_prs = 3;
   bool globally_disabled = 4;
+  bool auto_create_on_first_pr_push = 5;
 }
 
 message GetFullSelfDrivingTeamSettingsRequest {
@@ -3618,6 +3911,7 @@ message UpdateFullSelfDrivingTeamSettingsRequest {
   optional FullSelfDrivingMode default_mode = 2;
   optional bool only_cloud_agent_prs = 3;
   optional bool globally_disabled = 4;
+  optional bool auto_create_on_first_pr_push = 5;
 }
 
 message UpdateFullSelfDrivingTeamSettingsResponse {
@@ -3652,6 +3946,57 @@ message SetFullSelfDrivingTeamRepoEnabledRequest {
 
 message SetFullSelfDrivingTeamRepoEnabledResponse {
   FullSelfDrivingTeamRepoSetting repo = 1;
+}
+
+message FullSelfDrivingActiveAgent {
+  string pr_url = 1;
+  string repo_url = 2;
+  int32 pull_number = 3;
+  string bc_id = 4;
+  bool enabled = 5;
+  FullSelfDrivingMode mode = 6;
+  int32 owner_user_id = 7;
+  optional string owner_display_name = 8;
+  optional string owner_email = 9;
+  optional string mergeable_state = 10;
+  optional bool is_mergeable = 11;
+  optional int32 visible_findings_count = 12;
+}
+
+message ListFullSelfDrivingActiveAgentsRequest {
+  optional string search_query = 1;
+  optional int32 page = 2;
+  optional int32 page_size = 3;
+  optional bool archived = 4;
+}
+
+message ListFullSelfDrivingActiveAgentsResponse {
+  repeated FullSelfDrivingActiveAgent agents = 1;
+  int32 total_count = 2;
+}
+
+message ListFullSelfDrivingTeamActiveAgentsRequest {
+  int32 team_id = 1;
+  optional string search_query = 2;
+  optional int32 page = 3;
+  optional int32 page_size = 4;
+  optional bool archived = 5;
+}
+
+message ListFullSelfDrivingTeamActiveAgentsResponse {
+  repeated FullSelfDrivingActiveAgent agents = 1;
+  int32 total_count = 2;
+}
+
+message UpdateFullSelfDrivingPrConfigRequest {
+  string pr_url = 1;
+  optional bool enabled = 2;
+  optional FullSelfDrivingMode mode = 3;
+  optional int32 team_id = 4;
+}
+
+message UpdateFullSelfDrivingPrConfigResponse {
+  FullSelfDrivingActiveAgent agent = 1;
 }
 
 message GetBugBotProUserSettingsRequest {
@@ -3824,6 +4169,23 @@ message UpdateUserNameRequest {
 }
 
 message UpdateUserNameResponse {
+}
+
+message UploadUserProfilePictureRequest {
+  string content_type = 1;
+  bytes bytes = 2;
+}
+
+message UploadUserProfilePictureResponse {
+  string profile_picture_url = 1;
+}
+
+message UpdateUserProfilePictureRequest {
+  optional string profile_picture_url = 1;
+}
+
+message UpdateUserProfilePictureResponse {
+  optional string profile_picture_url = 1;
 }
 
 message ListInvoicesRequest {
@@ -4270,6 +4632,8 @@ message SlackRepoRoutingRule {
   string pattern = 2;
   string repo = 3;
   bool is_team_rule = 4;
+  SlackRoutingRuleTargetType target_type = 5;
+  optional string environment_public_id = 6;
 }
 
 message GetSlackRepoRoutingRulesRequest {
@@ -4284,6 +4648,8 @@ message CreateSlackRepoRoutingRuleRequest {
   int32 team_id = 1;
   string pattern = 2;
   string repo = 3;
+  SlackRoutingRuleTargetType target_type = 4;
+  optional string environment_public_id = 5;
 }
 
 message CreateSlackRepoRoutingRuleResponse {
@@ -4303,6 +4669,8 @@ message UpdateSlackRepoRoutingRuleRequest {
   string rule_id = 2;
   string pattern = 3;
   string repo = 4;
+  SlackRoutingRuleTargetType target_type = 5;
+  optional string environment_public_id = 6;
 }
 
 message UpdateSlackRepoRoutingRuleResponse {
@@ -4439,6 +4807,12 @@ message GetOrgDailySpendByCategoryRequest {
   int64 period_end_ms = 3;
   SpendGroupByCategory group_by = 4;
   optional SpendType spend_type = 5;
+  optional int32 team_id = 6;
+  optional string service_account_id = 7;
+  optional string cloud_agent_id = 8;
+  optional string automation_id = 9;
+  optional string automation_managed_type = 10;
+  optional string client_type = 11;
 }
 
 message Group {
@@ -4828,6 +5202,7 @@ message GetTeamBugbotSettingsResponse {
   bool can_migrate_to_usage_based = 14;
   int32 seat_license_count = 15;
   bool bugbot_migration_credit_already_granted = 16;
+  bool is_incremental_review_enabled = 17;
 }
 
 message UpdateTeamBugbotSettingsRequest {
@@ -4838,6 +5213,7 @@ message UpdateTeamBugbotSettingsRequest {
   optional AllowlistConfig allowlist_config = 5;
   optional bool bugbot_globally_disabled = 6;
   repeated string mcp_server_names = 7;
+  optional bool is_incremental_review_enabled = 8;
 }
 
 message UpdateTeamBugbotSettingsResponse {
@@ -5301,6 +5677,30 @@ message DeleteBugbotManualRepositoryRuleRequest {
 message DeleteBugbotManualRepositoryRuleResponse {
 }
 
+message RunDiamondToBugbotMigrationRequest {
+  int32 team_id = 1;
+  int64 installation_id = 2;
+  optional string ghe_application = 3;
+  string graphite_workspace_id = 4;
+  DiamondToBugbotMigrationMode mode = 5;
+  optional string approved_preview_hash = 6;
+  google.protobuf.Struct extracted_settings = 7;
+}
+
+message RunDiamondToBugbotMigrationResponse {
+  string status = 1;
+  string preview_hash = 2;
+  string preview_json = 3;
+  string repository_rules_json = 4;
+  string apply_plan_json = 5;
+  string audit_json = 6;
+  repeated string warnings = 7;
+  repeated string blockers = 8;
+  repeated string applied_operation_ids = 9;
+  repeated string skipped_operation_ids = 10;
+  int32 resolved_team_id = 11;
+}
+
 message GetBugbotRuleAnalyticsRequest {
   optional string date_range_start = 1;
   optional string date_range_end = 2;
@@ -5401,6 +5801,18 @@ message GetSharedCanvasResponse {
   SharedCanvasMetadata metadata = 1;
   bytes app_js = 2;
   bytes data_json = 3;
+}
+
+message GetPublicSharedCanvasRequest {
+  string share_id = 1;
+}
+
+message PublicSharedCanvasPreview {
+  string title = 1;
+}
+
+message GetPublicSharedCanvasResponse {
+  PublicSharedCanvasPreview preview = 1;
 }
 
 message ListSharedCanvasesRequest {
@@ -5856,6 +6268,7 @@ message UserProfile {
   string updated_at = 5;
   optional string display_name = 6;
   optional string avatar_url = 7;
+  repeated string badges = 8;
 }
 
 message PublicProfileDailyAgentCount {
@@ -5868,6 +6281,22 @@ message PublicProfileActivityCount {
   int32 count = 2;
 }
 
+message PublicProfileModelUsage {
+  string name = 1;
+  int32 agent_requests = 2;
+}
+
+message PublicProfileTokensPerDay {
+  string date = 1;
+  int64 tokens = 2;
+}
+
+message PublicProfileAgentsPerDay {
+  string date = 1;
+  int32 local_count = 2;
+  int32 cloud_count = 3;
+}
+
 message PublicProfileActivitySummary {
   string most_active_month = 1;
   string most_active_day = 2;
@@ -5876,13 +6305,21 @@ message PublicProfileActivitySummary {
   repeated string active_dates = 5;
   repeated PublicProfileDailyAgentCount daily_agent_counts = 6;
   repeated PublicProfileActivityCount activity_counts = 7;
+  repeated PublicProfileModelUsage top_models = 8;
+  int32 agents_local = 10;
+  int32 agents_cloud = 11;
+  int64 longest_agent_seconds = 12;
+  repeated PublicProfileTokensPerDay tokens_over_time = 13;
+  repeated PublicProfileAgentsPerDay agents_over_time = 14;
 }
 
 message GetUserProfileRequest {
+  bool include_activity_summary = 1;
 }
 
 message GetUserProfileResponse {
   optional UserProfile profile = 1;
+  PublicProfileActivitySummary activity_summary = 3;
 }
 
 message UpdateUserProfileRequest {
@@ -6210,6 +6647,8 @@ message TeamPluginPrimitiveUsageRow {
   int64 plugin_id = 2;
   PluginPrimitiveType primitive_type = 3;
   uint64 usage_count = 4;
+  uint64 human_usage_count = 5;
+  uint64 agent_usage_count = 6;
 }
 
 message GetTeamPluginPrimitiveUsageResponse {
@@ -6709,6 +7148,11 @@ service DashboardService {
   rpc GetUserOrganizations(GetUserOrganizationsRequest) returns (GetUserOrganizationsResponse);
   rpc SetUserDefaultTeam(SetUserDefaultTeamRequest) returns (SetUserDefaultTeamResponse);
   rpc GetOrganizationMembers(GetOrganizationMembersRequest) returns (GetOrganizationMembersResponse);
+  rpc ListOrganizationIdentityProviders(ListOrganizationIdentityProvidersRequest) returns (ListOrganizationIdentityProvidersResponse);
+  rpc UpdateOrganizationIdentityProviderSsoSettings(UpdateOrganizationIdentityProviderSsoSettingsRequest) returns (UpdateOrganizationIdentityProviderResponse);
+  rpc SetOrganizationIdentityProviderAllowDomainJoin(SetOrganizationIdentityProviderAllowDomainJoinRequest) returns (UpdateOrganizationIdentityProviderResponse);
+  rpc AddOrganizationIdentityProviderDomainJoin(AddOrganizationIdentityProviderDomainJoinRequest) returns (UpdateOrganizationIdentityProviderResponse);
+  rpc RemoveOrganizationIdentityProviderDomainJoin(RemoveOrganizationIdentityProviderDomainJoinRequest) returns (UpdateOrganizationIdentityProviderResponse);
   rpc MoveOrganizationMemberToTeam(MoveOrganizationMemberToTeamRequest) returns (MoveOrganizationMemberToTeamResponse);
   rpc SetOrganizationMemberTeams(SetOrganizationMemberTeamsRequest) returns (SetOrganizationMemberTeamsResponse);
   rpc BulkMoveOrganizationMembers(BulkMoveOrganizationMembersRequest) returns (BulkMoveOrganizationMembersResponse);
@@ -6758,6 +7202,13 @@ service DashboardService {
   rpc SendTeamInvite(SendTeamInviteRequest) returns (SendTeamInviteResponse);
   rpc GetTeamInviteLink(GetTeamInviteLinkRequest) returns (GetTeamInviteLinkResponse);
   rpc AcceptInvite(AcceptInviteRequest) returns (AcceptInviteResponse);
+  rpc GetTeamInviteMetadata(GetTeamInviteMetadataRequest) returns (GetTeamInviteMetadataResponse);
+  rpc ListContactImportConnections(ListContactImportConnectionsRequest) returns (ListContactImportConnectionsResponse);
+  rpc GetGoogleContactImportAuthUrl(GetGoogleContactImportAuthUrlRequest) returns (GetGoogleContactImportAuthUrlResponse);
+  rpc ConnectGoogleContactImportCallback(ConnectGoogleContactImportCallbackRequest) returns (ConnectGoogleContactImportCallbackResponse);
+  rpc ListContactImportContacts(ListContactImportContactsRequest) returns (ListContactImportContactsResponse);
+  rpc GetContactImportAvatar(GetContactImportAvatarRequest) returns (GetContactImportAvatarResponse);
+  rpc DisconnectContactImportConnection(DisconnectContactImportConnectionRequest) returns (DisconnectContactImportConnectionResponse);
   rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse);
   rpc GetJoinableTeamsByDomain(GetJoinableTeamsByDomainRequest) returns (GetJoinableTeamsByDomainResponse);
   rpc JoinTeamByDomain(JoinTeamByDomainRequest) returns (JoinTeamByDomainResponse);
@@ -6783,6 +7234,7 @@ service DashboardService {
   rpc SyncGitlabRepos(SyncGitlabReposRequest) returns (SyncGitlabReposResponse);
   rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse);
   rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
+  rpc GetMemberRemovalInsights(GetMemberRemovalInsightsRequest) returns (GetMemberRemovalInsightsResponse);
   rpc GetTeamUsage(GetTeamUsageRequest) returns (GetTeamUsageResponse);
   rpc GetSignUpType(GetSignUpTypeRequest) returns (GetSignUpTypeResponse);
   rpc GetHardLimit(GetHardLimitRequest) returns (GetHardLimitResponse);
@@ -6826,6 +7278,7 @@ service DashboardService {
   rpc MoveUserMcpServerToTeam(MoveUserMcpServerToTeamRequest) returns (MoveUserMcpServerToTeamResponse);
   rpc ProbeMcpUrl(ProbeMcpUrlRequest) returns (ProbeMcpUrlResponse);
   rpc CreateTeamWithFreeTrial(CreateTeamWithFreeTrialRequest) returns (CreateTeamWithFreeTrialResponse);
+  rpc CreateTeamWithOrg(CreateTeamWithOrgRequest) returns (CreateTeamWithOrgResponse);
   rpc GetTeamHasValidPaymentMethod(GetTeamHasValidPaymentMethodRequest) returns (GetTeamHasValidPaymentMethodResponse);
   rpc GetTeamPrivacyModeForced(GetTeamPrivacyModeForcedRequest) returns (GetTeamPrivacyModeForcedResponse);
   rpc SwitchTeamPrivacyMode(SwitchTeamPrivacyModeRequest) returns (SwitchTeamPrivacyModeResponse);
@@ -6879,6 +7332,7 @@ service DashboardService {
   rpc GetBugbotManualRepositoryRules(GetBugbotManualRepositoryRulesRequest) returns (GetBugbotManualRepositoryRulesResponse);
   rpc UpdateBugbotManualRepositoryRule(UpdateBugbotManualRepositoryRuleRequest) returns (UpdateBugbotManualRepositoryRuleResponse);
   rpc DeleteBugbotManualRepositoryRule(DeleteBugbotManualRepositoryRuleRequest) returns (DeleteBugbotManualRepositoryRuleResponse);
+  rpc RunDiamondToBugbotMigration(RunDiamondToBugbotMigrationRequest) returns (RunDiamondToBugbotMigrationResponse);
   rpc GetBugbotRuleAnalytics(GetBugbotRuleAnalyticsRequest) returns (GetBugbotRuleAnalyticsResponse);
   rpc GetBugbotRuleById(GetBugbotRuleByIdRequest) returns (GetBugbotRuleByIdResponse);
   rpc CreateTeamRepo(CreateTeamRepoRequest) returns (CreateTeamRepoResponse);
@@ -6890,6 +7344,7 @@ service DashboardService {
   rpc GetTeamAdminSettingsOrEmptyIfNotInTeam(GetTeamAdminSettingsRequest) returns (GetTeamAdminSettingsResponse);
   rpc GetBaseTeamAdminSettings(GetBaseTeamAdminSettingsRequest) returns (GetTeamAdminSettingsResponse);
   rpc UpdateTeamAdminSettings(UpdateTeamAdminSettingsRequest) returns (UpdateTeamAdminSettingsResponse);
+  rpc UpdateTeamInviteLinkTTLSetting(UpdateTeamInviteLinkTTLSettingRequest) returns (UpdateTeamInviteLinkTTLSettingResponse);
   rpc GetProtectedGitScopes(GetProtectedGitScopesRequest) returns (GetProtectedGitScopesResponse);
   rpc CreateProtectedGitScope(CreateProtectedGitScopeRequest) returns (CreateProtectedGitScopeResponse);
   rpc DeleteProtectedGitScope(DeleteProtectedGitScopeRequest) returns (DeleteProtectedGitScopeResponse);
@@ -6908,6 +7363,7 @@ service DashboardService {
   rpc GetAdvancedAnalyticsEnabled(GetAdvancedAnalyticsEnabledRequest) returns (GetAdvancedAnalyticsEnabledResponse);
   rpc GetTokenUsage(GetTokenUsageRequest) returns (GetTokenUsageResponse);
   rpc ValidateBedrockIamRole(ValidateBedrockIamRoleRequest) returns (ValidateBedrockIamRoleResponse);
+  rpc CreateAnthropicCyberEnrollmentUrl(CreateAnthropicCyberEnrollmentUrlRequest) returns (CreateAnthropicCyberEnrollmentUrlResponse);
   rpc AddUserToEarlyAccessList(AddUserToEarlyAccessListRequest) returns (AddUserToEarlyAccessListResponse);
   rpc GetTeamSpend(GetTeamSpendRequest) returns (GetTeamSpendResponse);
   rpc GetCurrentBillingCycle(GetCurrentBillingCycleRequest) returns (GetCurrentBillingCycleResponse);
@@ -6946,6 +7402,9 @@ service DashboardService {
   rpc UpdateFullSelfDrivingTeamSettings(UpdateFullSelfDrivingTeamSettingsRequest) returns (UpdateFullSelfDrivingTeamSettingsResponse);
   rpc ListFullSelfDrivingTeamRepoSettings(ListFullSelfDrivingTeamRepoSettingsRequest) returns (ListFullSelfDrivingTeamRepoSettingsResponse);
   rpc SetFullSelfDrivingTeamRepoEnabled(SetFullSelfDrivingTeamRepoEnabledRequest) returns (SetFullSelfDrivingTeamRepoEnabledResponse);
+  rpc ListFullSelfDrivingActiveAgents(ListFullSelfDrivingActiveAgentsRequest) returns (ListFullSelfDrivingActiveAgentsResponse);
+  rpc ListFullSelfDrivingTeamActiveAgents(ListFullSelfDrivingTeamActiveAgentsRequest) returns (ListFullSelfDrivingTeamActiveAgentsResponse);
+  rpc UpdateFullSelfDrivingPrConfig(UpdateFullSelfDrivingPrConfigRequest) returns (UpdateFullSelfDrivingPrConfigResponse);
   rpc GetBugBotProUserSettings(GetBugBotProUserSettingsRequest) returns (GetBugBotProUserSettingsResponse);
   rpc UpdateBugBotProUserSettings(UpdateBugBotProUserSettingsRequest) returns (UpdateBugBotProUserSettingsResponse);
   rpc MigrateBugBotProUserToUsageBasedBilling(MigrateBugBotProUserToUsageBasedBillingRequest) returns (MigrateBugBotProUserToUsageBasedBillingResponse);
@@ -6983,6 +7442,7 @@ service DashboardService {
   rpc UpdateSharedConversationVisibility(UpdateSharedConversationVisibilityRequest) returns (UpdateSharedConversationVisibilityResponse);
   rpc ShareCanvas(ShareCanvasRequest) returns (ShareCanvasResponse);
   rpc GetSharedCanvas(GetSharedCanvasRequest) returns (GetSharedCanvasResponse);
+  rpc GetPublicSharedCanvas(GetPublicSharedCanvasRequest) returns (GetPublicSharedCanvasResponse);
   rpc ListSharedCanvases(ListSharedCanvasesRequest) returns (ListSharedCanvasesResponse);
   rpc DeleteSharedCanvas(DeleteSharedCanvasRequest) returns (DeleteSharedCanvasResponse);
   rpc LookupSharedCanvasByKey(LookupSharedCanvasByKeyRequest) returns (LookupSharedCanvasByKeyResponse);
@@ -6995,6 +7455,8 @@ service DashboardService {
   rpc RevokeTeamInviteLink(RevokeTeamInviteLinkRequest) returns (RevokeTeamInviteLinkResponse);
   rpc ListTeamInviteLinks(ListTeamInviteLinksRequest) returns (ListTeamInviteLinksResponse);
   rpc UpdateUserName(UpdateUserNameRequest) returns (UpdateUserNameResponse);
+  rpc UploadUserProfilePicture(UploadUserProfilePictureRequest) returns (UploadUserProfilePictureResponse);
+  rpc UpdateUserProfilePicture(UpdateUserProfilePictureRequest) returns (UpdateUserProfilePictureResponse);
   rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse);
   rpc GetRemainingRefunds(GetRemainingRefundsRequest) returns (GetRemainingRefundsResponse);
   rpc GetServiceAccountSpendLimit(GetServiceAccountSpendLimitRequest) returns (GetServiceAccountSpendLimitResponse);

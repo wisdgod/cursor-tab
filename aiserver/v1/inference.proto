@@ -208,6 +208,7 @@ message InferenceToolResultPart {
   string tool_name = 2;
   google.protobuf.Value result = 3;
   bool is_error = 4;
+  repeated InferenceContentPart experimental_content = 5;
 }
 
 message InferenceExtraData {

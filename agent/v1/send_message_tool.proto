@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message SendMessageText {
+  string content = 1;
+}
+
+message SendMessageAttachment {
+  string url = 1;
+}
+
+message SendMessageArgs {
+  oneof message {
+    SendMessageText text = 1;
+    SendMessageAttachment attachment = 2;
+  }
+}
+
+message SendMessageSuccess {
+  uint64 timestamp = 1;
+}
+
+message SendMessageError {
+  string error = 1;
+}
+
+message SendMessageResult {
+  oneof result {
+    SendMessageSuccess success = 1;
+    SendMessageError error = 2;
+  }
+}
+
+message SendMessageToolCall {
+  SendMessageArgs args = 1;
+  SendMessageResult result = 2;
+}

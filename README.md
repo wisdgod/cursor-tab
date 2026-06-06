@@ -6,7 +6,7 @@ A reverse-engineered Protocol Buffers definition project that enables Cursor Tab
 
 This project provides Protocol Buffers definitions for integrating Cursor Tab features into third-party applications and platforms through reverse engineering efforts.
 
-**Current Version**: 3.5.38
+**Current Version**: 3.7.12
 
 > **Important Notice**
 > 
@@ -19,7 +19,7 @@ This project provides Protocol Buffers definitions for integrating Cursor Tab fe
 | Branch | Description |
 |--------|-------------|
 | `main` | Core protocol definitions — contains only the essential `.proto` files directly related to Cursor Tab functionality |
-| `extracted` | **Complete extraction** — contains the full set of `.proto` files recovered from reverse engineering, including all internal services, agent tools, AI server interfaces, and supporting definitions (114 files across 12 directories) |
+| `extracted` | **Complete extraction** — contains the full set of `.proto` files recovered from reverse engineering, including all internal services, agent tools, AI server interfaces, and supporting definitions (170 files across 6 directories) |
 
 > **Which branch should I use?**
 >

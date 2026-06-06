@@ -79,6 +79,7 @@ message RequestContextEnv {
   optional string process_working_directory = 21;
   optional bool smart_mode_classifier_auto_mode_enabled = 22;
   optional string dev_force_next_smart_mode_classifier_block_token = 23;
+  optional string dev_delay_next_smart_mode_classifier_token = 24;
 }
 
 message UserGitContext {
@@ -108,6 +109,11 @@ message SkillOptions {
 
 message HooksConfigInfo {
   repeated string configured_steps = 1;
+}
+
+message PermissionsAutoRunInstructions {
+  repeated string allow_instructions = 1;
+  repeated string block_instructions = 2;
 }
 
 message PrecomputedHumanChangeRenderedDiff {
@@ -167,6 +173,9 @@ message RequestContext {
   optional bool agent_skills_info_complete = 43;
   optional bool mcp_file_system_info_complete = 44;
   optional bool git_status_info_complete = 45;
+  optional PermissionsAutoRunInstructions user_permissions_auto_run = 46;
+  optional PermissionsAutoRunInstructions project_permissions_auto_run = 47;
+  optional PermissionsAutoRunInstructions admin_permissions_auto_run = 48;
 }
 
 message RecentlyAddedPlugin {

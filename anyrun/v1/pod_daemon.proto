@@ -1,0 +1,182 @@
+syntax = "proto3";
+
+package anyrun.v1;
+
+enum RestartPolicy {
+  RESTART_POLICY_UNSPECIFIED = 0;
+  RESTART_POLICY_NEVER = 1;
+  RESTART_POLICY_ON_FAILURE = 2;
+  RESTART_POLICY_ALWAYS = 3;
+}
+
+enum RestartReason {
+  RESTART_REASON_UNSPECIFIED = 0;
+  RESTART_REASON_PROCESS_EXITED = 1;
+  RESTART_REASON_HEALTH_CHECK_FAILED = 2;
+}
+
+enum EntryType {
+  ENTRY_TYPE_UNSPECIFIED = 0;
+  ENTRY_TYPE_FILE = 1;
+  ENTRY_TYPE_DIRECTORY = 2;
+  ENTRY_TYPE_SYMLINK = 3;
+}
+
+message CreateProcessRequest {
+  repeated string command = 1;
+  string user = 2;
+  string working_directory = 3;
+  map<string, string> env = 4;
+  optional string idempotency_key = 5;
+  optional ProcessSupervision supervision = 6;
+}
+
+message CreateProcessResponse {
+  int64 pid = 1;
+  bool reused_existing_pid = 2;
+  optional int64 process_pid = 3;
+}
+
+message AttachProcessRequest {
+  int64 pid = 1;
+  optional string last_event_id = 2;
+}
+
+message StreamMetricsRequest {
+}
+
+message PodMetricsSample {
+  uint64 cpu_usage_mcores = 1;
+  uint64 cpu_limit_mcores = 2;
+  uint64 memory_usage_bytes = 3;
+  uint64 memory_limit_bytes = 4;
+}
+
+message GetProcessStatusRequest {
+  int64 pid = 1;
+}
+
+message GetProcessStatusResponse {
+  message Running {
+  }
+  message Completed {
+    int32 exit_code = 1;
+  }
+  oneof status {
+    Running running = 1;
+    Completed completed = 2;
+  }
+}
+
+message ListProcessesRequest {
+}
+
+message ListedProcess {
+  int64 pid = 1;
+  GetProcessStatusResponse status = 2;
+}
+
+message ListProcessesResponse {
+  repeated ListedProcess processes = 1;
+}
+
+message ProcessEvent {
+  string event_id = 1;
+  oneof data {
+    StdoutData stdout = 2;
+    StderrData stderr = 3;
+    ProcessExited exited = 4;
+    ProcessRestarted restarted = 5;
+  }
+}
+
+message ProcessSupervision {
+  RestartPolicy restart_policy = 1;
+  optional RestartBackoff backoff = 2;
+  optional HttpHealthCheck health_check = 3;
+}
+
+message RestartBackoff {
+  uint32 initial_ms = 1;
+  uint32 max_ms = 2;
+  double multiplier = 3;
+  uint32 reset_after_healthy_ms = 4;
+}
+
+message HttpHealthCheck {
+  string url = 1;
+  string method = 2;
+  map<string, string> headers = 3;
+  bytes body = 4;
+  uint32 interval_ms = 5;
+  uint32 timeout_ms = 6;
+  uint32 start_period_ms = 7;
+  uint32 unhealthy_threshold = 8;
+}
+
+message StdoutData {
+  bytes data = 1;
+}
+
+message StderrData {
+  bytes data = 1;
+}
+
+message ProcessExited {
+  int32 exit_code = 1;
+}
+
+message ProcessRestarted {
+  uint32 attempt = 1;
+  int32 previous_exit_code = 2;
+  RestartReason reason = 3;
+}
+
+message ListDirectoryRequest {
+  string path = 1;
+  bool include_hidden = 2;
+}
+
+message ListDirectoryResponse {
+  repeated DirectoryEntry entries = 1;
+}
+
+message DirectoryEntry {
+  string name = 1;
+  string path = 2;
+  EntryType type = 3;
+  uint64 size_bytes = 4;
+  int64 modified_at_unix_ms = 5;
+}
+
+message ReadTextFileRequest {
+  string path = 1;
+}
+
+message ReadTextFileResponse {
+  string content = 1;
+}
+
+message WriteTextFileRequest {
+  string path = 1;
+  string content = 2;
+}
+
+message WriteTextFileResponse {
+}
+
+message ReadBinaryFileRequest {
+  string path = 1;
+}
+
+message ReadBinaryFileResponse {
+  bytes content = 1;
+}
+
+message WriteBinaryFileRequest {
+  string path = 1;
+  bytes content = 2;
+}
+
+message WriteBinaryFileResponse {
+}

@@ -19,6 +19,7 @@ message BackgroundShellSpawnArgs {
   optional SmartModeApproval smart_mode_approval = 10;
   optional ShellHookApprovalRequirement hook_approval_requirement = 11;
   bool skip_approval = 12;
+  optional string conversation_id = 13;
 }
 
 message BackgroundShellSpawnResult {

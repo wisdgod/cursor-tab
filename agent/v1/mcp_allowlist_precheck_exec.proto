@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message McpAllowlistPrecheckArgs {
+  string provider_identifier = 1;
+  string tool_name = 2;
+  optional string tool_call_id = 3;
+}
+
+message McpAllowlistPrecheckResult {
+  bool allowlisted = 1;
+}

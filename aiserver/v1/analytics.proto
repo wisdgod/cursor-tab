@@ -9,6 +9,7 @@ enum ClientOS {
   CLIENT_OS_WINDOWS = 1;
   CLIENT_OS_MACOS = 2;
   CLIENT_OS_LINUX = 3;
+  CLIENT_OS_IOS = 4;
 }
 
 enum ClientLogLevel {
@@ -22,6 +23,12 @@ enum ClientLogLevel {
 message BootstrapStatsigRequest {
   optional bool ignore_dev_status = 1;
   optional ClientOS operating_system = 2;
+  optional string device_model = 3;
+  optional string os_version = 4;
+  optional string form_factor = 5;
+  optional string stable_id = 6;
+  optional string client_channel = 7;
+  optional string bundle_id = 8;
 }
 
 message BootstrapStatsigResponse {

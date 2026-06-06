@@ -18,6 +18,7 @@ import "agent/v1/generate_image_tool.proto";
 import "agent/v1/get_mcp_tools_tool.proto";
 import "agent/v1/glob_tool.proto";
 import "agent/v1/grep_tool.proto";
+import "agent/v1/hook_additional_context.proto";
 import "agent/v1/ls_tool.proto";
 import "agent/v1/mcp.proto";
 import "agent/v1/mcp_auth_tool.proto";
@@ -36,6 +37,7 @@ import "agent/v1/request_context_exec.proto";
 import "agent/v1/selected_context.proto";
 import "agent/v1/semsearch_tool.proto";
 import "agent/v1/send_final_summary_tool.proto";
+import "agent/v1/send_message_tool.proto";
 import "agent/v1/setup_vm_environment_tool.proto";
 import "agent/v1/shell_exec.proto";
 import "agent/v1/shell_tool.proto";
@@ -115,7 +117,6 @@ enum SimulatedMsgReason {
   SIMULATED_MSG_REASON_CHECKOUT_BRANCH = 18;
   SIMULATED_MSG_REASON_DIFF_TAB_UPDATE_BRANCH = 19;
   SIMULATED_MSG_REASON_PR_TAB_BUGBOT_FIX = 20;
-  SIMULATED_MSG_REASON_SESSION_GOAL_FOLLOWUP = 21;
 }
 
 enum ThinkingStyle {
@@ -193,6 +194,7 @@ message SetActiveBranchToolCall {
 }
 
 message ToolCall {
+  repeated HookAdditionalContext hook_additional_contexts = 54;
   oneof tool {
     ShellToolCall shell_tool_call = 1;
     DeleteToolCall delete_tool_call = 3;
@@ -240,6 +242,7 @@ message ToolCall {
     ReplaceEnvToolCall replace_env_tool_call = 51;
     EditPrLabelsToolCall edit_pr_labels_tool_call = 52;
     RecordCiInvestigationFindingsToolCall record_ci_investigation_findings_tool_call = 53;
+    SendMessageToolCall send_message_tool_call = 55;
   }
 }
 
@@ -320,6 +323,8 @@ message BackgroundTaskCompletion {
   optional string output_path = 6;
   optional string thread_id = 7;
   BackgroundTaskCompletionReason reason = 8;
+  optional string subagent_id = 9;
+  optional string tool_call_id = 10;
 }
 
 message CancelSubagentAction {
@@ -412,6 +417,7 @@ message ConversationHistoryToolMessage {
   string tool_name = 2;
   repeated ConversationHistoryToolResultContent content = 3;
   optional bool is_error = 4;
+  repeated HookAdditionalContext hook_additional_contexts = 5;
 }
 
 message ConversationHistoryToolResultContent {
@@ -505,6 +511,7 @@ message UserMessage {
   optional string thread_id = 17;
   optional bytes text_blob_id = 18;
   optional bytes rich_text_blob_id = 19;
+  repeated HookAdditionalContext hook_additional_contexts = 21;
 }
 
 message AssistantMessage {
@@ -596,10 +603,37 @@ message PromptTokenBreakdownSnapshot {
   repeated PromptTokenBreakdownCategory categories = 3;
 }
 
+message PromptContextSourceRef {
+  string source_type = 1;
+  uint32 message_index = 3;
+  string content_path = 4;
+  uint32 start_offset = 5;
+  uint32 end_offset = 6;
+}
+
+message PromptContextNode {
+  string id = 1;
+  optional string parent_id = 2;
+  string kind = 3;
+  string label = 4;
+  string category_id = 5;
+  uint32 estimated_tokens = 6;
+  uint32 character_count = 7;
+  bool content_available = 9;
+  optional PromptContextSourceRef source = 11;
+  optional string inline_content = 12;
+}
+
+message PromptContextUsageTree {
+  uint32 schema_version = 1;
+  repeated PromptContextNode nodes = 2;
+}
+
 message ConversationTokenDetails {
   uint32 used_tokens = 1;
   uint32 max_tokens = 2;
   optional PromptTokenBreakdownSnapshot breakdown = 3;
+  optional PromptContextUsageTree prompt_context_usage_tree = 4;
 }
 
 message FileState {
@@ -1014,6 +1048,7 @@ message SubagentStartRequestQuery {
 message SubagentStartRequestResponse {
   optional string permission = 1;
   optional string user_message = 2;
+  optional string additional_context = 3;
 }
 
 message SubagentStopRequestQuery {
@@ -1040,6 +1075,7 @@ message SubagentStopRequestQuery {
 
 message SubagentStopRequestResponse {
   optional string followup_message = 1;
+  optional string additional_context = 2;
 }
 
 message PreToolUseRequestQuery {
@@ -1059,6 +1095,7 @@ message PreToolUseRequestResponse {
   optional string user_message = 2;
   optional string agent_message = 3;
   optional string updated_input = 4;
+  optional string additional_context = 5;
 }
 
 message PostToolUseRequestQuery {
@@ -1095,6 +1132,7 @@ message PostToolUseFailureRequestQuery {
 }
 
 message PostToolUseFailureRequestResponse {
+  optional string additional_context = 1;
 }
 
 message TaskToolCallArgsProto {

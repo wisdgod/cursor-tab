@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package agent.v1;
 
+import "agent/v1/hook_additional_context.proto";
 import "agent/v1/sandbox.proto";
 import "agent/v1/utils.proto";
 
@@ -117,6 +118,7 @@ message ShellArgs {
   optional ShellOutputNotificationConfig output_notification = 18;
   optional SmartModeApproval smart_mode_approval = 19;
   optional ShellHookApprovalRequirement hook_approval_requirement = 20;
+  optional string conversation_id = 21;
 }
 
 message ShellResult {
@@ -164,6 +166,10 @@ message ShellStreamBackgrounded {
   optional ShellBackgroundReason reason = 6;
 }
 
+message ShellStreamHookContext {
+  repeated HookAdditionalContext hook_additional_contexts = 1;
+}
+
 message ShellStream {
   oneof event {
     ShellStreamStdout stdout = 1;
@@ -173,6 +179,7 @@ message ShellStream {
     ShellRejected rejected = 5;
     ShellPermissionDenied permission_denied = 6;
     ShellStreamBackgrounded backgrounded = 7;
+    ShellStreamHookContext hook_context = 8;
   }
 }
 

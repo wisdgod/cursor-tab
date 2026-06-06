@@ -4,20 +4,25 @@ package agent.v1;
 
 import "agent/v1/agent.proto";
 import "agent/v1/background_shell_exec.proto";
+import "agent/v1/canvas_diagnostics_exec.proto";
 import "agent/v1/computer_use_tool.proto";
 import "agent/v1/delete_exec.proto";
 import "agent/v1/diagnostics_exec.proto";
 import "agent/v1/fetch_exec.proto";
 import "agent/v1/grep_exec.proto";
 import "agent/v1/ls_exec.proto";
+import "agent/v1/mcp_allowlist_precheck_exec.proto";
 import "agent/v1/mcp_exec.proto";
 import "agent/v1/read_exec.proto";
 import "agent/v1/record_screen_exec.proto";
 import "agent/v1/request_context_exec.proto";
+import "agent/v1/shell_allowlist_precheck_exec.proto";
 import "agent/v1/shell_exec.proto";
 import "agent/v1/smart_mode_classifier_exec.proto";
 import "agent/v1/subagent_exec.proto";
+import "agent/v1/web_fetch_allowlist_precheck_exec.proto";
 import "agent/v1/write_exec.proto";
+import "aiserver/v1/utils.proto";
 
 message ExecClientStreamClose {
   uint32 id = 1;
@@ -85,12 +90,18 @@ message ExecServerMessage {
     ForceBackgroundSubagentArgs force_background_subagent_args = 31;
     SubagentAwaitArgs subagent_await_args = 37;
     SmartModeClassifierArgs smart_mode_classifier_args = 38;
+    CanvasDiagnosticsArgs canvas_diagnostics_args = 40;
+    ShellAllowlistPrecheckArgs shell_allowlist_precheck_args = 41;
+    McpAllowlistPrecheckArgs mcp_allowlist_precheck_args = 42;
+    WebFetchAllowlistPrecheckArgs web_fetch_allowlist_precheck_args = 43;
+    aiserver.v1.GetDiffRequest git_diff_request = 44;
   }
 }
 
 message ExecClientMessage {
   uint32 id = 1;
   string exec_id = 15;
+  optional int32 local_execution_time_ms = 39;
   oneof message {
     ShellResult shell_result = 2;
     WriteResult write_result = 3;
@@ -117,6 +128,11 @@ message ExecClientMessage {
     ForceBackgroundSubagentResult force_background_subagent_result = 31;
     SubagentAwaitResult subagent_await_result = 37;
     SmartModeClassifierResult smart_mode_classifier_result = 38;
+    CanvasDiagnosticsResult canvas_diagnostics_result = 40;
+    ShellAllowlistPrecheckResult shell_allowlist_precheck_result = 41;
+    McpAllowlistPrecheckResult mcp_allowlist_precheck_result = 42;
+    WebFetchAllowlistPrecheckResult web_fetch_allowlist_precheck_result = 43;
+    aiserver.v1.GetDiffResponse git_diff_response = 44;
   }
 }
 

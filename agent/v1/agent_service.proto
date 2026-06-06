@@ -157,6 +157,7 @@ message GetSignedUrlForAttachedMediaResponse {
   int64 expires_at_unix_ms = 4;
   int64 refresh_after_unix_ms = 5;
   map<string, string> post_fields = 6;
+  string put_url = 7;
 }
 
 message NotifyConversationCloneRequest {

@@ -45,6 +45,7 @@ enum InAppAdTrigger {
   IN_APP_AD_TRIGGER_MOUNT = 1;
   IN_APP_AD_TRIGGER_FIND_ISSUES = 2;
   IN_APP_AD_TRIGGER_GIT_PUSH = 3;
+  IN_APP_AD_TRIGGER_COMMIT = 4;
 }
 
 enum Http2Config {

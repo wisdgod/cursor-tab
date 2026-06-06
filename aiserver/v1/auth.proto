@@ -124,6 +124,7 @@ message GetEmailResponse {
   string email = 1;
   SignUpType sign_up_type = 2;
   optional string job_role = 3;
+  optional bool is_recently_created_user = 4;
 }
 
 message GetUserMetaRequest {
@@ -134,6 +135,7 @@ message GetUserMetaResponse {
   GetEmailResponse.SignUpType sign_up_type = 2;
   int64 user_id = 3;
   optional string workos_id = 4;
+  optional string profile_picture_url = 5;
 }
 
 message EmailValidRequest {

@@ -46,6 +46,12 @@ message SnapshotFileChunk {
   string hash = 5;
 }
 
+message SnapshotExtraDriveFile {
+  string drive_id = 1;
+  repeated SnapshotFileChunk file_chunks = 2;
+  uint64 file_size = 3;
+}
+
 message SnapshotVmSnapshotV1Metadata {
   repeated SnapshotFileChunk rootfs_file_chunks = 1;
   uint64 rootfs_file_size = 2;
@@ -53,4 +59,5 @@ message SnapshotVmSnapshotV1Metadata {
   SnapshotFileChunk state_file_chunk = 4;
   SnapshotFileChunk kernel_file_chunk = 5;
   IsoDevContainerMetadata dev_container_metadata = 6;
+  repeated SnapshotExtraDriveFile extra_drive_files = 7;
 }

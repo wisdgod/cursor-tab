@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/diagnostics_exec.proto";
+
+message CanvasDiagnosticsArgs {
+  string path = 1;
+  string tool_call_id = 2;
+}
+
+message CanvasDiagnosticsResult {
+  oneof result {
+    CanvasDiagnosticsSuccess success = 1;
+    CanvasDiagnosticsError error = 2;
+  }
+}
+
+message CanvasDiagnosticsSuccess {
+  string path = 1;
+  repeated Diagnostic diagnostics = 2;
+}
+
+message CanvasDiagnosticsError {
+  string path = 1;
+  string error = 2;
+}

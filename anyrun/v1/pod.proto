@@ -136,7 +136,13 @@ message PodFailureDetails {
     DockerBuildFailure docker_build_failure = 2;
     GitCloneFailure git_clone_failure = 3;
     GitCheckoutFailure git_checkout_failure = 4;
+    ContainerWaitFailure container_wait_failure = 5;
   }
+}
+
+message ContainerWaitFailure {
+  int64 exit_code = 1;
+  string message = 2;
 }
 
 message InstallCommandFailure {

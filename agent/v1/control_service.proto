@@ -62,6 +62,7 @@ message GetCapabilitiesRequest {
 
 message GetCapabilitiesResponse {
   optional bool computer_use_supported = 1;
+  optional bool install_plugin_artifact_supported = 2;
 }
 
 message ReloadAgentSkillsRequest {
@@ -193,6 +194,7 @@ message BatchGetDiffError {
 message RefreshGithubAccessTokenRequest {
   string github_access_token = 1;
   string hostname = 2;
+  optional string repo_url = 3;
 }
 
 message RefreshGithubAccessTokenResponse {
@@ -305,6 +307,15 @@ message DownloadCursorServerResponse {
   bool already_downloaded = 1;
 }
 
+message InstallPluginArtifactRequest {
+  string download_url = 1;
+  string target_root = 2;
+  string artifact_digest = 3;
+}
+
+message InstallPluginArtifactResponse {
+}
+
 service ControlService {
   rpc Ping(PingRequest) returns (PingResponse);
   rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
@@ -327,4 +338,5 @@ service ControlService {
   rpc UpdateEnvironmentVariables(UpdateEnvironmentVariablesRequest) returns (UpdateEnvironmentVariablesResponse);
   rpc ReloadAgentSkills(ReloadAgentSkillsRequest) returns (ReloadAgentSkillsResponse);
   rpc ReloadPlugins(ReloadPluginsRequest) returns (ReloadPluginsResponse);
+  rpc InstallPluginArtifact(InstallPluginArtifactRequest) returns (InstallPluginArtifactResponse);
 }

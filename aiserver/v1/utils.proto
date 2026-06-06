@@ -91,6 +91,8 @@ message GetDiffRequest {
   int32 submodule_recurse_depth = 9;
   bool include_space_changes = 10;
   bool committed_only = 11;
+  bool compute_patch_id = 12;
+  optional bool return_head_sha = 13;
   optional OutputFormat output_format = 8;
 }
 
@@ -102,6 +104,9 @@ message GetDiffResponse {
   }
   GitDiff diff = 1;
   repeated SubmoduleDiff submodule_diffs = 2;
+  optional string patch_id = 3;
+  optional string head_sha = 4;
+  optional bool has_uncommitted_changes = 5;
 }
 
 message SimplestRange {

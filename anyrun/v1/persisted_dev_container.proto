@@ -4,6 +4,11 @@ package anyrun.v1;
 
 import "anyrun/v1/common.proto";
 
+enum IsoEnvExtraDrivePurpose {
+  ISO_ENV_EXTRA_DRIVE_PURPOSE_UNSPECIFIED = 0;
+  ISO_ENV_EXTRA_DRIVE_PURPOSE_CHECKPOINT_SCRATCH = 1;
+}
+
 message PersistedGitRepoSource {
   string cache_uri = 1;
   bytes commit_hash = 2;
@@ -59,6 +64,7 @@ message PersistedDevContainerConfig {
   optional string user = 16;
   optional bool privileged = 17;
   optional bool build_container = 22;
+  optional bool enable_checkpoint_scratch_drive = 25;
   oneof source {
     PersistedGitRepoSource git = 1;
     PersistedTarRepoSource tar = 2;
@@ -87,11 +93,27 @@ message IsoDevContainerMetadata {
   IsoEnvConfig env_config = 3;
 }
 
+message IsoEnvExtraDriveConfig {
+  IsoEnvExtraDrivePurpose purpose = 1;
+  uint32 size_mib = 3;
+  string drive_id = 4;
+  string guest_device = 5;
+  string guest_mount_path = 6;
+}
+
+message IsoEnvBalloonConfig {
+  uint32 amount_mib = 1;
+  bool deflate_on_oom = 2;
+  optional uint32 stats_polling_interval_s = 3;
+}
+
 message IsoEnvConfig {
   uint32 vcpu_count = 1;
   uint32 mem_size_mib = 2;
   optional uint32 swap_size_mib = 3;
   optional uint32 rootfs_size_mib = 4;
+  repeated IsoEnvExtraDriveConfig extra_drives = 5;
+  optional IsoEnvBalloonConfig balloon = 6;
 }
 
 message DockerDevContainerPersistentState {

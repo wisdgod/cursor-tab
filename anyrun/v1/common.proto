@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package anyrun.v1;
 
+import "anyrun/v1/pod_daemon.proto";
 import "anyrun/v1/pod_event.proto";
 import "google/protobuf/empty.proto";
 
@@ -18,6 +19,7 @@ enum BlobStorageFormat {
   BLOB_STORAGE_FORMAT_V1 = 1;
   BLOB_STORAGE_FORMAT_VM_SNAPSHOT_V1 = 2;
   BLOB_STORAGE_FORMAT_V2 = 3;
+  BLOB_STORAGE_FORMAT_V2_LAYERED = 4;
 }
 
 message ImageMetadata {
@@ -60,6 +62,7 @@ message DevContainerExecCommand {
   bool failure_tolerant = 6;
   repeated string depends_on = 7;
   bool depends_on_git_checkout = 8;
+  optional ProcessSupervision supervision = 9;
 }
 
 message ResourceRequests {
@@ -164,6 +167,7 @@ message DevContainerSpec {
   optional uint32 expected_fork_count = 24;
   optional EgressPolicy egress_policy = 26;
   optional AnygressPerPodDenyRules anygress_per_pod_deny_rules = 28;
+  optional AgentStoreConfig agent_store_config = 30;
 }
 
 message DevContainerEnv {
@@ -173,6 +177,26 @@ message DevContainerEnv {
     string inline = 2;
     string encrypted = 3;
   }
+}
+
+message PodAgentStoreGrant {
+  string pod_id = 1;
+  string self_store_id = 2;
+  int64 team_id = 3;
+  int64 issued_at_ms = 4;
+  int64 expires_at_ms = 5;
+  string grant_id = 6;
+  string token = 7;
+}
+
+message AgentStoreConfig {
+  bool enabled = 1;
+  string self_store_id = 2;
+  repeated string additional_store_ids = 3;
+  PodAgentStoreGrant pod_grant = 4;
+  string bcs_endpoint = 6;
+  uint32 vsock_port = 7;
+  string mount_root = 8;
 }
 
 message ExternalSnapshot {
@@ -205,6 +229,7 @@ message DevContainerConfig {
   optional bool build_container = 29;
   optional uint64 checkpoint_threshold_ms = 23;
   optional bool enable_cgroup_subtree_control = 30;
+  optional bool enable_checkpoint_scratch_drive = 34;
   oneof source {
     GitRepoSourceReference git = 1;
     TarRepoSourceReference tar = 2;

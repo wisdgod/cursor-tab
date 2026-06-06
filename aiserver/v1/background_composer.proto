@@ -14,6 +14,7 @@ import "aiserver/v1/repository.proto";
 import "aiserver/v1/scm.proto";
 import "aiserver/v1/tools.proto";
 import "aiserver/v1/utils.proto";
+import "aiserver/v1/waterfall_update.proto";
 import "anyrun/v1/pod.proto";
 import "anyrun/v1/pod_event.proto";
 import "anyrun/v1/snapshot.proto";
@@ -37,6 +38,7 @@ enum CloudAgentWorkflowStatus {
   CLOUD_AGENT_WORKFLOW_STATUS_ARCHIVED = 4;
   CLOUD_AGENT_WORKFLOW_STATUS_EXPIRED = 5;
   CLOUD_AGENT_WORKFLOW_STATUS_NOT_YET_STARTED = 6;
+  CLOUD_AGENT_WORKFLOW_STATUS_WAITING_FOR_BACKGROUND_WORK = 7;
 }
 
 enum BackgroundComposerSource {
@@ -268,6 +270,30 @@ enum PrivateWorkerStatusFilter {
   PRIVATE_WORKER_STATUS_FILTER_ALL = 1;
   PRIVATE_WORKER_STATUS_FILTER_IN_USE = 2;
   PRIVATE_WORKER_STATUS_FILTER_IDLE = 3;
+}
+
+enum AgentStoreKind {
+  AGENT_STORE_KIND_UNSPECIFIED = 0;
+  AGENT_STORE_KIND_CLOUD = 1;
+  AGENT_STORE_KIND_LOCAL = 2;
+}
+
+enum AgentStoreEntryKind {
+  AGENT_STORE_ENTRY_KIND_UNSPECIFIED = 0;
+  AGENT_STORE_ENTRY_KIND_DIRECTORY = 1;
+  AGENT_STORE_ENTRY_KIND_FILE = 2;
+}
+
+enum AgentStoreShareVisibility {
+  AGENT_STORE_SHARE_VISIBILITY_UNSPECIFIED = 0;
+  AGENT_STORE_SHARE_VISIBILITY_TEAM = 2;
+  AGENT_STORE_SHARE_VISIBILITY_PUBLIC = 3;
+}
+
+enum ListSharedAgentStoresScope {
+  LIST_SHARED_AGENT_STORES_SCOPE_UNSPECIFIED = 0;
+  LIST_SHARED_AGENT_STORES_SCOPE_MINE = 1;
+  LIST_SHARED_AGENT_STORES_SCOPE_TEAM = 2;
 }
 
 message UpdateBackgroundComposerEnvironmentRequest {
@@ -905,6 +931,7 @@ message AttachBackgroundComposerLogsResponse {
   message Event {
     string event_id = 1;
     anyrun.v1.PodEvent event = 2;
+    WaterfallUpdate waterfall_update = 3;
   }
   Event event = 1;
   anyrun.v1.PodStatus updated_status = 2;
@@ -946,7 +973,18 @@ message ConversationStreamMessage {
     TransientError transient_error = 5;
     WorkerLifecycleEvent worker_lifecycle_event = 6;
     bytes transient_error_blob_id = 7;
+    agent.v1.InteractionQuery interaction_query = 8;
+    ReadOnlySharedPodLifecycleEvent read_only_shared_pod_lifecycle_event = 9;
   }
+}
+
+message ReadOnlySharedPodLifecycleEvent {
+  enum Phase {
+    PHASE_UNSPECIFIED = 0;
+    PHASE_AWAITING_FULL_POD = 2;
+    PHASE_INACTIVE = 3;
+  }
+  Phase phase = 1;
 }
 
 message WorkerLifecycleEvent {
@@ -988,6 +1026,10 @@ message StreamConversationResponse {
     agent.v1.InteractionUpdate interaction_update = 2;
     repeated agent.v1.UserDisplayInfo user_display_infos = 3;
   }
+  message InteractionQueryWithOffset {
+    string offset_key = 1;
+    agent.v1.InteractionQuery interaction_query = 2;
+  }
   message WorkflowStatusWithOffset {
     string offset_key = 1;
     CloudAgentWorkflowStatus workflow_status = 2;
@@ -1003,6 +1045,10 @@ message StreamConversationResponse {
     string offset_key = 1;
     WorkerLifecycleEvent worker_lifecycle_event = 2;
   }
+  message ReadOnlySharedPodLifecycleEventWithOffset {
+    string offset_key = 1;
+    ReadOnlySharedPodLifecycleEvent read_only_shared_pod_lifecycle_event = 2;
+  }
   oneof message {
     InitialState initial_state = 3;
     InteractionUpdateWithOffset interaction_update_with_offset = 4;
@@ -1013,6 +1059,8 @@ message StreamConversationResponse {
     TransientErrorWithOffset transient_error_with_offset = 9;
     DevBannerMessage dev_banner_message = 10;
     WorkerLifecycleEventWithOffset worker_lifecycle_event_with_offset = 11;
+    InteractionQueryWithOffset interaction_query_with_offset = 12;
+    ReadOnlySharedPodLifecycleEventWithOffset read_only_shared_pod_lifecycle_event_with_offset = 13;
   }
 }
 
@@ -1155,6 +1203,14 @@ message AddAsyncFollowupBackgroundComposerRequest {
 
 message AddAsyncFollowupBackgroundComposerResponse {
   string run_id = 1;
+}
+
+message SubmitInteractionResponseBackgroundComposerRequest {
+  string bc_id = 1;
+  agent.v1.InteractionResponse interaction_response = 2;
+}
+
+message SubmitInteractionResponseBackgroundComposerResponse {
 }
 
 message ListPendingFollowupsRequest {
@@ -1403,6 +1459,24 @@ message GetGithubAccessTokenForReposResponse {
   repeated Status repo_url_statuses = 3;
   GithubAccessErrorType error_type = 4;
   optional string github_redirect_url = 5;
+}
+
+message MakeGithubRequestRequest {
+  string method = 1;
+  string path = 2;
+  optional string body_json = 3;
+  string github_user_token = 4;
+  string caller = 5;
+  optional string host = 6;
+  optional string path_template = 7;
+  optional string accept_header = 8;
+}
+
+message MakeGithubRequestResponse {
+  int32 status = 1;
+  string status_text = 4;
+  map<string, string> headers = 2;
+  string body = 3;
 }
 
 message GetBackgroundComposerConversationRequest {
@@ -2445,6 +2519,9 @@ message CloudAgentWorkflowControlState {
   repeated agent.v1.ConversationAction skipped_input_actions = 10;
   repeated CompletedMakePRRequest completed_make_pr_requests = 11;
   repeated CompletedOpenPRRequest completed_open_pr_requests = 12;
+  optional PausedInteractionStep paused_interaction_step = 13;
+  repeated QueuedInteractionResponse pending_interaction_responses = 14;
+  repeated uint32 completed_interaction_query_ids = 15;
 }
 
 message CompletedMakePRRequest {
@@ -2478,6 +2555,23 @@ message QueuedFollowup {
   optional string run_id = 12;
   optional agent.v1.RequestedModel requested_model = 13;
   optional int64 turn_start_unix_ms = 14;
+}
+
+message PausedInteractionStep {
+  bytes step_context_blob_id = 1;
+  bytes agent_state_blob_id = 2;
+  bool is_time_limit_expired = 3;
+  bool use_step_separation = 4;
+  uint32 tool_call_index = 5;
+  uint32 query_id = 6;
+  string tool_call_id = 7;
+  int32 current_step_in_turn = 8;
+}
+
+message QueuedInteractionResponse {
+  uint32 query_id = 1;
+  agent.v1.InteractionResponse interaction_response = 2;
+  int64 submitted_at_ms = 3;
 }
 
 message QueuedMakePRRequest {
@@ -2589,7 +2683,10 @@ message GetCloudAgentMemoryDbLogsResponse {
 message CloudAgentMemoryDbLogEntry {
   CloudAgentMemoryDbLogSource source = 2;
   optional uint32 worker_index = 3;
-  anyrun.v1.PodEvent event = 4;
+  oneof log {
+    anyrun.v1.PodEvent event = 4;
+    WaterfallUpdate waterfall_update = 5;
+  }
 }
 
 message CreateAgentShareRequest {
@@ -2745,8 +2842,59 @@ message AttachAgentStartupTraceResponse {
   AgentStartupTraceEvent trace_event = 3;
 }
 
+message ListAgentStoresRequest {
+  int32 n = 1;
+  optional string page_token = 5;
+}
+
+message AgentStore {
+  string store_id = 1;
+  double created_at_ms = 4;
+  double updated_at_ms = 5;
+  repeated string repo_urls = 8;
+  repeated SharedAgentStoreInfo shares = 9;
+  AgentStoreKind kind = 10;
+  optional double last_file_write_at_ms = 11;
+}
+
+message ListAgentStoresResponse {
+  repeated AgentStore stores = 1;
+  bool has_more = 2;
+  optional string next_page_token = 4;
+}
+
+message ListAgentStoreEntriesRequest {
+  string store_id = 1;
+  string relative_path = 2;
+  optional string share_id = 3;
+}
+
+message AgentStoreEntry {
+  string name = 1;
+  string relative_path = 2;
+  AgentStoreEntryKind kind = 3;
+  optional int64 size_bytes = 4;
+  optional double updated_at_ms = 5;
+}
+
+message ListAgentStoreEntriesResponse {
+  string normalized_relative_path = 1;
+  repeated AgentStoreEntry entries = 2;
+}
+
+message ReadAgentStoreFileRequest {
+  string store_id = 1;
+  string relative_path = 2;
+  optional string share_id = 3;
+}
+
+message ReadAgentStoreFileResponse {
+  string content = 1;
+}
+
 message MintAgentStoreTokenRequest {
   string agent_id = 1;
+  optional string share_id = 2;
 }
 
 message MintAgentStoreTokenResponse {
@@ -2764,6 +2912,7 @@ message AgentStoreFileEntry {
 
 message ListAgentStoreFilesRequest {
   string agent_id = 1;
+  optional string share_id = 2;
 }
 
 message ListAgentStoreFilesResponse {
@@ -2779,6 +2928,7 @@ message AgentStoreReadInstruction {
 message PresignAgentStoreReadsRequest {
   string agent_id = 1;
   repeated string rel_paths = 2;
+  optional string share_id = 3;
 }
 
 message PresignAgentStoreReadsResponse {
@@ -2807,6 +2957,61 @@ message PresignAgentStoreWritesResponse {
   repeated AgentStoreWriteInstruction instructions = 1;
 }
 
+message SharedAgentStoreInfo {
+  string share_id = 1;
+  string path_prefix = 2;
+  AgentStoreShareVisibility visibility = 3;
+  double created_at_ms = 4;
+  optional double revoked_at_ms = 5;
+}
+
+message ShareAgentStoreRequest {
+  string agent_id = 1;
+  string path_prefix = 2;
+}
+
+message ShareAgentStoreResponse {
+  string share_id = 1;
+  string share_url = 2;
+}
+
+message UnshareAgentStoreRequest {
+  string share_id = 1;
+}
+
+message UnshareAgentStoreResponse {
+}
+
+message ListSharedAgentStoresRequest {
+  int32 limit = 1;
+  optional double created_before_ms = 2;
+  optional int32 owning_user_id = 3;
+  optional string search_query = 4;
+  optional ListSharedAgentStoresScope scope = 5;
+  optional string created_before_share_id = 6;
+}
+
+message SharedAgentStoreListing {
+  string share_id = 1;
+  string agent_id = 2;
+  string store_id = 3;
+  string path_prefix = 4;
+  AgentStoreShareVisibility visibility = 5;
+  double created_at_ms = 6;
+  optional double revoked_at_ms = 7;
+  optional int32 owning_user_id = 8;
+  optional int32 owning_team_id = 9;
+  string owner_display_name = 10;
+  string store_kind = 11;
+}
+
+message ListSharedAgentStoresResponse {
+  repeated SharedAgentStoreListing listings = 1;
+  bool has_more = 2;
+  optional double next_created_before_ms = 3;
+  optional string next_created_before_share_id = 4;
+}
+
 service BackgroundComposerService {
   rpc ListBackgroundComposers(ListBackgroundComposersRequest) returns (ListBackgroundComposersResponse);
   rpc AttachBackgroundComposer(AttachBackgroundComposerRequest) returns (stream AttachBackgroundComposerResponse);
@@ -2820,6 +3025,7 @@ service BackgroundComposerService {
   rpc OpenPRBackgroundComposer(OpenPRBackgroundComposerRequest) returns (OpenPRBackgroundComposerResponse);
   rpc GetBackgroundComposerStatus(GetBackgroundComposerStatusRequest) returns (GetBackgroundComposerStatusResponse);
   rpc AddAsyncFollowupBackgroundComposer(AddAsyncFollowupBackgroundComposerRequest) returns (AddAsyncFollowupBackgroundComposerResponse);
+  rpc SubmitInteractionResponseBackgroundComposer(SubmitInteractionResponseBackgroundComposerRequest) returns (SubmitInteractionResponseBackgroundComposerResponse);
   rpc ListPendingFollowups(ListPendingFollowupsRequest) returns (ListPendingFollowupsResponse);
   rpc UpdatePendingFollowup(UpdatePendingFollowupRequest) returns (UpdatePendingFollowupResponse);
   rpc DeletePendingFollowup(DeletePendingFollowupRequest) returns (DeletePendingFollowupResponse);
@@ -2841,6 +3047,7 @@ service BackgroundComposerService {
   rpc GetMachine(GetMachineRequest) returns (GetMachineResponse);
   rpc ListDetailedBackgroundComposers(ListDetailedBackgroundComposersRequest) returns (ListDetailedBackgroundComposersResponse);
   rpc GetGithubAccessTokenForRepos(GetGithubAccessTokenForReposRequest) returns (GetGithubAccessTokenForReposResponse);
+  rpc MakeGithubRequest(MakeGithubRequestRequest) returns (MakeGithubRequestResponse);
   rpc GetBackgroundComposerDiffDetails(GetBackgroundComposerDiffDetailsRequest) returns (GetBackgroundComposerDiffDetailsResponse);
   rpc GetOptimizedDiffDetails(GetOptimizedDiffDetailsRequest) returns (GetOptimizedDiffDetailsResponse);
   rpc GetBackgroundComposerChangesHash(GetBackgroundComposerChangesHashRequest) returns (GetBackgroundComposerChangesHashResponse);
@@ -2930,8 +3137,14 @@ service BackgroundComposerService {
   rpc GetPrivateWorker(GetPrivateWorkerRequest) returns (GetPrivateWorkerResponse);
   rpc ReleasePrivateWorker(ReleasePrivateWorkerRequest) returns (ReleasePrivateWorkerResponse);
   rpc BatchRefreshPullRequestStatus(BatchRefreshPullRequestStatusRequest) returns (BatchRefreshPullRequestStatusResponse);
+  rpc ListAgentStores(ListAgentStoresRequest) returns (ListAgentStoresResponse);
+  rpc ListAgentStoreEntries(ListAgentStoreEntriesRequest) returns (ListAgentStoreEntriesResponse);
+  rpc ReadAgentStoreFile(ReadAgentStoreFileRequest) returns (ReadAgentStoreFileResponse);
   rpc MintAgentStoreToken(MintAgentStoreTokenRequest) returns (MintAgentStoreTokenResponse);
   rpc ListAgentStoreFiles(ListAgentStoreFilesRequest) returns (ListAgentStoreFilesResponse);
   rpc PresignAgentStoreReads(PresignAgentStoreReadsRequest) returns (PresignAgentStoreReadsResponse);
   rpc PresignAgentStoreWrites(PresignAgentStoreWritesRequest) returns (PresignAgentStoreWritesResponse);
+  rpc ShareAgentStore(ShareAgentStoreRequest) returns (ShareAgentStoreResponse);
+  rpc UnshareAgentStore(UnshareAgentStoreRequest) returns (UnshareAgentStoreResponse);
+  rpc ListSharedAgentStores(ListSharedAgentStoresRequest) returns (ListSharedAgentStoresResponse);
 }

@@ -148,6 +148,8 @@ message ReadMcpResourceExecArgs {
   string server = 1;
   string uri = 2;
   optional string download_path = 3;
+  string tool_call_id = 4;
+  optional SmartModeApproval smart_mode_approval = 5;
 }
 
 message ReadMcpResourceExecResult {
