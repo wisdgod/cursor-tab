@@ -38,6 +38,7 @@ import "agent/v1/selected_context.proto";
 import "agent/v1/semsearch_tool.proto";
 import "agent/v1/send_final_summary_tool.proto";
 import "agent/v1/send_message_tool.proto";
+import "agent/v1/send_to_user_tool.proto";
 import "agent/v1/setup_vm_environment_tool.proto";
 import "agent/v1/shell_exec.proto";
 import "agent/v1/shell_tool.proto";
@@ -243,6 +244,7 @@ message ToolCall {
     EditPrLabelsToolCall edit_pr_labels_tool_call = 52;
     RecordCiInvestigationFindingsToolCall record_ci_investigation_findings_tool_call = 53;
     SendMessageToolCall send_message_tool_call = 55;
+    SendToUserToolCall send_to_user_tool_call = 58;
   }
 }
 
@@ -821,6 +823,7 @@ message AgentRunRequest {
   repeated SubagentModelOverride subagent_model_overrides = 20;
   optional bool can_create_cloud_subagents = 21;
   optional bool suppress_subagent_progress_update_tool = 22;
+  optional bool client_supports_send_to_user = 23;
 }
 
 message TextDeltaUpdate {
@@ -934,6 +937,9 @@ message FeedbackRequestUpdate {
   repeated FeedbackRequestCategory categories = 3;
   repeated FeedbackRequestCategoryGroup category_groups = 4;
   bool show_form_immediately = 5;
+  optional string title = 6;
+  optional string negative_title = 7;
+  optional string comment_placeholder = 8;
 }
 
 message InteractionUpdate {

@@ -33,6 +33,7 @@ message PrewarmRequest {
   repeated SubagentModelOverride subagent_model_overrides = 19;
   optional bool can_create_cloud_subagents = 20;
   optional bool suppress_subagent_progress_update_tool = 21;
+  optional bool client_supports_send_to_user = 22;
 }
 
 message ExecServerAbort {

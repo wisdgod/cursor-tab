@@ -65,6 +65,14 @@ enum GitCICompletionCondition {
   GIT_CI_COMPLETION_CONDITION_ANY = 3;
 }
 
+enum GitWorkflowRunConclusion {
+  GIT_WORKFLOW_RUN_CONCLUSION_UNSPECIFIED = 0;
+  GIT_WORKFLOW_RUN_CONCLUSION_ANY = 1;
+  GIT_WORKFLOW_RUN_CONCLUSION_SUCCESS = 2;
+  GIT_WORKFLOW_RUN_CONCLUSION_FAILURE = 3;
+  GIT_WORKFLOW_RUN_CONCLUSION_CANCELLED = 4;
+}
+
 enum PlatformActionStatus {
   PLATFORM_ACTION_STATUS_UNSPECIFIED = 0;
   PLATFORM_ACTION_STATUS_PENDING = 1;
@@ -237,6 +245,11 @@ message GitTrigger {
     GitCICompletedEvent ci_completed = 4;
     GitIssueLabeledEvent issue_labeled = 5;
     GitLabelEvent label = 6;
+    GitIssueCommentEvent issue_comment = 7;
+    GitPullRequestReviewCommentEvent pull_request_review_comment = 8;
+    GitPullRequestReviewEvent pull_request_review = 9;
+    GitReviewThreadEvent review_thread = 10;
+    GitWorkflowRunEvent workflow_run = 11;
   }
 }
 
@@ -270,6 +283,40 @@ message GitIssueLabeledEvent {
   repeated string repos = 1;
   string label_name = 2;
   bool unlabeled = 3;
+}
+
+message GitIssueCommentEvent {
+  repeated string repos = 1;
+  repeated string commenter_allowlist = 2;
+  string comment_contains = 3;
+  bool comment_contains_is_regex = 4;
+}
+
+message GitPullRequestReviewCommentEvent {
+  repeated string repos = 1;
+  repeated string commenter_allowlist = 2;
+  string comment_contains = 3;
+  bool comment_contains_is_regex = 4;
+}
+
+message GitPullRequestReviewEvent {
+  repeated string repos = 1;
+  bool on_approved = 2;
+  bool on_changes_requested = 3;
+  bool on_commented = 4;
+}
+
+message GitReviewThreadEvent {
+  repeated string repos = 1;
+  bool on_resolved = 2;
+  bool on_unresolved = 3;
+}
+
+message GitWorkflowRunEvent {
+  repeated string repos = 1;
+  repeated string workflow_names = 2;
+  string branch = 3;
+  GitWorkflowRunConclusion conclusion = 4;
 }
 
 message GitLabelEvent {
@@ -448,6 +495,7 @@ message ReadMicrosoftTeamsAction {
 message PrCommentActionPayload {
   int32 pr_number = 1;
   string repo_url = 2;
+  optional string head_sha = 3;
 }
 
 message GitPrActionPayload {

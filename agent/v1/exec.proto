@@ -10,6 +10,7 @@ import "agent/v1/delete_exec.proto";
 import "agent/v1/diagnostics_exec.proto";
 import "agent/v1/fetch_exec.proto";
 import "agent/v1/grep_exec.proto";
+import "agent/v1/hook_additional_context.proto";
 import "agent/v1/ls_exec.proto";
 import "agent/v1/mcp_allowlist_precheck_exec.proto";
 import "agent/v1/mcp_exec.proto";
@@ -102,6 +103,7 @@ message ExecClientMessage {
   uint32 id = 1;
   string exec_id = 15;
   optional int32 local_execution_time_ms = 39;
+  repeated HookAdditionalContext hook_additional_contexts = 45;
   oneof message {
     ShellResult shell_result = 2;
     WriteResult write_result = 3;

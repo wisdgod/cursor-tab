@@ -2826,9 +2826,15 @@ message ModelAllowlistParameterRestriction {
   repeated string allowed_values = 1;
 }
 
+message ModelAllowlistParameterGrant {
+  repeated string granted_values = 1;
+}
+
 message ModelAllowlistModelEntry {
   bool enabled = 1;
   map<string, ModelAllowlistParameterRestriction> parameter_restrictions = 2;
+  map<string, ModelAllowlistParameterGrant> parameter_grants = 3;
+  repeated TeamAdminModelRef.ModelParameterValue default_parameter_values = 4;
 }
 
 message ModelAllowlistProviderEntry {
