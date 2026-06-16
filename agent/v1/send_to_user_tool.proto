@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message SendToUserArgs {
+  string message = 1;
+}
+
+message SendToUserSuccess {
+}
+
+message SendToUserError {
+  string error = 1;
+}
+
+message SendToUserResult {
+  oneof result {
+    SendToUserSuccess success = 1;
+    SendToUserError error = 2;
+  }
+}
+
+message SendToUserToolCall {
+  SendToUserArgs args = 1;
+  SendToUserResult result = 2;
+}
