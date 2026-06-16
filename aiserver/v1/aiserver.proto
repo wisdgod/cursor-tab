@@ -1384,6 +1384,7 @@ message ModelParameterDefinition {
       string value = 1;
       optional string display_name = 2;
       optional bool increases_model_cost = 3;
+      optional bool blocked_by_admin_allowlist = 4;
     }
     repeated EnumParameterValue values = 1;
   }

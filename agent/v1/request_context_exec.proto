@@ -176,6 +176,7 @@ message RequestContext {
   optional PermissionsAutoRunInstructions user_permissions_auto_run = 46;
   optional PermissionsAutoRunInstructions project_permissions_auto_run = 47;
   optional PermissionsAutoRunInstructions admin_permissions_auto_run = 48;
+  repeated string disabled_team_rules = 49;
 }
 
 message RecentlyAddedPlugin {
