@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message FetchCloudAgentDataArgs {
+  repeated string bc_ids = 4;
+  repeated string sources = 6;
+  repeated string statuses = 7;
+  bool include_team_wide = 8;
+  bool include_archived = 9;
+  optional int32 limit = 10;
+  bool include_transcript = 12;
+  string active_since = 13;
+}
+
+message FetchCloudAgentDataResult {
+  oneof result {
+    FetchCloudAgentDataSuccess success = 1;
+    FetchCloudAgentDataError error = 2;
+  }
+}
+
+message FetchCloudAgentDataSuccess {
+  string summary = 1;
+  int32 agent_count = 2;
+  repeated string written_paths = 3;
+  repeated string unavailable_bc_ids = 4;
+}
+
+message FetchCloudAgentDataError {
+  string error = 1;
+}
+
+message FetchCloudAgentDataToolCall {
+  FetchCloudAgentDataArgs args = 1;
+  FetchCloudAgentDataResult result = 2;
+}

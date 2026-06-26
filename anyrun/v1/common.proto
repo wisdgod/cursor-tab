@@ -14,12 +14,23 @@ enum DrainingReason {
   DRAINING_REASON_HEALTH = 4;
 }
 
+enum WorkspaceGitSetupMode {
+  WORKSPACE_GIT_SETUP_MODE_UNSPECIFIED = 0;
+  WORKSPACE_GIT_SETUP_MODE_REUSE = 1;
+}
+
+enum ContainerRuntime {
+  CONTAINER_RUNTIME_DOCKERD_UNSPECIFIED = 0;
+  CONTAINER_RUNTIME_ISOD_RUNC = 1;
+}
+
 enum BlobStorageFormat {
   BLOB_STORAGE_FORMAT_LEGACY_UNSPECIFIED = 0;
   BLOB_STORAGE_FORMAT_V1 = 1;
   BLOB_STORAGE_FORMAT_VM_SNAPSHOT_V1 = 2;
   BLOB_STORAGE_FORMAT_V2 = 3;
   BLOB_STORAGE_FORMAT_V2_LAYERED = 4;
+  BLOB_STORAGE_FORMAT_V3 = 5;
 }
 
 message ImageMetadata {
@@ -230,6 +241,9 @@ message DevContainerConfig {
   optional uint64 checkpoint_threshold_ms = 23;
   optional bool enable_cgroup_subtree_control = 30;
   optional bool enable_checkpoint_scratch_drive = 34;
+  optional bool blob_client_resilience_enabled = 35;
+  optional bool skip_workspace_source_checkout = 36;
+  ContainerRuntime container_runtime = 37;
   oneof source {
     GitRepoSourceReference git = 1;
     TarRepoSourceReference tar = 2;
@@ -322,10 +336,16 @@ message EgressPolicy {
 
 message EgressRestricted {
   repeated AllowedDomain allowed_domains = 1;
+  repeated AllowedTcpDestination allowed_tcp_destinations = 2;
 }
 
 message AllowedDomain {
   string domain = 1;
+}
+
+message AllowedTcpDestination {
+  string cidr = 1;
+  uint32 port = 2;
 }
 
 message ScmConfig {

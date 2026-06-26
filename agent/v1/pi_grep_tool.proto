@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/pi_common.proto";
+
+message PiGrepToolCall {
+  PiGrepToolArgs args = 1;
+  PiGrepToolResult result = 2;
+}
+
+message PiGrepToolArgs {
+  string pattern = 1;
+  optional string path = 2;
+  optional string glob = 3;
+  optional bool ignore_case = 4;
+  optional bool literal = 5;
+  optional int32 context = 6;
+  optional int32 limit = 7;
+}
+
+message PiGrepToolResult {
+  oneof result {
+    PiGrepToolSuccess success = 1;
+    PiGrepToolError error = 2;
+  }
+}
+
+message PiGrepToolSuccess {
+  string output = 1;
+  optional PiTruncation truncation = 2;
+  optional uint32 match_limit_reached = 3;
+  bool lines_truncated = 4;
+}
+
+message PiGrepToolError {
+  string error = 1;
+}

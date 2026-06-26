@@ -68,6 +68,9 @@ enum BackgroundComposerSource {
   BACKGROUND_COMPOSER_SOURCE_QABOT_FRONTEND = 23;
   BACKGROUND_COMPOSER_SOURCE_AS_SUBAGENT_FROM_LOCAL = 24;
   BACKGROUND_COMPOSER_SOURCE_ENVIRONMENT_SETUP_GLASS = 25;
+  BACKGROUND_COMPOSER_SOURCE_SAND_CODING_SUBAGENT = 26;
+  BACKGROUND_COMPOSER_SOURCE_BITBUCKET = 27;
+  BACKGROUND_COMPOSER_SOURCE_CLOUD_META_AGENT = 28;
 }
 
 enum OwnerType {
@@ -296,6 +299,23 @@ enum ListSharedAgentStoresScope {
   LIST_SHARED_AGENT_STORES_SCOPE_TEAM = 2;
 }
 
+enum RemoteControlRequestStatus {
+  REMOTE_CONTROL_REQUEST_STATUS_UNSPECIFIED = 0;
+  REMOTE_CONTROL_REQUEST_STATUS_DISPATCHED = 1;
+  REMOTE_CONTROL_REQUEST_STATUS_DESKTOP_UNREACHABLE = 2;
+  REMOTE_CONTROL_REQUEST_STATUS_REJECTED = 3;
+}
+
+enum RemoteControlRequestRejectionReason {
+  REMOTE_CONTROL_REQUEST_REJECTION_REASON_UNSPECIFIED = 0;
+  REMOTE_CONTROL_REQUEST_REJECTION_REASON_NOT_OWNED = 1;
+  REMOTE_CONTROL_REQUEST_REJECTION_REASON_MACHINE_NOT_FOUND = 2;
+  REMOTE_CONTROL_REQUEST_REJECTION_REASON_REPO_MISMATCH = 3;
+  REMOTE_CONTROL_REQUEST_REJECTION_REASON_AMBIGUOUS = 4;
+  REMOTE_CONTROL_REQUEST_REJECTION_REASON_UNLINKED = 5;
+  REMOTE_CONTROL_REQUEST_REJECTION_REASON_WORKER_OFFLINE = 6;
+}
+
 message UpdateBackgroundComposerEnvironmentRequest {
   string bc_id = 1;
   bool replace = 2;
@@ -371,6 +391,13 @@ message PreWarmPodRequest {
 }
 
 message PreWarmPodResponse {
+}
+
+message WakeBackgroundComposerRequest {
+  string bc_id = 1;
+}
+
+message WakeBackgroundComposerResponse {
 }
 
 message AttachBackgroundComposerPodRequest {
@@ -702,6 +729,7 @@ message BackgroundComposer {
   repeated string repo_urls = 62;
   optional string environment_name = 63;
   optional PrivateWorkspaceIdentifier private_workspace_identifier = 64;
+  optional string private_worker_display_name = 65;
 }
 
 message BackgroundComposerParticipant {
@@ -910,6 +938,10 @@ message StartBackgroundComposerFromSnapshotRequest {
   repeated agent.v1.CustomSubagent custom_subagents = 96;
   optional int32 team_id = 98;
   optional CloudSubagentParentReference cloud_subagent_parent = 99;
+  repeated string requested_additional_store_ids = 101;
+  optional string remote_control_workspace_key = 102;
+  optional string remote_control_machine_id = 103;
+  optional bool is_slack_v2 = 104;
 }
 
 message StartBackgroundComposerFromSnapshotResponse {
@@ -1171,6 +1203,8 @@ message HeadlessAgenticComposerConfig {
   optional bool show_onboarding_setup_note_for_manual_testing = 15;
   optional agent.v1.RequestedModel requested_model = 16;
   optional CloudSubagentParentReference cloud_subagent_parent = 17;
+  optional bool enable_computer_use = 18;
+  optional bool is_slack_v2 = 19;
 }
 
 message GetBackgroundComposerStatusRequest {
@@ -1199,6 +1233,7 @@ message AddAsyncFollowupBackgroundComposerRequest {
   optional int64 time_budget_seconds = 13;
   optional string followup_system_reminder = 14;
   optional string mcp_config_json = 16;
+  repeated string requested_additional_store_ids = 17;
 }
 
 message AddAsyncFollowupBackgroundComposerResponse {
@@ -1360,6 +1395,8 @@ message DetailedBackgroundComposer {
 message VmProvisionedSkill {
   string skill_id = 1;
   string description = 2;
+  repeated string environments = 3;
+  repeated string disabled_environments = 4;
 }
 
 message BackgroundComposerPr {
@@ -1631,6 +1668,15 @@ message LogicalEnvironment {
 message ListEnvironmentsResponse {
   repeated LogicalEnvironment environments = 1;
   optional string dashboard_scope_id = 2;
+}
+
+message GetEnvironmentRequest {
+  string public_id = 1;
+  optional bool include_environment_json = 2;
+}
+
+message GetEnvironmentResponse {
+  optional LogicalEnvironment environment = 1;
 }
 
 message ResolveOrCreateMultiRepoEnvironmentRequest {
@@ -2040,6 +2086,7 @@ message UpdateBackgroundComposerUserSettingsRequest {
   optional string bc_id = 13;
   optional string default_environment_public_id = 14;
   repeated BackgroundComposerDefaultEnvironmentSetting default_environment_settings = 15;
+  optional bool remote_control_enabled = 16;
 }
 
 message UpdateBackgroundComposerUserSettingsResponse {
@@ -2063,6 +2110,7 @@ message GetBackgroundComposerUserSettingsResponse {
   optional bool allow_private_workers = 12;
   optional string default_environment_public_id = 13;
   repeated BackgroundComposerDefaultEnvironmentSetting default_environment_settings = 14;
+  optional bool remote_control_enabled = 15;
 }
 
 message GetRepositoryBranchesRequest {
@@ -2376,6 +2424,44 @@ message DeletePushNotificationTokenRequest {
 message DeletePushNotificationTokenResponse {
 }
 
+message LiveActivityAgentEntry {
+  string bc_id = 1;
+  string title = 2;
+  BackgroundComposerStatus status = 3;
+  int64 started_at_epoch_seconds = 4;
+  optional string repo_label = 5;
+  optional string branch_name = 6;
+  optional int64 finished_at_epoch_seconds = 7;
+  optional string result_type = 8;
+  optional int32 lines_added = 9;
+  optional int32 lines_removed = 10;
+  optional int32 changed_files = 11;
+}
+
+message LiveActivityContentState {
+  repeated LiveActivityAgentEntry agents = 1;
+}
+
+message SyncLiveActivityRequest {
+  string device_id = 1;
+  PushPlatform platform = 2;
+  string activity_push_token = 3;
+  LiveActivityContentState content_state = 4;
+  uint64 state_version = 5;
+  string bundle_id = 6;
+}
+
+message SyncLiveActivityResponse {
+}
+
+message DeleteLiveActivityRequest {
+  string device_id = 1;
+  PushPlatform platform = 2;
+}
+
+message DeleteLiveActivityResponse {
+}
+
 message VerifyBackgroundComposerAccessRequest {
   string bc_id = 1;
   string access_type = 2;
@@ -2387,6 +2473,7 @@ message VerifyBackgroundComposerAccessResponse {
 
 message ConvertPullRequestFromDraftRequest {
   string bc_id = 1;
+  optional string pr_url = 2;
 }
 
 message ConvertPullRequestFromDraftResponse {
@@ -2506,6 +2593,11 @@ message TransientError {
   string error_message = 1;
 }
 
+message ConversationActionReference {
+  optional agent.v1.ConversationAction conversation_action = 1;
+  bytes conversation_action_blob_id = 2;
+}
+
 message CloudAgentWorkflowControlState {
   repeated QueuedFollowup pending_followups = 1;
   int32 followup_completion_count = 2;
@@ -2522,6 +2614,8 @@ message CloudAgentWorkflowControlState {
   optional PausedInteractionStep paused_interaction_step = 13;
   repeated QueuedInteractionResponse pending_interaction_responses = 14;
   repeated uint32 completed_interaction_query_ids = 15;
+  repeated PendingIdleFollowup pending_idle_followups = 16;
+  repeated ConversationActionReference skipped_input_action_refs = 17;
 }
 
 message CompletedMakePRRequest {
@@ -2555,6 +2649,16 @@ message QueuedFollowup {
   optional string run_id = 12;
   optional agent.v1.RequestedModel requested_model = 13;
   optional int64 turn_start_unix_ms = 14;
+  optional int64 not_before_unix_ms = 15;
+  bytes conversation_action_blob_id = 16;
+}
+
+message PendingIdleFollowup {
+  string grouping_identifier = 1;
+  string followup_id = 2;
+  BackgroundComposerSource source = 3;
+  agent.v1.ConversationAction conversation_action = 4;
+  repeated string merged_followup_ids = 5;
 }
 
 message PausedInteractionStep {
@@ -2669,6 +2773,56 @@ message GetCloudAgentDebugDetailsResponse {
   CloudAgentVmHistory vm_history = 5;
 }
 
+message ProvisionSyntheticsServiceAccountsRequest {
+  int32 team_id = 1;
+  int32 count = 2;
+  string name_prefix = 3;
+  string pool_name = 4;
+  string created_by = 5;
+  bool provision_origin_repos = 6;
+  string origin_namespace = 7;
+}
+
+message ProvisionedSyntheticsIdentity {
+  string identity_id = 1;
+  string service_account_id = 2;
+  string service_account_name = 3;
+  string masked_api_key = 4;
+  string repo_url = 5;
+  string repo_ref = 6;
+}
+
+message ProvisionSyntheticsServiceAccountsResponse {
+  repeated ProvisionedSyntheticsIdentity identities = 1;
+  string pool_id = 2;
+}
+
+message CloudAgentSyntheticsScenarioInput {
+  string name = 1;
+  string prompt = 2;
+  string model = 3;
+  string repo_url = 4;
+  string repo_ref = 5;
+  bool canary = 6;
+  uint32 max_duration_sec = 7;
+}
+
+message StartCloudAgentLoadTestRequest {
+  string scenario_name = 1;
+  CloudAgentSyntheticsScenarioInput custom_scenario = 2;
+  string pool_id = 3;
+  uint32 count = 4;
+  uint32 per_identity_create_per_min = 5;
+  uint32 ramp_up_sec = 6;
+  string created_by = 7;
+}
+
+message StartCloudAgentLoadTestResponse {
+  string temporal_workflow_id = 1;
+  string temporal_run_id = 2;
+  string load_test_run_id = 3;
+}
+
 message GetCloudAgentMemoryDbLogsRequest {
   string bc_id = 1;
   optional uint32 worker_index = 2;
@@ -2729,6 +2883,23 @@ message ListPrivateWorkersResponse {
   int32 total_count = 3;
 }
 
+message AdminListUserPrivateWorkersRequest {
+  optional string auth_id = 1;
+  optional int32 user_id = 2;
+  optional string email = 3;
+}
+
+message AdminListUserPrivateWorkersResponse {
+  int32 user_id = 1;
+  string auth_id = 2;
+  string email = 3;
+  repeated int32 team_ids = 4;
+  repeated PrivateWorker private_workers = 5;
+  repeated ConnectedMachine connected_machines = 6;
+  bool remote_control_enabled = 7;
+  bool team_remote_control_allowed = 8;
+}
+
 message ListPendingPrivateWorkerRequestsRequest {
   int32 page_size = 1;
   optional string page_token = 2;
@@ -2766,6 +2937,7 @@ message PrivateWorker {
   repeated PrivateWorkerLabel labels = 11;
   optional string repo_url = 12;
   optional string display_name = 13;
+  optional string machine_id = 14;
 }
 
 message PrivateWorkerLabel {
@@ -2855,6 +3027,8 @@ message AgentStore {
   repeated SharedAgentStoreInfo shares = 9;
   AgentStoreKind kind = 10;
   optional double last_file_write_at_ms = 11;
+  string source_id = 12;
+  optional string source_display_name = 13;
 }
 
 message ListAgentStoresResponse {
@@ -2901,6 +3075,7 @@ message MintAgentStoreTokenResponse {
   string token = 1;
   int64 expires_at_ms = 2;
   repeated string agent_ids = 3;
+  repeated string store_ids = 4;
 }
 
 message AgentStoreFileEntry {
@@ -3012,6 +3187,41 @@ message ListSharedAgentStoresResponse {
   optional string next_created_before_share_id = 4;
 }
 
+message RequestLocalAgentRemoteControlRequest {
+  string bc_id = 1;
+  string machine_name = 2;
+  string worker_id = 3;
+  string idempotency_key = 4;
+}
+
+message RequestLocalAgentRemoteControlResponse {
+  RemoteControlRequestStatus status = 1;
+  RemoteControlRequestRejectionReason rejection_reason = 2;
+  string message = 3;
+  string migrated_bc_id = 4;
+}
+
+message ListConnectedMachinesRequest {
+}
+
+message ListConnectedMachinesResponse {
+  repeated ConnectedMachine machines = 1;
+}
+
+message ConnectedMachine {
+  string machine_id = 1;
+  string display_name = 2;
+  int64 last_seen_ms = 3;
+  repeated ConnectedMachineWorkspace workspaces = 4;
+}
+
+message ConnectedMachineWorkspace {
+  string workspace_key = 1;
+  string name = 2;
+  string repo_url = 3;
+  string root_path = 4;
+}
+
 service BackgroundComposerService {
   rpc ListBackgroundComposers(ListBackgroundComposersRequest) returns (ListBackgroundComposersResponse);
   rpc AttachBackgroundComposer(AttachBackgroundComposerRequest) returns (stream AttachBackgroundComposerResponse);
@@ -3032,9 +3242,12 @@ service BackgroundComposerService {
   rpc ReorderPendingFollowup(ReorderPendingFollowupRequest) returns (ReorderPendingFollowupResponse);
   rpc SubmitPendingFollowupNow(SubmitPendingFollowupNowRequest) returns (SubmitPendingFollowupNowResponse);
   rpc MarkFollowupEditing(MarkFollowupEditingRequest) returns (MarkFollowupEditingResponse);
+  rpc RequestLocalAgentRemoteControl(RequestLocalAgentRemoteControlRequest) returns (RequestLocalAgentRemoteControlResponse);
+  rpc ListConnectedMachines(ListConnectedMachinesRequest) returns (ListConnectedMachinesResponse);
   rpc GetCursorServerUrl(GetCursorServerUrlRequest) returns (GetCursorServerUrlResponse);
   rpc WarmCursorServerDownload(WarmCursorServerDownloadRequest) returns (WarmCursorServerDownloadResponse);
   rpc PreWarmPod(PreWarmPodRequest) returns (PreWarmPodResponse);
+  rpc WakeBackgroundComposer(WakeBackgroundComposerRequest) returns (WakeBackgroundComposerResponse);
   rpc PauseBackgroundComposer(PauseBackgroundComposerRequest) returns (PauseBackgroundComposerResponse);
   rpc ResumeBackgroundComposer(ResumeBackgroundComposerRequest) returns (ResumeBackgroundComposerResponse);
   rpc ArchiveBackgroundComposer(ArchiveBackgroundComposerRequest) returns (ArchiveBackgroundComposerResponse);
@@ -3077,6 +3290,7 @@ service BackgroundComposerService {
   rpc SetTeamEnvironmentJson(SetTeamEnvironmentJsonRequest) returns (SetTeamEnvironmentJsonResponse);
   rpc RestoreEnvironmentVersion(RestoreEnvironmentVersionRequest) returns (RestoreEnvironmentVersionResponse);
   rpc ListEnvironments(ListEnvironmentsRequest) returns (ListEnvironmentsResponse);
+  rpc GetEnvironment(GetEnvironmentRequest) returns (GetEnvironmentResponse);
   rpc ResolveOrCreateMultiRepoEnvironment(ResolveOrCreateMultiRepoEnvironmentRequest) returns (ResolveOrCreateMultiRepoEnvironmentResponse);
   rpc ResolveOrCreateDraftEnvironment(ResolveOrCreateDraftEnvironmentRequest) returns (ResolveOrCreateDraftEnvironmentResponse);
   rpc SnapshotAndSaveEnvironment(SnapshotAndSaveEnvironmentRequest) returns (SnapshotAndSaveEnvironmentResponse);
@@ -3119,6 +3333,8 @@ service BackgroundComposerService {
   rpc UpdatePullRequestBranch(UpdatePullRequestBranchRequest) returns (UpdatePullRequestBranchResponse);
   rpc RegisterPushNotificationToken(RegisterPushNotificationTokenRequest) returns (RegisterPushNotificationTokenResponse);
   rpc DeletePushNotificationToken(DeletePushNotificationTokenRequest) returns (DeletePushNotificationTokenResponse);
+  rpc SyncLiveActivity(SyncLiveActivityRequest) returns (SyncLiveActivityResponse);
+  rpc DeleteLiveActivity(DeleteLiveActivityRequest) returns (DeleteLiveActivityResponse);
   rpc VerifyBackgroundComposerAccess(VerifyBackgroundComposerAccessRequest) returns (VerifyBackgroundComposerAccessResponse);
   rpc StartSlackStreamingForFollowup(StartSlackStreamingForFollowupRequest) returns (StartSlackStreamingForFollowupResponse);
   rpc StartGithubStreamingForFollowup(StartGithubStreamingForFollowupRequest) returns (StartGithubStreamingForFollowupResponse);
@@ -3132,6 +3348,7 @@ service BackgroundComposerService {
   rpc CreateAgentShare(CreateAgentShareRequest) returns (CreateAgentShareResponse);
   rpc GetAgentSharePreview(GetAgentSharePreviewRequest) returns (GetAgentSharePreviewResponse);
   rpc ListPrivateWorkers(ListPrivateWorkersRequest) returns (ListPrivateWorkersResponse);
+  rpc AdminListUserPrivateWorkers(AdminListUserPrivateWorkersRequest) returns (AdminListUserPrivateWorkersResponse);
   rpc ListPendingPrivateWorkerRequests(ListPendingPrivateWorkerRequestsRequest) returns (ListPendingPrivateWorkerRequestsResponse);
   rpc GetPrivateWorkersSummary(GetPrivateWorkersSummaryRequest) returns (GetPrivateWorkersSummaryResponse);
   rpc GetPrivateWorker(GetPrivateWorkerRequest) returns (GetPrivateWorkerResponse);
@@ -3147,4 +3364,6 @@ service BackgroundComposerService {
   rpc ShareAgentStore(ShareAgentStoreRequest) returns (ShareAgentStoreResponse);
   rpc UnshareAgentStore(UnshareAgentStoreRequest) returns (UnshareAgentStoreResponse);
   rpc ListSharedAgentStores(ListSharedAgentStoresRequest) returns (ListSharedAgentStoresResponse);
+  rpc ProvisionSyntheticsServiceAccounts(ProvisionSyntheticsServiceAccountsRequest) returns (ProvisionSyntheticsServiceAccountsResponse);
+  rpc StartCloudAgentLoadTest(StartCloudAgentLoadTestRequest) returns (StartCloudAgentLoadTestResponse);
 }

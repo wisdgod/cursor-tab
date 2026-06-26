@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/pi_common.proto";
+
+message PiBashExecArgs {
+  string command = 1;
+  optional double timeout = 2;
+}
+
+message PiBashExecResult {
+  oneof result {
+    PiBashExecSuccess success = 1;
+    PiBashExecError error = 2;
+  }
+}
+
+message PiBashExecSuccess {
+  string output = 1;
+  optional PiTruncation truncation = 2;
+  optional string full_output_path = 3;
+}
+
+message PiBashExecError {
+  string error = 1;
+  optional PiTruncation truncation = 2;
+  optional string full_output_path = 3;
+}

@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/pi_edit_tool.proto";
+
+message PiEditExecArgs {
+  string path = 1;
+  repeated PiEditReplacement edits = 2;
+}
+
+message PiEditExecResult {
+  oneof result {
+    PiEditExecSuccess success = 1;
+    PiEditExecError error = 2;
+    PiEditExecRejected rejected = 3;
+  }
+}
+
+message PiEditExecSuccess {
+  string output = 1;
+  string diff = 2;
+  string patch = 3;
+  optional uint32 first_changed_line = 4;
+}
+
+message PiEditExecError {
+  string error = 1;
+}
+
+message PiEditExecRejected {
+  string reason = 1;
+}

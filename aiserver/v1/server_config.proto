@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package aiserver.v1;
 
+import "aiserver/v1/online_metrics.proto";
+import "aiserver/v1/profiling_config.proto";
+import "aiserver/v1/review.proto";
 import "aiserver/v1/utils.proto";
 
 enum ButtonType {
@@ -66,92 +69,6 @@ enum InferenceProviderWarningTrigger {
   INFERENCE_PROVIDER_WARNING_TRIGGER_UNSPECIFIED = 0;
   INFERENCE_PROVIDER_WARNING_TRIGGER_ON_SELECT = 1;
   INFERENCE_PROVIDER_WARNING_TRIGGER_ON_ERROR = 2;
-}
-
-message OnlineMetricsConfig {
-  bool enabled = 1;
-  int32 max_requests_tracked = 2;
-  int32 max_requests_tracked_mb = 3;
-  double max_request_retention_seconds = 4;
-  bool send_original_file_contents_for_initial_snapshot = 5;
-  bool send_full_added_lines_in_diff_changes = 6;
-  int32 num_commits_tracked = 7;
-  repeated int32 time_intervals_tracked_minutes = 8;
-  int32 too_big_file_size_bytes = 9;
-}
-
-message BugConfigResponse {
-  message LinterStrategyV1 {
-    bool enabled = 1;
-    bool try_trigger_on_save = 2;
-    double wait_between_triggers_ms = 3;
-  }
-  message LinterStrategyV2 {
-    bool enabled = 1;
-    double wait_between_triggers_ms = 2;
-    double debounce_triggers_ms = 3;
-    int32 keep_lines_around_chunk = 4;
-    int32 prevent_triggering_for_files_with_this_many_lines = 5;
-    bool prevent_triggering_when_lints = 6;
-  }
-  message BugBotV1 {
-    bool enabled = 1;
-    bool is_subsidized = 2;
-    int32 background_call_frequency_ms = 3;
-    bool kill_switch = 4;
-    double show_intrusive_notification_only_if_last_time_was_more_than_ms_ago = 5;
-    optional int32 background_diff_absolute_max_tokens = 6;
-    optional int32 background_diff_min_min_token_threshold = 7;
-    optional int32 background_diff_min_max_token_threshold = 8;
-    optional double background_diff_last_commit_less_than_this_many_ms_ago = 9;
-    optional int32 background_unified_context_lines = 15;
-    optional bool background_diff_include_uncommitted = 16;
-    optional int32 default_diff_context_lines = 10;
-    optional int32 diff_absolute_max_tokens = 11;
-    optional int32 custom_instructions_max_char_length = 12;
-    optional int32 default_fallback_iterations = 13;
-    optional int32 threshold_for_expensive_run_modal_cents = 14;
-    optional string cheap_model_name = 17;
-    optional int32 cheap_absolute_max_tokens = 18;
-    optional int32 expensive_absolute_max_tokens = 19;
-  }
-  LinterStrategyV1 linter_strategy_v1 = 1;
-  BugBotV1 bug_bot_v1 = 2;
-  LinterStrategyV2 linter_strategy_v2 = 3;
-}
-
-message HeapProfileConfig {
-  int32 sampling_interval = 1;
-  optional bool include_objects_collected_by_major_gc = 2;
-  optional bool include_objects_collected_by_minor_gc = 3;
-}
-
-message CpuProfileConfig {
-  int32 interval = 1;
-}
-
-message ProfileConfig {
-  string id = 1;
-  optional HeapProfileConfig heap = 2;
-  optional CpuProfileConfig cpu = 3;
-}
-
-message ProfileScheduleConfig {
-  message ScheduleConfig {
-    int32 interval = 1;
-    int32 duration = 2;
-  }
-  string id = 1;
-  string process = 2;
-  string config_id = 3;
-  ScheduleConfig schedule = 4;
-  int32 activity_timeout = 5;
-}
-
-message ProfilingConfig {
-  bool enabled = 1;
-  repeated ProfileConfig configs = 2;
-  repeated ProfileScheduleConfig schedules = 3;
 }
 
 message ModalDisplayConfig {

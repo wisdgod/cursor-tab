@@ -13,6 +13,7 @@ import "agent/v1/create_plan_tool.proto";
 import "agent/v1/delete_tool.proto";
 import "agent/v1/edit_pr_labels_tool.proto";
 import "agent/v1/edit_tool.proto";
+import "agent/v1/fetch_cloud_agent_data_tool.proto";
 import "agent/v1/fetch_tool.proto";
 import "agent/v1/generate_image_tool.proto";
 import "agent/v1/get_mcp_tools_tool.proto";
@@ -24,6 +25,13 @@ import "agent/v1/mcp.proto";
 import "agent/v1/mcp_auth_tool.proto";
 import "agent/v1/mcp_resource_tool.proto";
 import "agent/v1/mcp_tool.proto";
+import "agent/v1/pi_bash_tool.proto";
+import "agent/v1/pi_edit_tool.proto";
+import "agent/v1/pi_find_tool.proto";
+import "agent/v1/pi_grep_tool.proto";
+import "agent/v1/pi_ls_tool.proto";
+import "agent/v1/pi_read_tool.proto";
+import "agent/v1/pi_write_tool.proto";
 import "agent/v1/pr_management_tool.proto";
 import "agent/v1/read_lints_tool.proto";
 import "agent/v1/read_tool.proto";
@@ -96,6 +104,15 @@ enum BackgroundTaskCompletionReason {
   BACKGROUND_TASK_COMPLETION_REASON_TASK_PROGRESS = 2;
 }
 
+enum SubagentRunStatus {
+  SUBAGENT_RUN_STATUS_UNSPECIFIED = 0;
+  SUBAGENT_RUN_STATUS_RUNNING = 1;
+  SUBAGENT_RUN_STATUS_BACKGROUNDED = 2;
+  SUBAGENT_RUN_STATUS_SUCCESS = 3;
+  SUBAGENT_RUN_STATUS_ERROR = 4;
+  SUBAGENT_RUN_STATUS_ABORTED = 5;
+}
+
 enum SimulatedMsgReason {
   SIMULATED_MSG_REASON_UNSPECIFIED = 0;
   SIMULATED_MSG_REASON_PLAN_EXECUTION = 1;
@@ -118,6 +135,19 @@ enum SimulatedMsgReason {
   SIMULATED_MSG_REASON_CHECKOUT_BRANCH = 18;
   SIMULATED_MSG_REASON_DIFF_TAB_UPDATE_BRANCH = 19;
   SIMULATED_MSG_REASON_PR_TAB_BUGBOT_FIX = 20;
+  SIMULATED_MSG_REASON_RUN_BUGBOT_REVIEW = 22;
+  SIMULATED_MSG_REASON_RUN_SECURITY_REVIEW = 23;
+  SIMULATED_MSG_REASON_FSD_APPLY_FINDING = 24;
+  SIMULATED_MSG_REASON_FSD_UNDO_FINDING = 25;
+  SIMULATED_MSG_REASON_FSD_START = 26;
+  SIMULATED_MSG_REASON_FSD_PR_INTERRUPT = 27;
+  SIMULATED_MSG_REASON_SUBSCRIPTION = 28;
+}
+
+enum SubscriptionSource {
+  SUBSCRIPTION_SOURCE_UNSPECIFIED = 0;
+  SUBSCRIPTION_SOURCE_SLACK = 1;
+  SUBSCRIPTION_SOURCE_GITHUB = 2;
 }
 
 enum ThinkingStyle {
@@ -196,6 +226,9 @@ message SetActiveBranchToolCall {
 
 message ToolCall {
   repeated HookAdditionalContext hook_additional_contexts = 54;
+  optional string tool_call_id = 57;
+  optional uint64 started_at_ms = 59;
+  optional uint64 completed_at_ms = 60;
   oneof tool {
     ShellToolCall shell_tool_call = 1;
     DeleteToolCall delete_tool_call = 3;
@@ -244,7 +277,15 @@ message ToolCall {
     EditPrLabelsToolCall edit_pr_labels_tool_call = 52;
     RecordCiInvestigationFindingsToolCall record_ci_investigation_findings_tool_call = 53;
     SendMessageToolCall send_message_tool_call = 55;
+    FetchCloudAgentDataToolCall fetch_cloud_agent_data_tool_call = 56;
     SendToUserToolCall send_to_user_tool_call = 58;
+    PiReadToolCall pi_read_tool_call = 61;
+    PiBashToolCall pi_bash_tool_call = 62;
+    PiEditToolCall pi_edit_tool_call = 63;
+    PiWriteToolCall pi_write_tool_call = 64;
+    PiGrepToolCall pi_grep_tool_call = 65;
+    PiFindToolCall pi_find_tool_call = 66;
+    PiLsToolCall pi_ls_tool_call = 67;
   }
 }
 
@@ -327,6 +368,19 @@ message BackgroundTaskCompletion {
   BackgroundTaskCompletionReason reason = 8;
   optional string subagent_id = 9;
   optional string tool_call_id = 10;
+}
+
+message SubagentRunState {
+  string parent_tool_call_id = 1;
+  optional string subagent_id = 2;
+  SubagentExecutionEnvironment environment = 3;
+  SubagentRunStatus status = 4;
+  optional string title = 5;
+  optional string detail = 6;
+  optional string transcript_path = 7;
+  optional string output_path = 8;
+  optional uint64 completed_timestamp_ms = 9;
+  optional BackgroundTaskCompletionReason completion_reason = 10;
 }
 
 message CancelSubagentAction {
@@ -494,6 +548,9 @@ message UserMessage {
   message SimulatedMessageMetadata {
     optional string title = 1;
     optional string task_id = 2;
+    optional string fsd_finding_action = 3;
+    optional string url = 4;
+    optional SubscriptionSource subscription_source = 5;
   }
   string text = 1;
   string message_id = 2;
@@ -729,6 +786,7 @@ message ConversationStateStructure {
   optional string communicate_update_final_summary = 25;
   optional string communicate_update_completed_subtitle = 28;
   map<string, CommunicateUpdateTurnState> communicate_update_states_by_parent_tool_call_id = 29;
+  map<string, SubagentRunState> subagent_runs_by_parent_tool_call_id = 30;
   optional uint64 conversation_started_timestamp_ms = 26;
   optional string conversation_started_time_zone = 27;
 }
@@ -896,6 +954,7 @@ message TurnEndedUpdate {
   optional int64 output_tokens = 2;
   optional int64 cache_read_tokens = 3;
   optional int64 cache_write_tokens = 4;
+  optional int64 reasoning_tokens = 5;
 }
 
 message UserMessageAppendedUpdate {

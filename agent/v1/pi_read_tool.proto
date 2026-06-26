@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/pi_common.proto";
+
+message PiReadToolCall {
+  PiReadToolArgs args = 1;
+  PiReadToolResult result = 2;
+}
+
+message PiReadToolArgs {
+  string path = 1;
+  optional int32 offset = 2;
+  optional int32 limit = 3;
+}
+
+message PiReadToolResult {
+  oneof result {
+    PiReadToolSuccess success = 1;
+    PiReadToolError error = 2;
+  }
+}
+
+message PiReadToolSuccess {
+  string output = 1;
+  optional PiTruncation truncation = 2;
+}
+
+message PiReadToolError {
+  string error = 1;
+}

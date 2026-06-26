@@ -19,6 +19,7 @@ message GetCommitMetricsRequest {
   optional bool include_skills = 6;
   optional bool include_mcps = 7;
   optional ConversationSummarizationPromptOptions summarization_prompt_options = 12;
+  optional int32 team_id = 13;
 }
 
 message GetCommitMetricsByFilePathRequest {
@@ -33,6 +34,7 @@ message GetCommitMetricsByFilePathRequest {
   optional bool include_skills = 10;
   optional bool include_mcps = 11;
   optional ConversationSummarizationPromptOptions summarization_prompt_options = 12;
+  optional int32 team_id = 13;
 }
 
 message CommitMetrics {

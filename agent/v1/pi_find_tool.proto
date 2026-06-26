@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/pi_common.proto";
+
+message PiFindToolCall {
+  PiFindToolArgs args = 1;
+  PiFindToolResult result = 2;
+}
+
+message PiFindToolArgs {
+  string pattern = 1;
+  optional string path = 2;
+  optional int32 limit = 3;
+}
+
+message PiFindToolResult {
+  oneof result {
+    PiFindToolSuccess success = 1;
+    PiFindToolError error = 2;
+  }
+}
+
+message PiFindToolSuccess {
+  string output = 1;
+  optional PiTruncation truncation = 2;
+  optional uint32 result_limit_reached = 3;
+}
+
+message PiFindToolError {
+  string error = 1;
+}

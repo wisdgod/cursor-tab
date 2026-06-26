@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message PiTruncation {
+  bool truncated = 1;
+  string truncated_by = 2;
+  uint32 total_lines = 3;
+  uint32 output_lines = 4;
+  uint32 output_bytes = 5;
+  optional uint32 max_lines = 6;
+  optional uint32 max_bytes = 7;
+  bool first_line_exceeds_limit = 8;
+  bool last_line_partial = 9;
+}

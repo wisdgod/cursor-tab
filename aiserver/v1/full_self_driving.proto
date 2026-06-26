@@ -53,6 +53,13 @@ message ListFullSelfDrivingRunsRequest {
   optional int32 limit = 2;
 }
 
+message FullSelfDrivingRunLiveStatus {
+  string state = 1;
+  string status = 2;
+  repeated string loading_messages = 3;
+  google.protobuf.Timestamp updated_at = 4;
+}
+
 message FullSelfDrivingRun {
   string bc_id = 1;
   string status = 2;
@@ -63,6 +70,7 @@ message FullSelfDrivingRun {
   int32 files_changed = 7;
   string source = 8;
   string active_run_id = 9;
+  optional FullSelfDrivingRunLiveStatus latest_status_update = 10;
 }
 
 message ListFullSelfDrivingRunsResponse {
@@ -234,6 +242,7 @@ message PrepareLocalFullSelfDrivingRunRequest {
   string pr_url = 1;
   FullSelfDrivingMode mode = 2;
   optional string trigger_description = 3;
+  optional string model_id = 4;
 }
 
 message PrepareLocalFullSelfDrivingRunResponse {
@@ -251,6 +260,7 @@ message RunFullSelfDrivingCloudCommandRequest {
   FullSelfDrivingMode mode = 2;
   optional string user_instructions = 3;
   optional string trigger_description = 4;
+  optional string model_id = 5;
 }
 
 message RunFullSelfDrivingCloudCommandResponse {

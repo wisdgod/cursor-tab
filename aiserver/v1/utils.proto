@@ -93,6 +93,7 @@ message GetDiffRequest {
   bool committed_only = 11;
   bool compute_patch_id = 12;
   optional bool return_head_sha = 13;
+  optional int32 max_response_bytes = 14;
   optional OutputFormat output_format = 8;
 }
 

@@ -9,11 +9,18 @@ import "aiserver/v1/privacy_mode.proto";
 import "aiserver/v1/usage.proto";
 import "aiserver/v1/utils.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
 
 enum UserOrganizationRole {
   USER_ORGANIZATION_ROLE_UNSPECIFIED = 0;
   USER_ORGANIZATION_ROLE_ADMIN = 1;
   USER_ORGANIZATION_ROLE_MEMBER = 2;
+}
+
+enum CreateOrganizationTeamIdentityProviderMode {
+  CREATE_ORGANIZATION_TEAM_IDENTITY_PROVIDER_MODE_UNSPECIFIED = 0;
+  CREATE_ORGANIZATION_TEAM_IDENTITY_PROVIDER_MODE_USE_ORGANIZATION = 1;
+  CREATE_ORGANIZATION_TEAM_IDENTITY_PROVIDER_MODE_CREATE_NEW = 2;
 }
 
 enum BackgroundComposerSecretLevel {
@@ -136,6 +143,7 @@ enum CloudAgentEgressProtectionMode {
   CLOUD_AGENT_EGRESS_PROTECTION_MODE_ALLOW_ALL = 1;
   CLOUD_AGENT_EGRESS_PROTECTION_MODE_DEFAULT_WITH_NETWORK_SETTINGS = 2;
   CLOUD_AGENT_EGRESS_PROTECTION_MODE_NETWORK_SETTINGS_ONLY = 3;
+  CLOUD_AGENT_EGRESS_PROTECTION_MODE_PARENT_PLUS_NETWORK_SETTINGS = 4;
 }
 
 enum TeamFollowupEnabledMode {
@@ -173,6 +181,13 @@ enum FreeTrialCodePurpose {
   FREE_TRIAL_CODE_PURPOSE_UNSPECIFIED = 0;
   FREE_TRIAL_CODE_PURPOSE_FREE_TRIAL = 1;
   FREE_TRIAL_CODE_PURPOSE_ORG_INVITE = 2;
+}
+
+enum LimitHitStage {
+  LIMIT_HIT_STAGE_UNSPECIFIED = 0;
+  LIMIT_HIT_STAGE_AUTO_SWITCH = 1;
+  LIMIT_HIT_STAGE_SLOW_POOL = 2;
+  LIMIT_HIT_STAGE_HARD_BLOCK = 3;
 }
 
 enum AllowlistConfig {
@@ -293,6 +308,7 @@ enum AdminNotificationRequestType {
   ADMIN_NOTIFICATION_REQUEST_TYPE_UNSPECIFIED = 0;
   ADMIN_NOTIFICATION_REQUEST_TYPE_PRIVACY_MODE = 1;
   ADMIN_NOTIFICATION_REQUEST_TYPE_BUGBOT = 2;
+  ADMIN_NOTIFICATION_REQUEST_TYPE_BUGBOT_ENABLE_REPOS = 3;
 }
 
 enum BugbotMode {
@@ -300,6 +316,7 @@ enum BugbotMode {
   BUGBOT_MODE_DEFAULT = 1;
   BUGBOT_MODE_HIGH = 2;
   BUGBOT_MODE_AUTO = 3;
+  BUGBOT_MODE_FRONTIER = 4;
 }
 
 enum GlobalCommandAvailability {
@@ -486,6 +503,7 @@ message ListGithubEnterpriseAppsResponse {
     bool can_delete = 4;
   }
   repeated GithubEnterpriseApp apps = 1;
+  bool can_manage = 2;
 }
 
 message DeleteGithubEnterpriseAppRequest {
@@ -619,6 +637,7 @@ message DeleteAccountResponse {
 
 message GetMeRequest {
   optional int32 team_id = 1;
+  optional string source_site_hostname = 2;
 }
 
 message GetMeResponse {
@@ -637,6 +656,8 @@ message GetMeResponse {
   optional string profile_picture_url = 13;
   optional bool cursor_review_onboarding_use_cursor_github_app = 14;
   optional int64 organization_id = 15;
+  optional string organization_public_id = 16;
+  optional bool is_team_admin = 17;
 }
 
 message GetAgenticOnboardingConfigRequest {
@@ -680,6 +701,7 @@ message OrganizationMemberTeam {
   int32 team_id = 1;
   string team_name = 2;
   string team_slug = 3;
+  TeamRole team_role = 4;
 }
 
 message OrganizationMember {
@@ -690,6 +712,7 @@ message OrganizationMember {
   optional string last_name = 5;
   UserOrganizationRole role = 6;
   repeated OrganizationMemberTeam teams = 7;
+  string member_public_id = 8;
 }
 
 message GetOrganizationMembersRequest {
@@ -699,12 +722,31 @@ message GetOrganizationMembersRequest {
   optional string search_term = 4;
   optional string sort_by = 5;
   optional string sort_direction = 6;
+  optional UserOrganizationRole role_filter = 7;
 }
 
 message GetOrganizationMembersResponse {
   repeated OrganizationMember members = 1;
   int32 total_members = 2;
   int32 total_pages = 3;
+}
+
+message OrganizationMemberGroup {
+  string group_public_id = 1;
+  string group_name = 2;
+  int64 joined_at = 3;
+  bool is_admin = 4;
+  optional int32 monthly_spending_limit_dollars = 5;
+}
+
+message GetOrganizationMemberRequest {
+  string organization_id = 1;
+  string member_public_id = 2;
+}
+
+message GetOrganizationMemberResponse {
+  OrganizationMember member = 1;
+  repeated OrganizationMemberGroup groups = 2;
 }
 
 message OrganizationIdentityProviderUsedByTeam {
@@ -837,6 +879,15 @@ message SetOrganizationMemberRoleResponse {
   UserOrganizationRole role = 2;
 }
 
+message UpdateOrganizationRequest {
+  string organization_id = 1;
+  string name = 2;
+}
+
+message UpdateOrganizationResponse {
+  string name = 1;
+}
+
 message UpdateOrganizationTeamRequest {
   string organization_id = 1;
   int32 team_id = 2;
@@ -855,6 +906,7 @@ message CreateOrganizationTeamRequest {
   string slug = 3;
   int32 owner_user_id = 4;
   optional CreateOrganizationTeamScimMapping scim_mapping = 5;
+  CreateOrganizationTeamIdentityProviderMode identity_provider_mode = 6;
 }
 
 message CreateOrganizationTeamScimMapping {
@@ -892,6 +944,7 @@ message OrganizationGroup {
   int32 member_count = 6;
   string public_id = 7;
   optional int32 monthly_spending_limit_dollars = 8;
+  bool ant_cyber_approved = 9;
 }
 
 message GetOrganizationGroupsRequest {
@@ -932,6 +985,8 @@ message GetOrganizationGroupMembersRequest {
   optional int32 page = 4;
   optional int32 page_size = 5;
   optional string search_term = 6;
+  optional string sort_by = 7;
+  optional string sort_direction = 8;
 }
 
 message GetOrganizationGroupMembersResponse {
@@ -1021,6 +1076,16 @@ message UpdateOrganizationGroupModelAllowlistRequest {
 }
 
 message UpdateOrganizationGroupModelAllowlistResponse {
+}
+
+message CreateOrganizationGroupAnthropicCyberEnrollmentUrlRequest {
+  string organization_id = 1;
+  int64 group_id = 2;
+}
+
+message CreateOrganizationGroupAnthropicCyberEnrollmentUrlResponse {
+  string enrollment_url = 1;
+  string user_profile_id = 2;
 }
 
 message AddOrganizationGroupMembersRequest {
@@ -1172,6 +1237,13 @@ message GetMcpConfigResponse {
   map<string, McpServerMetadata> server_metadata_by_name = 2;
 }
 
+message GetEffectiveMcpConfigForUserRequest {
+}
+
+message GetEffectiveMcpConfigForUserResponse {
+  string config_json = 1;
+}
+
 message GetAvailableMcpServersRequest {
 }
 
@@ -1190,6 +1262,7 @@ message GetAvailableMcpServersResponse {
     optional bool user_has_access_token = 11;
     bool is_required = 12;
     bool managed_by_team_plugin_policy = 13;
+    bool disabled_by_team_admin_policy = 14;
   }
   repeated McpServerInfo servers = 1;
 }
@@ -1374,6 +1447,7 @@ message CompleteMcpOAuthRequest {
 }
 
 message CompleteMcpOAuthResponse {
+  string post_auth_return_url = 1;
 }
 
 message GetPluginMcpConfigRequest {
@@ -1618,6 +1692,7 @@ message SetOrgTeamBudgetResponse {
 }
 
 message EnableOnDemandSpendRequest {
+  optional int32 team_id = 1;
 }
 
 message EnableOnDemandSpendResponse {
@@ -1657,12 +1732,11 @@ message Team {
   bool scim_require_user_directory = 29;
   bool self_serve_tiered_pricing_enabled = 30;
   bool new_member_usage_promo_eligible = 31;
-  optional string ant_user_profile_id = 32;
-  bool ant_cyber_approved = 33;
   optional int64 deleted_at_ms = 34;
 }
 
 message GetTeamsRequest {
+  optional bool active_only = 1;
 }
 
 message GetTeamsResponse {
@@ -1693,6 +1767,7 @@ message GetActivationCheckoutUrlRequest {
   optional string code = 5;
   optional string radar_session_id = 6;
   optional bool include_bugbot = 7;
+  optional TeamMemberBillingTier billing_tier = 8;
 }
 
 message GetActivationCheckoutUrlResponse {
@@ -1965,6 +2040,7 @@ message CreateTeamApiKeyRequest {
   int32 team_id = 1;
   string name = 2;
   repeated string scopes = 3;
+  optional int64 expires_at = 4;
 }
 
 message CreateTeamApiKeyResponse {
@@ -1995,6 +2071,7 @@ message ApiKey {
   int64 created_at = 4;
   optional string service_account_name = 5;
   repeated string scopes = 6;
+  optional int64 expires_at = 7;
 }
 
 message ListTeamApiKeysRequest {
@@ -2273,32 +2350,6 @@ message ChangeTeamSubscriptionRequest {
 
 message ChangeTeamSubscriptionResponse {
   bool success = 1;
-}
-
-message GetTeamUsageRequest {
-  int32 team_id = 1;
-}
-
-message GetTeamUsageResponse {
-  repeated TeamMemberUsage team_member_usage = 1;
-  bool analytics_degraded_warning = 2;
-}
-
-message TeamMemberUsage {
-  int32 id = 1;
-  repeated TeamMemberUsageData usage_data = 2;
-}
-
-message TeamMemberUsageData {
-  string model_type = 1;
-  int32 num_requests = 2;
-  int32 num_tokens = 3;
-  int32 max_token_usage = 4;
-  int32 max_request_usage = 5;
-  string last_usage = 6;
-  optional int32 copilot_usage = 7;
-  optional int32 docs_count = 8;
-  optional int32 copilot_accepted_usage = 9;
 }
 
 message GetSignUpTypeRequest {
@@ -2652,6 +2703,10 @@ message CursorIgnoreControls {
 message AllowedMCPServer {
   optional string command = 1;
   optional string server_url = 2;
+  optional string name = 3;
+  repeated string network_allowlist = 4;
+  repeated string tool_allowlist = 5;
+  optional string network_mode = 6;
 }
 
 message AllowedMCPConfiguration {
@@ -2659,10 +2714,7 @@ message AllowedMCPConfiguration {
   repeated AllowedMCPServer allowed_mcp_servers = 2;
   optional bool require_mcp_servers_in_team_network_allowlist = 3;
   optional bool allow_user_override_mcp_servers = 4;
-  optional bool allow_user_override_mcp_tools = 5;
-  optional bool enable_mcp_network_controls = 6;
-  repeated string mcp_network_allowlist = 7;
-  optional bool enable_mcp_tool_controls = 8;
+  repeated AllowedMCPServer denied_mcp_servers = 10;
 }
 
 message FirstPartyPluginConfiguration {
@@ -2695,6 +2747,7 @@ message BackgroundAgentSettings {
   optional bool ci_failure_followup_enabled = 18;
   DataRetentionPolicy data_retention = 19;
   optional bool restrict_team_environment_writes_to_admins = 20;
+  optional bool allow_remote_control = 21;
 }
 
 message DataRetentionPolicy {
@@ -2756,6 +2809,10 @@ message GitlabIntegrationSettings {
   bool hidden = 1;
 }
 
+message BitbucketIntegrationSettings {
+  bool hidden = 1;
+}
+
 message SlackIntegrationSettings {
   bool hidden = 1;
 }
@@ -2780,6 +2837,11 @@ message SharedConversationSettings {
 
 message SharedCanvasSettings {
   bool enabled = 1;
+}
+
+message PublicProfileSettings {
+  bool public_visibility_allowed = 1;
+  string policy = 2;
 }
 
 message CursorBlameSettings {
@@ -2844,6 +2906,7 @@ message ModelAllowlistProviderEntry {
 
 message ModelAllowlistByokEntry {
   bool enabled = 1;
+  repeated string models = 2;
 }
 
 message ModelAllowlistByok {
@@ -2916,6 +2979,9 @@ message GetTeamAdminSettingsResponse {
   optional SharedCanvasSettings shared_canvas_settings = 42;
   optional int32 invite_link_max_ttl_seconds = 43;
   optional ExtensionInstallCooldownSettings extension_install_cooldown_settings = 48;
+  optional PublicProfileSettings public_profile_settings = 50;
+  optional BitbucketIntegrationSettings bitbucket_integration_settings = 51;
+  optional bool marketplace_leaderboard_disabled = 52;
 }
 
 message GetBaseTeamAdminSettingsRequest {
@@ -2972,6 +3038,9 @@ message UpdateTeamAdminSettingsRequest {
   optional bool permissions_file_overrides_auto_run = 47;
   optional SharedCanvasSettings shared_canvas_settings = 43;
   optional ExtensionInstallCooldownSettings extension_install_cooldown_settings = 48;
+  optional PublicProfileSettings public_profile_settings = 50;
+  optional BitbucketIntegrationSettings bitbucket_integration_settings = 51;
+  optional bool marketplace_leaderboard_disabled = 52;
 }
 
 message UpdateTeamAdminSettingsResponse {
@@ -2991,6 +3060,13 @@ message CreateTeamFreeTrialCodeRequest {
 }
 
 message CreateTeamFreeTrialCodeResponse {
+  string code = 1;
+}
+
+message CreateTeamsTrialV2ReferralCodeRequest {
+}
+
+message CreateTeamsTrialV2ReferralCodeResponse {
   string code = 1;
 }
 
@@ -3188,10 +3264,16 @@ message GetPlanInfoRequest {
 
 message GetPlanInfoResponse {
   message PlanInfo {
+    enum PlanOwner {
+      PLAN_OWNER_UNSPECIFIED = 0;
+      PLAN_OWNER_STRIPE = 1;
+      PLAN_OWNER_APPLE = 2;
+    }
     string plan_name = 1;
     int32 included_amount_cents = 2;
     optional string price = 3;
     optional int64 billing_cycle_end = 4;
+    PlanOwner plan_owner = 5;
   }
   message NextUpgrade {
     string tier = 1;
@@ -3202,6 +3284,16 @@ message GetPlanInfoResponse {
   }
   optional PlanInfo plan_info = 1;
   optional NextUpgrade next_upgrade = 2;
+}
+
+message VerifyAppleTransactionRequest {
+  string signed_transaction_jws = 1;
+  string product_id = 2;
+  string app_account_token = 3;
+}
+
+message VerifyAppleTransactionResponse {
+  string tier = 1;
 }
 
 message GetCursorReviewEntitlementRequest {
@@ -3243,6 +3335,18 @@ message GetUsageLimitPolicyStatusResponse {
   repeated string allowed_model_ids = 9;
   repeated string allowed_model_tags = 10;
   optional ErrorButton primary_button = 11;
+  LimitHitStage stage = 12;
+  optional string tray_label = 13;
+  optional string tray_description = 14;
+  optional string cta_label = 15;
+  optional bool dismissible = 16;
+  optional int64 reset_at_ms = 17;
+  optional int32 reset_days_remaining = 18;
+  optional bool can_adjust_on_demand = 19;
+  optional int64 recommended_on_demand_limit_cents = 20;
+  optional int64 on_demand_min_cents = 21;
+  optional int64 on_demand_max_cents = 22;
+  optional int64 current_on_demand_limit_cents = 23;
 }
 
 message GetUsageLimitStatusAndActiveGrantsRequest {
@@ -3276,6 +3380,18 @@ message GetUsageLimitStatusAndActiveGrantsResponse {
     repeated string allowed_model_ids = 9;
     repeated string allowed_model_tags = 10;
     optional ErrorButton primary_button = 11;
+    LimitHitStage stage = 12;
+    optional string tray_label = 13;
+    optional string tray_description = 14;
+    optional string cta_label = 15;
+    optional bool dismissible = 16;
+    optional int64 reset_at_ms = 17;
+    optional int32 reset_days_remaining = 18;
+    optional bool can_adjust_on_demand = 19;
+    optional int64 recommended_on_demand_limit_cents = 20;
+    optional int64 on_demand_min_cents = 21;
+    optional int64 on_demand_max_cents = 22;
+    optional int64 current_on_demand_limit_cents = 23;
   }
   UsageLimitPolicyStatus usage_limit_policy_status = 1;
   repeated ActiveCreditGrant active_grants = 2;
@@ -3304,6 +3420,7 @@ message ClientVisibleCreditGrant {
   int64 total_cents = 2;
   int64 expires_at_ms = 3;
   string display_name = 4;
+  optional int32 percent_used = 5;
 }
 
 message GetAdvancedAnalyticsEnabledRequest {
@@ -3333,15 +3450,6 @@ message ValidateBedrockIamRoleRequest {
 message ValidateBedrockIamRoleResponse {
   bool success = 1;
   string error_message = 2;
-}
-
-message CreateAnthropicCyberEnrollmentUrlRequest {
-  int32 team_id = 1;
-}
-
-message CreateAnthropicCyberEnrollmentUrlResponse {
-  string enrollment_url = 1;
-  string user_profile_id = 2;
 }
 
 message DeleteBedrockIamRoleRequest {
@@ -3547,6 +3655,24 @@ message GetGithubInstallationsResponse {
   optional string ghe_app_slug = 6;
   repeated int64 sso_required_orgs = 7;
   repeated string sso_required_org_display_names = 8;
+}
+
+message GetBugbotSuggestedReposRequest {
+  optional string ghe_application = 1;
+  optional int32 limit = 2;
+}
+
+message GetBugbotSuggestedReposResponse {
+  message SuggestedRepo {
+    int64 installation_id = 1;
+    string repo_node_id = 2;
+    string owner = 3;
+    string name = 4;
+    string html_url = 5;
+    int32 pr_count_last_week = 6;
+  }
+  repeated SuggestedRepo repos = 1;
+  bool can_enable = 2;
 }
 
 message InstallationSettings {
@@ -3849,6 +3975,7 @@ message GetFullSelfDrivingUserSettingsResponse {
   bool auto_create_on_first_pr_push = 4;
   bool slack_notifications_enabled = 5;
   optional string fsd_slack_channel_id = 6;
+  optional string default_model = 7;
 }
 
 message UpdateFullSelfDrivingUserSettingsRequest {
@@ -3858,6 +3985,7 @@ message UpdateFullSelfDrivingUserSettingsRequest {
   optional bool auto_create_on_first_pr_push = 4;
   optional bool slack_notifications_enabled = 5;
   optional string fsd_slack_channel_id = 6;
+  optional string default_model = 7;
 }
 
 message UpdateFullSelfDrivingUserSettingsResponse {
@@ -3867,6 +3995,7 @@ message UpdateFullSelfDrivingUserSettingsResponse {
   bool auto_create_on_first_pr_push = 4;
   bool slack_notifications_enabled = 5;
   optional string fsd_slack_channel_id = 6;
+  optional string default_model = 7;
 }
 
 message FullSelfDrivingRepoSetting {
@@ -3967,6 +4096,15 @@ message FullSelfDrivingActiveAgent {
   optional string mergeable_state = 10;
   optional bool is_mergeable = 11;
   optional int32 visible_findings_count = 12;
+  optional FullSelfDrivingStatusUpdate latest_status_update = 13;
+  optional string pr_title = 14;
+}
+
+message FullSelfDrivingStatusUpdate {
+  string state = 1;
+  string status = 2;
+  repeated string loading_messages = 3;
+  google.protobuf.Timestamp updated_at = 4;
 }
 
 message ListFullSelfDrivingActiveAgentsRequest {
@@ -3974,6 +4112,7 @@ message ListFullSelfDrivingActiveAgentsRequest {
   optional int32 page = 2;
   optional int32 page_size = 3;
   optional bool archived = 4;
+  optional string status_visual = 5;
 }
 
 message ListFullSelfDrivingActiveAgentsResponse {
@@ -4027,6 +4166,7 @@ message UpdateBugBotProUserSettingsResponse {
 }
 
 message MigrateBugBotProUserToUsageBasedBillingRequest {
+  optional bool keep_high_effort_default = 1;
 }
 
 message MigrateBugBotProUserToUsageBasedBillingResponse {
@@ -4314,6 +4454,74 @@ message SetUserMonthlyLimitRequest {
 }
 
 message SetUserMonthlyLimitResponse {
+}
+
+message SetTeamNoZdrModelConsentRequest {
+  int32 team_id = 1;
+  string model_id = 2;
+  bool enabled = 3;
+  bool acknowledged = 4;
+  string consent_version = 5;
+}
+
+message SetTeamNoZdrModelConsentResponse {
+  bool consented = 1;
+}
+
+message SetOrganizationNoZdrModelConsentRequest {
+  string organization_id = 1;
+  string model_id = 2;
+  bool enabled = 3;
+  bool acknowledged = 4;
+  string consent_version = 5;
+}
+
+message SetOrganizationNoZdrModelConsentResponse {
+  bool consented = 1;
+}
+
+message SetUserNoZdrModelConsentRequest {
+  string model_id = 1;
+  bool enabled = 2;
+  bool acknowledged = 3;
+  string consent_version = 4;
+}
+
+message SetUserNoZdrModelConsentResponse {
+  bool consented = 1;
+}
+
+message SetTeamMemberNoZdrModelConsentRequest {
+  int32 team_id = 1;
+  string model_id = 2;
+  bool enabled = 3;
+  bool acknowledged = 4;
+  string consent_version = 5;
+}
+
+message SetTeamMemberNoZdrModelConsentResponse {
+  bool consented = 1;
+}
+
+message GetNoZdrModelConsentStatusRequest {
+  enum Scope {
+    SCOPE_UNSPECIFIED = 0;
+    SCOPE_TEAM = 1;
+    SCOPE_TEAM_MEMBER = 2;
+    SCOPE_USER = 3;
+  }
+  Scope scope = 1;
+  int32 team_id = 2;
+}
+
+message NoZdrModelConsentStatusEntry {
+  string model_id = 1;
+  string consent_version = 2;
+  string accepted_at = 3;
+}
+
+message GetNoZdrModelConsentStatusResponse {
+  repeated NoZdrModelConsentStatusEntry consents = 1;
 }
 
 message ToggleMarketingEmailOptRequest {
@@ -4754,6 +4962,7 @@ message DirectoryGroup {
   AutoRunControls auto_run_controls = 5;
   string external_id = 6;
   int32 per_user_monthly_limit_dollars = 7;
+  AllowedMCPConfiguration allowed_mcp_configuration = 8;
 }
 
 message GetDirectoryGroupsRequest {
@@ -4770,6 +4979,7 @@ message UpdateDirectoryGroupSettingsRequest {
   int32 per_user_monthly_limit_dollars = 4;
   AutoRunControls auto_run_controls = 3;
   int32 team_id = 5;
+  optional AllowedMCPConfiguration allowed_mcp_configuration = 6;
 }
 
 message UpdateDirectoryGroupSettingsResponse {
@@ -5123,9 +5333,18 @@ message DeleteScimTargetMappingRequest {
 message DeleteScimTargetMappingResponse {
 }
 
+message NotifyTeamAdminsRepo {
+  int64 installation_id = 1;
+  string repo_node_id = 2;
+  string owner = 3;
+  string name = 4;
+}
+
 message NotifyTeamAdminsRequest {
   int32 team_id = 1;
   AdminNotificationRequestType request_type = 2;
+  repeated NotifyTeamAdminsRepo repos = 3;
+  optional string ghe_application = 4;
 }
 
 message NotifyTeamAdminsResponse {
@@ -5136,6 +5355,8 @@ message NotifyTeamAdminsResponse {
 message GetAdminNotificationStatusRequest {
   int32 team_id = 1;
   AdminNotificationRequestType request_type = 2;
+  repeated NotifyTeamAdminsRepo repos = 3;
+  optional string ghe_application = 4;
 }
 
 message GetAdminNotificationStatusResponse {
@@ -5176,6 +5397,7 @@ message SubmitFeedbackRequest {
   optional string shell = 6;
   optional string model = 7;
   optional string update_channel = 8;
+  optional string agent_mode = 9;
 }
 
 message SubmitFeedbackResponse {
@@ -5209,6 +5431,7 @@ message GetTeamBugbotSettingsResponse {
   int32 seat_license_count = 15;
   bool bugbot_migration_credit_already_granted = 16;
   bool is_incremental_review_enabled = 17;
+  bool merged_pr_scan_opted_out = 18;
 }
 
 message UpdateTeamBugbotSettingsRequest {
@@ -5220,6 +5443,8 @@ message UpdateTeamBugbotSettingsRequest {
   optional bool bugbot_globally_disabled = 6;
   repeated string mcp_server_names = 7;
   optional bool is_incremental_review_enabled = 8;
+  optional bool merged_pr_scan_opt_out = 9;
+  optional bool apply_onboarding_high_effort_learning_defaults = 10;
 }
 
 message UpdateTeamBugbotSettingsResponse {
@@ -5227,9 +5452,43 @@ message UpdateTeamBugbotSettingsResponse {
 
 message MigrateTeamBugbotToUsageBasedBillingRequest {
   int32 team_id = 1;
+  optional bool keep_high_effort_default = 2;
 }
 
 message MigrateTeamBugbotToUsageBasedBillingResponse {
+}
+
+message GetBugbotMergedPrScanSummaryRequest {
+  int32 team_id = 1;
+}
+
+message GetBugbotMergedPrScanSummaryResponse {
+  message Finding {
+    string description = 1;
+    string severity = 2;
+    string category = 3;
+    string repo_owner = 4;
+    string repo_name = 5;
+    int32 pr_number = 6;
+    string pr_url = 7;
+    string file = 8;
+    int32 start_line = 9;
+    int32 end_line = 10;
+    repeated string code_lines = 11;
+    string installation_id = 12;
+    string repo_node_id = 13;
+    int64 pr_merged_at_epoch_millis = 14;
+    string pr_title = 15;
+    string diff_hunk = 16;
+  }
+  bool has_scan = 1;
+  int64 scanned_at_epoch_millis = 2;
+  int32 window_days = 3;
+  int32 prs_sampled = 4;
+  int32 prs_with_findings = 5;
+  int32 bugs_found = 6;
+  repeated Finding findings = 7;
+  int32 total_merged_prs = 8;
 }
 
 message BugbotModePrompt {
@@ -5243,16 +5502,44 @@ message GetBugbotModeRequest {
 message GetBugbotModeResponse {
   BugbotMode mode = 1;
   repeated BugbotModePrompt prompts = 2;
+  bool smart_frontier_enabled = 3;
+  bool frontier_available = 4;
 }
 
 message UpdateBugbotModeRequest {
   BugbotMode mode = 1;
   repeated BugbotModePrompt prompts = 2;
+  optional bool smart_frontier_enabled = 3;
 }
 
 message UpdateBugbotModeResponse {
   BugbotMode mode = 1;
   repeated BugbotModePrompt prompts = 2;
+  bool smart_frontier_enabled = 3;
+  bool frontier_available = 4;
+}
+
+message GetBugBotProUserModeRequest {
+}
+
+message GetBugBotProUserModeResponse {
+  BugbotMode mode = 1;
+  repeated BugbotModePrompt prompts = 2;
+  bool smart_frontier_enabled = 3;
+  bool frontier_available = 4;
+}
+
+message UpdateBugBotProUserModeRequest {
+  BugbotMode mode = 1;
+  repeated BugbotModePrompt prompts = 2;
+  optional bool smart_frontier_enabled = 3;
+}
+
+message UpdateBugBotProUserModeResponse {
+  BugbotMode mode = 1;
+  repeated BugbotModePrompt prompts = 2;
+  bool smart_frontier_enabled = 3;
+  bool frontier_available = 4;
 }
 
 message RevokeBugBotLicensesRequest {
@@ -5333,6 +5620,7 @@ message Rule {
 
 message GetTeamRulesRequest {
   optional bool active_only = 1;
+  optional int32 team_id = 2;
 }
 
 message GetTeamRulesResponse {
@@ -5345,6 +5633,7 @@ message CreateTeamRuleRequest {
   repeated string globs = 5;
   bool is_active = 3;
   bool is_required = 4;
+  optional int32 team_id = 6;
 }
 
 message CreateTeamRuleResponse {
@@ -5358,6 +5647,7 @@ message UpdateTeamRuleRequest {
   repeated string globs = 6;
   optional bool is_active = 4;
   optional bool is_required = 5;
+  optional int32 team_id = 7;
 }
 
 message UpdateTeamRuleResponse {
@@ -5366,6 +5656,7 @@ message UpdateTeamRuleResponse {
 
 message DeleteTeamRuleRequest {
   string rule_id = 1;
+  optional int32 team_id = 2;
 }
 
 message DeleteTeamRuleResponse {
@@ -5385,6 +5676,7 @@ message TeamHook {
 
 message GetTeamHooksRequest {
   optional bool active_only = 1;
+  optional int32 team_id = 2;
 }
 
 message GetTeamHooksResponse {
@@ -5400,6 +5692,7 @@ message CreateTeamHookRequest {
   optional string hook_type = 6;
   optional string prompt_content = 7;
   optional string prompt_model = 8;
+  optional int32 team_id = 9;
 }
 
 message CreateTeamHookResponse {
@@ -5415,6 +5708,7 @@ message UpdateTeamHookRequest {
   optional string hook_type = 6;
   optional string prompt_content = 7;
   optional string prompt_model = 8;
+  optional int32 team_id = 9;
 }
 
 message UpdateTeamHookResponse {
@@ -5423,6 +5717,7 @@ message UpdateTeamHookResponse {
 
 message DeleteTeamHookRequest {
   string hook_id = 1;
+  optional int32 team_id = 2;
 }
 
 message DeleteTeamHookResponse {
@@ -5438,6 +5733,7 @@ message TeamCommand {
 
 message GetTeamCommandsRequest {
   optional bool active_only = 1;
+  optional int32 team_id = 2;
 }
 
 message GetTeamCommandsResponse {
@@ -5449,6 +5745,7 @@ message CreateTeamCommandRequest {
   string content = 2;
   optional string description = 3;
   optional bool is_active = 4;
+  optional int32 team_id = 5;
 }
 
 message CreateTeamCommandResponse {
@@ -5461,6 +5758,7 @@ message UpdateTeamCommandRequest {
   optional string content = 3;
   optional string description = 4;
   optional bool is_active = 5;
+  optional int32 team_id = 6;
 }
 
 message UpdateTeamCommandResponse {
@@ -5469,6 +5767,7 @@ message UpdateTeamCommandResponse {
 
 message DeleteTeamCommandRequest {
   string command_id = 1;
+  optional int32 team_id = 2;
 }
 
 message DeleteTeamCommandResponse {
@@ -5515,6 +5814,7 @@ message GetBackgroundComposerSlashCommandsResponse {
 
 message GetCloudAgentPluginsSnapshotRequest {
   optional bool use_replica = 1;
+  optional int32 team_id = 2;
 }
 
 message CloudAgentPluginSnapshot {
@@ -5540,6 +5840,7 @@ message BugbotRule {
 
 message GetBugbotTeamRulesRequest {
   optional bool active_only = 1;
+  optional int32 team_id = 2;
 }
 
 message GetBugbotTeamRulesResponse {
@@ -5551,6 +5852,7 @@ message CreateBugbotTeamRuleRequest {
   string content = 2;
   optional bool is_active = 3;
   optional bool is_required = 4;
+  optional int32 team_id = 5;
 }
 
 message CreateBugbotTeamRuleResponse {
@@ -5563,6 +5865,7 @@ message UpdateBugbotTeamRuleRequest {
   optional string content = 3;
   optional bool is_active = 4;
   optional bool is_required = 5;
+  optional int32 team_id = 6;
 }
 
 message UpdateBugbotTeamRuleResponse {
@@ -5571,6 +5874,7 @@ message UpdateBugbotTeamRuleResponse {
 
 message DeleteBugbotTeamRuleRequest {
   string rule_id = 1;
+  optional int32 team_id = 2;
 }
 
 message DeleteBugbotTeamRuleResponse {
@@ -5710,6 +6014,7 @@ message RunDiamondToBugbotMigrationResponse {
 message GetBugbotRuleAnalyticsRequest {
   optional string date_range_start = 1;
   optional string date_range_end = 2;
+  optional int32 team_id = 3;
 }
 
 message GetBugbotRuleAnalyticsResponse {
@@ -5734,6 +6039,7 @@ message BugbotRuleAnalytics {
 
 message GetBugbotRuleByIdRequest {
   string rule_id = 1;
+  optional int32 team_id = 2;
 }
 
 message GetBugbotRuleByIdResponse {
@@ -5880,6 +6186,7 @@ message ListSharedConversationsRequest {
   optional int32 creator_id = 2;
   optional string created_before = 3;
   repeated SharedConversationVisibility visibilities = 4;
+  optional int32 team_id = 5;
 }
 
 message ListSharedConversationsResponse {
@@ -5945,6 +6252,22 @@ message UpdateTeamSharedCanvasSettingsRequest {
 }
 
 message UpdateTeamSharedCanvasSettingsResponse {
+}
+
+message GetTeamPublicProfileSettingsRequest {
+  int32 team_id = 1;
+}
+
+message GetTeamPublicProfileSettingsResponse {
+  PublicProfileSettings settings = 1;
+}
+
+message UpdateTeamPublicProfileSettingsRequest {
+  int32 team_id = 1;
+  PublicProfileSettings settings = 2;
+}
+
+message UpdateTeamPublicProfileSettingsResponse {
 }
 
 message GetTeamBackgroundAgentSettingsRequest {
@@ -6055,11 +6378,13 @@ message ListSlackConversationsRequest {
   optional string search = 1;
   optional bool include_private = 2;
   optional bool skip_cache = 3;
+  optional bool allow_partial = 4;
 }
 
 message ListSlackConversationsResponse {
   repeated SlackConversation conversations = 1;
   bool has_slack_auth = 2;
+  bool is_partial = 3;
 }
 
 message ListMicrosoftTeamsChannelsRequest {
@@ -6285,6 +6610,7 @@ message PublicProfileDailyAgentCount {
 message PublicProfileActivityCount {
   string date = 1;
   int32 count = 2;
+  int64 value = 3;
 }
 
 message PublicProfileModelUsage {
@@ -6326,6 +6652,8 @@ message GetUserProfileRequest {
 message GetUserProfileResponse {
   optional UserProfile profile = 1;
   PublicProfileActivitySummary activity_summary = 3;
+  optional bool public_visibility_allowed = 4;
+  optional string max_visibility = 5;
 }
 
 message UpdateUserProfileRequest {
@@ -6351,6 +6679,25 @@ message GetPublicProfileByHandleRequest {
 }
 
 message GetPublicProfileByHandleResponse {
+  UserProfile profile = 1;
+  PublicProfileActivitySummary activity_summary = 2;
+}
+
+message GetViewableProfileByHandleRequest {
+  string handle = 1;
+}
+
+message GetViewableProfileByHandleResponse {
+  UserProfile profile = 1;
+  PublicProfileActivitySummary activity_summary = 2;
+  string viewed_as = 3;
+}
+
+message GetTeamMemberProfileByHandleRequest {
+  string handle = 1;
+}
+
+message GetTeamMemberProfileByHandleResponse {
   UserProfile profile = 1;
   PublicProfileActivitySummary activity_summary = 2;
 }
@@ -6386,6 +6733,7 @@ message CreatePluginRequest {
   repeated TeamSkill inline_skills = 21;
   repeated TeamSubagent inline_subagents = 22;
   optional int64 marketplace_id = 23;
+  optional int32 team_id = 24;
 }
 
 message CreatePluginResponse {
@@ -6451,6 +6799,20 @@ message ImportPluginsFromGitHubRequest {
 message ImportPluginsFromGitHubResponse {
   repeated Plugin created_plugins = 1;
   repeated string skipped_plugin_names = 2;
+}
+
+message ParsePluginPublisherRepoInternalRequest {
+  string git_url = 1;
+  optional string git_ref = 2;
+  optional string release_tag = 3;
+  optional string release_asset = 4;
+}
+
+message ParsePluginPublisherRepoInternalResponse {
+  ParseGitHubRepoForPluginsResponse parsed_repo = 1;
+  optional string release_repo = 2;
+  optional string release_asset = 3;
+  optional string release_tag = 4;
 }
 
 message ReindexComponentDiff {
@@ -6730,6 +7092,7 @@ message UninstallTeamPluginResponse {
 
 message GetEffectiveUserPluginsRequest {
   optional bool use_replica = 1;
+  optional int32 team_id = 2;
 }
 
 message EffectivePlugin {
@@ -6794,6 +7157,8 @@ message UpdateMarketplaceRequest {
   optional string name = 2;
   optional string description = 3;
   optional bool auto_reindex = 4;
+  optional int32 team_id = 5;
+  optional string display_name = 6;
 }
 
 message UpdateMarketplaceResponse {
@@ -6802,6 +7167,7 @@ message UpdateMarketplaceResponse {
 
 message RemoveMarketplaceRequest {
   int64 marketplace_id = 1;
+  optional int32 team_id = 2;
 }
 
 message RemoveMarketplaceResponse {
@@ -6810,6 +7176,7 @@ message RemoveMarketplaceResponse {
 
 message RefreshMarketplaceRequest {
   int64 marketplace_id = 1;
+  optional int32 team_id = 2;
 }
 
 message RefreshMarketplaceResponse {
@@ -6825,6 +7192,7 @@ message ReindexAndApplyTeamMarketplaceChangesRequest {
   int64 marketplace_id = 1;
   optional string git_ref = 2;
   optional string commit_sha = 3;
+  optional int32 team_id = 4;
 }
 
 message ReindexAndApplyTeamMarketplaceChangesResponse {
@@ -6880,6 +7248,7 @@ message TeamMarketplaceConfig {
 message UpdateTeamMarketplaceConfigRequest {
   int64 marketplace_id = 1;
   repeated int64 directory_group_ids = 2;
+  optional int32 team_id = 3;
 }
 
 message UpdateTeamMarketplaceConfigResponse {
@@ -6911,6 +7280,7 @@ message SetTeamMarketplacePluginPoliciesRequest {
   }
   int64 marketplace_id = 1;
   repeated Policy policies = 2;
+  optional int32 team_id = 3;
 }
 
 message SetTeamMarketplacePluginPoliciesResponse {
@@ -6921,6 +7291,7 @@ message SetTeamMarketplacePluginPolicyVariablesRequest {
   int64 marketplace_id = 1;
   int64 plugin_id = 2;
   google.protobuf.Struct variables = 3;
+  optional int32 team_id = 4;
 }
 
 message SetTeamMarketplacePluginPolicyVariablesResponse {
@@ -7032,11 +7403,28 @@ message GetJiraStatusResponse {
   optional string base_url = 3;
 }
 
+message GetBitbucketForgeStatusRequest {
+  int32 team_id = 1;
+}
+
+message GetBitbucketForgeStatusResponse {
+  string status = 1;
+  optional string workspace_name = 2;
+  optional string base_url = 3;
+}
+
 message DisconnectJiraRequest {
   int32 team_id = 1;
 }
 
 message DisconnectJiraResponse {
+}
+
+message DisconnectBitbucketForgeRequest {
+  int32 team_id = 1;
+}
+
+message DisconnectBitbucketForgeResponse {
 }
 
 message JiraProject {
@@ -7147,6 +7535,255 @@ message UnlinkJiraUserResponse {
   bool success = 1;
 }
 
+message CrewAgent {
+  string id = 1;
+  string name = 3;
+  string automation_id = 7;
+  string archetype = 9;
+  bool drifted = 10;
+  bool paused = 11;
+  string repo_mode = 12;
+  repeated CrewMcpToolStatus mcp_tool_statuses = 14;
+  string persona = 15;
+}
+
+message CrewMcpToolStatus {
+  string key = 1;
+  string label = 2;
+  string state = 3;
+  string server_name = 4;
+}
+
+message Crew {
+  string id = 1;
+  string name = 2;
+  string vision = 3;
+  string goals = 4;
+  string slack_channel = 5;
+  repeated CrewAgent agents = 6;
+  string created_at = 7;
+  string updated_at = 8;
+  string standup_time = 9;
+  string datadog_dashboard_url = 10;
+  string notion_doc_url = 11;
+  string repo_url = 12;
+  string base_branch = 13;
+  string linear_project_url = 14;
+  string steering_note = 15;
+  string steering_note_updated_at = 16;
+}
+
+message CrewRecommendedMcp {
+  string name = 1;
+  string label = 2;
+}
+
+message CrewArchetype {
+  string key = 1;
+  string label = 2;
+  string description = 3;
+  string repo_mode = 4;
+  repeated CrewRecommendedMcp recommended_mcp = 5;
+}
+
+message ListCrewsRequest {
+}
+
+message ListCrewsResponse {
+  repeated Crew crews = 1;
+}
+
+message GetCrewRequest {
+  string crew_id = 1;
+}
+
+message GetCrewResponse {
+  Crew crew = 1;
+  optional CrewSlackChannelStatus slack_channel_status = 2;
+  optional CrewScheduleStatus schedule_status = 3;
+}
+
+message CrewScheduleStatus {
+  bool ok = 1;
+  string warning = 2;
+}
+
+message CrewSlackChannelStatus {
+  bool ok = 1;
+  bool bot_in_channel = 2;
+  string warning = 3;
+}
+
+message CreateCrewRequest {
+  string name = 1;
+}
+
+message CreateCrewResponse {
+  Crew crew = 1;
+}
+
+message UpdateCrewRequest {
+  Crew crew = 1;
+}
+
+message UpdateCrewResponse {
+  Crew crew = 1;
+  optional CrewSlackChannelStatus slack_channel_status = 2;
+  bool annotations_refreshed = 3;
+  optional CrewScheduleStatus schedule_status = 4;
+}
+
+message DeleteCrewRequest {
+  string crew_id = 1;
+}
+
+message DeleteCrewResponse {
+  repeated Crew crews = 1;
+}
+
+message ListCrewArchetypesRequest {
+}
+
+message ListCrewArchetypesResponse {
+  repeated CrewArchetype archetypes = 1;
+}
+
+message CrewActivityRun {
+  string run_uuid = 1;
+  string status = 2;
+  int64 created_at = 3;
+  bool posted_to_slack = 4;
+  string slack_delivery = 5;
+  string slack_error = 6;
+  string background_composer_id = 7;
+  string summary = 8;
+}
+
+message CrewMemberActivity {
+  string agent_id = 1;
+  string agent_name = 2;
+  string archetype = 3;
+  string automation_id = 4;
+  bool paused = 5;
+  repeated CrewActivityRun recent_runs = 6;
+  optional int64 next_run_at = 7;
+}
+
+message GetCrewActivityRequest {
+  string crew_id = 1;
+}
+
+message GetCrewActivityResponse {
+  repeated CrewMemberActivity members = 1;
+}
+
+message TriggerCrewStandupRequest {
+  string crew_id = 1;
+  string member_id = 2;
+  string instructions = 3;
+}
+
+message CrewStandupTriggerResult {
+  string agent_id = 1;
+  string agent_name = 2;
+  bool success = 3;
+  string background_composer_id = 4;
+  string error = 5;
+}
+
+message TriggerCrewStandupResponse {
+  int32 triggered_count = 1;
+  repeated CrewStandupTriggerResult results = 2;
+  bool skipped = 3;
+}
+
+message GetCrewStatsRequest {
+  string crew_id = 1;
+}
+
+message CrewMemberStats {
+  string agent_id = 1;
+  string agent_name = 2;
+  string automation_id = 3;
+  int32 runs = 4;
+  int32 prs_opened = 5;
+  int32 prs_merged = 6;
+  int32 files_changed = 7;
+  string last_activity_at = 8;
+  int32 runs_posted = 9;
+}
+
+message CrewPullRequest {
+  string pr_url = 1;
+  string title = 2;
+  string agent_id = 3;
+  string agent_name = 4;
+  bool is_draft = 5;
+  string created_at = 6;
+  string background_composer_id = 7;
+}
+
+message GetCrewStatsResponse {
+  int32 runs = 1;
+  int32 prs_opened = 2;
+  int32 prs_merged = 3;
+  int32 files_changed = 4;
+  string last_activity_at = 5;
+  repeated CrewMemberStats members = 6;
+  int32 runs_posted = 7;
+  repeated CrewPullRequest open_prs = 8;
+}
+
+message GetCrewStandupDigestRequest {
+  string crew_id = 1;
+}
+
+message CrewStandupDigestEntry {
+  string agent_id = 1;
+  string agent_name = 2;
+  string archetype = 3;
+  string persona = 4;
+  string text = 5;
+  int64 posted_at = 6;
+}
+
+message GetCrewStandupDigestResponse {
+  bool available = 1;
+  int64 posted_at = 2;
+  string thread_url = 3;
+  repeated CrewStandupDigestEntry entries = 4;
+}
+
+message DraftCrewBriefRequest {
+  string goal = 1;
+}
+
+message DraftCrewBriefMember {
+  string name = 1;
+  string archetype = 2;
+}
+
+message DraftCrewBriefResponse {
+  string name = 1;
+  string vision = 2;
+  string goals = 3;
+  repeated DraftCrewBriefMember members = 4;
+}
+
+message CrewWriteBackRequest {
+  string token = 1;
+  string action = 2;
+  string kind = 3;
+  string url = 4;
+  string text = 5;
+}
+
+message CrewWriteBackResponse {
+  bool ok = 1;
+  bool updated = 2;
+  string reason = 3;
+}
+
 service DashboardService {
   rpc GetTeams(GetTeamsRequest) returns (GetTeamsResponse);
   rpc GetMe(GetMeRequest) returns (GetMeResponse);
@@ -7154,6 +7791,7 @@ service DashboardService {
   rpc GetUserOrganizations(GetUserOrganizationsRequest) returns (GetUserOrganizationsResponse);
   rpc SetUserDefaultTeam(SetUserDefaultTeamRequest) returns (SetUserDefaultTeamResponse);
   rpc GetOrganizationMembers(GetOrganizationMembersRequest) returns (GetOrganizationMembersResponse);
+  rpc GetOrganizationMember(GetOrganizationMemberRequest) returns (GetOrganizationMemberResponse);
   rpc ListOrganizationIdentityProviders(ListOrganizationIdentityProvidersRequest) returns (ListOrganizationIdentityProvidersResponse);
   rpc UpdateOrganizationIdentityProviderSsoSettings(UpdateOrganizationIdentityProviderSsoSettingsRequest) returns (UpdateOrganizationIdentityProviderResponse);
   rpc SetOrganizationIdentityProviderAllowDomainJoin(SetOrganizationIdentityProviderAllowDomainJoinRequest) returns (UpdateOrganizationIdentityProviderResponse);
@@ -7163,6 +7801,7 @@ service DashboardService {
   rpc SetOrganizationMemberTeams(SetOrganizationMemberTeamsRequest) returns (SetOrganizationMemberTeamsResponse);
   rpc BulkMoveOrganizationMembers(BulkMoveOrganizationMembersRequest) returns (BulkMoveOrganizationMembersResponse);
   rpc SetOrganizationMemberRole(SetOrganizationMemberRoleRequest) returns (SetOrganizationMemberRoleResponse);
+  rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse);
   rpc UpdateOrganizationTeam(UpdateOrganizationTeamRequest) returns (UpdateOrganizationTeamResponse);
   rpc CreateOrganizationTeam(CreateOrganizationTeamRequest) returns (CreateOrganizationTeamResponse);
   rpc GetOrganizationTeamAdminCandidates(GetOrganizationTeamAdminCandidatesRequest) returns (GetOrganizationTeamAdminCandidatesResponse);
@@ -7181,6 +7820,7 @@ service DashboardService {
   rpc UpdateOrganizationGroupAutorunSettings(UpdateOrganizationGroupAutorunSettingsRequest) returns (UpdateOrganizationGroupAutorunSettingsResponse);
   rpc GetOrganizationGroupModelAllowlist(GetOrganizationGroupModelAllowlistRequest) returns (GetOrganizationGroupModelAllowlistResponse);
   rpc UpdateOrganizationGroupModelAllowlist(UpdateOrganizationGroupModelAllowlistRequest) returns (UpdateOrganizationGroupModelAllowlistResponse);
+  rpc CreateOrganizationGroupAnthropicCyberEnrollmentUrl(CreateOrganizationGroupAnthropicCyberEnrollmentUrlRequest) returns (CreateOrganizationGroupAnthropicCyberEnrollmentUrlResponse);
   rpc GetGroups(GetGroupsRequest) returns (GetGroupsResponse);
   rpc GetGroupMembers(GetGroupMembersRequest) returns (GetGroupMembersResponse);
   rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse);
@@ -7241,7 +7881,6 @@ service DashboardService {
   rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse);
   rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
   rpc GetMemberRemovalInsights(GetMemberRemovalInsightsRequest) returns (GetMemberRemovalInsightsResponse);
-  rpc GetTeamUsage(GetTeamUsageRequest) returns (GetTeamUsageResponse);
   rpc GetSignUpType(GetSignUpTypeRequest) returns (GetSignUpTypeResponse);
   rpc GetHardLimit(GetHardLimitRequest) returns (GetHardLimitResponse);
   rpc SetHardLimit(SetHardLimitRequest) returns (SetHardLimitResponse);
@@ -7263,6 +7902,7 @@ service DashboardService {
   rpc RevokeBackgroundComposerSecret(RevokeBackgroundComposerSecretRequest) returns (RevokeBackgroundComposerSecretResponse);
   rpc UpdateBackgroundComposerSecret(UpdateBackgroundComposerSecretRequest) returns (UpdateBackgroundComposerSecretResponse);
   rpc GetMcpConfig(GetMcpConfigRequest) returns (GetMcpConfigResponse);
+  rpc GetEffectiveMcpConfigForUser(GetEffectiveMcpConfigForUserRequest) returns (GetEffectiveMcpConfigForUserResponse);
   rpc GetAvailableMcpServers(GetAvailableMcpServersRequest) returns (GetAvailableMcpServersResponse);
   rpc GetMcpServerUsageSummary(GetMcpServerUsageSummaryRequest) returns (GetMcpServerUsageSummaryResponse);
   rpc SetMcpConfig(SetMcpConfigRequest) returns (SetMcpConfigResponse);
@@ -7350,17 +7990,24 @@ service DashboardService {
   rpc GetTeamAdminSettingsOrEmptyIfNotInTeam(GetTeamAdminSettingsRequest) returns (GetTeamAdminSettingsResponse);
   rpc GetBaseTeamAdminSettings(GetBaseTeamAdminSettingsRequest) returns (GetTeamAdminSettingsResponse);
   rpc UpdateTeamAdminSettings(UpdateTeamAdminSettingsRequest) returns (UpdateTeamAdminSettingsResponse);
+  rpc SetTeamNoZdrModelConsent(SetTeamNoZdrModelConsentRequest) returns (SetTeamNoZdrModelConsentResponse);
+  rpc SetOrganizationNoZdrModelConsent(SetOrganizationNoZdrModelConsentRequest) returns (SetOrganizationNoZdrModelConsentResponse);
+  rpc SetUserNoZdrModelConsent(SetUserNoZdrModelConsentRequest) returns (SetUserNoZdrModelConsentResponse);
+  rpc SetTeamMemberNoZdrModelConsent(SetTeamMemberNoZdrModelConsentRequest) returns (SetTeamMemberNoZdrModelConsentResponse);
+  rpc GetNoZdrModelConsentStatus(GetNoZdrModelConsentStatusRequest) returns (GetNoZdrModelConsentStatusResponse);
   rpc UpdateTeamInviteLinkTTLSetting(UpdateTeamInviteLinkTTLSettingRequest) returns (UpdateTeamInviteLinkTTLSettingResponse);
   rpc GetProtectedGitScopes(GetProtectedGitScopesRequest) returns (GetProtectedGitScopesResponse);
   rpc CreateProtectedGitScope(CreateProtectedGitScopeRequest) returns (CreateProtectedGitScopeResponse);
   rpc DeleteProtectedGitScope(DeleteProtectedGitScopeRequest) returns (DeleteProtectedGitScopeResponse);
   rpc CreateTeamFreeTrialCode(CreateTeamFreeTrialCodeRequest) returns (CreateTeamFreeTrialCodeResponse);
+  rpc CreateTeamsTrialV2ReferralCode(CreateTeamsTrialV2ReferralCodeRequest) returns (CreateTeamsTrialV2ReferralCodeResponse);
   rpc GetTeamAnalytics(GetTeamAnalyticsRequest) returns (GetTeamAnalyticsResponse);
   rpc GetUserAnalytics(GetUserAnalyticsRequest) returns (GetUserAnalyticsResponse);
   rpc GetTeamRawData(GetTeamRawDataRequest) returns (GetTeamRawDataResponse);
   rpc GetClientUsageData(GetClientUsageDataRequest) returns (GetClientUsageDataResponse);
   rpc GetCurrentPeriodUsage(GetCurrentPeriodUsageRequest) returns (GetCurrentPeriodUsageResponse);
   rpc GetPlanInfo(GetPlanInfoRequest) returns (GetPlanInfoResponse);
+  rpc VerifyAppleTransaction(VerifyAppleTransactionRequest) returns (VerifyAppleTransactionResponse);
   rpc GetCursorReviewEntitlement(GetCursorReviewEntitlementRequest) returns (GetCursorReviewEntitlementResponse);
   rpc GetUsageLimitPolicyStatus(GetUsageLimitPolicyStatusRequest) returns (GetUsageLimitPolicyStatusResponse);
   rpc GetUsageLimitStatusAndActiveGrants(GetUsageLimitStatusAndActiveGrantsRequest) returns (GetUsageLimitStatusAndActiveGrantsResponse);
@@ -7369,7 +8016,6 @@ service DashboardService {
   rpc GetAdvancedAnalyticsEnabled(GetAdvancedAnalyticsEnabledRequest) returns (GetAdvancedAnalyticsEnabledResponse);
   rpc GetTokenUsage(GetTokenUsageRequest) returns (GetTokenUsageResponse);
   rpc ValidateBedrockIamRole(ValidateBedrockIamRoleRequest) returns (ValidateBedrockIamRoleResponse);
-  rpc CreateAnthropicCyberEnrollmentUrl(CreateAnthropicCyberEnrollmentUrlRequest) returns (CreateAnthropicCyberEnrollmentUrlResponse);
   rpc AddUserToEarlyAccessList(AddUserToEarlyAccessListRequest) returns (AddUserToEarlyAccessListResponse);
   rpc GetTeamSpend(GetTeamSpendRequest) returns (GetTeamSpendResponse);
   rpc GetCurrentBillingCycle(GetCurrentBillingCycleRequest) returns (GetCurrentBillingCycleResponse);
@@ -7378,6 +8024,7 @@ service DashboardService {
   rpc GetBugbotAnalyticsV2(GetBugbotAnalyticsV2Request) returns (GetBugbotAnalyticsV2Response);
   rpc GetBugBotPRAnalytics(GetBugBotPRAnalyticsRequest) returns (GetBugBotPRAnalyticsResponse);
   rpc GetGithubInstallations(GetGithubInstallationsRequest) returns (GetGithubInstallationsResponse);
+  rpc GetBugbotSuggestedRepos(GetBugbotSuggestedReposRequest) returns (GetBugbotSuggestedReposResponse);
   rpc GetScmConnectionStatus(GetScmConnectionStatusRequest) returns (GetScmConnectionStatusResponse);
   rpc GetInstallationRepos(GetInstallationReposRequest) returns (GetInstallationReposResponse);
   rpc FetchAllInstallationRepos(FetchAllInstallationReposRequest) returns (FetchAllInstallationReposResponse);
@@ -7396,8 +8043,11 @@ service DashboardService {
   rpc GetTeamBugbotSettings(GetTeamBugbotSettingsRequest) returns (GetTeamBugbotSettingsResponse);
   rpc UpdateTeamBugbotSettings(UpdateTeamBugbotSettingsRequest) returns (UpdateTeamBugbotSettingsResponse);
   rpc MigrateTeamBugbotToUsageBasedBilling(MigrateTeamBugbotToUsageBasedBillingRequest) returns (MigrateTeamBugbotToUsageBasedBillingResponse);
+  rpc GetBugbotMergedPrScanSummary(GetBugbotMergedPrScanSummaryRequest) returns (GetBugbotMergedPrScanSummaryResponse);
   rpc GetBugbotMode(GetBugbotModeRequest) returns (GetBugbotModeResponse);
   rpc UpdateBugbotMode(UpdateBugbotModeRequest) returns (UpdateBugbotModeResponse);
+  rpc GetBugBotProUserMode(GetBugBotProUserModeRequest) returns (GetBugBotProUserModeResponse);
+  rpc UpdateBugBotProUserMode(UpdateBugBotProUserModeRequest) returns (UpdateBugBotProUserModeResponse);
   rpc GetBugbotUserSettings(GetBugbotUserSettingsRequest) returns (GetBugbotUserSettingsResponse);
   rpc UpdateBugbotUserSettings(UpdateBugbotUserSettingsRequest) returns (UpdateBugbotUserSettingsResponse);
   rpc GetFullSelfDrivingUserSettings(GetFullSelfDrivingUserSettingsRequest) returns (GetFullSelfDrivingUserSettingsResponse);
@@ -7456,6 +8106,8 @@ service DashboardService {
   rpc UpdateTeamSharedConversationSettings(UpdateTeamSharedConversationSettingsRequest) returns (UpdateTeamSharedConversationSettingsResponse);
   rpc GetTeamSharedCanvasSettings(GetTeamSharedCanvasSettingsRequest) returns (GetTeamSharedCanvasSettingsResponse);
   rpc UpdateTeamSharedCanvasSettings(UpdateTeamSharedCanvasSettingsRequest) returns (UpdateTeamSharedCanvasSettingsResponse);
+  rpc GetTeamPublicProfileSettings(GetTeamPublicProfileSettingsRequest) returns (GetTeamPublicProfileSettingsResponse);
+  rpc UpdateTeamPublicProfileSettings(UpdateTeamPublicProfileSettingsRequest) returns (UpdateTeamPublicProfileSettingsResponse);
   rpc GetTeamBackgroundAgentSettings(GetTeamBackgroundAgentSettingsRequest) returns (GetTeamBackgroundAgentSettingsResponse);
   rpc UpdateTeamBackgroundAgentSettings(UpdateTeamBackgroundAgentSettingsRequest) returns (UpdateTeamBackgroundAgentSettingsResponse);
   rpc RevokeTeamInviteLink(RevokeTeamInviteLinkRequest) returns (RevokeTeamInviteLinkResponse);
@@ -7522,7 +8174,9 @@ service DashboardService {
   rpc GetJiraInstallUrl(GetJiraInstallUrlRequest) returns (GetJiraInstallUrlResponse);
   rpc LinkJiraInstallation(LinkJiraInstallationRequest) returns (LinkJiraInstallationResponse);
   rpc GetJiraStatus(GetJiraStatusRequest) returns (GetJiraStatusResponse);
+  rpc GetBitbucketForgeStatus(GetBitbucketForgeStatusRequest) returns (GetBitbucketForgeStatusResponse);
   rpc DisconnectJira(DisconnectJiraRequest) returns (DisconnectJiraResponse);
+  rpc DisconnectBitbucketForge(DisconnectBitbucketForgeRequest) returns (DisconnectBitbucketForgeResponse);
   rpc GetJiraProjects(GetJiraProjectsRequest) returns (GetJiraProjectsResponse);
   rpc GetJiraTeamSettings(GetJiraTeamSettingsRequest) returns (GetJiraTeamSettingsResponse);
   rpc UpdateJiraTeamSettings(UpdateJiraTeamSettingsRequest) returns (UpdateJiraTeamSettingsResponse);
@@ -7548,6 +8202,7 @@ service DashboardService {
   rpc GetAdminNotificationStatus(GetAdminNotificationStatusRequest) returns (GetAdminNotificationStatusResponse);
   rpc OptOutNewPricing(OptOutNewPricingRequest) returns (OptOutNewPricingResponse);
   rpc SubmitFeedback(SubmitFeedbackRequest) returns (SubmitFeedbackResponse);
+  rpc SubmitFeedbackAnon(SubmitFeedbackRequest) returns (SubmitFeedbackResponse);
   rpc CanStudentReverify(CanStudentReverifyRequest) returns (CanStudentReverifyResponse);
   rpc GetActiveOffboardingBanner(GetActiveOffboardingBannerRequest) returns (GetActiveOffboardingBannerResponse);
   rpc ClientAction(ClientActionRequest) returns (ClientActionResponse);
@@ -7561,11 +8216,14 @@ service DashboardService {
   rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UpdateUserProfileResponse);
   rpc ClaimUserProfileHandle(ClaimUserProfileHandleRequest) returns (ClaimUserProfileHandleResponse);
   rpc GetPublicProfileByHandle(GetPublicProfileByHandleRequest) returns (GetPublicProfileByHandleResponse);
+  rpc GetViewableProfileByHandle(GetViewableProfileByHandleRequest) returns (GetViewableProfileByHandleResponse);
+  rpc GetTeamMemberProfileByHandle(GetTeamMemberProfileByHandleRequest) returns (GetTeamMemberProfileByHandleResponse);
   rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse);
   rpc CreatePlugin(CreatePluginRequest) returns (CreatePluginResponse);
   rpc UpdatePlugin(UpdatePluginRequest) returns (UpdatePluginResponse);
   rpc ParseGitHubRepoForPlugins(ParseGitHubRepoForPluginRequest) returns (ParseGitHubRepoForPluginsResponse);
   rpc ImportPluginsFromGitHub(ImportPluginsFromGitHubRequest) returns (ImportPluginsFromGitHubResponse);
+  rpc ParsePluginPublisherRepoInternal(ParsePluginPublisherRepoInternalRequest) returns (ParsePluginPublisherRepoInternalResponse);
   rpc PreviewReindexPluginRepoInternal(PreviewReindexPluginRepoInternalRequest) returns (PreviewReindexPluginRepoResponse);
   rpc ApplyReindexPluginRepoInternal(ApplyReindexPluginRepoInternalRequest) returns (ApplyReindexPluginRepoResponse);
   rpc PreviewMigrateReindexPluginRepoInternal(PreviewMigrateReindexPluginRepoInternalRequest) returns (PreviewMigrateReindexPluginRepoResponse);
@@ -7607,4 +8265,16 @@ service DashboardService {
   rpc GetManagedSkills(GetManagedSkillsRequest) returns (GetManagedSkillsResponse);
   rpc GetCursorUserState(GetCursorUserStateRequest) returns (GetCursorUserStateResponse);
   rpc SetJobData(SetJobDataRequest) returns (SetJobDataResponse);
+  rpc ListCrews(ListCrewsRequest) returns (ListCrewsResponse);
+  rpc GetCrew(GetCrewRequest) returns (GetCrewResponse);
+  rpc CreateCrew(CreateCrewRequest) returns (CreateCrewResponse);
+  rpc UpdateCrew(UpdateCrewRequest) returns (UpdateCrewResponse);
+  rpc DeleteCrew(DeleteCrewRequest) returns (DeleteCrewResponse);
+  rpc ListCrewArchetypes(ListCrewArchetypesRequest) returns (ListCrewArchetypesResponse);
+  rpc GetCrewActivity(GetCrewActivityRequest) returns (GetCrewActivityResponse);
+  rpc TriggerCrewStandup(TriggerCrewStandupRequest) returns (TriggerCrewStandupResponse);
+  rpc GetCrewStats(GetCrewStatsRequest) returns (GetCrewStatsResponse);
+  rpc GetCrewStandupDigest(GetCrewStandupDigestRequest) returns (GetCrewStandupDigestResponse);
+  rpc DraftCrewBrief(DraftCrewBriefRequest) returns (DraftCrewBriefResponse);
+  rpc CrewWriteBack(CrewWriteBackRequest) returns (CrewWriteBackResponse);
 }

@@ -44,4 +44,7 @@ message CursorRule {
   optional string marketplace = 10;
   optional string plugin_id = 11;
   optional string marketplace_id = 12;
+  repeated string scoped_to = 13;
+  string frontmatter = 14;
+  optional bool is_required = 15;
 }

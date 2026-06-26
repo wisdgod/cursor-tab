@@ -16,6 +16,7 @@ message AgentSkill {
   optional string plugin_id = 11;
   optional string marketplace_id = 12;
   repeated string globs = 13;
+  repeated string scoped_to = 14;
 }
 
 message AgentSkillMetadata {
@@ -31,4 +32,5 @@ message AgentSkillMetadata {
   optional string plugin_id = 10;
   optional string marketplace_id = 11;
   repeated string globs = 12;
+  repeated string scoped_to = 13;
 }

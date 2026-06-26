@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/pi_common.proto";
+
+message PiLsToolCall {
+  PiLsToolArgs args = 1;
+  PiLsToolResult result = 2;
+}
+
+message PiLsToolArgs {
+  optional string path = 1;
+  optional int32 limit = 2;
+}
+
+message PiLsToolResult {
+  oneof result {
+    PiLsToolSuccess success = 1;
+    PiLsToolError error = 2;
+  }
+}
+
+message PiLsToolSuccess {
+  string output = 1;
+  optional PiTruncation truncation = 2;
+  optional uint32 entry_limit_reached = 3;
+}
+
+message PiLsToolError {
+  string error = 1;
+}

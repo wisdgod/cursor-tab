@@ -50,6 +50,40 @@ message PodMetricsSample {
   uint64 cpu_limit_mcores = 2;
   uint64 memory_usage_bytes = 3;
   uint64 memory_limit_bytes = 4;
+  uint64 cgroup_memory_current_bytes = 5;
+  uint64 cgroup_memory_max_bytes = 6;
+  uint64 oom_kill_count = 7;
+  uint64 pids_current = 8;
+  uint64 pids_max = 9;
+  uint64 process_count = 10;
+  uint64 new_procs_this_interval = 12;
+  uint64 procs_seen_total = 13;
+  map<string, uint64> process_state_counts = 14;
+  map<string, uint64> top_procs_by_name = 15;
+  repeated TopProcess top_procs = 16;
+  double memory_psi_full_avg10 = 17;
+  int64 oom_victim_pid = 18;
+  string oom_victim_comm = 19;
+  uint64 oom_victim_rss_kb = 20;
+  repeated PodDiskUsage disk_usage_by_device = 21;
+}
+
+message PodDiskUsage {
+  string device = 1;
+  uint64 usage_bytes = 2;
+  uint64 limit_bytes = 3;
+  string path = 4;
+}
+
+message TopProcess {
+  int64 pid = 1;
+  int64 ppid = 2;
+  string comm = 3;
+  string state = 4;
+  uint64 rss_kb = 5;
+  uint64 threads = 6;
+  uint64 num_fds = 7;
+  uint64 cpu_ticks_delta = 8;
 }
 
 message GetProcessStatusRequest {

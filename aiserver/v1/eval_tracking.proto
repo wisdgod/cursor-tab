@@ -31,6 +31,7 @@ enum EvalKillReason {
   EVAL_KILL_REASON_UNSPECIFIED = 0;
   EVAL_KILL_REASON_USER_KILL = 1;
   EVAL_KILL_REASON_JOB_TIMEOUT = 2;
+  EVAL_KILL_REASON_STEP_FAILED = 3;
 }
 
 enum RlEvalJobDbStatus {
@@ -167,6 +168,7 @@ message CreateRunRequest {
   optional string slack_channel = 11;
   optional string slack_thread_ts = 12;
   optional string slack_user_id = 13;
+  optional string slack_status_message_ts = 14;
 }
 
 message CreateRunResponse {
@@ -246,6 +248,7 @@ message UpsertRunRolloutStatusRequest {
   optional int32 completion_tokens = 15;
   optional int32 cache_read_tokens = 16;
   optional int32 cache_write_tokens = 17;
+  optional int32 reasoning_tokens = 23;
   optional double total_cost_usd = 18;
   optional google.protobuf.Struct structured_outputs_by_scorer = 19;
   optional double env_prep_ms = 20;
@@ -255,6 +258,16 @@ message UpsertRunRolloutStatusRequest {
 
 message UpsertRunRolloutStatusResponse {
   bool ok = 1;
+}
+
+message GetLastRolloutRequestIdRequest {
+  string run_id = 1;
+  int32 iteration_no = 2;
+  string data_point_id = 3;
+}
+
+message GetLastRolloutRequestIdResponse {
+  optional string rollout_request_id = 1;
 }
 
 message HeartbeatProgress {
@@ -281,6 +294,7 @@ message HeartbeatResponse {
   bool ok = 1;
   bool kill_requested = 2;
   optional EvalCleanupRequest cleanup_request = 3;
+  optional int32 concurrency_limit_override = 4;
 }
 
 message RequestKillRequest {
@@ -490,6 +504,24 @@ message UpdateRlEvalStepDatasetEvalResponse {
   bool ok = 1;
 }
 
+message RequestRlEvalStepKillRequest {
+  string job_id = 1;
+  int32 step = 2;
+  optional string requested_by = 3;
+}
+
+message RequestRlEvalStepKillResponse {
+  bool ok = 1;
+}
+
+message GetRlEvalStepKillSignalsRequest {
+  string job_id = 1;
+}
+
+message GetRlEvalStepKillSignalsResponse {
+  repeated int32 steps = 1;
+}
+
 message DataOpsJobStepRecord {
   string id = 1;
   DataOpsPhase phase = 2;
@@ -541,6 +573,9 @@ message UpdateDataOpsJobRequest {
   optional string stats_s3_uri = 11;
   optional string config_block_s3_uri = 12;
   optional string error_message = 13;
+  optional string rollouts_s3_uri = 14;
+  optional string rewards_s3_uri = 15;
+  optional string datacheck_s3_uri = 16;
 }
 
 message UpdateDataOpsJobResponse {
@@ -595,6 +630,7 @@ service EvalTrackingService {
   rpc SetRunParams(SetRunParamsRequest) returns (SetRunParamsResponse);
   rpc SetRunTags(SetRunTagsRequest) returns (SetRunTagsResponse);
   rpc UpsertRunRolloutStatus(UpsertRunRolloutStatusRequest) returns (UpsertRunRolloutStatusResponse);
+  rpc GetLastRolloutRequestId(GetLastRolloutRequestIdRequest) returns (GetLastRolloutRequestIdResponse);
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
   rpc RequestKill(RequestKillRequest) returns (RequestKillResponse);
   rpc SetRayJobName(SetRayJobNameRequest) returns (SetRayJobNameResponse);
@@ -610,6 +646,8 @@ service EvalTrackingService {
   rpc UpsertRlEvalJobStep(UpsertRlEvalJobStepRequest) returns (UpsertRlEvalJobStepResponse);
   rpc SetEvalRunRlEvalJobStep(SetEvalRunRlEvalJobStepRequest) returns (SetEvalRunRlEvalJobStepResponse);
   rpc UpdateRlEvalStepDatasetEval(UpdateRlEvalStepDatasetEvalRequest) returns (UpdateRlEvalStepDatasetEvalResponse);
+  rpc RequestRlEvalStepKill(RequestRlEvalStepKillRequest) returns (RequestRlEvalStepKillResponse);
+  rpc GetRlEvalStepKillSignals(GetRlEvalStepKillSignalsRequest) returns (GetRlEvalStepKillSignalsResponse);
   rpc UpdateDataOpsJob(UpdateDataOpsJobRequest) returns (UpdateDataOpsJobResponse);
   rpc GetDataOpsJob(GetDataOpsJobRequest) returns (GetDataOpsJobResponse);
   rpc ListDataOpsJobs(ListDataOpsJobsRequest) returns (ListDataOpsJobsResponse);

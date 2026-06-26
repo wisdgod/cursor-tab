@@ -65,6 +65,8 @@ message PersistedDevContainerConfig {
   optional bool privileged = 17;
   optional bool build_container = 22;
   optional bool enable_checkpoint_scratch_drive = 25;
+  optional bool blob_client_resilience_enabled = 26;
+  ContainerRuntime container_runtime = 27;
   oneof source {
     PersistedGitRepoSource git = 1;
     PersistedTarRepoSource tar = 2;
@@ -136,6 +138,7 @@ message DockerContainerPersistentState {
   bool removed = 4;
   bool leaked = 5;
   optional uint64 post_pause_unpause_delay_ms = 6;
+  optional string isod_container_name = 8;
 }
 
 message RuntimeStatePersistentState {

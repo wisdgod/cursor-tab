@@ -88,6 +88,7 @@ message Pod {
   repeated string low_cardinality_labels = 25;
   repeated string checkpoint_group_ids = 26;
   optional string started_from_checkpoint_group_id = 27;
+  optional string started_from_checkpoint_id = 30;
   optional PodStartCacheSource started_from_cache_source = 28;
   optional uint64 started_from_checkpoint_creation_timestamp = 29;
 }
@@ -170,6 +171,7 @@ message DaemonPod {
   optional uint32 internal_proxy_port = 3;
   optional DefaultPortConfig default_port_config = 4;
   optional string started_from_checkpoint_group_id = 5;
+  optional string started_from_checkpoint_id = 8;
   optional PodStartCacheSource started_from_cache_source = 6;
   optional uint64 started_from_checkpoint_creation_timestamp = 7;
 }

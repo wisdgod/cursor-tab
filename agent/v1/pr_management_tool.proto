@@ -18,6 +18,7 @@ message CreatePrAction {
   string branch_name = 5;
   repeated string add_labels = 6;
   optional string repo_url = 7;
+  optional bool skip_branch_prefix_check = 8;
 }
 
 message UpdatePrAction {

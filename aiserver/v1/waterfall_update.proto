@@ -19,6 +19,27 @@ enum WaterfallSpanStatusType {
   WATERFALL_SPAN_STATUS_TYPE_ERROR = 3;
 }
 
+enum WaterfallSpanEndStatus {
+  WATERFALL_SPAN_END_STATUS_UNSPECIFIED = 0;
+  WATERFALL_SPAN_END_STATUS_SUCCESS = 1;
+  WATERFALL_SPAN_END_STATUS_FAILURE = 2;
+}
+
+enum WaterfallPhaseType {
+  WATERFALL_PHASE_TYPE_UNSPECIFIED = 0;
+  WATERFALL_PHASE_TYPE_ENVIRONMENT = 1;
+  WATERFALL_PHASE_TYPE_CREATE_CLOUD_WORKSPACE = 2;
+  WATERFALL_PHASE_TYPE_PROVISION_SANDBOX = 3;
+  WATERFALL_PHASE_TYPE_RESTORE_WORKSPACE_FILES = 4;
+  WATERFALL_PHASE_TYPE_DOCKER_BUILD = 5;
+  WATERFALL_PHASE_TYPE_SETUP_REPOSITORY = 6;
+  WATERFALL_PHASE_TYPE_INSTALL_DEPENDENCIES = 7;
+  WATERFALL_PHASE_TYPE_RUN_WORKSPACE_SETUP = 8;
+  WATERFALL_PHASE_TYPE_START_AGENT_SERVICES = 9;
+  WATERFALL_PHASE_TYPE_INSTALL_EXTENSIONS = 10;
+  WATERFALL_PHASE_TYPE_COMPLETE = 11;
+}
+
 message WaterfallUpdate {
   google.protobuf.Timestamp timestamp = 1;
   oneof update {
@@ -33,6 +54,8 @@ message WaterfallUpdate {
 message SpanStart {
   string span_id = 1;
   optional string parent_span_id = 2;
+  WaterfallPhaseType phase_type = 5;
+  optional string fallback_phase_label = 6;
   oneof span_details {
     GitReposSetupSpanDetails git_repos_setup = 3;
     GitRepoSetupSpanDetails git_repo_setup = 4;
@@ -48,6 +71,7 @@ message SpanUpdate {
 
 message SpanEnd {
   string span_id = 1;
+  WaterfallSpanEndStatus end_status = 2;
 }
 
 message SpanLog {

@@ -307,6 +307,7 @@ message ContextRerankingResponse {
 message NameTabRequest {
   repeated ConversationMessage messages = 1;
   bool is_project = 2;
+  string conversation_id = 6;
   oneof credentials {
     agent.v1.ApiKeyCredentials api_key_credentials = 3;
     agent.v1.AzureCredentials azure_credentials = 4;
@@ -753,11 +754,17 @@ message ReportAgentFeedbackRequest {
     SENTIMENT_UNSPECIFIED = 0;
     SENTIMENT_UP = 1;
     SENTIMENT_DOWN = 2;
+    SENTIMENT_RETRACTED = 3;
   }
   enum Source {
     SOURCE_UNSPECIFIED = 0;
     SOURCE_IDE = 1;
     SOURCE_GLASS = 2;
+  }
+  enum Variant {
+    VARIANT_UNSPECIFIED = 0;
+    VARIANT_PROMINENT = 1;
+    VARIANT_INLINE = 2;
   }
   string request_id = 1;
   Sentiment sentiment = 2;
@@ -765,6 +772,7 @@ message ReportAgentFeedbackRequest {
   optional string comment = 4;
   optional string canonical_model_name = 5;
   optional Source source = 6;
+  optional Variant variant = 7;
 }
 
 message ReportAgentFeedbackResponse {
@@ -1194,6 +1202,43 @@ message AvailableDocsResponse {
   repeated DocumentationInfo docs = 1;
 }
 
+message RunWebSearchRequest {
+  string search_term = 1;
+  optional string explanation = 2;
+  string model_id = 3;
+}
+
+message WebSearchDocument {
+  string url = 1;
+  string title = 2;
+  string text = 3;
+}
+
+message RunWebSearchResponse {
+  optional string answer = 1;
+  repeated WebSearchDocument documents = 2;
+}
+
+message RunWebFetchRequest {
+  string url = 1;
+}
+
+message RunWebFetchSuccess {
+  string content = 1;
+}
+
+message RunWebFetchError {
+  string error = 1;
+  bool is_timeout = 2;
+}
+
+message RunWebFetchResponse {
+  oneof result {
+    RunWebFetchSuccess success = 1;
+    RunWebFetchError error = 2;
+  }
+}
+
 message ThrowErrorCheckRequest {
   ErrorDetails.Error error = 1;
 }
@@ -1214,6 +1259,7 @@ message AvailableModelsRequest {
   optional AvailableModelsScope scope = 10;
   optional bool use_react_model_picker = 11;
   optional bool use_cloud_agent_effort_modes = 12;
+  optional string admin_settings_group_public_id = 13;
 }
 
 message AvailableModelsResponse {
@@ -1291,6 +1337,8 @@ message AvailableModelsResponse {
     optional bool default_disabled_in_admin_allowlist = 43;
     repeated CloudAgentEffortMode cloud_agent_effort_modes = 44;
     optional bool supports_smart_mode_classifier = 45;
+    optional bool requires_data_retention = 46;
+    optional string reason_for_zdr_consent_block = 47;
   }
   message ModelVariantConfig {
     repeated agent.v1.RequestedModel.ModelParameterValue parameter_values = 1;
@@ -3012,6 +3060,7 @@ message ProcessMetricsV2RowRequest {
   double session_peak_mem_mb = 9;
   double memory_during_sample_peak_mb = 10;
   double cpu_during_sample_peak_pct = 11;
+  repeated string argv = 12;
 }
 
 message ReportProcessMetricsV2Response {
@@ -3287,6 +3336,8 @@ service AiService {
   rpc SummarizeWithReferences(SummarizeWithReferencesRequest) returns (RequestReceivedResponse);
   rpc DocumentationQuery(DocumentationQueryRequest) returns (DocumentationQueryResponse);
   rpc AvailableDocs(AvailableDocsRequest) returns (AvailableDocsResponse);
+  rpc RunWebSearch(RunWebSearchRequest) returns (RunWebSearchResponse);
+  rpc RunWebFetch(RunWebFetchRequest) returns (RunWebFetchResponse);
   rpc ReportFeedback(ReportFeedbackRequest) returns (ReportFeedbackResponse);
   rpc ReportBug(ReportBugRequest) returns (ReportBugResponse);
   rpc StreamChatContext(StreamChatContextRequest) returns (stream StreamChatContextResponse);

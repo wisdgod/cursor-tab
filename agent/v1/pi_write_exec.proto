@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message PiWriteExecArgs {
+  string path = 1;
+  string content = 2;
+}
+
+message PiWriteExecResult {
+  oneof result {
+    PiWriteExecSuccess success = 1;
+    PiWriteExecError error = 2;
+    PiWriteExecRejected rejected = 3;
+  }
+}
+
+message PiWriteExecSuccess {
+  string output = 1;
+}
+
+message PiWriteExecError {
+  string error = 1;
+}
+
+message PiWriteExecRejected {
+  string reason = 1;
+}

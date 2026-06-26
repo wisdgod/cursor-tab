@@ -250,6 +250,26 @@ message SCMGetPullRequestForBranchResponse {
   repeated string pr_urls = 1;
 }
 
+message SCMBranchRef {
+  string repo_url = 1;
+  string branch_name = 2;
+}
+
+message SCMBatchGetPullRequestForBranchRequest {
+  repeated SCMBranchRef branches = 1;
+  optional bool skip_cache = 2;
+}
+
+message SCMBranchPullRequests {
+  string repo_url = 1;
+  string branch_name = 2;
+  repeated string pr_urls = 3;
+}
+
+message SCMBatchGetPullRequestForBranchResponse {
+  repeated SCMBranchPullRequests results = 1;
+}
+
 message SCMPullRequestDiffFile {
   string filename = 1;
   optional string previous_filename = 2;
@@ -366,9 +386,14 @@ service SCMService {
   rpc GetPullRequestChecks(GetPullRequestChecksRequest) returns (GetPullRequestChecksResponse);
   rpc GetSCMPullRequestCommits(GetSCMPullRequestCommitsRequest) returns (GetSCMPullRequestCommitsResponse);
   rpc GetSCMPullRequestTimelineEvents(GetSCMPullRequestTimelineEventsRequest) returns (GetSCMPullRequestTimelineEventsResponse);
+  rpc InternalGetPullRequest(GetPullRequestRequest) returns (GetPullRequestResponse);
+  rpc InternalGetPullRequestDiff(GetPullRequestDiffRequest) returns (GetPullRequestDiffResponse);
+  rpc InternalGetPullRequestChecks(GetPullRequestChecksRequest) returns (GetPullRequestChecksResponse);
+  rpc InternalGetSCMPullRequestCommits(GetSCMPullRequestCommitsRequest) returns (GetSCMPullRequestCommitsResponse);
   rpc GetPullRequestCheckLogExcerpt(GetPullRequestCheckLogExcerptRequest) returns (GetPullRequestCheckLogExcerptResponse);
   rpc GetBranchComparison(GetBranchComparisonRequest) returns (GetBranchComparisonResponse);
   rpc GetPullRequestForBranch(SCMGetPullRequestForBranchRequest) returns (SCMGetPullRequestForBranchResponse);
+  rpc BatchGetPullRequestForBranch(SCMBatchGetPullRequestForBranchRequest) returns (SCMBatchGetPullRequestForBranchResponse);
   rpc MergePullRequest(SCMMergePullRequestRequest) returns (SCMMergePullRequestResponse);
   rpc UpdatePullRequestTitle(SCMUpdatePullRequestTitleRequest) returns (SCMUpdatePullRequestTitleResponse);
   rpc MakePullRequestReady(SCMMakePullRequestReadyRequest) returns (SCMMakePullRequestReadyResponse);

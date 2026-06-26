@@ -8,6 +8,7 @@ message SendMessageText {
 
 message SendMessageAttachment {
   string url = 1;
+  optional string alt = 2;
 }
 
 message SendMessageArgs {

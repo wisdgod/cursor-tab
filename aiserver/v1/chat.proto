@@ -543,6 +543,8 @@ message ConversationMessage {
     optional ToolResultError error = 9;
     repeated ImageProto images = 10;
     optional ClientSideToolV2Call tool_call = 11;
+    optional uint64 started_at_ms = 13;
+    optional uint64 completed_at_ms = 14;
   }
   message MultiRangeCodeChunk {
     message RangeWithPriority {
@@ -655,6 +657,9 @@ message ConversationMessage {
   message SimulatedMessageMetadata {
     optional string title = 1;
     optional string task_id = 2;
+    optional string fsd_finding_action = 3;
+    optional string url = 4;
+    optional agent.v1.SubscriptionSource subscription_source = 5;
   }
   message McpDescriptor {
     message Tool {

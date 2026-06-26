@@ -27,12 +27,33 @@ message AcquireRequest {
   int64 timeout_ms = 5;
   string model = 6;
   string conversation_group_id = 7;
+  bool is_stream = 8;
+  string canonical_model = 9;
 }
 
 message AcquireResponse {
   bool granted = 1;
   RateLimitReason reason = 2;
   int32 replay_count = 3;
+  RouteResult route_result = 4;
+}
+
+message RouteResult {
+  string deployment_id = 1;
+  DeploymentInfo deployment_info = 2;
+  string full_model_id = 3;
+  string provider = 4;
+}
+
+message DeploymentInfo {
+  string endpoint = 1;
+  string url_path = 2;
+  string protocol = 3;
+  string api_key_env_var = 4;
+  string api_model_name = 5;
+  string auth_header = 6;
+  string auth_prefix = 7;
+  bool safe_tokenization = 8;
 }
 
 message ReportUsageRequest {
@@ -48,9 +69,50 @@ message ReportUsageRequest {
   string model = 10;
   ProviderErrorType provider_error_type = 11;
   string conversation_group_id = 12;
+  int64 cached_input_tokens = 13;
+  bool is_stream = 14;
+  string canonical_model = 15;
 }
 
 message ReportUsageResponse {
+}
+
+message SchedulerConfig {
+  int64 tick_ms = 1;
+  map<string, ProviderConfig> providers = 2;
+  map<string, WorkloadConfig> workloads = 3;
+}
+
+message ProviderConfig {
+  map<string, ModelConfig> models = 1;
+}
+
+message ModelConfig {
+  map<string, DeploymentConfig> deployments = 1;
+}
+
+message DeploymentConfig {
+  RateLimits limits = 1;
+  RampConfig ramp = 2;
+  int64 max_input_tokens_per_request = 3;
+  int64 max_output_tokens_per_request = 4;
+}
+
+message RateLimits {
+  int64 tpm_max = 1;
+  int64 rpm_max = 2;
+}
+
+message RampConfig {
+  bool enabled = 1;
+  double max_multiplier = 2;
+  int64 window_minutes = 3;
+}
+
+message WorkloadConfig {
+  int32 priority = 1;
+  int32 weight = 2;
+  bool disabled = 3;
 }
 
 service SchedulerService {

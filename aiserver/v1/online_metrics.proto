@@ -49,7 +49,35 @@ message RequestTrackingFileGitInfo {
   }
 }
 
+message StoredRequestTrackingMetadata {
+  message File {
+    string fs_path = 1;
+    string file_uuid = 2;
+    RequestTrackingFileGitInfo git_info = 3;
+    bool too_big = 4;
+  }
+  string agent_request_id = 1;
+  repeated File request_files = 2;
+  repeated RequestTrackingFileGitInfo deduplicated_git_infos = 3;
+  int32 num_commits_tracked = 4;
+  double start_tracking_date_unix_milliseconds = 5;
+  double file_size_bytes = 6;
+  string workspace_id = 7;
+}
+
 message ReportAgentSnapshotResponse {
+}
+
+message OnlineMetricsConfig {
+  bool enabled = 1;
+  int32 max_requests_tracked = 2;
+  int32 max_requests_tracked_mb = 3;
+  double max_request_retention_seconds = 4;
+  bool send_original_file_contents_for_initial_snapshot = 5;
+  bool send_full_added_lines_in_diff_changes = 6;
+  int32 num_commits_tracked = 7;
+  repeated int32 time_intervals_tracked_minutes = 8;
+  int32 too_big_file_size_bytes = 9;
 }
 
 service OnlineMetricsService {

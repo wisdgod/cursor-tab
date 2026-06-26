@@ -19,6 +19,7 @@ message DeploymentDemand {
   string deployment = 2;
   repeated WorkloadDemand workloads = 3;
   string model = 4;
+  string canonical_model = 5;
 }
 
 message WorkloadDemand {
@@ -27,6 +28,7 @@ message WorkloadDemand {
   int64 requests = 3;
   int64 input_tokens = 4;
   int64 output_tokens = 5;
+  bool is_stream = 6;
 }
 
 message WorkloadGrant {
@@ -41,6 +43,9 @@ message WorkloadGrant {
   string model = 9;
   int64 replay_requests = 10;
   int64 max_replay_count_per_request = 11;
+  bool is_stream = 12;
+  RouteResult route_result = 13;
+  string canonical_model = 14;
 }
 
 message UsageReport {
@@ -52,6 +57,9 @@ message UsageReport {
   int64 output_tokens = 6;
   bool success = 7;
   ProviderErrorType provider_error_type = 8;
+  int64 cached_input_tokens = 9;
+  bool is_stream = 10;
+  string canonical_model = 11;
 }
 
 service DistributorService {

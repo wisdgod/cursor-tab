@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "aiserver/v1/waterfall_update.proto";
+import "google/protobuf/timestamp.proto";
+
+message WaterfallState {
+  repeated WaterfallSpan spans = 1;
+}
+
+message WaterfallSpan {
+  string span_id = 1;
+  optional string parent_span_id = 2;
+  WaterfallPhaseType phase_type = 10;
+  optional string fallback_phase_label = 11;
+  google.protobuf.Timestamp start_time = 3;
+  optional WaterfallSpanEnd end = 9;
+  repeated WaterfallSpanLog logs = 5;
+  optional WaterfallSpanStatus status = 6;
+  optional CallToAction call_to_action = 7;
+  SpanState span_state = 8;
+}
+
+message WaterfallSpanEnd {
+  google.protobuf.Timestamp timestamp = 1;
+  WaterfallSpanEndStatus end_status = 2;
+}
+
+message SpanState {
+  oneof span_state {
+    GitReposSetupSpanState git_repos_setup = 1;
+    GitRepoSetupSpanState git_repo_setup = 2;
+  }
+}
+
+message GitReposSetupSpanState {
+}
+
+message GitRepoSetupSpanState {
+  string repo_display_name = 1;
+}
+
+message WaterfallSpanLog {
+  google.protobuf.Timestamp timestamp = 1;
+  string message = 2;
+  WaterfallLogLevel level = 3;
+}
+
+message WaterfallSpanStatus {
+  google.protobuf.Timestamp timestamp = 1;
+  WaterfallSpanStatusType status_type = 2;
+  string message = 3;
+}

@@ -2,6 +2,18 @@ syntax = "proto3";
 
 package agent.v1;
 
+enum ReplaceEnvMode {
+  REPLACE_ENV_MODE_UNSPECIFIED = 0;
+  REPLACE_ENV_MODE_CUSTOM = 1;
+  REPLACE_ENV_MODE_CLEAN_SLATE = 2;
+  REPLACE_ENV_MODE_DEFAULT = 3;
+}
+
+message RepoCheckoutRefOverride {
+  string repo_url = 1;
+  string ref = 2;
+}
+
 message ReplaceEnvConfig {
   string install_script = 1;
   string dockerfile_contents = 2;
@@ -9,6 +21,8 @@ message ReplaceEnvConfig {
 
 message ReplaceEnvArgs {
   ReplaceEnvConfig config = 1;
+  ReplaceEnvMode mode = 2;
+  repeated RepoCheckoutRefOverride checkout_ref_overrides = 3;
 }
 
 message ReplaceEnvSuccess {

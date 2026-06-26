@@ -21,4 +21,5 @@ message McpToolResult {
 message McpToolCall {
   McpArgs args = 1;
   McpToolResult result = 2;
+  optional string description = 3;
 }

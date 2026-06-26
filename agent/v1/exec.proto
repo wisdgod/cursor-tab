@@ -14,6 +14,13 @@ import "agent/v1/hook_additional_context.proto";
 import "agent/v1/ls_exec.proto";
 import "agent/v1/mcp_allowlist_precheck_exec.proto";
 import "agent/v1/mcp_exec.proto";
+import "agent/v1/pi_bash_exec.proto";
+import "agent/v1/pi_edit_exec.proto";
+import "agent/v1/pi_find_exec.proto";
+import "agent/v1/pi_grep_exec.proto";
+import "agent/v1/pi_ls_exec.proto";
+import "agent/v1/pi_read_exec.proto";
+import "agent/v1/pi_write_exec.proto";
 import "agent/v1/read_exec.proto";
 import "agent/v1/record_screen_exec.proto";
 import "agent/v1/request_context_exec.proto";
@@ -96,6 +103,13 @@ message ExecServerMessage {
     McpAllowlistPrecheckArgs mcp_allowlist_precheck_args = 42;
     WebFetchAllowlistPrecheckArgs web_fetch_allowlist_precheck_args = 43;
     aiserver.v1.GetDiffRequest git_diff_request = 44;
+    PiReadExecArgs pi_read_args = 45;
+    PiBashExecArgs pi_bash_args = 46;
+    PiEditExecArgs pi_edit_args = 47;
+    PiWriteExecArgs pi_write_args = 48;
+    PiGrepExecArgs pi_grep_args = 49;
+    PiFindExecArgs pi_find_args = 50;
+    PiLsExecArgs pi_ls_args = 51;
   }
 }
 
@@ -135,6 +149,13 @@ message ExecClientMessage {
     McpAllowlistPrecheckResult mcp_allowlist_precheck_result = 42;
     WebFetchAllowlistPrecheckResult web_fetch_allowlist_precheck_result = 43;
     aiserver.v1.GetDiffResponse git_diff_response = 44;
+    PiReadExecResult pi_read_result = 46;
+    PiBashExecResult pi_bash_result = 47;
+    PiEditExecResult pi_edit_result = 48;
+    PiWriteExecResult pi_write_result = 49;
+    PiGrepExecResult pi_grep_result = 50;
+    PiFindExecResult pi_find_result = 51;
+    PiLsExecResult pi_ls_result = 52;
   }
 }
 
