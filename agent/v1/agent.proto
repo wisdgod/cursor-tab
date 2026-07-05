@@ -9,6 +9,7 @@ import "agent/v1/await_tool.proto";
 import "agent/v1/blame_by_file_path_tool.proto";
 import "agent/v1/communicate_update_tool.proto";
 import "agent/v1/computer_use_tool.proto";
+import "agent/v1/connect_scm_tool.proto";
 import "agent/v1/create_plan_tool.proto";
 import "agent/v1/delete_tool.proto";
 import "agent/v1/edit_pr_labels_tool.proto";
@@ -157,6 +158,20 @@ enum ThinkingStyle {
   THINKING_STYLE_GPT5 = 3;
 }
 
+enum ResponseComparisonDisplayOrder {
+  RESPONSE_COMPARISON_DISPLAY_ORDER_UNSPECIFIED = 0;
+  RESPONSE_COMPARISON_DISPLAY_ORDER_PARENT_FIRST = 1;
+  RESPONSE_COMPARISON_DISPLAY_ORDER_ALTERNATE_FIRST = 2;
+}
+
+enum ResponseComparisonSkipReason {
+  RESPONSE_COMPARISON_SKIP_REASON_UNSPECIFIED = 0;
+  RESPONSE_COMPARISON_SKIP_REASON_ALTERNATE_TOOL_CALL = 1;
+  RESPONSE_COMPARISON_SKIP_REASON_INFERENCE_ERROR = 2;
+  RESPONSE_COMPARISON_SKIP_REASON_TIMEOUT = 3;
+  RESPONSE_COMPARISON_SKIP_REASON_CANCELLED = 4;
+}
+
 message TaskArgs {
   string description = 1;
   string prompt = 2;
@@ -286,6 +301,7 @@ message ToolCall {
     PiGrepToolCall pi_grep_tool_call = 65;
     PiFindToolCall pi_find_tool_call = 66;
     PiLsToolCall pi_ls_tool_call = 67;
+    ConnectScmToolCall connect_scm_tool_call = 68;
   }
 }
 
@@ -1001,6 +1017,34 @@ message FeedbackRequestUpdate {
   optional string comment_placeholder = 8;
 }
 
+message ResponseComparisonStarted {
+  ResponseComparisonDisplayOrder display_order = 1;
+  string parent_invocation_id = 2;
+  string alternate_invocation_id = 3;
+  string parent_response = 4;
+}
+
+message ResponseComparisonTextDelta {
+  string text = 1;
+}
+
+message ResponseComparisonCompleted {
+}
+
+message ResponseComparisonSkipped {
+  ResponseComparisonSkipReason reason = 1;
+}
+
+message ResponseComparisonUpdate {
+  string comparison_id = 1;
+  oneof event {
+    ResponseComparisonStarted started = 2;
+    ResponseComparisonTextDelta text_delta = 3;
+    ResponseComparisonCompleted completed = 4;
+    ResponseComparisonSkipped skipped = 5;
+  }
+}
+
 message InteractionUpdate {
   oneof message {
     TextDeltaUpdate text_delta = 1;
@@ -1024,6 +1068,7 @@ message InteractionUpdate {
     PostRequestPromptUpdate post_request_prompt = 19;
     ActiveBranchChange active_branch_change = 20;
     FeedbackRequestUpdate feedback_request = 21;
+    ResponseComparisonUpdate response_comparison = 22;
   }
 }
 
@@ -1047,6 +1092,7 @@ message InteractionQuery {
     McpAuthRequestQuery mcp_auth_request_query = 11;
     GenerateImageRequestQuery generate_image_request_query = 12;
     ReplaceEnvArgs replace_env_args = 13;
+    ConnectScmRequestQuery connect_scm_request_query = 14;
   }
 }
 
@@ -1063,6 +1109,7 @@ message InteractionResponse {
     McpAuthRequestResponse mcp_auth_request_response = 11;
     GenerateImageRequestResponse generate_image_request_response = 12;
     ReplaceEnvResult replace_env_result = 13;
+    ConnectScmRequestResponse connect_scm_request_response = 14;
   }
 }
 
@@ -1141,6 +1188,57 @@ message SubagentStopRequestQuery {
 message SubagentStopRequestResponse {
   optional string followup_message = 1;
   optional string additional_context = 2;
+}
+
+message BeforeSubmitPromptAttachment {
+  string type = 1;
+  string file_path = 2;
+}
+
+message BeforeSubmitPromptRequestQuery {
+  string prompt = 1;
+  repeated BeforeSubmitPromptAttachment attachments = 2;
+  optional string composer_mode = 3;
+  optional string conversation_id = 4;
+  optional string generation_id = 5;
+  optional string model = 6;
+  optional string model_id = 7;
+  repeated RequestedModel.ModelParameterValue model_params = 8;
+}
+
+message BeforeSubmitPromptRequestResponse {
+  optional bool continue = 1;
+  optional string user_message = 2;
+  optional string additional_context = 3;
+}
+
+message AfterAgentResponseRequestQuery {
+  string text = 1;
+  optional string conversation_id = 2;
+  optional string generation_id = 3;
+  optional string model = 4;
+  optional string model_id = 5;
+  repeated RequestedModel.ModelParameterValue model_params = 6;
+  optional int64 input_tokens = 7;
+  optional int64 output_tokens = 8;
+  optional int64 cache_read_tokens = 9;
+  optional int64 cache_write_tokens = 10;
+}
+
+message AfterAgentResponseRequestResponse {
+}
+
+message AfterAgentThoughtRequestQuery {
+  string text = 1;
+  optional int64 duration_ms = 2;
+  optional string conversation_id = 3;
+  optional string generation_id = 4;
+  optional string model = 5;
+  optional string model_id = 6;
+  repeated RequestedModel.ModelParameterValue model_params = 7;
+}
+
+message AfterAgentThoughtRequestResponse {
 }
 
 message PreToolUseRequestQuery {

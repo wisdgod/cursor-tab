@@ -294,6 +294,12 @@ message UpdateEnvironmentVariablesRequest {
   bool replace = 2;
 }
 
+message RunScopedOverlay {
+  string run_id = 1;
+  bool release = 2;
+  string holder = 3;
+}
+
 message UpdateEnvironmentVariablesResponse {
   uint32 applied = 1;
   uint32 removed = 2;

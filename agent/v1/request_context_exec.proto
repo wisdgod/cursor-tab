@@ -15,6 +15,7 @@ message RequestContextArgs {
   optional string workspace_id = 3;
   optional string read_only_pinned_tree_sha = 4;
   optional string read_only_plugin_cache_root = 5;
+  optional bool use_cached = 7;
 }
 
 message RequestContextResult {
@@ -27,6 +28,7 @@ message RequestContextResult {
 
 message RequestContextSuccess {
   RequestContext request_context = 1;
+  optional bool served_from_disk_cache = 2;
 }
 
 message RequestContextError {

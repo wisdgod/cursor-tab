@@ -176,6 +176,7 @@ message SelectedCursorCommand {
   string name = 1;
   string content = 2;
   optional SelectedPluginCapabilityRef plugin_capability = 3;
+  optional string full_path = 4;
 }
 
 message SelectedDocumentation {

@@ -36,6 +36,7 @@ message SetFullSelfDrivingConfigResponse {
   bool enabled = 1;
   FullSelfDrivingMode mode = 2;
   string spawned_bc_id = 3;
+  bool auto_started = 4;
 }
 
 message GetFullSelfDrivingConfigRequest {
@@ -46,6 +47,7 @@ message GetFullSelfDrivingConfigResponse {
   bool has_config = 1;
   bool enabled = 2;
   FullSelfDrivingMode mode = 3;
+  bool auto_started = 4;
 }
 
 message ListFullSelfDrivingRunsRequest {

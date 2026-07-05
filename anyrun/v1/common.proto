@@ -19,6 +19,19 @@ enum WorkspaceGitSetupMode {
   WORKSPACE_GIT_SETUP_MODE_REUSE = 1;
 }
 
+enum WarmForkMode {
+  WARM_FORK_MODE_UNSPECIFIED = 0;
+  WARM_FORK_MODE_NONE = 1;
+  WARM_FORK_MODE_FORKED = 2;
+  WARM_FORK_MODE_COLD_FALLBACK = 3;
+}
+
+enum AgentStoreSourceKind {
+  AGENT_STORE_SOURCE_KIND_UNSPECIFIED = 0;
+  AGENT_STORE_SOURCE_KIND_CLOUD = 1;
+  AGENT_STORE_SOURCE_KIND_LOCAL = 2;
+}
+
 enum ContainerRuntime {
   CONTAINER_RUNTIME_DOCKERD_UNSPECIFIED = 0;
   CONTAINER_RUNTIME_ISOD_RUNC = 1;
@@ -31,6 +44,13 @@ enum BlobStorageFormat {
   BLOB_STORAGE_FORMAT_V2 = 3;
   BLOB_STORAGE_FORMAT_V2_LAYERED = 4;
   BLOB_STORAGE_FORMAT_V3 = 5;
+}
+
+message EnvironmentBuildBootInfo {
+  string build_id = 1;
+  string snapshot_id = 2;
+  WorkspaceGitSetupMode workspace_git_setup_mode = 3;
+  WarmForkMode warm_fork_mode = 4;
 }
 
 message ImageMetadata {
@@ -198,6 +218,20 @@ message PodAgentStoreGrant {
   int64 expires_at_ms = 5;
   string grant_id = 6;
   string token = 7;
+}
+
+message AgentStoreSourceRef {
+  AgentStoreSourceKind kind = 1;
+  string source_id = 2;
+}
+
+message AgentStoreMount {
+  optional string mount_name = 1;
+  oneof target {
+    AgentStoreSourceRef source = 2;
+    string store_id = 3;
+    string share_id = 4;
+  }
 }
 
 message AgentStoreConfig {

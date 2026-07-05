@@ -68,6 +68,25 @@ message BatchGetPullRequestsResponse {
   repeated string failed_pr_urls = 2;
 }
 
+message BatchGetPullRequestStatusRequest {
+  repeated string pr_urls = 1;
+  bool skip_cache = 2;
+}
+
+message BatchGetPullRequestStatusResponse {
+  map<string, SCMPullRequestStatus> statuses = 1;
+  repeated string failed_pr_urls = 2;
+}
+
+message SCMPullRequestStatus {
+  string title = 1;
+  SCMPullRequestState state = 2;
+  bool is_merged = 3;
+  bool is_draft = 4;
+  optional bool degraded_by_rate_limit = 5;
+  optional string updated_at = 6;
+}
+
 message SCMPullRequest {
   string id = 1;
   string pr_url = 2;
@@ -382,6 +401,7 @@ message GetPullRequestCheckLogExcerptResponse {
 service SCMService {
   rpc GetPullRequest(GetPullRequestRequest) returns (GetPullRequestResponse);
   rpc BatchGetPullRequests(BatchGetPullRequestsRequest) returns (BatchGetPullRequestsResponse);
+  rpc BatchGetPullRequestStatus(BatchGetPullRequestStatusRequest) returns (BatchGetPullRequestStatusResponse);
   rpc GetPullRequestDiff(GetPullRequestDiffRequest) returns (GetPullRequestDiffResponse);
   rpc GetPullRequestChecks(GetPullRequestChecksRequest) returns (GetPullRequestChecksResponse);
   rpc GetSCMPullRequestCommits(GetSCMPullRequestCommitsRequest) returns (GetSCMPullRequestCommitsResponse);

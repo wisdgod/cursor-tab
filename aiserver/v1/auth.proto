@@ -48,6 +48,12 @@ message RevokeSessionResponse {
   bool success = 1;
 }
 
+message RevokeCurrentSessionRequest {
+}
+
+message RevokeCurrentSessionResponse {
+}
+
 message GetSessionTokenRequest {
   enum Destination {
     DESTINATION_UNSPECIFIED = 0;
@@ -86,6 +92,14 @@ message CreateMobileSessionRequest {
 message CreateMobileSessionResponse {
   string session_token = 1;
   string auth_id = 2;
+}
+
+message UpgradeMobileSessionRequest {
+}
+
+message UpgradeMobileSessionResponse {
+  string session_token = 1;
+  string workos_id = 2;
 }
 
 message CustomerIdRequest {
@@ -201,7 +215,9 @@ service AuthService {
   rpc GetSessionToken(GetSessionTokenRequest) returns (GetSessionTokenResponse);
   rpc CheckSessionToken(CheckSessionTokenRequest) returns (CheckSessionTokenResponse);
   rpc CreateMobileSession(CreateMobileSessionRequest) returns (CreateMobileSessionResponse);
+  rpc UpgradeMobileSession(UpgradeMobileSessionRequest) returns (UpgradeMobileSessionResponse);
   rpc ListActiveSessions(ListActiveSessionsRequest) returns (ListActiveSessionsResponse);
   rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse);
+  rpc RevokeCurrentSession(RevokeCurrentSessionRequest) returns (RevokeCurrentSessionResponse);
   rpc ListJwtPublicKeys(ListJwtPublicKeysRequest) returns (ListJwtPublicKeysResponse);
 }

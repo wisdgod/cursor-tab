@@ -89,6 +89,27 @@ enum DataOpsStepDbStatus {
   DATA_OPS_STEP_DB_STATUS_CANCELED = 6;
 }
 
+enum DatagenRLPipelineRunDbStatus {
+  DATAGEN_RL_PIPELINE_RUN_DB_STATUS_UNSPECIFIED = 0;
+  DATAGEN_RL_PIPELINE_RUN_DB_STATUS_PENDING = 1;
+  DATAGEN_RL_PIPELINE_RUN_DB_STATUS_BUILDING = 2;
+  DATAGEN_RL_PIPELINE_RUN_DB_STATUS_SUBMITTED = 3;
+  DATAGEN_RL_PIPELINE_RUN_DB_STATUS_RUNNING = 4;
+  DATAGEN_RL_PIPELINE_RUN_DB_STATUS_FINISHED = 5;
+  DATAGEN_RL_PIPELINE_RUN_DB_STATUS_FAILED = 6;
+  DATAGEN_RL_PIPELINE_RUN_DB_STATUS_CANCELED = 7;
+}
+
+enum DatagenRLPipelineStageDbStatus {
+  DATAGEN_RL_PIPELINE_STAGE_DB_STATUS_UNSPECIFIED = 0;
+  DATAGEN_RL_PIPELINE_STAGE_DB_STATUS_PENDING = 1;
+  DATAGEN_RL_PIPELINE_STAGE_DB_STATUS_RUNNING = 2;
+  DATAGEN_RL_PIPELINE_STAGE_DB_STATUS_FINISHED = 3;
+  DATAGEN_RL_PIPELINE_STAGE_DB_STATUS_FAILED = 4;
+  DATAGEN_RL_PIPELINE_STAGE_DB_STATUS_SKIPPED = 5;
+  DATAGEN_RL_PIPELINE_STAGE_DB_STATUS_CANCELED = 6;
+}
+
 message EvalSummary {
   string id = 1;
   string name = 2;
@@ -619,6 +640,90 @@ message UpsertDataOpsJobStepResponse {
   string step_id = 2;
 }
 
+message CreateDatagenRLPipelineRunRequest {
+  optional DatagenRLPipelineRunDbStatus status = 1;
+  string config_name = 2;
+  string config_path = 3;
+  optional string mode = 4;
+  optional string description = 5;
+  optional string output_path = 6;
+  optional string config_s3_uri = 7;
+  optional string stats_s3_uri = 8;
+  optional google.protobuf.Struct artifacts = 9;
+  optional google.protobuf.Struct params_snapshot = 10;
+  optional string everysphere_branch = 11;
+  optional string everysphere_commit = 12;
+  optional bool git_dirty = 13;
+  optional string ray_job_name = 14;
+  optional string ray_job_namespace = 15;
+  optional string buildkite_build_id = 16;
+  optional int32 buildkite_build_number = 17;
+  optional string buildkite_build_url = 18;
+  optional string parent_run_id = 19;
+  optional string fork_from_stage = 20;
+  optional string created_by = 21;
+  optional string status_message = 22;
+  repeated RunParamKV params = 23;
+  repeated RunTagKV tags = 24;
+}
+
+message CreateDatagenRLPipelineRunResponse {
+  string run_id = 1;
+}
+
+message UpdateDatagenRLPipelineRunRequest {
+  string run_id = 1;
+  optional DatagenRLPipelineRunDbStatus status = 2;
+  optional string status_message = 3;
+  optional google.protobuf.Timestamp started_at = 4;
+  optional google.protobuf.Timestamp finished_at = 5;
+  optional string output_path = 6;
+  optional string config_s3_uri = 7;
+  optional string stats_s3_uri = 8;
+  optional google.protobuf.Struct artifacts = 9;
+  optional google.protobuf.Struct params_snapshot = 10;
+  optional string ray_job_name = 11;
+  optional string ray_job_namespace = 12;
+  optional string buildkite_build_id = 13;
+  optional int32 buildkite_build_number = 14;
+  optional string buildkite_build_url = 15;
+  optional string error_message = 16;
+}
+
+message UpdateDatagenRLPipelineRunResponse {
+  bool ok = 1;
+}
+
+message DatagenRLPipelineRunHeartbeatRequest {
+  string run_id = 1;
+}
+
+message DatagenRLPipelineRunHeartbeatResponse {
+  bool ok = 1;
+  bool kill_requested = 2;
+}
+
+message UpsertDatagenRLPipelineRunStageRequest {
+  string run_id = 1;
+  string stage = 2;
+  optional int32 stage_index = 3;
+  optional DatagenRLPipelineStageDbStatus status = 4;
+  optional int32 progress_completed = 5;
+  optional int32 progress_failed = 6;
+  optional int32 progress_total = 7;
+  optional string artifact_s3_uri = 8;
+  optional google.protobuf.Struct artifacts = 9;
+  optional string message = 10;
+  optional string error_message = 11;
+  optional google.protobuf.Timestamp started_at = 12;
+  optional google.protobuf.Timestamp finished_at = 13;
+}
+
+message UpsertDatagenRLPipelineRunStageResponse {
+  bool ok = 1;
+  string stage_id = 2;
+}
+
 service EvalTrackingService {
   rpc CreateEval(CreateEvalRequest) returns (CreateEvalResponse);
   rpc GetEvalByName(GetEvalByNameRequest) returns (GetEvalByNameResponse);
@@ -652,4 +757,8 @@ service EvalTrackingService {
   rpc GetDataOpsJob(GetDataOpsJobRequest) returns (GetDataOpsJobResponse);
   rpc ListDataOpsJobs(ListDataOpsJobsRequest) returns (ListDataOpsJobsResponse);
   rpc UpsertDataOpsJobStep(UpsertDataOpsJobStepRequest) returns (UpsertDataOpsJobStepResponse);
+  rpc CreateDatagenRLPipelineRun(CreateDatagenRLPipelineRunRequest) returns (CreateDatagenRLPipelineRunResponse);
+  rpc UpdateDatagenRLPipelineRun(UpdateDatagenRLPipelineRunRequest) returns (UpdateDatagenRLPipelineRunResponse);
+  rpc DatagenRLPipelineRunHeartbeat(DatagenRLPipelineRunHeartbeatRequest) returns (DatagenRLPipelineRunHeartbeatResponse);
+  rpc UpsertDatagenRLPipelineRunStage(UpsertDatagenRLPipelineRunStageRequest) returns (UpsertDatagenRLPipelineRunStageResponse);
 }

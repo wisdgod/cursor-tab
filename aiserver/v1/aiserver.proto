@@ -1239,6 +1239,35 @@ message RunWebFetchResponse {
   }
 }
 
+message GenerateImageReferenceImage {
+  string data = 1;
+  string mime_type = 2;
+}
+
+message RunGenerateImageRequest {
+  string description = 1;
+  repeated GenerateImageReferenceImage reference_images = 2;
+  string model_id = 3;
+  bool max_mode = 4;
+}
+
+message RunGenerateImageSuccess {
+  string image_data = 1;
+  string mime_type = 2;
+}
+
+message RunGenerateImageError {
+  string error = 1;
+  bool model_restricted = 2;
+}
+
+message RunGenerateImageResponse {
+  oneof result {
+    RunGenerateImageSuccess success = 1;
+    RunGenerateImageError error = 2;
+  }
+}
+
 message ThrowErrorCheckRequest {
   ErrorDetails.Error error = 1;
 }
@@ -1433,6 +1462,7 @@ message ModelParameterDefinition {
       optional string display_name = 2;
       optional bool increases_model_cost = 3;
       optional bool blocked_by_admin_allowlist = 4;
+      optional string markdown_tooltip = 5;
     }
     repeated EnumParameterValue values = 1;
   }
@@ -3338,6 +3368,7 @@ service AiService {
   rpc AvailableDocs(AvailableDocsRequest) returns (AvailableDocsResponse);
   rpc RunWebSearch(RunWebSearchRequest) returns (RunWebSearchResponse);
   rpc RunWebFetch(RunWebFetchRequest) returns (RunWebFetchResponse);
+  rpc RunGenerateImage(RunGenerateImageRequest) returns (RunGenerateImageResponse);
   rpc ReportFeedback(ReportFeedbackRequest) returns (ReportFeedbackResponse);
   rpc ReportBug(ReportBugRequest) returns (ReportBugResponse);
   rpc StreamChatContext(StreamChatContextRequest) returns (stream StreamChatContextResponse);

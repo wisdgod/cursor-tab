@@ -108,6 +108,7 @@ message UsageEventDetails {
   }
   optional int32 override_num_requests_counted = 13;
   optional int32 override_num_requests_counted_millis = 16;
+  optional string routed_model = 17;
   oneof feature {
     Chat chat = 1;
     ContextChat context_chat = 2;

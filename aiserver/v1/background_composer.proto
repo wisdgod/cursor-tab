@@ -15,6 +15,7 @@ import "aiserver/v1/scm.proto";
 import "aiserver/v1/tools.proto";
 import "aiserver/v1/utils.proto";
 import "aiserver/v1/waterfall_update.proto";
+import "anyrun/v1/common.proto";
 import "anyrun/v1/pod.proto";
 import "anyrun/v1/pod_event.proto";
 import "anyrun/v1/snapshot.proto";
@@ -71,6 +72,7 @@ enum BackgroundComposerSource {
   BACKGROUND_COMPOSER_SOURCE_SAND_CODING_SUBAGENT = 26;
   BACKGROUND_COMPOSER_SOURCE_BITBUCKET = 27;
   BACKGROUND_COMPOSER_SOURCE_CLOUD_META_AGENT = 28;
+  BACKGROUND_COMPOSER_SOURCE_AS_SUBAGENT_FROM_CLOUD = 29;
 }
 
 enum OwnerType {
@@ -90,6 +92,7 @@ enum PRStatus {
 enum CloudSubagentParentAgentType {
   CLOUD_SUBAGENT_PARENT_AGENT_TYPE_UNSPECIFIED = 0;
   CLOUD_SUBAGENT_PARENT_AGENT_TYPE_LOCAL = 1;
+  CLOUD_SUBAGENT_PARENT_AGENT_TYPE_CLOUD = 2;
 }
 
 enum EnsembleStatus {
@@ -111,6 +114,7 @@ enum CloudAgentTimingEventType {
   CLOUD_AGENT_TIMING_EVENT_TYPE_POD_REQUESTED = 3;
   CLOUD_AGENT_TIMING_EVENT_TYPE_POD_READY = 4;
   CLOUD_AGENT_TIMING_EVENT_TYPE_FIRST_TOKEN = 5;
+  CLOUD_AGENT_TIMING_EVENT_TYPE_STALE_SNAPSHOT_USED = 6;
 }
 
 enum GithubAccessErrorType {
@@ -279,6 +283,12 @@ enum AgentStoreKind {
   AGENT_STORE_KIND_UNSPECIFIED = 0;
   AGENT_STORE_KIND_CLOUD = 1;
   AGENT_STORE_KIND_LOCAL = 2;
+}
+
+enum AgentStoreSourceKind {
+  AGENT_STORE_SOURCE_KIND_UNSPECIFIED = 0;
+  AGENT_STORE_SOURCE_KIND_CLOUD = 1;
+  AGENT_STORE_SOURCE_KIND_LOCAL = 2;
 }
 
 enum AgentStoreEntryKind {
@@ -739,6 +749,52 @@ message BackgroundComposerParticipant {
   optional string profile_picture_url = 4;
 }
 
+message NamedAgentProfile {
+  optional string profile_picture_url = 1;
+}
+
+message NamedAgentSession {
+  string named_agent_id = 1;
+  string bc_id = 2;
+  string session_key = 3;
+  string session_kind = 4;
+  double created_at_ms = 10;
+  double updated_at_ms = 11;
+  optional double last_awakened_at_ms = 12;
+  optional string slack_channel_id = 13;
+  optional string slack_channel_name = 14;
+  optional string slack_permalink = 15;
+}
+
+message NamedAgent {
+  string named_agent_id = 1;
+  string home_bc_id = 2;
+  string name = 3;
+  optional BackgroundComposerParticipant creator = 4;
+  double created_at_ms = 5;
+  double updated_at_ms = 6;
+  bool pinned = 7;
+  optional NamedAgentProfile profile = 8;
+}
+
+message ListNamedAgentsRequest {
+}
+
+message ListNamedAgentsResponse {
+  repeated NamedAgent agents = 1;
+}
+
+message ListNamedAgentSessionsRequest {
+  string named_agent_id = 1;
+  optional int32 page_size = 2;
+  optional string page_token = 3;
+}
+
+message ListNamedAgentSessionsResponse {
+  repeated NamedAgentSession sessions = 1;
+  optional string next_page_token = 2;
+}
+
 message ExternalSourceMetadata {
   optional SlackSourceMetadata slack = 1;
   optional LinearSourceMetadata linear = 2;
@@ -939,9 +995,14 @@ message StartBackgroundComposerFromSnapshotRequest {
   optional int32 team_id = 98;
   optional CloudSubagentParentReference cloud_subagent_parent = 99;
   repeated string requested_additional_store_ids = 101;
+  repeated AgentStoreMount store_mounts = 108;
   optional string remote_control_workspace_key = 102;
   optional string remote_control_machine_id = 103;
   optional bool is_slack_v2 = 104;
+  optional string named_agent_id = 105;
+  optional string named_agent_session_key = 106;
+  optional string named_agent_session_kind = 107;
+  optional NamedAgentProfile named_agent_profile = 109;
 }
 
 message StartBackgroundComposerFromSnapshotResponse {
@@ -1234,6 +1295,8 @@ message AddAsyncFollowupBackgroundComposerRequest {
   optional string followup_system_reminder = 14;
   optional string mcp_config_json = 16;
   repeated string requested_additional_store_ids = 17;
+  map<string, string> run_env_vars = 18;
+  repeated AgentStoreMount store_mounts = 19;
 }
 
 message AddAsyncFollowupBackgroundComposerResponse {
@@ -1360,6 +1423,10 @@ message CloudAgentTimingEvent {
   optional uint32 turn_number = 3;
 }
 
+message UsedEnvironmentBuildInfo {
+  optional anyrun.v1.EnvironmentBuildBootInfo boot_info = 1;
+}
+
 message DetailedBackgroundComposer {
   BackgroundComposer composer = 1;
   string starting_commit = 2;
@@ -1390,6 +1457,7 @@ message DetailedBackgroundComposer {
   optional agent.v1.RequestedModel requested_model = 28;
   optional CloudSubagentParentReference cloud_subagent_parent = 29;
   repeated CloudAgentStartupWarning startup_warnings = 30;
+  optional UsedEnvironmentBuildInfo used_environment_build = 31;
 }
 
 message VmProvisionedSkill {
@@ -1844,6 +1912,10 @@ message SnapshotAndSaveEnvironmentRequest {
     TARGET_PERSONAL = 1;
     TARGET_TEAM = 2;
   }
+  message EgressConfig {
+    CloudAgentEgressProtectionMode mode = 1;
+    repeated string allowlist = 2;
+  }
   Target target = 1;
   string bc_id = 2;
   string repo_url = 3;
@@ -1854,6 +1926,7 @@ message SnapshotAndSaveEnvironmentRequest {
   optional string environment_name = 8;
   optional EnvironmentRepoConfig repo_config = 9;
   optional string environment_public_id = 10;
+  optional EgressConfig egress_config = 11;
 }
 
 message SnapshotAndSaveEnvironmentResponse {
@@ -2087,6 +2160,9 @@ message UpdateBackgroundComposerUserSettingsRequest {
   optional string default_environment_public_id = 14;
   repeated BackgroundComposerDefaultEnvironmentSetting default_environment_settings = 15;
   optional bool remote_control_enabled = 16;
+  optional PrReviewOpenSurfaceMode pr_review_open_surface = 17;
+  repeated string sidebar_named_agent_ids = 18;
+  optional bool sidebar_named_agent_ids_explicitly_set = 19;
 }
 
 message UpdateBackgroundComposerUserSettingsResponse {
@@ -2111,6 +2187,8 @@ message GetBackgroundComposerUserSettingsResponse {
   optional string default_environment_public_id = 13;
   repeated BackgroundComposerDefaultEnvironmentSetting default_environment_settings = 14;
   optional bool remote_control_enabled = 15;
+  optional PrReviewOpenSurfaceMode pr_review_open_surface = 16;
+  repeated string sidebar_named_agent_ids = 17;
 }
 
 message GetRepositoryBranchesRequest {
@@ -2550,6 +2628,8 @@ message CloudAgentState {
   map<string, OptimizedDiffState> per_branch_optimized_diffs = 44;
   repeated CloudAgentStartupWarning startup_warnings = 45;
   optional PrivateWorkspaceIdentifier private_workspace_identifier = 46;
+  optional bool async_user_install_reminder_delivered = 47;
+  optional bool uses_first_class_subagents = 48;
 }
 
 message NextTurnSystemReminderEntry {
@@ -3019,6 +3099,20 @@ message ListAgentStoresRequest {
   optional string page_token = 5;
 }
 
+message AgentStoreSourceRef {
+  AgentStoreSourceKind kind = 1;
+  string source_id = 2;
+}
+
+message AgentStoreMount {
+  optional string mount_name = 1;
+  oneof target {
+    AgentStoreSourceRef source = 2;
+    string store_id = 3;
+    string share_id = 4;
+  }
+}
+
 message AgentStore {
   string store_id = 1;
   double created_at_ms = 4;
@@ -3029,6 +3123,7 @@ message AgentStore {
   optional double last_file_write_at_ms = 11;
   string source_id = 12;
   optional string source_display_name = 13;
+  AgentStoreSourceRef source = 14;
 }
 
 message ListAgentStoresResponse {
@@ -3069,6 +3164,8 @@ message ReadAgentStoreFileResponse {
 message MintAgentStoreTokenRequest {
   string agent_id = 1;
   optional string share_id = 2;
+  optional string store_id = 3;
+  AgentStoreSourceRef source = 4;
 }
 
 message MintAgentStoreTokenResponse {
@@ -3088,6 +3185,7 @@ message AgentStoreFileEntry {
 message ListAgentStoreFilesRequest {
   string agent_id = 1;
   optional string share_id = 2;
+  optional string store_id = 3;
 }
 
 message ListAgentStoreFilesResponse {
@@ -3104,6 +3202,7 @@ message PresignAgentStoreReadsRequest {
   string agent_id = 1;
   repeated string rel_paths = 2;
   optional string share_id = 3;
+  optional string store_id = 4;
 }
 
 message PresignAgentStoreReadsResponse {
@@ -3126,6 +3225,7 @@ message AgentStoreWriteInstruction {
 message PresignAgentStoreWritesRequest {
   string agent_id = 1;
   repeated AgentStoreWriteFileEntry files = 2;
+  optional string store_id = 3;
 }
 
 message PresignAgentStoreWritesResponse {
@@ -3143,6 +3243,8 @@ message SharedAgentStoreInfo {
 message ShareAgentStoreRequest {
   string agent_id = 1;
   string path_prefix = 2;
+  optional string store_id = 4;
+  AgentStoreSourceRef source = 5;
 }
 
 message ShareAgentStoreResponse {
@@ -3178,6 +3280,8 @@ message SharedAgentStoreListing {
   optional int32 owning_team_id = 9;
   string owner_display_name = 10;
   string store_kind = 11;
+  AgentStoreKind kind = 12;
+  AgentStoreSourceRef source = 13;
 }
 
 message ListSharedAgentStoresResponse {
@@ -3259,6 +3363,8 @@ service BackgroundComposerService {
   rpc GetBackgroundComposerRepositoryInfo(GetBackgroundComposerRepositoryInfoRequest) returns (GetBackgroundComposerRepositoryInfoResponse);
   rpc GetMachine(GetMachineRequest) returns (GetMachineResponse);
   rpc ListDetailedBackgroundComposers(ListDetailedBackgroundComposersRequest) returns (ListDetailedBackgroundComposersResponse);
+  rpc ListNamedAgents(ListNamedAgentsRequest) returns (ListNamedAgentsResponse);
+  rpc ListNamedAgentSessions(ListNamedAgentSessionsRequest) returns (ListNamedAgentSessionsResponse);
   rpc GetGithubAccessTokenForRepos(GetGithubAccessTokenForReposRequest) returns (GetGithubAccessTokenForReposResponse);
   rpc MakeGithubRequest(MakeGithubRequestRequest) returns (MakeGithubRequestResponse);
   rpc GetBackgroundComposerDiffDetails(GetBackgroundComposerDiffDetailsRequest) returns (GetBackgroundComposerDiffDetailsResponse);

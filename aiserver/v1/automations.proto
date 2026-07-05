@@ -736,6 +736,15 @@ message UpdateAutomationResponse {
   AutomationWithOwner workflow = 1;
 }
 
+message ReassignAutomationOwnerRequest {
+  string automation_id = 1;
+  int32 new_owner_user_id = 2;
+}
+
+message ReassignAutomationOwnerResponse {
+  AutomationWithOwner workflow = 1;
+}
+
 message UpdateAutomationAuthoringModeRequest {
   string automation_id = 1;
   AutomationManagedBy managed_by = 2;
@@ -1065,6 +1074,30 @@ message GetApprovalAgentAnalyticsResponse {
   uint32 automation_count = 3;
 }
 
+message ManagedAutomationTeamSettings {
+  int32 team_id = 1;
+  bool security_agent_disabled = 2;
+  bool approval_agent_disabled = 3;
+}
+
+message GetManagedAutomationTeamSettingsRequest {
+  int32 team_id = 1;
+}
+
+message GetManagedAutomationTeamSettingsResponse {
+  ManagedAutomationTeamSettings settings = 1;
+}
+
+message UpdateManagedAutomationTeamSettingsRequest {
+  int32 team_id = 1;
+  bool security_agent_disabled = 2;
+  bool approval_agent_disabled = 3;
+}
+
+message UpdateManagedAutomationTeamSettingsResponse {
+  ManagedAutomationTeamSettings settings = 1;
+}
+
 message CancelAutomationRunRequest {
   string background_composer_id = 1;
 }
@@ -1270,6 +1303,7 @@ service AutomationsService {
   rpc ListAutomations(ListAutomationsRequest) returns (ListAutomationsResponse);
   rpc GetAutomation(GetAutomationRequest) returns (GetAutomationResponse);
   rpc UpdateAutomation(UpdateAutomationRequest) returns (UpdateAutomationResponse);
+  rpc ReassignAutomationOwner(ReassignAutomationOwnerRequest) returns (ReassignAutomationOwnerResponse);
   rpc UpdateAutomationAuthoringMode(UpdateAutomationAuthoringModeRequest) returns (UpdateAutomationAuthoringModeResponse);
   rpc ValidateAutomationSpec(ValidateAutomationSpecRequest) returns (ValidateAutomationSpecResponse);
   rpc ApplyAutomationSpec(ApplyAutomationSpecRequest) returns (ApplyAutomationSpecResponse);
@@ -1282,6 +1316,8 @@ service AutomationsService {
   rpc GetRunSummary(GetRunSummaryRequest) returns (GetRunSummaryResponse);
   rpc GetSecuritybotResolutionStats(GetSecuritybotResolutionStatsRequest) returns (GetSecuritybotResolutionStatsResponse);
   rpc GetApprovalAgentAnalytics(GetApprovalAgentAnalyticsRequest) returns (GetApprovalAgentAnalyticsResponse);
+  rpc GetManagedAutomationTeamSettings(GetManagedAutomationTeamSettingsRequest) returns (GetManagedAutomationTeamSettingsResponse);
+  rpc UpdateManagedAutomationTeamSettings(UpdateManagedAutomationTeamSettingsRequest) returns (UpdateManagedAutomationTeamSettingsResponse);
   rpc CancelAutomationRun(CancelAutomationRunRequest) returns (CancelAutomationRunResponse);
   rpc CancelAllAutomationRuns(CancelAllAutomationRunsRequest) returns (CancelAllAutomationRunsResponse);
   rpc RetryAutomationRun(RetryAutomationRunRequest) returns (RetryAutomationRunResponse);

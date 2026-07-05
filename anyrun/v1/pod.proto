@@ -33,6 +33,15 @@ enum GitCloneFailureCategory {
   GIT_CLONE_FAILURE_CATEGORY_UPSTREAM_BAD_GATEWAY = 8;
 }
 
+enum ImagePullFailureCategory {
+  IMAGE_PULL_FAILURE_CATEGORY_UNSPECIFIED = 0;
+  IMAGE_PULL_FAILURE_CATEGORY_DENIED = 1;
+  IMAGE_PULL_FAILURE_CATEGORY_UNAUTHORIZED = 2;
+  IMAGE_PULL_FAILURE_CATEGORY_NOT_FOUND = 3;
+  IMAGE_PULL_FAILURE_CATEGORY_RATE_LIMITED = 4;
+  IMAGE_PULL_FAILURE_CATEGORY_UPSTREAM = 5;
+}
+
 message PodPorts {
   repeated PortDefinition ports = 1;
   optional DefaultPortConfig default_port_config = 2;
@@ -138,6 +147,7 @@ message PodFailureDetails {
     GitCloneFailure git_clone_failure = 3;
     GitCheckoutFailure git_checkout_failure = 4;
     ContainerWaitFailure container_wait_failure = 5;
+    ImagePullFailure image_pull_failure = 6;
   }
 }
 
@@ -164,6 +174,13 @@ message GitCloneFailure {
 
 message GitCheckoutFailure {
   int64 exit_code = 1;
+}
+
+message ImagePullFailure {
+  ImagePullFailureCategory category = 1;
+  bool retryable = 2;
+  optional int32 http_status = 3;
+  optional string repository = 4;
 }
 
 message DaemonPod {

@@ -73,6 +73,7 @@ enum ClientSideToolV2 {
   CLIENT_SIDE_TOOL_V2_AWAIT = 62;
   CLIENT_SIDE_TOOL_V2_GET_MCP_TOOLS = 63;
   CLIENT_SIDE_TOOL_V2_SEND_TO_USER = 65;
+  CLIENT_SIDE_TOOL_V2_CONNECT_SCM = 66;
 }
 
 enum ShellType {
@@ -222,6 +223,7 @@ message ClientSideToolV2Call {
     ReportBugfixResultsParams report_bugfix_results_params = 70;
     McpAuthParams mcp_auth_params = 71;
     GetMcpToolsParams get_mcp_tools_params = 72;
+    ConnectScmParams connect_scm_params = 73;
   }
 }
 
@@ -283,6 +285,7 @@ message ClientSideToolV2Result {
     agent.v1.AiAttributionResult ai_attribution_result = 72;
     McpAuthResult mcp_auth_result = 73;
     GetMcpToolsResult get_mcp_tools_result = 74;
+    ConnectScmResult connect_scm_result = 75;
   }
 }
 
@@ -370,6 +373,7 @@ message StreamedBackToolCall {
     WebFetchStream web_fetch_stream = 68;
     ReportBugfixResultsStream report_bugfix_results_stream = 69;
     McpAuthStream mcp_auth_stream = 70;
+    ConnectScmStream connect_scm_stream = 71;
   }
 }
 
@@ -430,6 +434,7 @@ message StreamedBackToolCallV2 {
     ReportBugfixResultsParams report_bugfix_results_params = 78;
     McpAuthParams mcp_auth_params = 79;
     GetMcpToolsParams get_mcp_tools_params = 80;
+    ConnectScmParams connect_scm_params = 81;
   }
 }
 
@@ -1406,6 +1411,12 @@ message MCPParams {
     string description = 2;
     string parameters = 3;
     string server_name = 4;
+    optional TranscriptDisplay transcript_display = 5;
+  }
+  message TranscriptDisplay {
+    string loading = 1;
+    string success = 2;
+    string error = 3;
   }
   repeated Tool tools = 1;
   optional int64 file_output_threshold_bytes = 2;
@@ -2114,4 +2125,26 @@ message McpAuthResult {
 }
 
 message McpAuthStream {
+}
+
+message ConnectScmParams {
+  ConnectScmGithub github = 1;
+}
+
+message ConnectScmGithub {
+  ConnectScmGithubRepository repository = 1;
+  optional string ghe_application = 2;
+}
+
+message ConnectScmGithubRepository {
+  string owner = 1;
+  string repo = 2;
+}
+
+message ConnectScmResult {
+  bool success = 1;
+  string message = 2;
+}
+
+message ConnectScmStream {
 }

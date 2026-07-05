@@ -126,6 +126,12 @@ enum PrReviewOpenDestinationMode {
   PR_REVIEW_OPEN_DESTINATION_MODE_REVIEW_CURSOR = 3;
 }
 
+enum PrReviewOpenSurfaceMode {
+  PR_REVIEW_OPEN_SURFACE_MODE_UNSPECIFIED = 0;
+  PR_REVIEW_OPEN_SURFACE_MODE_IN_APP = 1;
+  PR_REVIEW_OPEN_SURFACE_MODE_EXTERNAL_BROWSER = 2;
+}
+
 enum GithubArtifactPostingMode {
   GITHUB_ARTIFACT_POSTING_MODE_UNSPECIFIED = 0;
   GITHUB_ARTIFACT_POSTING_MODE_POST_ARTIFACT = 1;
@@ -353,6 +359,12 @@ enum SharedCanvasVisibility {
   SHARED_CANVAS_VISIBILITY_PUBLIC = 3;
 }
 
+enum SmartAutoModelSeverity {
+  SMART_AUTO_MODEL_SEVERITY_UNSPECIFIED = 0;
+  SMART_AUTO_MODEL_SEVERITY_REQUIRED = 1;
+  SMART_AUTO_MODEL_SEVERITY_RECOMMENDED = 2;
+}
+
 enum IndividualLimitsOptOutOutcome {
   INDIVIDUAL_LIMITS_OPT_OUT_OUTCOME_UNSPECIFIED = 0;
   INDIVIDUAL_LIMITS_OPT_OUT_OUTCOME_SUCCESS = 1;
@@ -394,6 +406,14 @@ enum PluginPrimitiveUsageInterval {
   PLUGIN_PRIMITIVE_USAGE_INTERVAL_LAST_14D = 4;
   PLUGIN_PRIMITIVE_USAGE_INTERVAL_LAST_90D = 5;
   PLUGIN_PRIMITIVE_USAGE_INTERVAL_LAST_30D = 6;
+}
+
+enum MarketplaceAccessPrincipalKind {
+  MARKETPLACE_ACCESS_PRINCIPAL_KIND_UNSPECIFIED = 0;
+  MARKETPLACE_ACCESS_PRINCIPAL_KIND_USER = 1;
+  MARKETPLACE_ACCESS_PRINCIPAL_KIND_TEAM_MEMBER_GROUP = 2;
+  MARKETPLACE_ACCESS_PRINCIPAL_KIND_TEAM_ADMIN_GROUP = 3;
+  MARKETPLACE_ACCESS_PRINCIPAL_KIND_GROUP = 4;
 }
 
 enum TeamMarketplacePluginInstallMode {
@@ -493,6 +513,7 @@ message FinishSetupGithubEnterpriseAppResponse {
 }
 
 message ListGithubEnterpriseAppsRequest {
+  optional int32 team_id = 1;
 }
 
 message ListGithubEnterpriseAppsResponse {
@@ -528,6 +549,7 @@ message SetupGitlabEnterpriseInstanceResponse {
 }
 
 message ListGitlabEnterpriseInstancesRequest {
+  optional int32 team_id = 1;
 }
 
 message ListGitlabEnterpriseInstancesResponse {
@@ -539,6 +561,7 @@ message ListGitlabEnterpriseInstancesResponse {
     string host_controlled_webhook_url = 5;
     string host_controlled_webhook_secret = 6;
     bool host_controlled_service_account_token_configured = 7;
+    optional string external_host = 8;
   }
   repeated GitlabEnterpriseInstance instances = 1;
 }
@@ -564,6 +587,37 @@ message DeleteGitlabEnterpriseInstanceRequest {
 }
 
 message DeleteGitlabEnterpriseInstanceResponse {
+}
+
+message SetupBitbucketServerInstanceRequest {
+  string hostname = 1;
+  optional string external_host = 2;
+  optional string access_token = 3;
+}
+
+message SetupBitbucketServerInstanceResponse {
+  string uuid = 1;
+}
+
+message ListBitbucketServerInstancesRequest {
+}
+
+message ListBitbucketServerInstancesResponse {
+  message BitbucketServerInstance {
+    string uuid = 1;
+    string hostname = 2;
+    string external_host = 3;
+    bool can_delete = 4;
+    bool service_account_token_configured = 5;
+  }
+  repeated BitbucketServerInstance instances = 1;
+}
+
+message DeleteBitbucketServerInstanceRequest {
+  string uuid = 1;
+}
+
+message DeleteBitbucketServerInstanceResponse {
 }
 
 message SyncGitlabReposRequest {
@@ -693,6 +747,8 @@ message GetUserOrganizationsResponse {
     UserOrganizationRole role = 4;
     repeated Team teams = 5;
     optional int32 default_team_id = 6;
+    optional int32 effective_max_teams = 7;
+    repeated string granted_permissions = 8;
   }
   repeated Organization organizations = 1;
 }
@@ -823,6 +879,50 @@ message RemoveOrganizationIdentityProviderDomainJoinRequest {
 
 message UpdateOrganizationIdentityProviderResponse {
   OrganizationIdentityProvider provider = 1;
+}
+
+message MergeOrganizationIdentityProviderRequest {
+  string organization_id = 1;
+  string source_identity_provider_public_id = 2;
+}
+
+message MergeOrganizationIdentityProviderResponse {
+  string request_public_id = 1;
+}
+
+message OrganizationMergeIdpRequestInfo {
+  string request_public_id = 1;
+  string status = 2;
+  optional string current_phase = 3;
+  optional string source_identity_provider_public_id = 4;
+  optional string target_identity_provider_public_id = 5;
+  optional int32 total_users = 6;
+  int32 processed_users = 7;
+  int32 moved_membership_count = 8;
+  int32 skipped_membership_count = 9;
+  int32 failed_membership_count = 10;
+  optional string last_error = 11;
+  int64 created_at_ms = 12;
+  optional int64 started_at_ms = 13;
+  optional int64 completed_at_ms = 14;
+  optional int64 source_deletion_eligible_at_ms = 15;
+}
+
+message GetOrganizationMergeIdpRequestRequest {
+  string organization_id = 1;
+  string request_public_id = 2;
+}
+
+message GetOrganizationMergeIdpRequestResponse {
+  OrganizationMergeIdpRequestInfo request = 1;
+}
+
+message ListOrganizationMergeIdpRequestsRequest {
+  string organization_id = 1;
+}
+
+message ListOrganizationMergeIdpRequestsResponse {
+  repeated OrganizationMergeIdpRequestInfo requests = 1;
 }
 
 message MoveOrganizationMemberToTeamRequest {
@@ -1078,6 +1178,48 @@ message UpdateOrganizationGroupModelAllowlistRequest {
 message UpdateOrganizationGroupModelAllowlistResponse {
 }
 
+message GetOrganizationGroupAutoReviewSettingsRequest {
+  string organization_id = 1;
+  string group_public_id = 2;
+}
+
+message GetOrganizationGroupAutoReviewSettingsResponse {
+  AutoReviewInstructions auto_review = 1;
+}
+
+message UpdateOrganizationGroupAutoReviewSettingsRequest {
+  string organization_id = 1;
+  int64 group_id = 2;
+  AutoReviewInstructions auto_review = 3;
+}
+
+message UpdateOrganizationGroupAutoReviewSettingsResponse {
+}
+
+message GetOrganizationGroupSmartAutoSettingsRequest {
+  string organization_id = 1;
+  string group_public_id = 2;
+}
+
+message GetOrganizationGroupSmartAutoSettingsResponse {
+  SmartAutoSettings settings = 1;
+  bool can_enable = 2;
+  optional bool new_chat_nudge_all_to_smart_auto = 3;
+  repeated SmartAutoMemberTeamConflict member_team_conflicts = 4;
+  optional bool models_auto_only = 5;
+}
+
+message UpdateOrganizationGroupSmartAutoSettingsRequest {
+  string organization_id = 1;
+  int64 group_id = 2;
+  SmartAutoSettings settings = 3;
+  optional bool new_chat_nudge_all_to_smart_auto = 4;
+  optional bool models_auto_only = 5;
+}
+
+message UpdateOrganizationGroupSmartAutoSettingsResponse {
+}
+
 message CreateOrganizationGroupAnthropicCyberEnrollmentUrlRequest {
   string organization_id = 1;
   int64 group_id = 2;
@@ -1300,6 +1442,16 @@ message MoveUserMcpServerToTeamRequest {
 }
 
 message MoveUserMcpServerToTeamResponse {
+}
+
+message MigrateTeamMcpServersToDefaultMarketplaceRequest {
+  int32 team_id = 1;
+}
+
+message MigrateTeamMcpServersToDefaultMarketplaceResponse {
+  int32 migrated_count = 1;
+  int32 skipped_count = 2;
+  int64 default_marketplace_id = 3;
 }
 
 message UpdateUserDefaultMcpSettingsRequest {
@@ -1733,6 +1885,7 @@ message Team {
   bool self_serve_tiered_pricing_enabled = 30;
   bool new_member_usage_promo_eligible = 31;
   optional int64 deleted_at_ms = 34;
+  repeated string granted_permissions = 35;
 }
 
 message GetTeamsRequest {
@@ -2093,6 +2246,7 @@ message OrganizationApiKey {
 message CreateOrganizationApiKeyRequest {
   string organization_id = 1;
   string name = 2;
+  repeated string scopes = 3;
 }
 
 message CreateOrganizationApiKeyResponse {
@@ -2715,6 +2869,7 @@ message AllowedMCPConfiguration {
   optional bool require_mcp_servers_in_team_network_allowlist = 3;
   optional bool allow_user_override_mcp_servers = 4;
   repeated AllowedMCPServer denied_mcp_servers = 10;
+  optional bool enable_cursor_cloud_mcp = 11;
 }
 
 message FirstPartyPluginConfiguration {
@@ -2982,6 +3137,8 @@ message GetTeamAdminSettingsResponse {
   optional PublicProfileSettings public_profile_settings = 50;
   optional BitbucketIntegrationSettings bitbucket_integration_settings = 51;
   optional bool marketplace_leaderboard_disabled = 52;
+  optional bool new_chat_nudge_all_to_smart_auto = 53;
+  optional bool models_auto_only = 54;
 }
 
 message GetBaseTeamAdminSettingsRequest {
@@ -3041,6 +3198,8 @@ message UpdateTeamAdminSettingsRequest {
   optional PublicProfileSettings public_profile_settings = 50;
   optional BitbucketIntegrationSettings bitbucket_integration_settings = 51;
   optional bool marketplace_leaderboard_disabled = 52;
+  optional bool new_chat_nudge_all_to_smart_auto = 53;
+  optional bool models_auto_only = 54;
 }
 
 message UpdateTeamAdminSettingsResponse {
@@ -3564,6 +3723,9 @@ message GetBugbotAnalyticsV2Response {
   int32 total_autofix_runs = 13;
   repeated BugbotAnalyticsDataPoint cost_cents_series = 14;
   repeated BugbotAnalyticsDataPoint num_billed_runs_series = 15;
+  int32 total_bugs_found = 16;
+  int32 total_bugs_evaluated = 17;
+  repeated BugbotAnalyticsDataPoint bugs_evaluated_series = 18;
 }
 
 message BugBotPRData {
@@ -3620,6 +3782,7 @@ message GetGithubInstallationsRequest {
 
 message GetScmConnectionStatusRequest {
   optional string ghe_application = 1;
+  optional int32 team_id = 2;
 }
 
 message GetScmConnectionStatusResponse {
@@ -5510,6 +5673,7 @@ message UpdateBugbotModeRequest {
   BugbotMode mode = 1;
   repeated BugbotModePrompt prompts = 2;
   optional bool smart_frontier_enabled = 3;
+  optional int32 team_id = 4;
 }
 
 message UpdateBugbotModeResponse {
@@ -6236,6 +6400,46 @@ message UpdateTeamSharedConversationSettingsRequest {
 }
 
 message UpdateTeamSharedConversationSettingsResponse {
+}
+
+message SmartAutoSettings {
+  optional bool enabled = 1;
+  optional SmartAutoOptimizeForSettings optimize_for = 2;
+  optional bool show_routed_model = 3;
+}
+
+message SmartAutoOptimizeForSettings {
+  repeated string allowed_values = 1;
+}
+
+message SmartAutoRequiredModel {
+  string model_id = 1;
+  string display_name = 2;
+  SmartAutoModelSeverity severity = 3;
+  bool blocked = 4;
+}
+
+message SmartAutoMemberTeamConflict {
+  SmartAutoRequiredModel model = 1;
+  repeated string team_names = 2;
+}
+
+message GetTeamSmartAutoSettingsRequest {
+  int32 team_id = 1;
+}
+
+message GetTeamSmartAutoSettingsResponse {
+  SmartAutoSettings settings = 1;
+  bool can_enable = 2;
+  repeated SmartAutoRequiredModel required_models = 3;
+}
+
+message UpdateTeamSmartAutoSettingsRequest {
+  int32 team_id = 1;
+  SmartAutoSettings settings = 2;
+}
+
+message UpdateTeamSmartAutoSettingsResponse {
 }
 
 message GetTeamSharedCanvasSettingsRequest {
@@ -7238,17 +7442,25 @@ message RegisteredPlugin {
   string name = 2;
 }
 
+message MarketplaceAccessGrant {
+  MarketplaceAccessPrincipalKind principal_kind = 1;
+  string principal_id = 2;
+}
+
 message TeamMarketplaceConfig {
   repeated int64 directory_group_ids = 1;
   optional int32 configured_by = 2;
   int64 created_at = 3;
   int64 updated_at = 4;
+  repeated MarketplaceAccessGrant access_grants = 5;
 }
 
 message UpdateTeamMarketplaceConfigRequest {
   int64 marketplace_id = 1;
   repeated int64 directory_group_ids = 2;
   optional int32 team_id = 3;
+  repeated MarketplaceAccessGrant access_grants = 4;
+  optional bool sync_access_grants = 5;
 }
 
 message UpdateTeamMarketplaceConfigResponse {
@@ -7322,6 +7534,29 @@ message UnlinkPluginsFromTeamMarketplaceRequest {
 
 message UnlinkPluginsFromTeamMarketplaceResponse {
   bool success = 1;
+}
+
+message PreviewTeamMarketplaceMcpImpactRequest {
+  message SetPoliciesPreview {
+    repeated SetTeamMarketplacePluginPoliciesRequest.Policy policies = 1;
+  }
+  message RemoveMarketplacePreview {
+  }
+  int64 marketplace_id = 1;
+  optional int32 team_id = 2;
+  oneof action {
+    SetPoliciesPreview set_policies = 3;
+    RemoveMarketplacePreview remove_marketplace = 4;
+  }
+}
+
+message PreviewTeamMarketplaceMcpImpactResponse {
+  message ImpactedPlugin {
+    int64 plugin_id = 1;
+    string plugin_name = 2;
+    repeated string mcp_server_names = 3;
+  }
+  repeated ImpactedPlugin impacted_plugins = 1;
 }
 
 message DeprecatePluginRequest {
@@ -7797,6 +8032,9 @@ service DashboardService {
   rpc SetOrganizationIdentityProviderAllowDomainJoin(SetOrganizationIdentityProviderAllowDomainJoinRequest) returns (UpdateOrganizationIdentityProviderResponse);
   rpc AddOrganizationIdentityProviderDomainJoin(AddOrganizationIdentityProviderDomainJoinRequest) returns (UpdateOrganizationIdentityProviderResponse);
   rpc RemoveOrganizationIdentityProviderDomainJoin(RemoveOrganizationIdentityProviderDomainJoinRequest) returns (UpdateOrganizationIdentityProviderResponse);
+  rpc MergeOrganizationIdentityProvider(MergeOrganizationIdentityProviderRequest) returns (MergeOrganizationIdentityProviderResponse);
+  rpc GetOrganizationMergeIdpRequest(GetOrganizationMergeIdpRequestRequest) returns (GetOrganizationMergeIdpRequestResponse);
+  rpc ListOrganizationMergeIdpRequests(ListOrganizationMergeIdpRequestsRequest) returns (ListOrganizationMergeIdpRequestsResponse);
   rpc MoveOrganizationMemberToTeam(MoveOrganizationMemberToTeamRequest) returns (MoveOrganizationMemberToTeamResponse);
   rpc SetOrganizationMemberTeams(SetOrganizationMemberTeamsRequest) returns (SetOrganizationMemberTeamsResponse);
   rpc BulkMoveOrganizationMembers(BulkMoveOrganizationMembersRequest) returns (BulkMoveOrganizationMembersResponse);
@@ -7820,6 +8058,10 @@ service DashboardService {
   rpc UpdateOrganizationGroupAutorunSettings(UpdateOrganizationGroupAutorunSettingsRequest) returns (UpdateOrganizationGroupAutorunSettingsResponse);
   rpc GetOrganizationGroupModelAllowlist(GetOrganizationGroupModelAllowlistRequest) returns (GetOrganizationGroupModelAllowlistResponse);
   rpc UpdateOrganizationGroupModelAllowlist(UpdateOrganizationGroupModelAllowlistRequest) returns (UpdateOrganizationGroupModelAllowlistResponse);
+  rpc GetOrganizationGroupAutoReviewSettings(GetOrganizationGroupAutoReviewSettingsRequest) returns (GetOrganizationGroupAutoReviewSettingsResponse);
+  rpc UpdateOrganizationGroupAutoReviewSettings(UpdateOrganizationGroupAutoReviewSettingsRequest) returns (UpdateOrganizationGroupAutoReviewSettingsResponse);
+  rpc GetOrganizationGroupSmartAutoSettings(GetOrganizationGroupSmartAutoSettingsRequest) returns (GetOrganizationGroupSmartAutoSettingsResponse);
+  rpc UpdateOrganizationGroupSmartAutoSettings(UpdateOrganizationGroupSmartAutoSettingsRequest) returns (UpdateOrganizationGroupSmartAutoSettingsResponse);
   rpc CreateOrganizationGroupAnthropicCyberEnrollmentUrl(CreateOrganizationGroupAnthropicCyberEnrollmentUrlRequest) returns (CreateOrganizationGroupAnthropicCyberEnrollmentUrlResponse);
   rpc GetGroups(GetGroupsRequest) returns (GetGroupsResponse);
   rpc GetGroupMembers(GetGroupMembersRequest) returns (GetGroupMembersResponse);
@@ -7877,6 +8119,9 @@ service DashboardService {
   rpc SetGitlabEnterpriseHostControlledServiceAccountToken(SetGitlabEnterpriseHostControlledServiceAccountTokenRequest) returns (SetGitlabEnterpriseHostControlledServiceAccountTokenResponse);
   rpc RotateGitlabEnterpriseWebhookSecret(RotateGitlabEnterpriseWebhookSecretRequest) returns (RotateGitlabEnterpriseWebhookSecretResponse);
   rpc DeleteGitlabEnterpriseInstance(DeleteGitlabEnterpriseInstanceRequest) returns (DeleteGitlabEnterpriseInstanceResponse);
+  rpc SetupBitbucketServerInstance(SetupBitbucketServerInstanceRequest) returns (SetupBitbucketServerInstanceResponse);
+  rpc ListBitbucketServerInstances(ListBitbucketServerInstancesRequest) returns (ListBitbucketServerInstancesResponse);
+  rpc DeleteBitbucketServerInstance(DeleteBitbucketServerInstanceRequest) returns (DeleteBitbucketServerInstanceResponse);
   rpc SyncGitlabRepos(SyncGitlabReposRequest) returns (SyncGitlabReposResponse);
   rpc UpdateRole(UpdateRoleRequest) returns (UpdateRoleResponse);
   rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse);
@@ -7922,6 +8167,7 @@ service DashboardService {
   rpc BatchGetPluginMcpConfig(BatchGetPluginMcpConfigRequest) returns (BatchGetPluginMcpConfigResponse);
   rpc AddMcpServersFromPlugin(AddMcpServersFromPluginRequest) returns (AddMcpServersFromPluginResponse);
   rpc MoveUserMcpServerToTeam(MoveUserMcpServerToTeamRequest) returns (MoveUserMcpServerToTeamResponse);
+  rpc MigrateTeamMcpServersToDefaultMarketplace(MigrateTeamMcpServersToDefaultMarketplaceRequest) returns (MigrateTeamMcpServersToDefaultMarketplaceResponse);
   rpc ProbeMcpUrl(ProbeMcpUrlRequest) returns (ProbeMcpUrlResponse);
   rpc CreateTeamWithFreeTrial(CreateTeamWithFreeTrialRequest) returns (CreateTeamWithFreeTrialResponse);
   rpc CreateTeamWithOrg(CreateTeamWithOrgRequest) returns (CreateTeamWithOrgResponse);
@@ -8016,7 +8262,6 @@ service DashboardService {
   rpc GetAdvancedAnalyticsEnabled(GetAdvancedAnalyticsEnabledRequest) returns (GetAdvancedAnalyticsEnabledResponse);
   rpc GetTokenUsage(GetTokenUsageRequest) returns (GetTokenUsageResponse);
   rpc ValidateBedrockIamRole(ValidateBedrockIamRoleRequest) returns (ValidateBedrockIamRoleResponse);
-  rpc AddUserToEarlyAccessList(AddUserToEarlyAccessListRequest) returns (AddUserToEarlyAccessListResponse);
   rpc GetTeamSpend(GetTeamSpendRequest) returns (GetTeamSpendResponse);
   rpc GetCurrentBillingCycle(GetCurrentBillingCycleRequest) returns (GetCurrentBillingCycleResponse);
   rpc GetMonthlyBillingCycle(GetMonthlyBillingCycleRequest) returns (GetMonthlyBillingCycleResponse);
@@ -8108,6 +8353,8 @@ service DashboardService {
   rpc UpdateTeamSharedCanvasSettings(UpdateTeamSharedCanvasSettingsRequest) returns (UpdateTeamSharedCanvasSettingsResponse);
   rpc GetTeamPublicProfileSettings(GetTeamPublicProfileSettingsRequest) returns (GetTeamPublicProfileSettingsResponse);
   rpc UpdateTeamPublicProfileSettings(UpdateTeamPublicProfileSettingsRequest) returns (UpdateTeamPublicProfileSettingsResponse);
+  rpc GetTeamSmartAutoSettings(GetTeamSmartAutoSettingsRequest) returns (GetTeamSmartAutoSettingsResponse);
+  rpc UpdateTeamSmartAutoSettings(UpdateTeamSmartAutoSettingsRequest) returns (UpdateTeamSmartAutoSettingsResponse);
   rpc GetTeamBackgroundAgentSettings(GetTeamBackgroundAgentSettingsRequest) returns (GetTeamBackgroundAgentSettingsResponse);
   rpc UpdateTeamBackgroundAgentSettings(UpdateTeamBackgroundAgentSettingsRequest) returns (UpdateTeamBackgroundAgentSettingsResponse);
   rpc RevokeTeamInviteLink(RevokeTeamInviteLinkRequest) returns (RevokeTeamInviteLinkResponse);
@@ -8203,7 +8450,6 @@ service DashboardService {
   rpc OptOutNewPricing(OptOutNewPricingRequest) returns (OptOutNewPricingResponse);
   rpc SubmitFeedback(SubmitFeedbackRequest) returns (SubmitFeedbackResponse);
   rpc SubmitFeedbackAnon(SubmitFeedbackRequest) returns (SubmitFeedbackResponse);
-  rpc CanStudentReverify(CanStudentReverifyRequest) returns (CanStudentReverifyResponse);
   rpc GetActiveOffboardingBanner(GetActiveOffboardingBannerRequest) returns (GetActiveOffboardingBannerResponse);
   rpc ClientAction(ClientActionRequest) returns (ClientActionResponse);
   rpc ListUsageAlerts(ListUsageAlertsRequest) returns (ListUsageAlertsResponse);
@@ -8262,6 +8508,7 @@ service DashboardService {
   rpc ApplyTeamMarketplaceRequiredPlugins(ApplyTeamMarketplaceRequiredPluginsRequest) returns (ApplyTeamMarketplaceRequiredPluginsResponse);
   rpc LinkPluginsToTeamMarketplace(LinkPluginsToTeamMarketplaceRequest) returns (LinkPluginsToTeamMarketplaceResponse);
   rpc UnlinkPluginsFromTeamMarketplace(UnlinkPluginsFromTeamMarketplaceRequest) returns (UnlinkPluginsFromTeamMarketplaceResponse);
+  rpc PreviewTeamMarketplaceMcpImpact(PreviewTeamMarketplaceMcpImpactRequest) returns (PreviewTeamMarketplaceMcpImpactResponse);
   rpc GetManagedSkills(GetManagedSkillsRequest) returns (GetManagedSkillsResponse);
   rpc GetCursorUserState(GetCursorUserStateRequest) returns (GetCursorUserStateResponse);
   rpc SetJobData(SetJobDataRequest) returns (SetJobDataResponse);

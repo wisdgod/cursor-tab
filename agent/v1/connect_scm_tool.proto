@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message ConnectScmArgs {
+  string tool_call_id = 1;
+  oneof target {
+    ConnectScmGithub github = 2;
+  }
+}
+
+message ConnectScmGithub {
+  ConnectScmGithubRepository repository = 1;
+  optional string ghe_application = 2;
+}
+
+message ConnectScmGithubRepository {
+  string owner = 1;
+  string repo = 2;
+}
+
+message ConnectScmResult {
+  oneof result {
+    ConnectScmSuccess success = 1;
+    ConnectScmError error = 2;
+    ConnectScmRejected rejected = 3;
+  }
+}
+
+message ConnectScmSuccess {
+}
+
+message ConnectScmError {
+  string error = 1;
+}
+
+message ConnectScmRejected {
+  string reason = 1;
+}
+
+message ConnectScmToolCall {
+  ConnectScmArgs args = 1;
+  ConnectScmResult result = 2;
+}
+
+message ConnectScmRequestQuery {
+  ConnectScmArgs args = 1;
+}
+
+message ConnectScmRequestResponse {
+  message Approved {
+  }
+  message Rejected {
+    string reason = 1;
+  }
+  message Failed {
+    string error = 1;
+  }
+  oneof result {
+    Approved approved = 1;
+    Rejected rejected = 2;
+    Failed failed = 3;
+  }
+}

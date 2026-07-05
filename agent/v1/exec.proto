@@ -175,6 +175,9 @@ message ExecuteHookRequest {
     PreToolUseRequestQuery pre_tool_use = 4;
     PostToolUseRequestQuery post_tool_use = 5;
     PostToolUseFailureRequestQuery post_tool_use_failure = 6;
+    BeforeSubmitPromptRequestQuery before_submit_prompt = 7;
+    AfterAgentResponseRequestQuery after_agent_response = 8;
+    AfterAgentThoughtRequestQuery after_agent_thought = 9;
   }
 }
 
@@ -186,5 +189,8 @@ message ExecuteHookResponse {
     PreToolUseRequestResponse pre_tool_use = 4;
     PostToolUseRequestResponse post_tool_use = 5;
     PostToolUseFailureRequestResponse post_tool_use_failure = 6;
+    BeforeSubmitPromptRequestResponse before_submit_prompt = 7;
+    AfterAgentResponseRequestResponse after_agent_response = 8;
+    AfterAgentThoughtRequestResponse after_agent_thought = 9;
   }
 }

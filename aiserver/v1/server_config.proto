@@ -51,12 +51,31 @@ enum InAppAdTrigger {
   IN_APP_AD_TRIGGER_COMMIT = 4;
 }
 
+enum ScmConnectAdProvider {
+  SCM_CONNECT_AD_PROVIDER_UNSPECIFIED = 0;
+  SCM_CONNECT_AD_PROVIDER_GITHUB = 1;
+  SCM_CONNECT_AD_PROVIDER_GITLAB = 2;
+}
+
+enum ScmConnectAdConnectionState {
+  SCM_CONNECT_AD_CONNECTION_STATE_UNSPECIFIED = 0;
+  SCM_CONNECT_AD_CONNECTION_STATE_UNKNOWN = 1;
+  SCM_CONNECT_AD_CONNECTION_STATE_NOT_CONNECTED = 2;
+  SCM_CONNECT_AD_CONNECTION_STATE_HAS_ACCESS = 3;
+}
+
 enum Http2Config {
   HTTP2_CONFIG_UNSPECIFIED = 0;
   HTTP2_CONFIG_FORCE_ALL_DISABLED = 1;
   HTTP2_CONFIG_FORCE_ALL_ENABLED = 2;
   HTTP2_CONFIG_FORCE_BIDI_DISABLED = 3;
   HTTP2_CONFIG_FORCE_BIDI_ENABLED = 4;
+}
+
+enum RetrievalKeepAliveConfig {
+  RETRIEVAL_KEEP_ALIVE_CONFIG_UNSPECIFIED = 0;
+  RETRIEVAL_KEEP_ALIVE_CONFIG_FORCE_DISABLED = 1;
+  RETRIEVAL_KEEP_ALIVE_CONFIG_FORCE_ENABLED = 2;
 }
 
 enum BugbotPlanType {
@@ -193,6 +212,12 @@ message RemoteAuthority {
   RemoteConnectionType connection_type = 1;
 }
 
+message ScmConnectAdContext {
+  ScmConnectAdProvider provider = 1;
+  string remote_url = 2;
+  ScmConnectAdConnectionState connection_state = 3;
+}
+
 message DevEnvironment {
   bool has_alternative_cli = 1;
   bool has_cursor_agent_cli = 2;
@@ -208,6 +233,7 @@ message GetServerConfigRequest {
   InAppAdTrigger in_app_ad_trigger = 7;
   DevEnvironment dev_environment = 8;
   ClientSurface client_surface = 9;
+  ScmConnectAdContext scm_connect_ad_context = 10;
 }
 
 message MetricsConfig {
@@ -368,6 +394,7 @@ message GetServerConfigResponse {
   optional OnboardingConfig onboarding_config = 33;
   optional BugbotConfig bugbot_config = 34;
   optional CodebaseTelemetryConfig codebase_telemetry_config = 35;
+  RetrievalKeepAliveConfig retrieval_keep_alive_config = 36;
 }
 
 message InferenceProviderWarning {

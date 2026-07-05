@@ -20,6 +20,7 @@ message SendMessageArgs {
 
 message SendMessageSuccess {
   uint64 timestamp = 1;
+  string message_id = 2;
 }
 
 message SendMessageError {
