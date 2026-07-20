@@ -39,25 +39,13 @@ message RequestContextRejected {
   string reason = 1;
 }
 
-message ImageProto {
-  message Dimension {
-    int32 width = 1;
-    int32 height = 2;
-  }
-  bytes data = 1;
-  string uuid = 2;
-  string path = 3;
-  Dimension dimension = 4;
-  optional string task_specific_description = 6;
-  string mime_type = 7;
-}
-
 message GitRepoInfo {
   string path = 1;
   string status = 2;
   string branch_name = 3;
   optional string remote_url = 4;
   optional bool previous_branch_is_ancestor = 5;
+  optional bool is_origin_backed = 6;
 }
 
 message RequestContextEnv {
@@ -82,11 +70,6 @@ message RequestContextEnv {
   optional bool smart_mode_classifier_auto_mode_enabled = 22;
   optional string dev_force_next_smart_mode_classifier_block_token = 23;
   optional string dev_delay_next_smart_mode_classifier_token = 24;
-}
-
-message UserGitContext {
-  optional string username = 1;
-  optional string email = 2;
 }
 
 message DebugModeConfig {
@@ -179,6 +162,7 @@ message RequestContext {
   optional PermissionsAutoRunInstructions project_permissions_auto_run = 47;
   optional PermissionsAutoRunInstructions admin_permissions_auto_run = 48;
   repeated string disabled_team_rules = 49;
+  optional bool search_conversations_enabled = 50;
 }
 
 message RecentlyAddedPlugin {

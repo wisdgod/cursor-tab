@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package agent.v1;
+
+enum AgentStoreClaimMountKind {
+  AGENT_STORE_CLAIM_MOUNT_KIND_UNSPECIFIED = 0;
+  AGENT_STORE_CLAIM_MOUNT_KIND_SELF = 1;
+  AGENT_STORE_CLAIM_MOUNT_KIND_USER = 2;
+  AGENT_STORE_CLAIM_MOUNT_KIND_TEAM = 3;
+  AGENT_STORE_CLAIM_MOUNT_KIND_AUTOMATION = 4;
+}
+
+message Empty {
+}
+
+message AgentStoreClaimConfig {
+  AgentStoreSelfClaimConfig self = 1;
+  repeated AgentStoreClaimMount mounts = 2;
+}
+
+message AgentStoreSelfClaimConfig {
+}
+
+message AgentStoreClaimMount {
+  AgentStoreClaimMountKind kind = 1;
+  string source_id = 2;
+}
+
+message ClaimWorkerRequest {
+  string http_mcp_config_json = 1;
+  string mcp_config_json = 2;
+  string bc_id = 3;
+  AgentStoreClaimConfig agent_store_claim_config = 4;
+}
+
+message ReleaseWorkerRequest {
+}
+
+service LifecycleService {
+  rpc ResetInstance(Empty) returns (Empty);
+  rpc RenewInstance(Empty) returns (Empty);
+  rpc ClaimWorker(ClaimWorkerRequest) returns (Empty);
+  rpc ReleaseWorker(ReleaseWorkerRequest) returns (Empty);
+}

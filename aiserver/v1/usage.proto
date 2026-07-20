@@ -164,6 +164,7 @@ message UsageEventDisplay {
   optional string automation_managed_type = 21;
   optional string client_type = 22;
   optional string conversation_id = 23;
+  optional string subscription_product_id = 24;
 }
 
 message TokenUsage {

@@ -29,6 +29,7 @@ message AcquireRequest {
   string conversation_group_id = 7;
   bool is_stream = 8;
   string canonical_model = 9;
+  string client_protocol = 10;
 }
 
 message AcquireResponse {
@@ -36,6 +37,7 @@ message AcquireResponse {
   RateLimitReason reason = 2;
   int32 replay_count = 3;
   RouteResult route_result = 4;
+  bool no_deployment_config = 5;
 }
 
 message RouteResult {
@@ -75,44 +77,6 @@ message ReportUsageRequest {
 }
 
 message ReportUsageResponse {
-}
-
-message SchedulerConfig {
-  int64 tick_ms = 1;
-  map<string, ProviderConfig> providers = 2;
-  map<string, WorkloadConfig> workloads = 3;
-}
-
-message ProviderConfig {
-  map<string, ModelConfig> models = 1;
-}
-
-message ModelConfig {
-  map<string, DeploymentConfig> deployments = 1;
-}
-
-message DeploymentConfig {
-  RateLimits limits = 1;
-  RampConfig ramp = 2;
-  int64 max_input_tokens_per_request = 3;
-  int64 max_output_tokens_per_request = 4;
-}
-
-message RateLimits {
-  int64 tpm_max = 1;
-  int64 rpm_max = 2;
-}
-
-message RampConfig {
-  bool enabled = 1;
-  double max_multiplier = 2;
-  int64 window_minutes = 3;
-}
-
-message WorkloadConfig {
-  int32 priority = 1;
-  int32 weight = 2;
-  bool disabled = 3;
 }
 
 service SchedulerService {

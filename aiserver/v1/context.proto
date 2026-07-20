@@ -209,10 +209,6 @@ message ContextIntent {
     SimpleRange potentially_out_of_date_range = 2;
     string text = 3;
   }
-  message Symbol {
-    DocumentSymbol symbol = 1;
-    string relative_workspace_path = 2;
-  }
   message CommitNotes {
   }
   message Lints {
@@ -234,8 +230,6 @@ message ContextIntent {
   message PastCmdkConversationsInDiffSessions {
   }
   message VisibleTabs {
-  }
-  message CodebaseChunks {
   }
   message CmdKCurrentFile {
   }

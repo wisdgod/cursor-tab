@@ -1,0 +1,196 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+enum SandBoxMigrationPhase {
+  SAND_BOX_MIGRATION_PHASE_UNSPECIFIED = 0;
+  SAND_BOX_MIGRATION_PHASE_BACKING_UP = 1;
+  SAND_BOX_MIGRATION_PHASE_CREATING = 2;
+  SAND_BOX_MIGRATION_PHASE_MOVING = 3;
+  SAND_BOX_MIGRATION_PHASE_CLEANING_UP = 4;
+  SAND_BOX_MIGRATION_PHASE_WIPING = 5;
+  SAND_BOX_MIGRATION_PHASE_DONE = 6;
+  SAND_BOX_MIGRATION_PHASE_FAILED = 7;
+}
+
+enum SandBoxRunState {
+  SAND_BOX_RUN_STATE_UNSPECIFIED = 0;
+  SAND_BOX_RUN_STATE_ABSENT = 1;
+  SAND_BOX_RUN_STATE_HIBERNATED = 2;
+  SAND_BOX_RUN_STATE_RUNNING = 3;
+}
+
+message EnsureSandBoxRequest {
+}
+
+message EnsureSandBoxWindowRequest {
+  int32 window_index = 2;
+}
+
+message EnsureSandBoxResponse {
+  string cluster = 1;
+  string tenant_id = 2;
+  string pod_id = 3;
+  string network_token = 4;
+  string exec_daemon_auth_token = 5;
+  string exec_daemon_url = 6;
+  string vnc_url = 7;
+  string terminals_folder = 8;
+  string fork_vnc_base_url = 12;
+  optional bool image_update_available = 9;
+  string gateway_url = 10;
+  string gateway_token = 11;
+}
+
+message RecreateSandBoxRequest {
+  bool preserve_data = 1;
+  bool force = 2;
+}
+
+message RecreateSandBoxResponse {
+  bool started = 1;
+  string reason = 2;
+}
+
+message AdminRecreateSandBoxRequest {
+  string auth_id = 1;
+  string flavor = 2;
+  bool preserve_data = 3;
+  bool force = 4;
+}
+
+message AdminForceRecreateSandBoxRequest {
+  string auth_id = 1;
+  string flavor = 2;
+}
+
+message AdminSandBoxStoreStatusRequest {
+  string auth_id = 1;
+  string flavor = 2;
+}
+
+message AdminSandBoxStoreStatusResponse {
+  bool durable = 1;
+  int64 entry_count = 2;
+  int64 total_bytes = 3;
+  int64 last_snapshot_at_ms = 4;
+  bool reachable = 5;
+}
+
+message AdminUpdateSandBoxHostRequest {
+  string auth_id = 1;
+  string flavor = 2;
+  bool force = 3;
+}
+
+message AdminUpdateSandBoxHostResponse {
+  bool started = 1;
+  string reason = 2;
+  string version = 3;
+}
+
+message AdminSandBoxHostStatusRequest {
+  string auth_id = 1;
+  string flavor = 2;
+}
+
+message AdminSandBoxHostStatusResponse {
+  bool gateway_reachable = 1;
+  optional string host_version = 2;
+  optional bool host_update_available = 3;
+  optional string latest_host_version = 4;
+  optional bool is_busy = 5;
+}
+
+message AdminSnapshotSandBoxStoreRequest {
+  string auth_id = 1;
+  string flavor = 2;
+}
+
+message AdminSnapshotSandBoxStoreResponse {
+  bool ok = 1;
+  int64 manifest_entries = 2;
+  int64 files_uploaded = 3;
+  string reason = 4;
+}
+
+message AdminListSandAgentsRequest {
+  string auth_id = 1;
+  string flavor = 2;
+}
+
+message AdminListSandAgentsResponse {
+  bool reachable = 1;
+  string agents_json = 2;
+  string reason = 3;
+}
+
+message AdminGetSandAgentTranscriptPageRequest {
+  string auth_id = 1;
+  string flavor = 2;
+  string agent_id = 3;
+  int64 before_seq = 4;
+  uint32 limit = 5;
+  int64 since_ms = 6;
+  int64 until_ms = 7;
+}
+
+message AdminGetSandAgentTranscriptPageResponse {
+  bool reachable = 1;
+  string entries_json = 2;
+  string reason = 3;
+  int64 next_before_seq = 4;
+}
+
+message WatchSandBoxMigrationRequest {
+  string from_offset_key = 1;
+}
+
+message AdminWatchSandBoxMigrationRequest {
+  string auth_id = 1;
+  string flavor = 2;
+  string from_offset_key = 3;
+}
+
+message SandBoxMigrationEvent {
+  SandBoxMigrationPhase phase = 1;
+  string detail = 2;
+  int64 at_ms = 3;
+  string offset_key = 4;
+}
+
+message GetSandBoxRunStateRequest {
+}
+
+message GetSandBoxRunStateResponse {
+  SandBoxRunState state = 1;
+}
+
+message SandBoxDescriptor {
+  bool running = 2;
+}
+
+message ListSandBoxesRequest {
+}
+
+message ListSandBoxesResponse {
+  repeated SandBoxDescriptor boxes = 1;
+}
+
+service SandBoxService {
+  rpc EnsureSandBox(EnsureSandBoxRequest) returns (EnsureSandBoxResponse);
+  rpc EnsureSandBoxWindow(EnsureSandBoxWindowRequest) returns (EnsureSandBoxResponse);
+  rpc RecreateSandBox(RecreateSandBoxRequest) returns (RecreateSandBoxResponse);
+  rpc AdminRecreateSandBox(AdminRecreateSandBoxRequest) returns (RecreateSandBoxResponse);
+  rpc AdminForceRecreateSandBox(AdminForceRecreateSandBoxRequest) returns (RecreateSandBoxResponse);
+  rpc AdminGetSandBoxStoreStatus(AdminSandBoxStoreStatusRequest) returns (AdminSandBoxStoreStatusResponse);
+  rpc AdminUpdateSandBoxHost(AdminUpdateSandBoxHostRequest) returns (AdminUpdateSandBoxHostResponse);
+  rpc AdminGetSandBoxHostStatus(AdminSandBoxHostStatusRequest) returns (AdminSandBoxHostStatusResponse);
+  rpc AdminSnapshotSandBoxStore(AdminSnapshotSandBoxStoreRequest) returns (AdminSnapshotSandBoxStoreResponse);
+  rpc AdminListSandAgents(AdminListSandAgentsRequest) returns (AdminListSandAgentsResponse);
+  rpc AdminGetSandAgentTranscriptPage(AdminGetSandAgentTranscriptPageRequest) returns (AdminGetSandAgentTranscriptPageResponse);
+  rpc WatchSandBoxMigration(WatchSandBoxMigrationRequest) returns (stream SandBoxMigrationEvent);
+  rpc AdminWatchSandBoxMigration(AdminWatchSandBoxMigrationRequest) returns (stream SandBoxMigrationEvent);
+  rpc GetSandBoxRunState(GetSandBoxRunStateRequest) returns (GetSandBoxRunStateResponse);
+  rpc ListSandBoxes(ListSandBoxesRequest) returns (ListSandBoxesResponse);
+}

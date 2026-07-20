@@ -647,11 +647,6 @@ message TakeNotesOnCommitDiffResponse {
   repeated CommitNoteWithEmbeddings notes = 1;
 }
 
-message SimpleCommitWithDiff {
-  string commit_hash = 1;
-  string diff = 2;
-}
-
 message IsCursorPredictionEnabledRequest {
 }
 
@@ -1307,6 +1302,7 @@ message AvailableModelsResponse {
     MODEL_VENDOR_ID_CURSOR = 6;
     MODEL_VENDOR_ID_NVIDIA = 7;
     MODEL_VENDOR_ID_ZAI = 8;
+    MODEL_VENDOR_ID_META = 9;
   }
   message TooltipData {
     string primary_text = 1;
@@ -1320,6 +1316,18 @@ message AvailableModelsResponse {
   message ModelVendor {
     ModelVendorId id = 1;
     string display_name = 2;
+  }
+  message ModelPickerBadge {
+    enum Variant {
+      VARIANT_UNSPECIFIED = 0;
+      VARIANT_ACCENT = 1;
+      VARIANT_NEUTRAL = 2;
+      VARIANT_SUCCESS = 3;
+      VARIANT_WARN = 4;
+      VARIANT_DANGER = 5;
+    }
+    string label = 1;
+    Variant variant = 2;
   }
   message AvailableModel {
     string name = 1;
@@ -1368,6 +1376,7 @@ message AvailableModelsResponse {
     optional bool supports_smart_mode_classifier = 45;
     optional bool requires_data_retention = 46;
     optional string reason_for_zdr_consent_block = 47;
+    repeated ModelPickerBadge model_picker_badges = 48;
   }
   message ModelVariantConfig {
     repeated agent.v1.RequestedModel.ModelParameterValue parameter_values = 1;
@@ -1383,10 +1392,15 @@ message AvailableModelsResponse {
     optional string legacy_slug = 11;
   }
   message ConfirmationDialogue {
+    enum Presentation {
+      PRESENTATION_UNSPECIFIED = 0;
+      PRESENTATION_POST_PICKER_WARNING = 1;
+    }
     string title = 1;
     string body = 2;
     string key = 3;
     bool blocks_submission = 4;
+    optional Presentation presentation = 5;
   }
   message FeatureModelConfig {
     string default_model = 1;
@@ -1439,6 +1453,10 @@ message AvailableModelsResponse {
   optional int32 disable_unused_models_after_n_hours = 12;
   optional int32 upgrade_unchanged_models_after_n_hours = 13;
   ModelPickerDisplayConfiguration display_configuration = 15;
+  bool non_max_model_defaults_experiment_enabled = 17;
+  bool non_max_model_defaults_experiment_candidate = 18;
+  optional string experimental_model_id = 19;
+  optional string experimental_model_display_name = 20;
 }
 
 message ModelParameterDefinition {
@@ -1463,6 +1481,7 @@ message ModelParameterDefinition {
       optional bool increases_model_cost = 3;
       optional bool blocked_by_admin_allowlist = 4;
       optional string markdown_tooltip = 5;
+      repeated AvailableModelsResponse.ModelPickerBadge model_picker_badges = 6;
     }
     repeated EnumParameterValue values = 1;
   }
@@ -1973,38 +1992,6 @@ message GetComposerChatRequest {
   CodeSearchResult uses_codebase_results = 29;
 }
 
-message StreamComposerContextRequest {
-  message CodeContext {
-    repeated CodeBlock chunks = 1;
-    repeated CodeResult scored_chunks = 2;
-  }
-  CurrentFileInfo current_file = 1;
-  repeated ConversationMessage conversation = 2;
-  repeated RepositoryInfo repositories = 3;
-  ExplicitContext explicit_context = 4;
-  optional string workspace_root_path = 5;
-  repeated CodeBlock code_blocks = 6;
-  ModelDetails model_details = 7;
-  repeated string documentation_identifiers = 8;
-  string query = 9;
-  CodeContext code_context = 10;
-  bool rerank_results = 11;
-  LinterErrors linter_errors = 14;
-  optional bool is_bash = 15;
-  bool rerank_results_v2 = 16;
-  string conversation_id = 17;
-  bool can_handle_filenames_after_language_ids = 18;
-  bool long_context_mode = 19;
-  bool is_eval = 20;
-  string request_id = 21;
-  optional int32 desired_max_tokens = 22;
-  optional bool runnable_code_blocks = 23;
-  oneof context_results {
-    FullFileSearchResult file_search_results = 12;
-    CodeSearchResult code_search_results = 13;
-  }
-}
-
 message CheckUsageBasedPriceRequest {
   UsageEventDetails usage_event_details = 1;
 }
@@ -2138,11 +2125,6 @@ message GetChatTitleRequest {
 
 message GetChatTitleResponse {
   string title = 1;
-}
-
-message GetChatPromptResponse {
-  string prompt = 1;
-  int32 token_count = 2;
 }
 
 message ServerTimingInfo {
@@ -2697,10 +2679,6 @@ message ReportCmdKFateRequest {
 message ReportCmdKFateResponse {
 }
 
-message SshConfigPromptProps {
-  string ssh_string = 1;
-}
-
 message GetFilesForComposerRequest {
   repeated ConversationMessage conversation = 1;
   repeated CurrentFileInfo files = 2;
@@ -2967,17 +2945,6 @@ message TestBedrockCredentialsResponse {
   optional string error = 2;
 }
 
-message GetBedrockModelsRequest {
-  string access_key = 1;
-  string secret_key = 2;
-  string region = 3;
-}
-
-message GetBedrockModelsResponse {
-  repeated string models = 1;
-  optional string error = 2;
-}
-
 message CommitLineRange {
   int32 start = 1;
   int32 end = 2;
@@ -3177,21 +3144,6 @@ message KnowledgeBaseListResponse {
   repeated Item all_results = 2;
 }
 
-message KnowledgeBaseGetRequest {
-  string id = 1;
-}
-
-message KnowledgeBaseGetResponse {
-  message Item {
-    string id = 1;
-    string knowledge = 2;
-    string title = 3;
-    string created_at = 4;
-  }
-  bool success = 1;
-  Item result = 2;
-}
-
 message FetchRelevantKnowledgeForConversationRequest {
   string request_id = 1;
   repeated ConversationMessage conversation = 2;
@@ -3230,23 +3182,12 @@ message GetBackgroundComposerFeedbackLinkResponse {
   string url = 1;
 }
 
-message PullRequestResult {
-  string sha = 1;
-  string full_pr_contents = 2;
-  float score = 3;
-}
-
 message ScoredAiCodeMetadata {
   string file_extension = 1;
   int32 lines_added = 2;
   int32 lines_deleted = 3;
   repeated string change_hashes = 5;
   optional string file_name = 4;
-}
-
-message IterativeSftInferenceConfig {
-  optional double temperature = 1;
-  optional double top_p = 2;
 }
 
 message SttConfig {

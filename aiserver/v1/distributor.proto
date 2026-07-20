@@ -29,6 +29,7 @@ message WorkloadDemand {
   int64 input_tokens = 4;
   int64 output_tokens = 5;
   bool is_stream = 6;
+  string client_protocol = 7;
 }
 
 message WorkloadGrant {
@@ -46,6 +47,7 @@ message WorkloadGrant {
   bool is_stream = 12;
   RouteResult route_result = 13;
   string canonical_model = 14;
+  string client_protocol = 15;
 }
 
 message UsageReport {

@@ -2,16 +2,6 @@ syntax = "proto3";
 
 package anyrun.v1;
 
-import "anyrun/v1/common.proto";
-import "anyrun/v1/persisted_dev_container.proto";
-import "google/protobuf/empty.proto";
-
-enum PodStartCacheSource {
-  POD_START_CACHE_SOURCE_UNSPECIFIED = 0;
-  POD_START_CACHE_SOURCE_NODE_LOCAL_FIRECRACKER_SNAPSHOT = 1;
-  POD_START_CACHE_SOURCE_REMOTE_ROOTAR_CHECKPOINT = 2;
-}
-
 enum PodCreatingPhase {
   POD_CREATING_PHASE_UNSPECIFIED = 0;
   POD_CREATING_PHASE_CLONE = 1;
@@ -42,25 +32,6 @@ enum ImagePullFailureCategory {
   IMAGE_PULL_FAILURE_CATEGORY_UPSTREAM = 5;
 }
 
-message PodPorts {
-  repeated PortDefinition ports = 1;
-  optional DefaultPortConfig default_port_config = 2;
-}
-
-message PortState {
-  string port_name = 1;
-  uint32 container_port = 2;
-  uint32 host_port = 3;
-  oneof visibility {
-    google.protobuf.Empty public = 4;
-    google.protobuf.Empty private = 5;
-  }
-  oneof authentication {
-    google.protobuf.Empty open = 6;
-    google.protobuf.Empty token = 7;
-  }
-}
-
 message PodStatus {
   oneof status {
     PodCreatingStatus creating = 1;
@@ -68,58 +39,6 @@ message PodStatus {
     PodFailedStatus failed = 3;
     PodTerminatedStatus terminated = 4;
   }
-}
-
-message Pod {
-  string tenant_id = 1;
-  string pod_id = 2;
-  uint32 resource_version = 9;
-  string name = 10;
-  map<string, string> labels = 11;
-  uint64 creation_timestamp = 12;
-  optional uint64 deletion_timestamp = 13;
-  optional uint64 hibernation_timestamp = 14;
-  ResourceRequests resource_requests = 4;
-  ResourceRequests hibernated_resource_requests = 20;
-  optional ResourceLimits resource_limits = 17;
-  optional bool cache = 18;
-  optional string cache_tag = 19;
-  string workload = 21;
-  string node_id = 5;
-  optional bool hibernated = 15;
-  string network_token = 7;
-  PodStatus status = 8;
-  PodPorts ports = 6;
-  optional uint32 internal_proxy_port = 22;
-  optional PersistedDevContainerConfig config = 16;
-  optional uint64 modified_timestamp = 23;
-  optional uint64 pod_awake_since = 24;
-  repeated string low_cardinality_labels = 25;
-  repeated string checkpoint_group_ids = 26;
-  optional string started_from_checkpoint_group_id = 27;
-  optional string started_from_checkpoint_id = 30;
-  optional PodStartCacheSource started_from_cache_source = 28;
-  optional uint64 started_from_checkpoint_creation_timestamp = 29;
-}
-
-message PodCollection {
-  repeated Pod items = 1;
-  optional string next_cursor = 2;
-}
-
-message PodUpdate {
-  optional string event_id = 1;
-  oneof update {
-    PodCollection initial = 2;
-    Pod added = 3;
-    Pod updated = 4;
-    Pod removed = 5;
-  }
-}
-
-message PodFilter {
-  optional string pod_id = 1;
-  map<string, string> labels = 2;
 }
 
 message PodCreatingStatus {
@@ -181,14 +100,4 @@ message ImagePullFailure {
   bool retryable = 2;
   optional int32 http_status = 3;
   optional string repository = 4;
-}
-
-message DaemonPod {
-  PodStatus status = 2;
-  optional uint32 internal_proxy_port = 3;
-  optional DefaultPortConfig default_port_config = 4;
-  optional string started_from_checkpoint_group_id = 5;
-  optional string started_from_checkpoint_id = 8;
-  optional PodStartCacheSource started_from_cache_source = 6;
-  optional uint64 started_from_checkpoint_creation_timestamp = 7;
 }

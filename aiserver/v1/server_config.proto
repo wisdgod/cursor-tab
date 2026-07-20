@@ -49,6 +49,7 @@ enum InAppAdTrigger {
   IN_APP_AD_TRIGGER_FIND_ISSUES = 2;
   IN_APP_AD_TRIGGER_GIT_PUSH = 3;
   IN_APP_AD_TRIGGER_COMMIT = 4;
+  IN_APP_AD_TRIGGER_IOS_DOWNLOAD_MENU = 5;
 }
 
 enum ScmConnectAdProvider {
@@ -299,6 +300,8 @@ message InteractionConfig {
   optional int32 metrics_click_inp_drop_highest_count = 11;
   optional int32 metrics_keypress_inp_drop_highest_count = 12;
   optional int32 metrics_startup_threshold_sec = 13;
+  optional int32 analytics_summary_every_n_windows = 14;
+  optional int32 ext_host_lag_summary_interval_sec = 15;
 }
 
 message AgentTelemetryConfig {
@@ -395,6 +398,12 @@ message GetServerConfigResponse {
   optional BugbotConfig bugbot_config = 34;
   optional CodebaseTelemetryConfig codebase_telemetry_config = 35;
   RetrievalKeepAliveConfig retrieval_keep_alive_config = 36;
+  optional GoogleWorkspaceMcpOAuthClient google_workspace_mcp_oauth_client = 37;
+}
+
+message GoogleWorkspaceMcpOAuthClient {
+  string client_id = 1;
+  string client_secret = 2;
 }
 
 message InferenceProviderWarning {

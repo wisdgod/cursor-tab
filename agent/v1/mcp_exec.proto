@@ -15,6 +15,7 @@ message McpArgs {
   optional SmartModeApproval smart_mode_approval = 6;
   bool smart_mode_approval_only = 7;
   bool skip_approval = 8;
+  string server_identifier = 9;
 }
 
 message McpResult {
@@ -80,6 +81,8 @@ message McpPermissionDenied {
 }
 
 message McpStateExecArgs {
+  repeated string server_identifiers = 1;
+  bool kick_only = 2;
 }
 
 message McpStateExecResult {
@@ -168,6 +171,7 @@ message ReadMcpResourceSuccess {
   optional string mime_type = 4;
   map<string, string> annotations = 7;
   optional string download_path = 8;
+  optional OutputLocation output_location = 9;
   oneof content {
     string text = 5;
     bytes blob = 6;

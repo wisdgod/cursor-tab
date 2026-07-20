@@ -10,12 +10,6 @@ message McpOAuthStoredData {
   optional string access_token = 5;
 }
 
-message McpOAuthStoredClientInfo {
-  string client_id = 1;
-  optional string client_secret = 2;
-  repeated string redirect_uris = 3;
-}
-
 message MCPKnownServerInfo {
   string name = 1;
   string description = 2;

@@ -27,6 +27,12 @@ message SandboxPolicy {
     TYPE_WORKSPACE_READWRITE = 2;
     TYPE_WORKSPACE_READONLY = 3;
   }
+  enum ReadBoundaryMode {
+    READ_BOUNDARY_MODE_UNSPECIFIED = 0;
+    READ_BOUNDARY_MODE_SYSTEM = 1;
+    READ_BOUNDARY_MODE_WORKSPACE = 2;
+    READ_BOUNDARY_MODE_CUSTOM = 3;
+  }
   Type type = 1;
   optional bool network_access = 2;
   repeated string additional_readwrite_paths = 3;
@@ -39,10 +45,6 @@ message SandboxPolicy {
   optional bool network_policy_strict = 11;
   optional bool capture_denies = 12;
   optional bool skip_statsig_defaults = 13;
-}
-
-message SandboxPolicyMergeSources {
-  optional SandboxPolicy per_user = 1;
-  optional SandboxPolicy per_repo = 2;
-  optional SandboxPolicy team_admin = 3;
+  ReadBoundaryMode read_boundary = 14;
+  repeated string additional_read_paths = 15;
 }

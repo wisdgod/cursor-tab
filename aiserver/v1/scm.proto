@@ -203,6 +203,7 @@ message SCMPullRequestCommit {
   optional int32 changed_files = 6;
   optional SCMPullRequestCommitUser author = 7;
   optional SCMPullRequestCommitUser committer = 8;
+  repeated SCMPullRequestCommitUser authors = 9;
 }
 
 message SCMPullRequestCommitUser {

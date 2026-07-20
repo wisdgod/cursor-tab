@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/conversation_search_exec.proto";
+
+message SearchConversationsToolCall {
+  ConversationSearchArgs args = 1;
+  ConversationSearchResult result = 2;
+}

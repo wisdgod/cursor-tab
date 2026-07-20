@@ -18,19 +18,3 @@ message AgentSkill {
   repeated string globs = 13;
   repeated string scoped_to = 14;
 }
-
-message AgentSkillMetadata {
-  string full_path = 1;
-  string description = 2;
-  optional string parse_error = 3;
-  repeated string environments = 4;
-  repeated string disabled_environments = 5;
-  optional string git_remote_origin = 6;
-  bool disable_model_invocation = 7;
-  optional string plugin = 8;
-  optional string marketplace = 9;
-  optional string plugin_id = 10;
-  optional string marketplace_id = 11;
-  repeated string globs = 12;
-  repeated string scoped_to = 13;
-}

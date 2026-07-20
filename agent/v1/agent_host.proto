@@ -1,0 +1,198 @@
+syntax = "proto3";
+
+package agent.v1;
+
+import "agent/v1/agent.proto";
+
+enum AgentHostSessionStatus {
+  AGENT_HOST_SESSION_STATUS_UNSPECIFIED = 0;
+  AGENT_HOST_SESSION_STATUS_IDLE = 1;
+  AGENT_HOST_SESSION_STATUS_RUNNING = 2;
+}
+
+message CreateAgentHostSessionRequest {
+  string session_id = 1;
+  optional ConversationStateStructure conversation_state = 2;
+}
+
+message CreateAgentHostSessionResponse {
+}
+
+message ListAgentHostSessionsRequest {
+}
+
+message ListAgentHostSessionsResponse {
+  repeated AgentHostSession sessions = 1;
+}
+
+message WatchAgentHostSessionsRequest {
+}
+
+message AgentHostSession {
+  string session_id = 1;
+  AgentHostSessionStatus status = 2;
+  uint64 last_event_id = 3;
+}
+
+message WatchAgentHostSessionsEvent {
+  oneof event {
+    AgentHostSessionsSnapshot snapshot = 1;
+    AgentHostSessionAdded added = 2;
+    AgentHostSessionUpdated updated = 3;
+    AgentHostSessionDeleted deleted = 4;
+  }
+}
+
+message AgentHostSessionsSnapshot {
+  repeated AgentHostSession sessions = 1;
+}
+
+message AgentHostSessionAdded {
+  AgentHostSession session = 1;
+}
+
+message AgentHostSessionUpdated {
+  AgentHostSession session = 1;
+}
+
+message AgentHostSessionDeleted {
+  string session_id = 1;
+}
+
+message SendAgentHostMessageRequest {
+  string session_id = 1;
+  string text = 2;
+  optional string model_id = 3;
+  optional ModelDetails model_details = 4;
+  optional AgentHostRunOptions run_options = 5;
+}
+
+message SendAgentHostActionRequest {
+  string session_id = 1;
+  ConversationAction action = 2;
+  optional string model_id = 3;
+  optional ModelDetails model_details = 4;
+  optional AgentHostRunOptions run_options = 5;
+}
+
+message SendAgentHostMessageResponse {
+  string run_id = 1;
+}
+
+message SendAgentHostActionResponse {
+  string run_id = 1;
+}
+
+message DeleteAgentHostSessionRequest {
+  string session_id = 1;
+}
+
+message DeleteAgentHostSessionResponse {
+}
+
+message CancelAgentHostRunRequest {
+  string session_id = 1;
+  string run_id = 2;
+  optional string reason = 3;
+}
+
+message CancelAgentHostRunResponse {
+}
+
+message AgentHostBackgroundWork {
+  string id = 1;
+  string kind = 2;
+  string state = 3;
+  optional string owner_id = 4;
+  bool has_abort = 5;
+  map<string, string> metadata = 6;
+}
+
+message ListAgentHostBackgroundWorkRequest {
+  string session_id = 1;
+  optional string kind = 2;
+  optional string state = 3;
+  optional string owner_id = 4;
+}
+
+message ListAgentHostBackgroundWorkResponse {
+  repeated AgentHostBackgroundWork work = 1;
+}
+
+message AbortAgentHostBackgroundWorkRequest {
+  string session_id = 1;
+  string work_id = 2;
+}
+
+message AbortAgentHostBackgroundWorkResponse {
+  bool aborted = 1;
+}
+
+message AbortAllAgentHostBackgroundWorkRequest {
+  string session_id = 1;
+  optional string kind = 2;
+  optional string state = 3;
+  optional string owner_id = 4;
+}
+
+message AbortAllAgentHostBackgroundWorkResponse {
+  uint32 aborted_count = 1;
+}
+
+message AttachAgentHostSessionRequest {
+  string session_id = 1;
+  optional uint64 last_event_id = 2;
+}
+
+message AgentHostSessionEvent {
+  uint64 event_id = 1;
+  oneof event {
+    InteractionUpdate interaction_update = 2;
+    ConversationStateStructure conversation_state = 3;
+    AgentHostRunStarted run_started = 4;
+    AgentHostRunCompleted run_completed = 5;
+    AgentHostRunFailed run_failed = 6;
+    AgentHostRunCancelled run_cancelled = 7;
+  }
+}
+
+message AgentHostRunStarted {
+  string run_id = 1;
+}
+
+message AgentHostRunCompleted {
+  string run_id = 1;
+}
+
+message AgentHostRunFailed {
+  string run_id = 1;
+  string error = 2;
+}
+
+message AgentHostRunCancelled {
+  string run_id = 1;
+  optional string reason = 2;
+}
+
+message AgentHostRunOptions {
+  optional string generation_uuid = 1;
+  optional string custom_system_prompt = 2;
+  optional bool exclude_workspace_context = 3;
+  optional bool enable_agent_retries = 4;
+  optional uint32 fixed_retry_delay_ms = 5;
+  optional bool endless_retries = 6;
+}
+
+service AgentHostService {
+  rpc CreateSession(CreateAgentHostSessionRequest) returns (CreateAgentHostSessionResponse);
+  rpc ListSessions(ListAgentHostSessionsRequest) returns (ListAgentHostSessionsResponse);
+  rpc WatchSessions(WatchAgentHostSessionsRequest) returns (stream WatchAgentHostSessionsEvent);
+  rpc SendMessage(SendAgentHostMessageRequest) returns (SendAgentHostMessageResponse);
+  rpc SendAction(SendAgentHostActionRequest) returns (SendAgentHostActionResponse);
+  rpc DeleteSession(DeleteAgentHostSessionRequest) returns (DeleteAgentHostSessionResponse);
+  rpc CancelRun(CancelAgentHostRunRequest) returns (CancelAgentHostRunResponse);
+  rpc ListBackgroundWork(ListAgentHostBackgroundWorkRequest) returns (ListAgentHostBackgroundWorkResponse);
+  rpc AbortBackgroundWork(AbortAgentHostBackgroundWorkRequest) returns (AbortAgentHostBackgroundWorkResponse);
+  rpc AbortAllBackgroundWork(AbortAllAgentHostBackgroundWorkRequest) returns (AbortAllAgentHostBackgroundWorkResponse);
+  rpc AttachSession(AttachAgentHostSessionRequest) returns (stream AgentHostSessionEvent);
+}

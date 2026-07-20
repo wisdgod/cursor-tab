@@ -271,6 +271,17 @@ message RunFullSelfDrivingCloudCommandResponse {
   FullSelfDrivingMode mode = 3;
 }
 
+message EnrollExternalFullSelfDrivingRunRequest {
+  string pr_url = 1;
+  string bc_id = 2;
+  FullSelfDrivingMode mode = 3;
+  bool enable_config = 4;
+}
+
+message EnrollExternalFullSelfDrivingRunResponse {
+  bool enrolled = 1;
+}
+
 service FullSelfDrivingService {
   rpc SetFullSelfDrivingConfig(SetFullSelfDrivingConfigRequest) returns (SetFullSelfDrivingConfigResponse);
   rpc GetFullSelfDrivingConfig(GetFullSelfDrivingConfigRequest) returns (GetFullSelfDrivingConfigResponse);
@@ -288,4 +299,5 @@ service FullSelfDrivingService {
   rpc BuildFullSelfDrivingTriageContext(BuildFullSelfDrivingTriageContextRequest) returns (BuildFullSelfDrivingTriageContextResponse);
   rpc PrepareLocalFullSelfDrivingRun(PrepareLocalFullSelfDrivingRunRequest) returns (PrepareLocalFullSelfDrivingRunResponse);
   rpc RunFullSelfDrivingCloudCommand(RunFullSelfDrivingCloudCommandRequest) returns (RunFullSelfDrivingCloudCommandResponse);
+  rpc EnrollExternalFullSelfDrivingRun(EnrollExternalFullSelfDrivingRunRequest) returns (EnrollExternalFullSelfDrivingRunResponse);
 }

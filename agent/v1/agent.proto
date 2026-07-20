@@ -43,6 +43,7 @@ import "agent/v1/replace_env_tool.proto";
 import "agent/v1/report_bug_tool.proto";
 import "agent/v1/report_bugfix_results_tool.proto";
 import "agent/v1/request_context_exec.proto";
+import "agent/v1/search_conversations_tool.proto";
 import "agent/v1/selected_context.proto";
 import "agent/v1/semsearch_tool.proto";
 import "agent/v1/send_final_summary_tool.proto";
@@ -71,6 +72,7 @@ enum AgentMode {
   AGENT_MODE_TRIAGE = 5;
   AGENT_MODE_PROJECT = 6;
   AGENT_MODE_MULTITASK = 7;
+  AGENT_MODE_CUSTOM = 8;
 }
 
 enum SubagentExecutionEnvironment {
@@ -114,6 +116,14 @@ enum SubagentRunStatus {
   SUBAGENT_RUN_STATUS_ABORTED = 5;
 }
 
+enum CustomModeSource {
+  CUSTOM_MODE_SOURCE_UNSPECIFIED = 0;
+  CUSTOM_MODE_SOURCE_AGENT_SKILL = 1;
+  CUSTOM_MODE_SOURCE_PLUGIN_SKILL = 2;
+  CUSTOM_MODE_SOURCE_REPO_SKILL = 3;
+  CUSTOM_MODE_SOURCE_MANAGED_SKILL = 4;
+}
+
 enum SimulatedMsgReason {
   SIMULATED_MSG_REASON_UNSPECIFIED = 0;
   SIMULATED_MSG_REASON_PLAN_EXECUTION = 1;
@@ -143,6 +153,7 @@ enum SimulatedMsgReason {
   SIMULATED_MSG_REASON_FSD_START = 26;
   SIMULATED_MSG_REASON_FSD_PR_INTERRUPT = 27;
   SIMULATED_MSG_REASON_SUBSCRIPTION = 28;
+  SIMULATED_MSG_REASON_DIFF_TAB_CREATE_BRANCH = 29;
 }
 
 enum SubscriptionSource {
@@ -302,6 +313,7 @@ message ToolCall {
     PiFindToolCall pi_find_tool_call = 66;
     PiLsToolCall pi_ls_tool_call = 67;
     ConnectScmToolCall connect_scm_tool_call = 68;
+    SearchConversationsToolCall search_conversations_tool_call = 69;
   }
 }
 
@@ -508,6 +520,48 @@ message UserMessageAction {
   optional ConversationHistory conversation_history = 7;
 }
 
+message SubmittedCustomMode {
+  string id = 1;
+  string label = 2;
+  CustomModeSource source = 5;
+  optional string source_path = 6;
+  optional string source_hash = 7;
+  optional string managed_skill_id = 10;
+  optional string plugin_id = 11;
+  optional string plugin_snapshot_token = 12;
+}
+
+message CustomModeDescriptor {
+  string id = 1;
+  string label = 2;
+  optional string description = 3;
+  optional string icon = 4;
+  optional string color = 5;
+  CustomModeSource source = 6;
+  optional string source_path = 7;
+  optional string source_hash = 8;
+  optional string managed_skill_id = 9;
+  optional string plugin_id = 10;
+  optional string plugin_snapshot_token = 11;
+}
+
+message SubmittedExitedCustomMode {
+  string id = 1;
+  string label = 2;
+}
+
+message CustomModeExitIntent {
+  AgentMode next_mode = 1;
+  SubmittedExitedCustomMode exited_mode = 2;
+}
+
+message CustomModeIntent {
+  oneof intent {
+    SubmittedCustomMode enter = 1;
+    CustomModeExitIntent exit = 2;
+  }
+}
+
 message CancelAction {
   string reason = 1;
   optional InterruptedPendingToolCallResolutions interrupted_pending_tool_call_resolutions = 3;
@@ -587,6 +641,7 @@ message UserMessage {
   optional bytes text_blob_id = 18;
   optional bytes rich_text_blob_id = 19;
   repeated HookAdditionalContext hook_additional_contexts = 21;
+  optional CustomModeIntent custom_mode_intent = 22;
 }
 
 message AssistantMessage {
@@ -600,19 +655,6 @@ message ThinkingMessage {
 
 message ShellCommand {
   string command = 1;
-}
-
-message ShellOutput {
-  string stdout = 1;
-  string stderr = 2;
-  int32 exit_code = 3;
-}
-
-message ConversationTurn {
-  oneof turn {
-    AgentConversationTurn agent_conversation_turn = 1;
-    ShellConversationTurn shell_conversation_turn = 2;
-  }
 }
 
 message ConversationPlan {
@@ -631,12 +673,6 @@ message ConversationTurnStructure {
   }
 }
 
-message AgentConversationTurn {
-  UserMessage user_message = 1;
-  repeated ConversationStep steps = 2;
-  optional string request_id = 3;
-}
-
 message AgentConversationTurnStructure {
   bytes user_message = 1;
   repeated bytes steps = 2;
@@ -644,18 +680,9 @@ message AgentConversationTurnStructure {
   optional string encrypted_model = 4;
 }
 
-message ShellConversationTurn {
-  ShellCommand shell_command = 1;
-  ShellOutput shell_output = 2;
-}
-
 message ShellConversationTurnStructure {
   bytes shell_command = 1;
   bytes shell_output = 2;
-}
-
-message ConversationSummary {
-  string summary = 1;
 }
 
 message ConversationSummaryArchive {
@@ -726,24 +753,6 @@ message StepTiming {
   uint64 timestamp_ms = 2;
 }
 
-message ConversationState {
-  repeated string root_prompt_messages_json = 1;
-  repeated ConversationTurn turns = 8;
-  repeated TodoItem todos = 3;
-  repeated string pending_tool_calls = 4;
-  ConversationTokenDetails token_details = 5;
-  optional ConversationSummary summary = 6;
-  optional ConversationPlan plan = 7;
-  optional ConversationSummaryArchive summary_archive = 9;
-  map<string, FileState> file_states = 10;
-  repeated ConversationSummaryArchive summary_archives = 11;
-  map<string, PlanRegistryEntry> plans = 12;
-  repeated CommunicateUpdateHistoryEntry communicate_update_history = 13;
-  optional string communicate_update_final_summary = 14;
-  optional string communicate_update_completed_subtitle = 15;
-  map<string, CommunicateUpdateTurnState> communicate_update_states_by_parent_tool_call_id = 16;
-}
-
 message CommunicateUpdateHistoryEntry {
   string step = 1;
   uint32 message_index = 3;
@@ -763,6 +772,7 @@ message SubagentPersistedState {
   optional string model_id = 5;
   SubagentExecutionEnvironment environment = 6;
   optional CloudSubagentReference cloud_subagent = 7;
+  optional string first_class_bc_id = 8;
 }
 
 message CloudSubagentReference {
@@ -805,6 +815,7 @@ message ConversationStateStructure {
   map<string, SubagentRunState> subagent_runs_by_parent_tool_call_id = 30;
   optional uint64 conversation_started_timestamp_ms = 26;
   optional string conversation_started_time_zone = 27;
+  map<string, bytes> subagent_state_refs = 31;
 }
 
 message ThinkingDetails {
@@ -1241,6 +1252,24 @@ message AfterAgentThoughtRequestQuery {
 message AfterAgentThoughtRequestResponse {
 }
 
+message StopRequestQuery {
+  string status = 1;
+  int32 loop_count = 2;
+  optional string conversation_id = 3;
+  optional string generation_id = 4;
+  optional string model = 5;
+  optional string model_id = 6;
+  repeated RequestedModel.ModelParameterValue model_params = 7;
+  optional int64 input_tokens = 8;
+  optional int64 output_tokens = 9;
+  optional int64 cache_read_tokens = 10;
+  optional int64 cache_write_tokens = 11;
+}
+
+message StopRequestResponse {
+  optional string followup_message = 1;
+}
+
 message PreToolUseRequestQuery {
   string tool_name = 1;
   google.protobuf.Struct tool_input = 2;
@@ -1296,60 +1325,4 @@ message PostToolUseFailureRequestQuery {
 
 message PostToolUseFailureRequestResponse {
   optional string additional_context = 1;
-}
-
-message TaskToolCallArgsProto {
-  string description = 1;
-  string prompt = 2;
-  optional string model = 3;
-  string subagent_type = 4;
-  optional string resume = 5;
-  optional bool readonly = 6;
-  optional bool run_in_background = 7;
-  repeated string attachments = 8;
-  SubagentExecutionEnvironment environment = 9;
-  optional string cloud_base_branch = 10;
-}
-
-message SubagentCredentials {
-  oneof credentials {
-    ApiKeyCredentials api_key_credentials = 1;
-    AzureCredentials azure_credentials = 2;
-    BedrockCredentials bedrock_credentials = 3;
-  }
-}
-
-message PreparedTaskSubagent {
-  string subagent_id = 1;
-  string subagent_type_name = 2;
-  SubagentType subagent_type = 3;
-  string analytics_subagent_type = 4;
-  string resolved_model_id = 5;
-  bool effective_readonly = 6;
-  bool use_ask_mode_for_subagent = 7;
-  ConversationStateStructure conversation_state = 8;
-  ConversationAction initial_action = 9;
-  uint32 initial_turns_count = 10;
-  string subagent_request_id = 11;
-  string tool_call_id = 12;
-  bool is_resume = 13;
-  optional string parent_request_id = 14;
-  optional string root_parent_request_id = 15;
-  string task_prompt = 16;
-  string task_description = 17;
-  optional SelectedContext selected_context = 18;
-  optional string plugin = 19;
-  optional string marketplace = 20;
-  string parent_model_name = 21;
-  TaskToolCallArgsProto raw_args = 22;
-  SubagentCredentials subagent_credentials = 23;
-  optional string result_suffix = 25;
-  bool enable_execute_hook_exec = 26;
-  repeated string configured_steps = 27;
-  bool readonly_shell_enabled = 28;
-  string tool_name = 29;
-  optional int64 prepared_timestamp_unix_ms = 30;
-  optional string plugin_id = 31;
-  optional string marketplace_id = 32;
-  optional string subagent_source = 33;
 }

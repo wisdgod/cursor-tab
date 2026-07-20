@@ -120,21 +120,6 @@ message LogprobsLintPayload {
   int32 line_chunk_index_zero_based = 6;
 }
 
-message AiLintInlineSuggestion {
-  string relative_workspace_path = 1;
-  string uuid = 8;
-  string message = 2;
-  int32 line_number = 3;
-  SimpleRange reevaluate_range = 4;
-  string reevaluate_initial_text = 5;
-}
-
-message AiLintOutOfFlowSuggestion {
-  string relative_workspace_path = 1;
-  string uuid = 8;
-  string message = 2;
-}
-
 message AiLintRule {
   string text = 1;
 }

@@ -5,10 +5,6 @@ package aiserver.v1;
 import "aiserver/v1/repository.proto";
 import "aiserver/v1/utils.proto";
 
-message InlineGPT4PromptProtoV1 {
-  CurrentFileInfo current_file = 1;
-}
-
 message StreamInlineLongCompletionRequest {
   message ContextBlock {
     enum ContextType {

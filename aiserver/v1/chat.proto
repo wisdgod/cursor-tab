@@ -91,17 +91,6 @@ message StreamUnifiedChatResponseWithToolsIdempotent {
   }
 }
 
-message ConversationSummaryStrategy {
-  message ArbitrarySummaryPlusToolResultTruncation {
-    ConversationSummary arbitrary_summary = 1;
-    int32 tool_result_truncation_length = 2;
-  }
-  oneof strategy {
-    string plain_text_summary = 1;
-    ArbitrarySummaryPlusToolResultTruncation arbitrary_summary_plus_tool_result_truncation = 2;
-  }
-}
-
 message ConversationSummary {
   string summary = 1;
   string truncation_last_bubble_id_inclusive = 2;
@@ -546,15 +535,6 @@ message ConversationMessage {
     optional uint64 started_at_ms = 13;
     optional uint64 completed_at_ms = 14;
   }
-  message MultiRangeCodeChunk {
-    message RangeWithPriority {
-      SimplestRange range = 1;
-      double priority = 2;
-    }
-    repeated RangeWithPriority ranges = 1;
-    string content = 2;
-    string relative_workspace_path = 3;
-  }
   message NotepadContext {
     string name = 1;
     string text = 2;
@@ -774,16 +754,6 @@ message CurrentFileLocationData {
   string relative_workspace_path = 1;
   int32 line_number = 2;
   string text = 3;
-}
-
-message SearchInfo {
-  string query = 1;
-  repeated SearchFileInfo files = 2;
-}
-
-message SearchFileInfo {
-  string relative_path = 1;
-  string content = 2;
 }
 
 message FolderInfo {

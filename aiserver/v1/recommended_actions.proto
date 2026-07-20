@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+enum RecommendedActionSurface {
+  RECOMMENDED_ACTION_SURFACE_UNSPECIFIED = 0;
+  RECOMMENDED_ACTION_SURFACE_GLASS_EMPTY_STATE_QUICKSTART = 1;
+}
+
+message InstallPluginAndPrefillPromptPayload {
+  string plugin_name = 1;
+  string prompt = 2;
+  int64 plugin_id = 3;
+}
+
+message RecommendedAction {
+  string action_id = 1;
+  string title = 2;
+  string subtitle = 3;
+  optional string icon_url = 4;
+  optional string icon_name = 5;
+  RecommendedActionSurface surface = 6;
+  oneof payload {
+    InstallPluginAndPrefillPromptPayload install_plugin_and_prefill_prompt = 7;
+  }
+}
+
+message ListRecommendedActionsRequest {
+  RecommendedActionSurface surface = 1;
+}
+
+message ListRecommendedActionsResponse {
+  repeated RecommendedAction actions = 1;
+}
+
+message DismissRecommendedActionRequest {
+  string action_id = 1;
+}
+
+message DismissRecommendedActionResponse {
+}
+
+message CompleteRecommendedActionRequest {
+  string action_id = 1;
+}
+
+message CompleteRecommendedActionResponse {
+}
+
+service RecommendedActionsService {
+  rpc ListRecommendedActions(ListRecommendedActionsRequest) returns (ListRecommendedActionsResponse);
+  rpc DismissRecommendedAction(DismissRecommendedActionRequest) returns (DismissRecommendedActionResponse);
+  rpc CompleteRecommendedAction(CompleteRecommendedActionRequest) returns (CompleteRecommendedActionResponse);
+}

@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+enum OnboardingChecklistSurface {
+  ONBOARDING_CHECKLIST_SURFACE_UNSPECIFIED = 0;
+  ONBOARDING_CHECKLIST_SURFACE_WEB = 1;
+  ONBOARDING_CHECKLIST_SURFACE_GLASS = 2;
+  ONBOARDING_CHECKLIST_SURFACE_IDE = 3;
+  ONBOARDING_CHECKLIST_SURFACE_CLI = 4;
+  ONBOARDING_CHECKLIST_SURFACE_MOBILE = 5;
+}
+
+enum OnboardingChecklistItemStatus {
+  ONBOARDING_CHECKLIST_ITEM_STATUS_UNSPECIFIED = 0;
+  ONBOARDING_CHECKLIST_ITEM_STATUS_PENDING = 1;
+  ONBOARDING_CHECKLIST_ITEM_STATUS_COMPLETED = 2;
+  ONBOARDING_CHECKLIST_ITEM_STATUS_DISMISSED = 3;
+}
+
+message OnboardingChecklistItem {
+  string item_id = 1;
+  string title = 2;
+  string subtitle = 3;
+  OnboardingChecklistSurface surface = 4;
+  OnboardingChecklistItemStatus status = 5;
+}
+
+message ListOnboardingChecklistItemsRequest {
+  OnboardingChecklistSurface surface = 1;
+}
+
+message ListOnboardingChecklistItemsResponse {
+  repeated OnboardingChecklistItem items = 1;
+}
+
+message CompleteOnboardingChecklistItemRequest {
+  string item_id = 1;
+}
+
+message CompleteOnboardingChecklistItemResponse {
+}
+
+message DismissOnboardingChecklistItemRequest {
+  string item_id = 1;
+}
+
+message DismissOnboardingChecklistItemResponse {
+}
+
+service OnboardingChecklistService {
+  rpc ListOnboardingChecklistItems(ListOnboardingChecklistItemsRequest) returns (ListOnboardingChecklistItemsResponse);
+  rpc CompleteOnboardingChecklistItem(CompleteOnboardingChecklistItemRequest) returns (CompleteOnboardingChecklistItemResponse);
+  rpc DismissOnboardingChecklistItem(DismissOnboardingChecklistItemRequest) returns (DismissOnboardingChecklistItemResponse);
+}

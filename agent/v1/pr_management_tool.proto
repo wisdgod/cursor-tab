@@ -2,11 +2,21 @@ syntax = "proto3";
 
 package agent.v1;
 
+enum PullRequestStatus {
+  PULL_REQUEST_STATUS_UNSPECIFIED = 0;
+  PULL_REQUEST_STATUS_OPEN = 1;
+  PULL_REQUEST_STATUS_CLOSED = 2;
+}
+
 message PrManagementArgs {
   string tool_call_id = 1;
   oneof action {
     CreatePrAction create_pr = 2;
     UpdatePrAction update_pr = 3;
+    PostCommentAction post_comment = 4;
+    ResolveCommentAction resolve_comment = 5;
+    GetCiStatusAction get_ci_status = 6;
+    SetPrStatusAction set_pr_status = 7;
   }
 }
 
@@ -30,6 +40,38 @@ message UpdatePrAction {
   repeated string add_labels = 6;
   repeated string remove_labels = 7;
   optional string repo_url = 8;
+}
+
+message PostCommentAction {
+  optional string pr_url = 1;
+  optional string branch_name = 2;
+  string body = 3;
+  optional string repo_url = 4;
+  optional int64 in_reply_to = 5;
+  optional string path = 6;
+  optional int32 line = 7;
+  optional int32 start_line = 8;
+  optional string side = 9;
+}
+
+message ResolveCommentAction {
+  optional string pr_url = 1;
+  optional string branch_name = 2;
+  int64 comment_id = 3;
+  optional string repo_url = 4;
+}
+
+message GetCiStatusAction {
+  optional string pr_url = 1;
+  optional string branch_name = 2;
+  optional string repo_url = 3;
+}
+
+message SetPrStatusAction {
+  optional string pr_url = 1;
+  optional string branch_name = 2;
+  optional string repo_url = 3;
+  PullRequestStatus status = 4;
 }
 
 message PrManagementResult {

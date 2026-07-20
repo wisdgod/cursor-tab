@@ -9,6 +9,7 @@ import "agent/v1/subagents.proto";
 import "aiserver/v1/agent_startup_trace.proto";
 import "aiserver/v1/aiserver.proto";
 import "aiserver/v1/chat.proto";
+import "aiserver/v1/cloud_agent_source.proto";
 import "aiserver/v1/dashboard.proto";
 import "aiserver/v1/repository.proto";
 import "aiserver/v1/scm.proto";
@@ -73,12 +74,47 @@ enum BackgroundComposerSource {
   BACKGROUND_COMPOSER_SOURCE_BITBUCKET = 27;
   BACKGROUND_COMPOSER_SOURCE_CLOUD_META_AGENT = 28;
   BACKGROUND_COMPOSER_SOURCE_AS_SUBAGENT_FROM_CLOUD = 29;
+  BACKGROUND_COMPOSER_SOURCE_ENVIRONMENT_SETUP_ONBOARDING_AUTO = 30;
+  BACKGROUND_COMPOSER_SOURCE_ORIGIN = 31;
 }
 
 enum OwnerType {
   OWNER_TYPE_UNSPECIFIED = 0;
   OWNER_TYPE_USER = 1;
   OWNER_TYPE_SERVICE_ACCOUNT = 2;
+}
+
+enum CloudAgentDashboardRunStatus {
+  CLOUD_AGENT_DASHBOARD_RUN_STATUS_UNSPECIFIED = 0;
+  CLOUD_AGENT_DASHBOARD_RUN_STATUS_RUNNING = 1;
+  CLOUD_AGENT_DASHBOARD_RUN_STATUS_FINISHED = 2;
+  CLOUD_AGENT_DASHBOARD_RUN_STATUS_ERROR = 3;
+  CLOUD_AGENT_DASHBOARD_RUN_STATUS_INSTALL_FAILED = 4;
+}
+
+enum CloudAgentDashboardRunSortField {
+  CLOUD_AGENT_DASHBOARD_RUN_SORT_FIELD_UNSPECIFIED = 0;
+  CLOUD_AGENT_DASHBOARD_RUN_SORT_FIELD_CREATED_AT = 1;
+}
+
+enum CloudAgentDashboardRunSortDirection {
+  CLOUD_AGENT_DASHBOARD_RUN_SORT_DIRECTION_UNSPECIFIED = 0;
+  CLOUD_AGENT_DASHBOARD_RUN_SORT_DIRECTION_DESC = 1;
+  CLOUD_AGENT_DASHBOARD_RUN_SORT_DIRECTION_ASC = 2;
+}
+
+enum CloudAgentRunEventCategory {
+  CLOUD_AGENT_RUN_EVENT_CATEGORY_UNSPECIFIED = 0;
+  CLOUD_AGENT_RUN_EVENT_CATEGORY_BUILD = 1;
+  CLOUD_AGENT_RUN_EVENT_CATEGORY_AGENT_SETUP = 2;
+  CLOUD_AGENT_RUN_EVENT_CATEGORY_AGENT_RUN = 3;
+}
+
+enum CloudAgentRunEventLogLevel {
+  CLOUD_AGENT_RUN_EVENT_LOG_LEVEL_UNSPECIFIED = 0;
+  CLOUD_AGENT_RUN_EVENT_LOG_LEVEL_INFO = 1;
+  CLOUD_AGENT_RUN_EVENT_LOG_LEVEL_WARN = 2;
+  CLOUD_AGENT_RUN_EVENT_LOG_LEVEL_ERROR = 3;
 }
 
 enum PRStatus {
@@ -95,10 +131,22 @@ enum CloudSubagentParentAgentType {
   CLOUD_SUBAGENT_PARENT_AGENT_TYPE_CLOUD = 2;
 }
 
+enum CloudSubagentParentSpawnKind {
+  CLOUD_SUBAGENT_PARENT_SPAWN_KIND_UNSPECIFIED = 0;
+  CLOUD_SUBAGENT_PARENT_SPAWN_KIND_TASK = 1;
+  CLOUD_SUBAGENT_PARENT_SPAWN_KIND_EVENT_SUBSCRIPTION = 2;
+}
+
 enum EnsembleStatus {
   ENSEMBLE_STATUS_UNSPECIFIED = 0;
   ENSEMBLE_STATUS_PARENT = 1;
   ENSEMBLE_STATUS_CHILD = 2;
+}
+
+enum ForkBackgroundComposerMode {
+  FORK_BACKGROUND_COMPOSER_MODE_UNSPECIFIED = 0;
+  FORK_BACKGROUND_COMPOSER_MODE_CONVERSATION = 1;
+  FORK_BACKGROUND_COMPOSER_MODE_POD = 2;
 }
 
 enum PlanFollowupType {
@@ -146,6 +194,33 @@ enum LogicalEnvironmentScope {
   LOGICAL_ENVIRONMENT_SCOPE_PERSONAL = 1;
   LOGICAL_ENVIRONMENT_SCOPE_TEAM = 2;
   LOGICAL_ENVIRONMENT_SCOPE_REPOSITORY = 3;
+}
+
+enum EnvironmentBuildRowStatus {
+  ENVIRONMENT_BUILD_ROW_STATUS_UNSPECIFIED = 0;
+  ENVIRONMENT_BUILD_ROW_STATUS_IN_PROGRESS = 1;
+  ENVIRONMENT_BUILD_ROW_STATUS_SUCCEEDED = 2;
+  ENVIRONMENT_BUILD_ROW_STATUS_FAILED = 3;
+}
+
+enum EnvironmentBuildRowTriggerType {
+  ENVIRONMENT_BUILD_ROW_TRIGGER_TYPE_UNSPECIFIED = 0;
+  ENVIRONMENT_BUILD_ROW_TRIGGER_TYPE_MANUAL = 1;
+  ENVIRONMENT_BUILD_ROW_TRIGGER_TYPE_RECURRING = 2;
+}
+
+enum EnvironmentBuildRowSource {
+  ENVIRONMENT_BUILD_ROW_SOURCE_UNSPECIFIED = 0;
+  ENVIRONMENT_BUILD_ROW_SOURCE_SYSTEM = 1;
+  ENVIRONMENT_BUILD_ROW_SOURCE_WEBSITE = 2;
+  ENVIRONMENT_BUILD_ROW_SOURCE_API = 3;
+  ENVIRONMENT_BUILD_ROW_SOURCE_AGENT = 4;
+}
+
+enum EnvironmentBuildRowFailureType {
+  ENVIRONMENT_BUILD_ROW_FAILURE_TYPE_UNSPECIFIED = 0;
+  ENVIRONMENT_BUILD_ROW_FAILURE_TYPE_INSTALL_FAILED = 1;
+  ENVIRONMENT_BUILD_ROW_FAILURE_TYPE_TERMINAL_FAILURE = 2;
 }
 
 enum MultiRepoEnvironmentReusePolicy {
@@ -244,19 +319,19 @@ enum StartingMessageType {
   STARTING_MESSAGE_TYPE_PLAN_EXECUTE = 3;
 }
 
-enum NextTurnSystemReminderKind {
-  NEXT_TURN_SYSTEM_REMINDER_KIND_UNSPECIFIED = 0;
-  NEXT_TURN_SYSTEM_REMINDER_KIND_PR_TITLE_EDITED = 1;
-  NEXT_TURN_SYSTEM_REMINDER_KIND_PR_DESCRIPTION_EDITED = 2;
-  NEXT_TURN_SYSTEM_REMINDER_KIND_ASYNC_USER_INSTALL_SCRIPT_RUNNING = 3;
-}
-
 enum CloudAgentStartupWarningType {
   CLOUD_AGENT_STARTUP_WARNING_TYPE_UNSPECIFIED = 0;
   CLOUD_AGENT_STARTUP_WARNING_TYPE_SNAPSHOT_EXPIRED = 1;
   CLOUD_AGENT_STARTUP_WARNING_TYPE_SNAPSHOT_INVALID = 2;
   CLOUD_AGENT_STARTUP_WARNING_TYPE_SNAPSHOT_NOT_FOUND_OR_NO_ACCESS = 3;
   CLOUD_AGENT_STARTUP_WARNING_TYPE_SNAPSHOT_COPY_FAILED = 4;
+}
+
+enum ModelRoutingLoadTestCancelOutcome {
+  MODEL_ROUTING_LOAD_TEST_CANCEL_OUTCOME_UNSPECIFIED = 0;
+  MODEL_ROUTING_LOAD_TEST_CANCEL_OUTCOME_CANCEL_REQUESTED = 1;
+  MODEL_ROUTING_LOAD_TEST_CANCEL_OUTCOME_NOT_FOUND = 2;
+  MODEL_ROUTING_LOAD_TEST_CANCEL_OUTCOME_ALREADY_CLOSED = 3;
 }
 
 enum CloudAgentMemoryDbLogSource {
@@ -283,12 +358,20 @@ enum AgentStoreKind {
   AGENT_STORE_KIND_UNSPECIFIED = 0;
   AGENT_STORE_KIND_CLOUD = 1;
   AGENT_STORE_KIND_LOCAL = 2;
+  AGENT_STORE_KIND_AUTOMATION = 3;
+  AGENT_STORE_KIND_USER = 4;
+  AGENT_STORE_KIND_TEAM = 5;
+  AGENT_STORE_KIND_NAMED_AGENT = 6;
 }
 
 enum AgentStoreSourceKind {
   AGENT_STORE_SOURCE_KIND_UNSPECIFIED = 0;
   AGENT_STORE_SOURCE_KIND_CLOUD = 1;
   AGENT_STORE_SOURCE_KIND_LOCAL = 2;
+  AGENT_STORE_SOURCE_KIND_AUTOMATION = 3;
+  AGENT_STORE_SOURCE_KIND_USER = 4;
+  AGENT_STORE_SOURCE_KIND_TEAM = 5;
+  AGENT_STORE_SOURCE_KIND_NAMED_AGENT = 6;
 }
 
 enum AgentStoreEntryKind {
@@ -307,23 +390,6 @@ enum ListSharedAgentStoresScope {
   LIST_SHARED_AGENT_STORES_SCOPE_UNSPECIFIED = 0;
   LIST_SHARED_AGENT_STORES_SCOPE_MINE = 1;
   LIST_SHARED_AGENT_STORES_SCOPE_TEAM = 2;
-}
-
-enum RemoteControlRequestStatus {
-  REMOTE_CONTROL_REQUEST_STATUS_UNSPECIFIED = 0;
-  REMOTE_CONTROL_REQUEST_STATUS_DISPATCHED = 1;
-  REMOTE_CONTROL_REQUEST_STATUS_DESKTOP_UNREACHABLE = 2;
-  REMOTE_CONTROL_REQUEST_STATUS_REJECTED = 3;
-}
-
-enum RemoteControlRequestRejectionReason {
-  REMOTE_CONTROL_REQUEST_REJECTION_REASON_UNSPECIFIED = 0;
-  REMOTE_CONTROL_REQUEST_REJECTION_REASON_NOT_OWNED = 1;
-  REMOTE_CONTROL_REQUEST_REJECTION_REASON_MACHINE_NOT_FOUND = 2;
-  REMOTE_CONTROL_REQUEST_REJECTION_REASON_REPO_MISMATCH = 3;
-  REMOTE_CONTROL_REQUEST_REJECTION_REASON_AMBIGUOUS = 4;
-  REMOTE_CONTROL_REQUEST_REJECTION_REASON_UNLINKED = 5;
-  REMOTE_CONTROL_REQUEST_REJECTION_REASON_WORKER_OFFLINE = 6;
 }
 
 message UpdateBackgroundComposerEnvironmentRequest {
@@ -370,16 +436,19 @@ message RenameBackgroundComposerResponse {
   string name = 1;
 }
 
+message UpdateBackgroundComposerExperimentalModelOptOutRequest {
+  string bc_id = 1;
+  bool use_experimental_model_opt_out = 2;
+}
+
+message UpdateBackgroundComposerExperimentalModelOptOutResponse {
+}
+
 message RefreshGithubAccessTokenInBackgroundComposerRequest {
   string bc_id = 1;
 }
 
 message RefreshGithubAccessTokenInBackgroundComposerResponse {
-}
-
-message BackgroundComposerFollowupContent {
-  string text = 1;
-  string rich_text = 2;
 }
 
 message CreateBackgroundComposerPodRequest {
@@ -572,6 +641,94 @@ message ListDetailedBackgroundComposersResponse {
   repeated BackgroundComposerParticipant participants = 2;
 }
 
+message CloudAgentDashboardRunSort {
+  CloudAgentDashboardRunSortField field = 1;
+  CloudAgentDashboardRunSortDirection direction = 2;
+}
+
+message CloudAgentRunsCursor {
+  int64 created_at_ms = 1;
+  string bc_id = 2;
+  int64 id = 3;
+}
+
+message CloudAgentDashboardRunFilter {
+  optional string team_id = 1;
+  int64 created_after_ms = 2;
+  int64 created_before_ms = 3;
+  repeated CloudAgentSourceCategory triggers = 4;
+  repeated CloudAgentDashboardRunStatus statuses = 5;
+  optional int64 created_by_user_id = 6;
+}
+
+message ListCloudAgentRunsForDashboardRequest {
+  CloudAgentDashboardRunFilter filter = 1;
+  CloudAgentDashboardRunSort sort = 2;
+  optional CloudAgentRunsCursor cursor = 3;
+}
+
+message CloudAgentDashboardRunRow {
+  string bc_id = 1;
+  int64 created_at_ms = 2;
+  CloudAgentSourceCategory trigger = 3;
+  optional int64 created_by_user_id = 4;
+  optional string created_by_display = 5;
+  optional string environment_name = 6;
+  optional string environment_public_id = 7;
+  optional string repo_url = 8;
+  CloudAgentDashboardRunStatus status = 9;
+}
+
+message ListCloudAgentRunsForDashboardResponse {
+  repeated CloudAgentDashboardRunRow rows = 1;
+  bool has_more = 2;
+  optional CloudAgentRunsCursor next_cursor = 3;
+}
+
+message AggregateCloudAgentRunsForDashboardRequest {
+  CloudAgentDashboardRunFilter filter = 1;
+  int32 tz_offset_minutes = 2;
+}
+
+message CloudAgentDashboardRunDayBucket {
+  int64 day_start_ms = 1;
+  int64 success_count = 2;
+  int64 warning_count = 3;
+  int64 failure_count = 4;
+}
+
+message AggregateCloudAgentRunsForDashboardResponse {
+  repeated CloudAgentDashboardRunDayBucket buckets = 1;
+}
+
+message GetCloudAgentRunForDashboardRequest {
+  string bc_id = 1;
+}
+
+message GetCloudAgentRunForDashboardResponse {
+  CloudAgentDashboardRunRow row = 1;
+  string name = 2;
+}
+
+message CloudAgentRunEvent {
+  string public_id = 1;
+  int64 created_at_ms = 2;
+  CloudAgentRunEventCategory category = 3;
+  CloudAgentRunEventLogLevel log_level = 4;
+  string kind = 5;
+  string title = 6;
+  optional string detail = 7;
+  optional string link_url = 8;
+}
+
+message ListCloudAgentRunEventsForDashboardRequest {
+  string bc_id = 1;
+}
+
+message ListCloudAgentRunEventsForDashboardResponse {
+  repeated CloudAgentRunEvent events = 1;
+}
+
 message PauseBackgroundComposerRequest {
   string bc_id = 1;
   BackgroundComposerSource source = 3;
@@ -591,6 +748,23 @@ message ArchiveBackgroundComposerRequest {
 
 message ArchiveBackgroundComposerResponse {
   bool closed_pull_request = 1;
+}
+
+message ArchiveRepoBackgroundComposersRequest {
+  repeated string repo_urls = 1;
+  optional int32 team_id = 2;
+  BackgroundComposerSource source = 3;
+  bool dry_run = 4;
+  bool remove_repo_environment_json = 5;
+}
+
+message ArchiveRepoBackgroundComposersResponse {
+  repeated string archived_bc_ids = 1;
+  repeated string failed_bc_ids = 2;
+  int32 remaining_count = 3;
+  int32 running_count = 4;
+  bool has_repo_environment_json = 5;
+  bool removed_repo_environment_json = 6;
 }
 
 message DeleteBackgroundComposerRequest {
@@ -684,6 +858,7 @@ message ListBackgroundComposersRequest {
   optional bool should_include_collaborators = 11;
   optional int32 team_id = 12;
   repeated BackgroundComposerSource include_hidden_sources = 13;
+  optional string preferred_workspace_binding_id = 14;
 }
 
 message BackgroundComposer {
@@ -740,6 +915,8 @@ message BackgroundComposer {
   optional string environment_name = 63;
   optional PrivateWorkspaceIdentifier private_workspace_identifier = 64;
   optional string private_worker_display_name = 65;
+  optional AgentWorkspaceBinding workspace_binding = 66;
+  optional bool use_experimental_model_opt_out = 67;
 }
 
 message BackgroundComposerParticipant {
@@ -795,6 +972,34 @@ message ListNamedAgentSessionsResponse {
   optional string next_page_token = 2;
 }
 
+message EventSubscription {
+  string subscription_id = 1;
+  string subscription_type = 2;
+  string subscription_args_json = 3;
+  optional string subscription_metadata_json = 4;
+  double open_time_ms = 10;
+  double expires_at_ms = 11;
+  optional double last_delivered_at_ms = 12;
+  int32 delivery_count = 13;
+}
+
+message ListEventSubscriptionsRequest {
+  string named_agent_id = 1;
+}
+
+message ListEventSubscriptionsResponse {
+  repeated EventSubscription subscriptions = 1;
+}
+
+message CloseEventSubscriptionRequest {
+  string named_agent_id = 1;
+  string subscription_id = 2;
+}
+
+message CloseEventSubscriptionResponse {
+  bool closed = 1;
+}
+
 message ExternalSourceMetadata {
   optional SlackSourceMetadata slack = 1;
   optional LinearSourceMetadata linear = 2;
@@ -807,11 +1012,32 @@ message PrivateWorkspaceIdentifier {
   string uri = 2;
 }
 
+message AgentWorkspaceBinding {
+  string id = 1;
+  string display_name = 2;
+  optional PrivateWorkspaceIdentifier private_workspace_identifier = 3;
+}
+
+message CloudSubagentTaskLineage {
+  string parent_tool_call_id = 1;
+}
+
+message CloudSubagentSubscriptionResourceLineage {
+  string route_id = 1;
+  string route_kind = 2;
+}
+
 message CloudSubagentParentReference {
   string parent_agent_id = 1;
   string parent_tool_call_id = 2;
   CloudSubagentParentAgentType parent_agent_type = 3;
   optional string subagent_type_name = 5;
+  optional CloudSubagentParentSpawnKind parent_spawn_kind = 6;
+  optional string parent_spawn_id = 7;
+  oneof lineage {
+    CloudSubagentTaskLineage task = 8;
+    CloudSubagentSubscriptionResourceLineage subscription_resource = 9;
+  }
 }
 
 message SlackSourceMetadata {
@@ -904,11 +1130,19 @@ message GrindModeConfig {
   optional bool grind_prompt_calibrate_effort = 6;
 }
 
-message GrindModeTrackingState {
-  int32 no_tool_turn_streak = 1;
-  optional string pending_done_token = 2;
-  bool final_summary_requested = 3;
-  optional int64 start_time_unix_ms = 4;
+message AdmittedCustomModeState {
+  string id = 1;
+  string label = 2;
+  optional string icon = 3;
+  optional string color = 4;
+  agent.v1.CustomModeSource source = 5;
+  optional string source_path = 6;
+  optional string source_hash = 7;
+  string active_reminder = 8;
+  string admitted_by_turn_id = 9;
+  optional string description = 10;
+  optional string managed_skill_id = 11;
+  optional string plugin_id = 12;
 }
 
 message StartBackgroundComposerFromSnapshotRequest {
@@ -980,6 +1214,7 @@ message StartBackgroundComposerFromSnapshotRequest {
   repeated PrivateWorkerLabel labels = 59;
   optional PrivateWorkerOwnerFilter private_worker_owner_filter = 97;
   optional PrivateWorkspaceIdentifier private_workspace_identifier = 100;
+  optional AgentWorkspaceBinding workspace_binding = 110;
   optional bool force_non_chargeable = 56;
   optional string pr_url = 57;
   optional CloudAgentEffortMode effort_mode = 75;
@@ -996,19 +1231,37 @@ message StartBackgroundComposerFromSnapshotRequest {
   optional CloudSubagentParentReference cloud_subagent_parent = 99;
   repeated string requested_additional_store_ids = 101;
   repeated AgentStoreMount store_mounts = 108;
-  optional string remote_control_workspace_key = 102;
-  optional string remote_control_machine_id = 103;
   optional bool is_slack_v2 = 104;
+  optional bool is_slack_v1_5 = 113;
   optional string named_agent_id = 105;
   optional string named_agent_session_key = 106;
   optional string named_agent_session_kind = 107;
   optional NamedAgentProfile named_agent_profile = 109;
+  map<string, string> run_env_vars = 111;
+  optional string selected_private_worker_id = 112;
+  optional bool use_experimental_model_opt_out = 114;
+  optional string forked_from_bc_id = 115;
 }
 
 message StartBackgroundComposerFromSnapshotResponse {
   BackgroundComposer composer = 1;
   optional bool was_swapped_to_default = 2;
   optional string initial_run_id = 3;
+}
+
+message ForkBackgroundComposerRequest {
+  string source_bc_id = 1;
+  ForkBackgroundComposerMode mode = 2;
+  optional string name = 3;
+  optional uint32 turn_count = 4;
+}
+
+message ForkBackgroundComposerResponse {
+  BackgroundComposer composer = 1;
+  string bc_id = 2;
+  string source_bc_id = 3;
+  ForkBackgroundComposerMode mode = 4;
+  optional string initial_run_id = 5;
 }
 
 message AttachBackgroundComposerLogsRequest {
@@ -1055,20 +1308,6 @@ message StreamConversationRequest {
   optional bool send_stream_signal_after_prefetch = 7;
   optional uint32 max_blobs_after_prefetch = 8;
   optional bool allow_streaming_when_terminal_status = 9;
-}
-
-message ConversationStreamMessage {
-  oneof message {
-    agent.v1.InteractionUpdate interaction_update = 1;
-    bytes cloud_agent_state_blob_id = 2;
-    CloudAgentWorkflowStatus workflow_status = 3;
-    bytes interaction_update_blob_id = 4;
-    TransientError transient_error = 5;
-    WorkerLifecycleEvent worker_lifecycle_event = 6;
-    bytes transient_error_blob_id = 7;
-    agent.v1.InteractionQuery interaction_query = 8;
-    ReadOnlySharedPodLifecycleEvent read_only_shared_pod_lifecycle_event = 9;
-  }
 }
 
 message ReadOnlySharedPodLifecycleEvent {
@@ -1164,6 +1403,7 @@ message GetLatestAgentConversationStateRequest {
 message LatestAgentConversationState {
   agent.v1.ConversationStateStructure conversation_state = 1;
   uint32 num_prior_interaction_updates = 2;
+  optional uint32 conversation_rewind_epoch = 3;
 }
 
 message GetLatestAgentConversationStateResponse {
@@ -1248,26 +1488,6 @@ message HeadlessAgenticComposerPrompt {
   repeated internapi.v1.BlobDataPerMessage blob_data_per_message = 11;
 }
 
-message HeadlessAgenticComposerConfig {
-  string chat_model_name = 2;
-  ModelDetails chat_model_details = 5;
-  bool auto_commit = 4;
-  bool is_background = 6;
-  optional bool auto_create_pr = 7;
-  optional BackgroundComposerSource background_agent_source = 8;
-  optional bool open_as_cursor_github_app = 9;
-  optional bool skip_reviewer_request = 10;
-  optional bool enable_cloud_testing = 11;
-  optional bool enable_setup_vm_environment_tool = 12;
-  repeated ModelDetails additional_model_details = 13;
-  optional bool should_synthesize = 14;
-  optional bool show_onboarding_setup_note_for_manual_testing = 15;
-  optional agent.v1.RequestedModel requested_model = 16;
-  optional CloudSubagentParentReference cloud_subagent_parent = 17;
-  optional bool enable_computer_use = 18;
-  optional bool is_slack_v2 = 19;
-}
-
 message GetBackgroundComposerStatusRequest {
   string bc_id = 1;
 }
@@ -1297,6 +1517,9 @@ message AddAsyncFollowupBackgroundComposerRequest {
   repeated string requested_additional_store_ids = 17;
   map<string, string> run_env_vars = 18;
   repeated AgentStoreMount store_mounts = 19;
+  optional string resubmit_from_message_id = 20;
+  optional bool use_experimental_model_opt_out = 21;
+  optional string coalescing_key = 22;
 }
 
 message AddAsyncFollowupBackgroundComposerResponse {
@@ -1327,6 +1550,7 @@ message PendingFollowup {
   bool past_chats_explicitly_set = 9;
   optional agent.v1.ConversationAction conversation_action = 10;
   repeated internapi.v1.BlobData blob_data = 11;
+  optional bool use_experimental_model_opt_out = 12;
 }
 
 message ListPendingFollowupsResponse {
@@ -1458,6 +1682,7 @@ message DetailedBackgroundComposer {
   optional CloudSubagentParentReference cloud_subagent_parent = 29;
   repeated CloudAgentStartupWarning startup_warnings = 30;
   optional UsedEnvironmentBuildInfo used_environment_build = 31;
+  optional bool use_experimental_model_opt_out = 34;
 }
 
 message VmProvisionedSkill {
@@ -1465,6 +1690,8 @@ message VmProvisionedSkill {
   string description = 2;
   repeated string environments = 3;
   repeated string disabled_environments = 4;
+  optional agent.v1.CustomModeDescriptor custom_mode = 5;
+  optional string display_name = 6;
 }
 
 message BackgroundComposerPr {
@@ -1545,6 +1772,14 @@ message MachineReference {
 
 message GetMachineResponse {
   MachineReference machine = 1;
+}
+
+message ListWorkspaceFilesRequest {
+  string bc_id = 1;
+}
+
+message ListWorkspaceFilesResponse {
+  repeated string relative_paths = 1;
 }
 
 message GetGithubAccessTokenForReposRequest {
@@ -1745,6 +1980,44 @@ message GetEnvironmentRequest {
 
 message GetEnvironmentResponse {
   optional LogicalEnvironment environment = 1;
+}
+
+message EnvironmentBuildRow {
+  string build_id = 1;
+  string environment_public_id = 2;
+  EnvironmentBuildRowStatus status = 3;
+  EnvironmentBuildRowTriggerType trigger_type = 4;
+  EnvironmentBuildRowSource source = 5;
+  optional EnvironmentBuildRowFailureType failure_type = 6;
+  optional int64 environment_version_id = 7;
+  optional string user_facing_snapshot_id = 8;
+  int64 created_at_ms = 9;
+  int64 updated_at_ms = 10;
+  optional int64 completed_at_ms = 11;
+}
+
+message EnvironmentBuildsCursor {
+  int64 created_at_ms = 1;
+  string build_id = 2;
+}
+
+message ListEnvironmentBuildsRequest {
+  string environment_public_id = 1;
+  optional EnvironmentBuildsCursor cursor = 2;
+}
+
+message ListEnvironmentBuildsResponse {
+  repeated EnvironmentBuildRow rows = 1;
+  bool has_more = 2;
+  optional EnvironmentBuildsCursor next_cursor = 3;
+}
+
+message GetEnvironmentBuildRequest {
+  string build_id = 1;
+}
+
+message GetEnvironmentBuildResponse {
+  EnvironmentBuildRow row = 1;
 }
 
 message ResolveOrCreateMultiRepoEnvironmentRequest {
@@ -2163,6 +2436,8 @@ message UpdateBackgroundComposerUserSettingsRequest {
   optional PrReviewOpenSurfaceMode pr_review_open_surface = 17;
   repeated string sidebar_named_agent_ids = 18;
   optional bool sidebar_named_agent_ids_explicitly_set = 19;
+  optional CloudAgentModelSelection default_model_selection = 20;
+  optional int32 ask_question_auto_answer_timeout_minutes = 21;
 }
 
 message UpdateBackgroundComposerUserSettingsResponse {
@@ -2189,6 +2464,8 @@ message GetBackgroundComposerUserSettingsResponse {
   optional bool remote_control_enabled = 15;
   optional PrReviewOpenSurfaceMode pr_review_open_surface = 16;
   repeated string sidebar_named_agent_ids = 17;
+  optional CloudAgentModelSelection default_model_selection = 18;
+  optional int32 ask_question_auto_answer_timeout_minutes = 19;
 }
 
 message GetRepositoryBranchesRequest {
@@ -2346,6 +2623,7 @@ message PRCommit {
   optional int32 changed_files = 6;
   PRCommitUser author = 7;
   PRCommitUser committer = 8;
+  repeated PRCommitUser authors = 9;
 }
 
 message GetPullRequestDiscussionsRequest {
@@ -2569,18 +2847,6 @@ message UpdatePullRequestBranchResponse {
   optional string new_head_sha = 3;
 }
 
-message CloudAgentStatePersistedMetadata {
-  enum PersistedMetadataVersion {
-    PERSISTED_METADATA_VERSION_UNSPECIFIED = 0;
-    PERSISTED_METADATA_VERSION_1 = 1;
-  }
-  bytes cloud_agent_state_blob_id = 1;
-  string offset_key = 2;
-  double timestamp_ms = 3;
-  CloudAgentWorkflowStatus workflow_status = 4;
-  PersistedMetadataVersion version = 5;
-}
-
 message CloudAgentState {
   agent.v1.ConversationStateStructure conversation_state = 1;
   uint32 num_prior_interaction_updates = 2;
@@ -2628,24 +2894,11 @@ message CloudAgentState {
   map<string, OptimizedDiffState> per_branch_optimized_diffs = 44;
   repeated CloudAgentStartupWarning startup_warnings = 45;
   optional PrivateWorkspaceIdentifier private_workspace_identifier = 46;
-  optional bool async_user_install_reminder_delivered = 47;
   optional bool uses_first_class_subagents = 48;
-}
-
-message NextTurnSystemReminderEntry {
-  NextTurnSystemReminderKind kind = 1;
-  string reminder = 2;
-}
-
-message NextTurnSystemRemindersWrapper {
-  repeated NextTurnSystemReminderEntry reminders = 1;
-}
-
-message PendingPullRequestData {
-  string title = 1;
-  string body = 2;
-  string branch_name = 3;
-  optional string base_branch = 4;
+  optional uint32 conversation_rewind_epoch = 49;
+  bytes pending_summarization_state_blob_id = 50;
+  bytes pending_summarization_snapshot_blob_id = 51;
+  bytes admitted_custom_mode_state_blob_id = 52;
 }
 
 message OptimizedDiffState {
@@ -2673,116 +2926,16 @@ message TransientError {
   string error_message = 1;
 }
 
-message ConversationActionReference {
-  optional agent.v1.ConversationAction conversation_action = 1;
-  bytes conversation_action_blob_id = 2;
-}
-
-message CloudAgentWorkflowControlState {
-  repeated QueuedFollowup pending_followups = 1;
-  int32 followup_completion_count = 2;
-  bool running_desired = 3;
-  bool can_run_loop = 4;
-  repeated QueuedMakePRRequest pending_make_pr_requests = 5;
-  repeated QueuedOpenPRRequest pending_open_pr_requests = 6;
-  repeated string immediate_followup_ids = 7;
-  int64 last_updated_ms = 8;
-  repeated string completed_followup_ids = 9;
-  repeated agent.v1.ConversationAction skipped_input_actions = 10;
-  repeated CompletedMakePRRequest completed_make_pr_requests = 11;
-  repeated CompletedOpenPRRequest completed_open_pr_requests = 12;
-  optional PausedInteractionStep paused_interaction_step = 13;
-  repeated QueuedInteractionResponse pending_interaction_responses = 14;
-  repeated uint32 completed_interaction_query_ids = 15;
-  repeated PendingIdleFollowup pending_idle_followups = 16;
-  repeated ConversationActionReference skipped_input_action_refs = 17;
-}
-
-message CompletedMakePRRequest {
-  string request_id = 1;
-  int64 completed_at_ms = 2;
-  optional MakePRBackgroundComposerResponse response = 3;
-  optional string error_message = 4;
-  optional string error_code = 5;
-}
-
-message CompletedOpenPRRequest {
-  string request_id = 1;
-  int64 completed_at_ms = 2;
-  optional OpenPRBackgroundComposerResponse response = 3;
-  optional string error_message = 4;
-  optional string error_code = 5;
-}
-
-message QueuedFollowup {
-  string followup_id = 1;
-  int64 created_at_ms = 2;
-  BackgroundComposerSource source = 3;
-  bool is_simulated = 4;
-  bool synchronous = 5;
-  repeated agent.v1.SelectedCursorCommand cursor_commands = 6;
-  bool cursor_commands_explicitly_set = 7;
-  optional agent.v1.ConversationAction conversation_action = 8;
-  repeated internapi.v1.BlobData blob_data = 9;
-  optional ModelDetails model_details = 10;
-  optional int64 editing_started_at_ms = 11;
-  optional string run_id = 12;
-  optional agent.v1.RequestedModel requested_model = 13;
-  optional int64 turn_start_unix_ms = 14;
-  optional int64 not_before_unix_ms = 15;
-  bytes conversation_action_blob_id = 16;
-}
-
-message PendingIdleFollowup {
-  string grouping_identifier = 1;
-  string followup_id = 2;
-  BackgroundComposerSource source = 3;
-  agent.v1.ConversationAction conversation_action = 4;
-  repeated string merged_followup_ids = 5;
-}
-
-message PausedInteractionStep {
-  bytes step_context_blob_id = 1;
-  bytes agent_state_blob_id = 2;
-  bool is_time_limit_expired = 3;
-  bool use_step_separation = 4;
-  uint32 tool_call_index = 5;
-  uint32 query_id = 6;
-  string tool_call_id = 7;
-  int32 current_step_in_turn = 8;
-}
-
-message QueuedInteractionResponse {
-  uint32 query_id = 1;
-  agent.v1.InteractionResponse interaction_response = 2;
-  int64 submitted_at_ms = 3;
-}
-
-message QueuedMakePRRequest {
-  string request_id = 1;
-  int64 created_at_ms = 2;
-  bytes request_blob_id = 3;
-}
-
-message QueuedOpenPRRequest {
-  string request_id = 1;
-  int64 created_at_ms = 2;
-  bytes request_blob_id = 3;
-}
-
 message CloudAgentErrorDetails {
   string error_message = 1;
   string error_code = 2;
   optional string dev_only_message = 3;
+  optional ErrorDetails error_details = 4;
 }
 
 message CloudAgentStartupWarning {
   CloudAgentStartupWarningType warning_type = 1;
   string user_facing_message = 2;
-}
-
-message VideoAnnotationsWrapper {
-  repeated VideoAnnotationEntry entries = 1;
 }
 
 message GetBackgroundComposerVmUsageRequest {
@@ -2838,6 +2991,7 @@ message CloudAgentAnyrunVmInfo {
   optional string docker_build_events_redis_stream_key = 5;
   optional string setup_events_redis_stream_key = 6;
   optional string prewarm_workflow_id = 7;
+  optional anyrun.v1.EnvironmentBuildBootInfo environment_build_boot_info = 8;
 }
 
 message CloudAgentAnyrunPendingDockerBuildVmInfo {
@@ -2901,6 +3055,68 @@ message StartCloudAgentLoadTestResponse {
   string temporal_workflow_id = 1;
   string temporal_run_id = 2;
   string load_test_run_id = 3;
+}
+
+message EnsureModelRoutingLoadTestStartedRequest {
+  string run_id = 1;
+}
+
+message EnsureModelRoutingLoadTestStartedResponse {
+  string temporal_run_id = 1;
+}
+
+message CancelModelRoutingLoadTestRequest {
+  string run_id = 1;
+}
+
+message CancelModelRoutingLoadTestResponse {
+  ModelRoutingLoadTestCancelOutcome outcome = 1;
+}
+
+message MintCustomerPrivatelinkProxyTokenRequest {
+  int32 team_id = 1;
+  repeated string allowed_hosts = 2;
+}
+
+message MintCustomerPrivatelinkProxyTokenResponse {
+  string proxy_username = 1;
+  string token = 2;
+  repeated string allowed_hosts = 3;
+}
+
+message AdminListTeamNamedAgentsRequest {
+  int32 team_id = 1;
+}
+
+message AdminNamedAgentSession {
+  string bc_id = 1;
+  string session_key = 2;
+  string session_kind = 3;
+}
+
+message AdminNamedAgent {
+  string named_agent_id = 1;
+  optional string name = 2;
+  optional string profile_picture_url = 3;
+  optional int32 owning_user = 4;
+  optional int32 owning_team = 5;
+  string created_at = 6;
+  string updated_at = 7;
+  repeated AdminNamedAgentSession sessions = 8;
+}
+
+message AdminListTeamNamedAgentsResponse {
+  repeated AdminNamedAgent named_agents = 1;
+}
+
+message AdminDeleteNamedAgentRequest {
+  string named_agent_id = 1;
+  int32 team_id = 2;
+}
+
+message AdminDeleteNamedAgentResponse {
+  repeated string deleted_bc_ids = 1;
+  repeated string failed_bc_ids = 2;
 }
 
 message GetCloudAgentMemoryDbLogsRequest {
@@ -2975,7 +3191,6 @@ message AdminListUserPrivateWorkersResponse {
   string email = 3;
   repeated int32 team_ids = 4;
   repeated PrivateWorker private_workers = 5;
-  repeated ConnectedMachine connected_machines = 6;
   bool remote_control_enabled = 7;
   bool team_remote_control_allowed = 8;
 }
@@ -3003,6 +3218,12 @@ message PendingPrivateWorkerRequest {
   double created_at_ms = 8;
 }
 
+message PrivateWorkerRepo {
+  string owner = 1;
+  string name = 2;
+  string url = 3;
+}
+
 message PrivateWorker {
   string worker_id = 1;
   string repo_owner = 2;
@@ -3018,6 +3239,8 @@ message PrivateWorker {
   optional string repo_url = 12;
   optional string display_name = 13;
   optional string machine_id = 14;
+  optional string machine_display_name = 15;
+  repeated PrivateWorkerRepo repos = 16;
 }
 
 message PrivateWorkerLabel {
@@ -3106,6 +3329,7 @@ message AgentStoreSourceRef {
 
 message AgentStoreMount {
   optional string mount_name = 1;
+  bool server_generated = 5;
   oneof target {
     AgentStoreSourceRef source = 2;
     string store_id = 3;
@@ -3213,6 +3437,17 @@ message AgentStoreWriteFileEntry {
   string rel_path = 1;
   int64 size_bytes = 2;
   string sha = 3;
+  oneof precondition {
+    string base_etag = 4;
+    bool expect_absent = 5;
+  }
+}
+
+message AgentStoreConflictWriteInstruction {
+  string rel_path = 1;
+  string url = 2;
+  map<string, string> headers = 3;
+  int64 expires_at_ms = 4;
 }
 
 message AgentStoreWriteInstruction {
@@ -3220,6 +3455,7 @@ message AgentStoreWriteInstruction {
   string url = 2;
   map<string, string> headers = 3;
   int64 expires_at_ms = 4;
+  optional AgentStoreConflictWriteInstruction conflict = 5;
 }
 
 message PresignAgentStoreWritesRequest {
@@ -3291,41 +3527,6 @@ message ListSharedAgentStoresResponse {
   optional string next_created_before_share_id = 4;
 }
 
-message RequestLocalAgentRemoteControlRequest {
-  string bc_id = 1;
-  string machine_name = 2;
-  string worker_id = 3;
-  string idempotency_key = 4;
-}
-
-message RequestLocalAgentRemoteControlResponse {
-  RemoteControlRequestStatus status = 1;
-  RemoteControlRequestRejectionReason rejection_reason = 2;
-  string message = 3;
-  string migrated_bc_id = 4;
-}
-
-message ListConnectedMachinesRequest {
-}
-
-message ListConnectedMachinesResponse {
-  repeated ConnectedMachine machines = 1;
-}
-
-message ConnectedMachine {
-  string machine_id = 1;
-  string display_name = 2;
-  int64 last_seen_ms = 3;
-  repeated ConnectedMachineWorkspace workspaces = 4;
-}
-
-message ConnectedMachineWorkspace {
-  string workspace_key = 1;
-  string name = 2;
-  string repo_url = 3;
-  string root_path = 4;
-}
-
 service BackgroundComposerService {
   rpc ListBackgroundComposers(ListBackgroundComposersRequest) returns (ListBackgroundComposersResponse);
   rpc AttachBackgroundComposer(AttachBackgroundComposerRequest) returns (stream AttachBackgroundComposerResponse);
@@ -3335,6 +3536,7 @@ service BackgroundComposerService {
   rpc AttachBackgroundComposerLogs(AttachBackgroundComposerLogsRequest) returns (stream AttachBackgroundComposerLogsResponse);
   rpc AttachAgentStartupTrace(AttachAgentStartupTraceRequest) returns (stream AttachAgentStartupTraceResponse);
   rpc StartBackgroundComposerFromSnapshot(StartBackgroundComposerFromSnapshotRequest) returns (StartBackgroundComposerFromSnapshotResponse);
+  rpc ForkBackgroundComposer(ForkBackgroundComposerRequest) returns (ForkBackgroundComposerResponse);
   rpc MakePRBackgroundComposer(MakePRBackgroundComposerRequest) returns (MakePRBackgroundComposerResponse);
   rpc OpenPRBackgroundComposer(OpenPRBackgroundComposerRequest) returns (OpenPRBackgroundComposerResponse);
   rpc GetBackgroundComposerStatus(GetBackgroundComposerStatusRequest) returns (GetBackgroundComposerStatusResponse);
@@ -3346,8 +3548,6 @@ service BackgroundComposerService {
   rpc ReorderPendingFollowup(ReorderPendingFollowupRequest) returns (ReorderPendingFollowupResponse);
   rpc SubmitPendingFollowupNow(SubmitPendingFollowupNowRequest) returns (SubmitPendingFollowupNowResponse);
   rpc MarkFollowupEditing(MarkFollowupEditingRequest) returns (MarkFollowupEditingResponse);
-  rpc RequestLocalAgentRemoteControl(RequestLocalAgentRemoteControlRequest) returns (RequestLocalAgentRemoteControlResponse);
-  rpc ListConnectedMachines(ListConnectedMachinesRequest) returns (ListConnectedMachinesResponse);
   rpc GetCursorServerUrl(GetCursorServerUrlRequest) returns (GetCursorServerUrlResponse);
   rpc WarmCursorServerDownload(WarmCursorServerDownloadRequest) returns (WarmCursorServerDownloadResponse);
   rpc PreWarmPod(PreWarmPodRequest) returns (PreWarmPodResponse);
@@ -3355,6 +3555,7 @@ service BackgroundComposerService {
   rpc PauseBackgroundComposer(PauseBackgroundComposerRequest) returns (PauseBackgroundComposerResponse);
   rpc ResumeBackgroundComposer(ResumeBackgroundComposerRequest) returns (ResumeBackgroundComposerResponse);
   rpc ArchiveBackgroundComposer(ArchiveBackgroundComposerRequest) returns (ArchiveBackgroundComposerResponse);
+  rpc ArchiveRepoBackgroundComposers(ArchiveRepoBackgroundComposersRequest) returns (ArchiveRepoBackgroundComposersResponse);
   rpc DeleteBackgroundComposer(DeleteBackgroundComposerRequest) returns (DeleteBackgroundComposerResponse);
   rpc GetBackgroundComposerInfo(GetBackgroundComposerInfoRequest) returns (GetBackgroundComposerInfoResponse);
   rpc GetBackgroundComposerEnvironmentVersion(GetBackgroundComposerEnvironmentVersionRequest) returns (GetBackgroundComposerEnvironmentVersionResponse);
@@ -3362,9 +3563,16 @@ service BackgroundComposerService {
   rpc GetBackgroundComposerTimings(GetBackgroundComposerTimingsRequest) returns (GetBackgroundComposerTimingsResponse);
   rpc GetBackgroundComposerRepositoryInfo(GetBackgroundComposerRepositoryInfoRequest) returns (GetBackgroundComposerRepositoryInfoResponse);
   rpc GetMachine(GetMachineRequest) returns (GetMachineResponse);
+  rpc ListWorkspaceFiles(ListWorkspaceFilesRequest) returns (ListWorkspaceFilesResponse);
   rpc ListDetailedBackgroundComposers(ListDetailedBackgroundComposersRequest) returns (ListDetailedBackgroundComposersResponse);
+  rpc ListCloudAgentRunsForDashboard(ListCloudAgentRunsForDashboardRequest) returns (ListCloudAgentRunsForDashboardResponse);
+  rpc AggregateCloudAgentRunsForDashboard(AggregateCloudAgentRunsForDashboardRequest) returns (AggregateCloudAgentRunsForDashboardResponse);
+  rpc GetCloudAgentRunForDashboard(GetCloudAgentRunForDashboardRequest) returns (GetCloudAgentRunForDashboardResponse);
+  rpc ListCloudAgentRunEventsForDashboard(ListCloudAgentRunEventsForDashboardRequest) returns (ListCloudAgentRunEventsForDashboardResponse);
   rpc ListNamedAgents(ListNamedAgentsRequest) returns (ListNamedAgentsResponse);
   rpc ListNamedAgentSessions(ListNamedAgentSessionsRequest) returns (ListNamedAgentSessionsResponse);
+  rpc ListEventSubscriptions(ListEventSubscriptionsRequest) returns (ListEventSubscriptionsResponse);
+  rpc CloseEventSubscription(CloseEventSubscriptionRequest) returns (CloseEventSubscriptionResponse);
   rpc GetGithubAccessTokenForRepos(GetGithubAccessTokenForReposRequest) returns (GetGithubAccessTokenForReposResponse);
   rpc MakeGithubRequest(MakeGithubRequestRequest) returns (MakeGithubRequestResponse);
   rpc GetBackgroundComposerDiffDetails(GetBackgroundComposerDiffDetailsRequest) returns (GetBackgroundComposerDiffDetailsResponse);
@@ -3383,6 +3591,7 @@ service BackgroundComposerService {
   rpc WatchBackgroundComposerSnapshotState(WatchBackgroundComposerSnapshotStateRequest) returns (stream WatchBackgroundComposerSnapshotStateResponse);
   rpc GetBackgroundComposerConversation(GetBackgroundComposerConversationRequest) returns (GetBackgroundComposerConversationResponse);
   rpc RenameBackgroundComposer(RenameBackgroundComposerRequest) returns (RenameBackgroundComposerResponse);
+  rpc UpdateBackgroundComposerExperimentalModelOptOut(UpdateBackgroundComposerExperimentalModelOptOutRequest) returns (UpdateBackgroundComposerExperimentalModelOptOutResponse);
   rpc CommitBackgroundComposer(CommitBackgroundComposerRequest) returns (CommitBackgroundComposerResponse);
   rpc SetPersonalEnvironmentJson(SetPersonalEnvironmentJsonRequest) returns (SetPersonalEnvironmentJsonResponse);
   rpc GetPersonalEnvironmentJson(GetPersonalEnvironmentJsonRequest) returns (GetPersonalEnvironmentJsonResponse);
@@ -3397,6 +3606,8 @@ service BackgroundComposerService {
   rpc RestoreEnvironmentVersion(RestoreEnvironmentVersionRequest) returns (RestoreEnvironmentVersionResponse);
   rpc ListEnvironments(ListEnvironmentsRequest) returns (ListEnvironmentsResponse);
   rpc GetEnvironment(GetEnvironmentRequest) returns (GetEnvironmentResponse);
+  rpc ListEnvironmentBuilds(ListEnvironmentBuildsRequest) returns (ListEnvironmentBuildsResponse);
+  rpc GetEnvironmentBuild(GetEnvironmentBuildRequest) returns (GetEnvironmentBuildResponse);
   rpc ResolveOrCreateMultiRepoEnvironment(ResolveOrCreateMultiRepoEnvironmentRequest) returns (ResolveOrCreateMultiRepoEnvironmentResponse);
   rpc ResolveOrCreateDraftEnvironment(ResolveOrCreateDraftEnvironmentRequest) returns (ResolveOrCreateDraftEnvironmentResponse);
   rpc SnapshotAndSaveEnvironment(SnapshotAndSaveEnvironmentRequest) returns (SnapshotAndSaveEnvironmentResponse);
@@ -3472,4 +3683,9 @@ service BackgroundComposerService {
   rpc ListSharedAgentStores(ListSharedAgentStoresRequest) returns (ListSharedAgentStoresResponse);
   rpc ProvisionSyntheticsServiceAccounts(ProvisionSyntheticsServiceAccountsRequest) returns (ProvisionSyntheticsServiceAccountsResponse);
   rpc StartCloudAgentLoadTest(StartCloudAgentLoadTestRequest) returns (StartCloudAgentLoadTestResponse);
+  rpc EnsureModelRoutingLoadTestStarted(EnsureModelRoutingLoadTestStartedRequest) returns (EnsureModelRoutingLoadTestStartedResponse);
+  rpc CancelModelRoutingLoadTest(CancelModelRoutingLoadTestRequest) returns (CancelModelRoutingLoadTestResponse);
+  rpc MintCustomerPrivatelinkProxyToken(MintCustomerPrivatelinkProxyTokenRequest) returns (MintCustomerPrivatelinkProxyTokenResponse);
+  rpc AdminListTeamNamedAgents(AdminListTeamNamedAgentsRequest) returns (AdminListTeamNamedAgentsResponse);
+  rpc AdminDeleteNamedAgent(AdminDeleteNamedAgentRequest) returns (AdminDeleteNamedAgentResponse);
 }

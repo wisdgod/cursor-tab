@@ -177,6 +177,7 @@ message SelectedCursorCommand {
   string content = 2;
   optional SelectedPluginCapabilityRef plugin_capability = 3;
   optional string full_path = 4;
+  optional string display_name = 5;
 }
 
 message SelectedDocumentation {
@@ -249,6 +250,9 @@ message SelectedAgenticGitActionCommitParams {
   repeated SelectedAgenticGitFileWithStatus files_to_exclude_from_commit_with_status = 6;
 }
 
+message SelectedAgenticGitActionCreateBranchParams {
+}
+
 message SelectedAgenticGitFileWithStatus {
   string path = 1;
   optional string status = 2;
@@ -292,6 +296,7 @@ message SelectedAgenticGitAction {
     SelectedAgenticGitActionCommitParams create_branch_and_commit_params = 12;
     SelectedAgenticGitActionCommitParams create_branch_commit_and_push_params = 13;
     SelectedAgenticGitActionUpdateBranchParams update_branch_params = 16;
+    SelectedAgenticGitActionCreateBranchParams create_branch_params = 17;
   }
 }
 
@@ -338,6 +343,10 @@ message InvocationContext {
     optional string channel_name = 2;
     optional string channel_purpose = 3;
     optional string channel_topic = 4;
+    optional string sender_name = 5;
+    optional string sender_id = 6;
+    optional string sender_type = 7;
+    optional bool is_directly_addressed = 8;
   }
   message MicrosoftTeamsThread {
     string thread = 1;

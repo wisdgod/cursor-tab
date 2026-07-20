@@ -49,22 +49,6 @@ message RequestTrackingFileGitInfo {
   }
 }
 
-message StoredRequestTrackingMetadata {
-  message File {
-    string fs_path = 1;
-    string file_uuid = 2;
-    RequestTrackingFileGitInfo git_info = 3;
-    bool too_big = 4;
-  }
-  string agent_request_id = 1;
-  repeated File request_files = 2;
-  repeated RequestTrackingFileGitInfo deduplicated_git_infos = 3;
-  int32 num_commits_tracked = 4;
-  double start_tracking_date_unix_milliseconds = 5;
-  double file_size_bytes = 6;
-  string workspace_id = 7;
-}
-
 message ReportAgentSnapshotResponse {
 }
 

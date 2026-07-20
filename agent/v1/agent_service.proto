@@ -8,6 +8,13 @@ import "agent/v1/kv.proto";
 import "agent/v1/mcp.proto";
 import "aiserver/v1/bidi.proto";
 
+enum LocalPromptQualityInvocationStatus {
+  LOCAL_PROMPT_QUALITY_INVOCATION_STATUS_UNSPECIFIED = 0;
+  LOCAL_PROMPT_QUALITY_INVOCATION_STATUS_SUCCESS = 1;
+  LOCAL_PROMPT_QUALITY_INVOCATION_STATUS_ERRORED = 2;
+  LOCAL_PROMPT_QUALITY_INVOCATION_STATUS_ABORTED = 3;
+}
+
 message ClientHeartbeat {
 }
 
@@ -146,6 +153,40 @@ message UploadConversationBlobsRequest {
 message UploadConversationBlobsResponse {
 }
 
+message LocalPromptQualityInvocation {
+  string invocation_id = 1;
+  string attempt_request_id = 2;
+  int32 attempt = 3;
+  string started_at = 4;
+  string completed_at = 5;
+  string model_id = 6;
+  string provider_name = 7;
+  LocalPromptQualityInvocationStatus status = 8;
+  repeated bytes messages = 9;
+  repeated bytes response_messages = 10;
+  string tools_json = 11;
+  int64 prompt_tokens = 12;
+  int64 completion_tokens = 13;
+  int64 total_tokens = 14;
+  optional int64 token_limit = 15;
+  optional string error_message = 16;
+}
+
+message UploadLocalAgentRunToPromptQualityRequest {
+  int32 schema_version = 1;
+  string generation_uuid = 2;
+  string conversation_id = 3;
+  string payload_digest = 4;
+  repeated LocalPromptQualityInvocation invocations = 5;
+  LocalPromptQualityInvocationStatus terminal_status = 6;
+  string created_at = 7;
+}
+
+message UploadLocalAgentRunToPromptQualityResponse {
+  string request_id = 1;
+  string primary_invocation_id = 2;
+}
+
 message GetSignedUrlForAttachedMediaRequest {
   string conversation_id = 3;
   optional string key = 1;
@@ -234,6 +275,7 @@ service AgentService {
   rpc GetDefaultModelForCli(GetDefaultModelForCliRequest) returns (GetDefaultModelForCliResponse);
   rpc GetAllowedModelIntents(GetAllowedModelIntentsRequest) returns (GetAllowedModelIntentsResponse);
   rpc UploadConversationBlobs(UploadConversationBlobsRequest) returns (UploadConversationBlobsResponse);
+  rpc UploadLocalAgentRunToPromptQuality(UploadLocalAgentRunToPromptQualityRequest) returns (UploadLocalAgentRunToPromptQualityResponse);
   rpc GetSignedUrlForAttachedMedia(GetSignedUrlForAttachedMediaRequest) returns (GetSignedUrlForAttachedMediaResponse);
   rpc NotifyConversationClone(NotifyConversationCloneRequest) returns (NotifyConversationCloneResponse);
   rpc GetNewChatNudgeLegacyModelPicker(GetNewChatNudgeLegacyModelPickerRequest) returns (GetNewChatNudgeLegacyModelPickerResponse);

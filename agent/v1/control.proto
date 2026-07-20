@@ -292,6 +292,8 @@ message GetMcpRefreshTokensResponse {
 message UpdateEnvironmentVariablesRequest {
   map<string, string> env = 1;
   bool replace = 2;
+  bool restore_previous_values = 3;
+  RunScopedOverlay run_scoped_overlay = 4;
 }
 
 message RunScopedOverlay {
@@ -322,6 +324,15 @@ message InstallPluginArtifactRequest {
 message InstallPluginArtifactResponse {
 }
 
+message LoadMcpServersRequest {
+  string mcp_config_json = 1;
+  bool remove_missing = 2;
+}
+
+message LoadMcpServersResponse {
+  repeated string loaded_server_names = 1;
+}
+
 service ControlService {
   rpc Ping(PingRequest) returns (PingResponse);
   rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
@@ -345,4 +356,5 @@ service ControlService {
   rpc ReloadAgentSkills(ReloadAgentSkillsRequest) returns (ReloadAgentSkillsResponse);
   rpc ReloadPlugins(ReloadPluginsRequest) returns (ReloadPluginsResponse);
   rpc InstallPluginArtifact(InstallPluginArtifactRequest) returns (InstallPluginArtifactResponse);
+  rpc LoadMcpServers(LoadMcpServersRequest) returns (LoadMcpServersResponse);
 }

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package agent.v1;
 
-import "agent/v1/pty_host_service.proto";
+import "agent/v1/pty_host.proto";
 
 enum TmuxSessionKind {
   TMUX_SESSION_KIND_UNSPECIFIED = 0;

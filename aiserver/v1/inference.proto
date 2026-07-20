@@ -146,7 +146,19 @@ message InferenceStreamResponse {
     InferenceInvocationIdInfo invocation_id = 7;
     InferenceStreamError error = 8;
     InferenceThinkingStreamPart thinking_part = 9;
+    InferenceImageDescriptionsInfo image_descriptions = 10;
   }
+}
+
+message InferenceImageDescriptionsInfo {
+  repeated InferenceImageDescription descriptions = 1;
+}
+
+message InferenceImageDescription {
+  int32 message_index = 1;
+  int32 part_index = 2;
+  optional int32 exp_content_index = 3;
+  string description = 4;
 }
 
 message InferenceTextStreamPart {
@@ -209,6 +221,7 @@ message InferenceToolResultPart {
   google.protobuf.Value result = 3;
   bool is_error = 4;
   repeated InferenceContentPart experimental_content = 5;
+  optional InferenceProviderOptions provider_options = 6;
 }
 
 message InferenceExtraData {
@@ -250,6 +263,12 @@ message InferenceStreamError {
 
 message InferenceProviderOptions {
   optional InferenceAnthropicOptions anthropic = 1;
+  optional InferenceCursorOptions cursor = 2;
+}
+
+message InferenceCursorOptions {
+  optional string image_description = 1;
+  map<int32, string> image_descriptions = 2;
 }
 
 message InferenceAnthropicOptions {

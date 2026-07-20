@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package agent.v1;
+
+enum ConversationSearchSource {
+  CONVERSATION_SEARCH_SOURCE_UNSPECIFIED = 0;
+  CONVERSATION_SEARCH_SOURCE_LOCAL = 1;
+  CONVERSATION_SEARCH_SOURCE_CLOUD_CACHE = 2;
+}
+
+message ConversationSearchArgs {
+  string query = 1;
+  string tool_call_id = 2;
+  optional int32 limit = 3;
+}
+
+message ConversationSearchResult {
+  oneof result {
+    ConversationSearchSuccess success = 1;
+    ConversationSearchError error = 2;
+  }
+}
+
+message ConversationSearchSuccess {
+  repeated ConversationSearchHit hits = 1;
+  bool truncated = 2;
+  bool partial = 3;
+  bool rebuilding = 4;
+}
+
+message ConversationSearchHit {
+  string conversation_id = 1;
+  string title = 2;
+  ConversationSearchSource source = 3;
+  int64 updated_at_ms = 4;
+  optional string snippet = 5;
+}
+
+message ConversationSearchError {
+  string error = 1;
+}

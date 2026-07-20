@@ -10,6 +10,7 @@ message McpToolDefinition {
   string tool_name = 5;
   string description = 2;
   google.protobuf.Value input_schema = 3;
+  optional string input_schema_json = 6;
 }
 
 message McpTools {
@@ -39,6 +40,7 @@ message McpToolDescriptor {
   optional string definition_path = 2;
   optional string description = 3;
   optional google.protobuf.Value input_schema = 4;
+  optional string input_schema_json = 5;
 }
 
 message McpFileSystemOptions {

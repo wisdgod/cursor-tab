@@ -39,6 +39,7 @@ message CreateManualEnterpriseContractRequest {
   optional double on_demand_usage_revenue_discount_percent = 12;
   optional int64 organization_id = 13;
   optional google.protobuf.Struct changed_by = 14;
+  optional bool waive_auto_smart_cursor_token_fee = 15;
 }
 
 message CreateManualEnterpriseContractResponse {
@@ -60,6 +61,7 @@ message CreateContractExpansionRequest {
   optional double on_demand_usage_revenue_discount_percent = 12;
   optional int64 organization_id = 13;
   optional google.protobuf.Struct changed_by = 14;
+  optional bool waive_auto_smart_cursor_token_fee = 15;
 }
 
 message CreateContractExpansionResponse {
@@ -82,6 +84,7 @@ message UpsertManualEnterpriseContractRequest {
   optional double on_demand_usage_revenue_discount_percent = 13;
   optional int64 organization_id = 14;
   optional google.protobuf.Struct changed_by = 15;
+  optional bool waive_auto_smart_cursor_token_fee = 16;
 }
 
 message UpsertManualEnterpriseContractResponse {
@@ -156,6 +159,7 @@ message EnterpriseContract {
   optional double pooled_usage_revenue_discount_percent = 14;
   optional double on_demand_usage_revenue_discount_percent = 15;
   optional int64 organization_id = 16;
+  optional bool waive_auto_smart_cursor_token_fee = 17;
 }
 
 message ListManualEnterpriseContractArchiveRequest {
@@ -189,6 +193,7 @@ message ManualEnterpriseContractArchiveEntry {
   string salesforce_line_item_id = 18;
   google.protobuf.Timestamp contract_created_at = 19;
   google.protobuf.Timestamp contract_updated_at = 20;
+  optional bool waive_auto_smart_cursor_token_fee = 21;
 }
 
 message GetTeamUsageForDateRangeRequest {

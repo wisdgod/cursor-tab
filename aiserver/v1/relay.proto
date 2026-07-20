@@ -1,0 +1,290 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+enum RelayRunKind {
+  RELAY_RUN_KIND_UNSPECIFIED = 0;
+  RELAY_RUN_KIND_MANUAL = 1;
+  RELAY_RUN_KIND_SCHEDULED = 2;
+  RELAY_RUN_KIND_BACKFILL = 3;
+}
+
+enum RelayPipelineRunStatus {
+  RELAY_PIPELINE_RUN_STATUS_UNSPECIFIED = 0;
+  RELAY_PIPELINE_RUN_STATUS_PENDING = 1;
+  RELAY_PIPELINE_RUN_STATUS_RUNNING = 2;
+  RELAY_PIPELINE_RUN_STATUS_FINISHED = 3;
+  RELAY_PIPELINE_RUN_STATUS_FAILED = 4;
+  RELAY_PIPELINE_RUN_STATUS_CANCELED = 5;
+}
+
+enum RelayPipelineRunStageStatus {
+  RELAY_PIPELINE_RUN_STAGE_STATUS_UNSPECIFIED = 0;
+  RELAY_PIPELINE_RUN_STAGE_STATUS_PENDING = 1;
+  RELAY_PIPELINE_RUN_STAGE_STATUS_RUNNING = 2;
+  RELAY_PIPELINE_RUN_STAGE_STATUS_FINISHED = 3;
+  RELAY_PIPELINE_RUN_STAGE_STATUS_FAILED = 4;
+  RELAY_PIPELINE_RUN_STAGE_STATUS_SKIPPED = 5;
+  RELAY_PIPELINE_RUN_STAGE_STATUS_CANCELED = 6;
+}
+
+enum RelayScheduleOverlapPolicy {
+  RELAY_SCHEDULE_OVERLAP_POLICY_UNSPECIFIED = 0;
+  RELAY_SCHEDULE_OVERLAP_POLICY_SKIP = 1;
+  RELAY_SCHEDULE_OVERLAP_POLICY_ALLOW = 2;
+}
+
+enum RelayScheduleCatchupPolicy {
+  RELAY_SCHEDULE_CATCHUP_POLICY_UNSPECIFIED = 0;
+  RELAY_SCHEDULE_CATCHUP_POLICY_NONE = 1;
+  RELAY_SCHEDULE_CATCHUP_POLICY_ONCE_PER_INTERVAL = 2;
+}
+
+enum RelayJobExecutionStatus {
+  RELAY_JOB_EXECUTION_STATUS_UNSPECIFIED = 0;
+  RELAY_JOB_EXECUTION_STATUS_PENDING = 1;
+  RELAY_JOB_EXECUTION_STATUS_SUBMITTED = 2;
+  RELAY_JOB_EXECUTION_STATUS_RUNNING = 3;
+  RELAY_JOB_EXECUTION_STATUS_FINISHED = 4;
+  RELAY_JOB_EXECUTION_STATUS_FAILED = 5;
+  RELAY_JOB_EXECUTION_STATUS_CANCELED = 6;
+  RELAY_JOB_EXECUTION_STATUS_JOB_TIMEOUT = 7;
+}
+
+message RelayPipelineDefinitionSummary {
+  string id = 1;
+  string name = 2;
+  string version = 3;
+  string content_hash = 4;
+  bool sync_enabled = 5;
+  repeated string stage_keys = 6;
+}
+
+message RelayJobExecutionRecord {
+  string id = 1;
+  string stage_key = 2;
+  int32 attempt = 3;
+  string external_job_key = 4;
+  RelayJobExecutionStatus status = 5;
+  optional string ray_job_name = 6;
+  optional string ray_job_namespace = 7;
+  optional string output_s3_uri = 8;
+  optional string error_message = 9;
+}
+
+message RelayPipelineRunStageRecord {
+  string id = 1;
+  string stage_key = 2;
+  int32 stage_index = 3;
+  RelayPipelineRunStageStatus status = 4;
+  optional string selected_job_execution_id = 5;
+  optional string rendered_ray_submission_s3_uri = 6;
+  optional string rendered_job_config_s3_uri = 7;
+  optional string error_message = 8;
+  repeated RelayJobExecutionRecord job_executions = 9;
+}
+
+message RelayPipelineRunRecord {
+  string id = 1;
+  string pipeline_definition_id = 2;
+  string pipeline_name = 3;
+  string pipeline_version = 4;
+  RelayRunKind run_kind = 5;
+  RelayPipelineRunStatus status = 6;
+  google.protobuf.Timestamp logical_start = 7;
+  google.protobuf.Timestamp logical_end = 8;
+  optional string manual_dedupe_key = 9;
+  optional string temporal_workflow_id = 10;
+  optional string temporal_run_id = 11;
+  optional string created_by = 12;
+  optional string error_message = 13;
+  google.protobuf.Struct input_json = 14;
+  google.protobuf.Struct output_json = 15;
+  repeated RelayPipelineRunStageRecord stages = 16;
+  optional string output_prefix = 17;
+  bool kill_requested = 18;
+  optional string schedule_id = 19;
+  google.protobuf.Timestamp scheduled_fire_time = 20;
+}
+
+message RelayScheduleRecord {
+  string id = 1;
+  string pipeline_definition_id = 2;
+  string pipeline_name = 3;
+  string pipeline_version = 4;
+  string temporal_schedule_id = 5;
+  string cron_expression = 6;
+  string timezone = 7;
+  string interval = 8;
+  google.protobuf.Struct input_template_json = 9;
+  bool enabled = 10;
+  RelayScheduleOverlapPolicy overlap_policy = 11;
+  RelayScheduleCatchupPolicy catchup_policy = 12;
+  google.protobuf.Timestamp starts_at = 13;
+  google.protobuf.Timestamp ends_at = 14;
+  optional string created_by = 15;
+  google.protobuf.Timestamp created_at = 16;
+  google.protobuf.Timestamp last_triggered_at = 17;
+}
+
+message ListRelayPipelineDefinitionsRequest {
+}
+
+message ListRelayPipelineDefinitionsResponse {
+  repeated RelayPipelineDefinitionSummary definitions = 1;
+}
+
+message GetRelayPipelineDefinitionRequest {
+  optional string id = 1;
+  optional string name = 2;
+  optional string version = 3;
+}
+
+message GetRelayPipelineDefinitionResponse {
+  RelayPipelineDefinitionSummary definition = 1;
+}
+
+message EnsureRelayPipelineDefinitionRequest {
+  optional string name = 1;
+  optional string version = 2;
+}
+
+message EnsureRelayPipelineDefinitionResponse {
+  string definition_action = 1;
+  RelayPipelineDefinitionSummary definition = 2;
+}
+
+message CreateRelayPipelineRunRequest {
+  string pipeline_name = 1;
+  string pipeline_version = 2;
+  RelayRunKind run_kind = 3;
+  google.protobuf.Timestamp logical_start = 4;
+  google.protobuf.Timestamp logical_end = 5;
+  string manual_dedupe_key = 6;
+  optional string created_by = 7;
+  google.protobuf.Struct input_json = 8;
+  bool dry_run = 9;
+  optional bool start_workflow = 10;
+  bool allow_stale_logical_date = 11;
+}
+
+message CreateRelayPipelineRunResponse {
+  bool dry_run = 1;
+  string definition_action = 2;
+  RelayPipelineRunRecord run = 3;
+  optional string temporal_workflow_id = 4;
+  optional string temporal_run_id = 5;
+  optional string output_prefix = 6;
+}
+
+message GetRelayPipelineRunRequest {
+  string run_id = 1;
+}
+
+message GetRelayPipelineRunResponse {
+  RelayPipelineRunRecord run = 1;
+}
+
+message ListRelayPipelineRunsRequest {
+  optional string pipeline_name = 1;
+  optional string pipeline_version = 2;
+  optional RelayPipelineRunStatus status = 3;
+  optional RelayRunKind run_kind = 4;
+  optional string created_by = 5;
+  optional string page_token = 6;
+  int32 page_size = 7;
+  optional string schedule_id = 8;
+}
+
+message ListRelayPipelineRunsResponse {
+  repeated RelayPipelineRunRecord runs = 1;
+  optional string next_page_token = 2;
+}
+
+message RequestRelayPipelineRunCancelRequest {
+  string run_id = 1;
+  optional string requested_by = 2;
+}
+
+message RequestRelayPipelineRunCancelResponse {
+  RelayPipelineRunRecord run = 1;
+}
+
+message CreateRelayScheduleRequest {
+  string pipeline_name = 1;
+  string pipeline_version = 2;
+  string cron_expression = 3;
+  optional string timezone = 4;
+  string interval = 5;
+  google.protobuf.Struct input_template_json = 6;
+  optional bool enabled = 7;
+  RelayScheduleOverlapPolicy overlap_policy = 8;
+  RelayScheduleCatchupPolicy catchup_policy = 9;
+  google.protobuf.Timestamp starts_at = 10;
+  google.protobuf.Timestamp ends_at = 11;
+  optional string created_by = 12;
+}
+
+message CreateRelayScheduleResponse {
+  string schedule_action = 1;
+  RelayScheduleRecord schedule = 2;
+}
+
+message GetRelayScheduleRequest {
+  string schedule_id = 1;
+}
+
+message GetRelayScheduleResponse {
+  RelayScheduleRecord schedule = 1;
+}
+
+message ListRelaySchedulesRequest {
+  optional string pipeline_name = 1;
+  optional string pipeline_version = 2;
+  optional bool enabled = 3;
+}
+
+message ListRelaySchedulesResponse {
+  repeated RelayScheduleRecord schedules = 1;
+}
+
+message UpdateRelayScheduleRequest {
+  string schedule_id = 1;
+  optional string cron_expression = 2;
+  optional string timezone = 3;
+  optional string interval = 4;
+  google.protobuf.Struct input_template_json = 5;
+  optional bool enabled = 6;
+  optional RelayScheduleOverlapPolicy overlap_policy = 7;
+  optional RelayScheduleCatchupPolicy catchup_policy = 8;
+}
+
+message UpdateRelayScheduleResponse {
+  RelayScheduleRecord schedule = 1;
+}
+
+message DeleteRelayScheduleRequest {
+  string schedule_id = 1;
+}
+
+message DeleteRelayScheduleResponse {
+  bool deleted = 1;
+}
+
+service RelayService {
+  rpc ListPipelineDefinitions(ListRelayPipelineDefinitionsRequest) returns (ListRelayPipelineDefinitionsResponse);
+  rpc GetPipelineDefinition(GetRelayPipelineDefinitionRequest) returns (GetRelayPipelineDefinitionResponse);
+  rpc EnsurePipelineDefinition(EnsureRelayPipelineDefinitionRequest) returns (EnsureRelayPipelineDefinitionResponse);
+  rpc CreatePipelineRun(CreateRelayPipelineRunRequest) returns (CreateRelayPipelineRunResponse);
+  rpc GetPipelineRun(GetRelayPipelineRunRequest) returns (GetRelayPipelineRunResponse);
+  rpc ListPipelineRuns(ListRelayPipelineRunsRequest) returns (ListRelayPipelineRunsResponse);
+  rpc RequestPipelineRunCancel(RequestRelayPipelineRunCancelRequest) returns (RequestRelayPipelineRunCancelResponse);
+  rpc CreateSchedule(CreateRelayScheduleRequest) returns (CreateRelayScheduleResponse);
+  rpc GetSchedule(GetRelayScheduleRequest) returns (GetRelayScheduleResponse);
+  rpc ListSchedules(ListRelaySchedulesRequest) returns (ListRelaySchedulesResponse);
+  rpc UpdateSchedule(UpdateRelayScheduleRequest) returns (UpdateRelayScheduleResponse);
+  rpc DeleteSchedule(DeleteRelayScheduleRequest) returns (DeleteRelayScheduleResponse);
+}

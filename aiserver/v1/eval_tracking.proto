@@ -15,6 +15,8 @@ enum EvalRunStatus {
   EVAL_RUN_STATUS_FAILED = 4;
   EVAL_RUN_STATUS_KILLED = 5;
   EVAL_RUN_STATUS_JOB_TIMEOUT = 8;
+  EVAL_RUN_STATUS_CANCELLED = 9;
+  EVAL_RUN_STATUS_DRAINING = 10;
 }
 
 enum EvalRolloutStatus {
@@ -25,6 +27,7 @@ enum EvalRolloutStatus {
   EVAL_ROLLOUT_STATUS_FAILED = 4;
   EVAL_ROLLOUT_STATUS_KILLED = 5;
   EVAL_ROLLOUT_STATUS_JOB_TIMEOUT = 6;
+  EVAL_ROLLOUT_STATUS_RETRYING = 7;
 }
 
 enum EvalKillReason {
@@ -32,6 +35,13 @@ enum EvalKillReason {
   EVAL_KILL_REASON_USER_KILL = 1;
   EVAL_KILL_REASON_JOB_TIMEOUT = 2;
   EVAL_KILL_REASON_STEP_FAILED = 3;
+}
+
+enum ConcurrencyTrend {
+  CONCURRENCY_TREND_UNSPECIFIED = 0;
+  CONCURRENCY_TREND_UP = 1;
+  CONCURRENCY_TREND_DOWN = 2;
+  CONCURRENCY_TREND_STABLE = 3;
 }
 
 enum RlEvalJobDbStatus {
@@ -277,6 +287,15 @@ message UpsertRunRolloutStatusRequest {
   optional double scoring_ms = 22;
 }
 
+message TouchRolloutThrottleRequest {
+  string run_id = 1;
+  string rollout_request_id = 2;
+}
+
+message TouchRolloutThrottleResponse {
+  bool ok = 1;
+}
+
 message UpsertRunRolloutStatusResponse {
   bool ok = 1;
 }
@@ -297,6 +316,11 @@ message HeartbeatProgress {
   int32 running_count = 3;
   int32 total_count = 4;
   optional int32 retry_count = 5;
+  optional string unhealthy_warning_histogram = 6;
+  optional int32 in_flight_count = 7;
+  optional int32 concurrency_limit = 8;
+  optional bool auto_concurrency = 9;
+  optional ConcurrencyTrend concurrency_trend = 10;
 }
 
 message HeartbeatRequest {
@@ -735,6 +759,7 @@ service EvalTrackingService {
   rpc SetRunParams(SetRunParamsRequest) returns (SetRunParamsResponse);
   rpc SetRunTags(SetRunTagsRequest) returns (SetRunTagsResponse);
   rpc UpsertRunRolloutStatus(UpsertRunRolloutStatusRequest) returns (UpsertRunRolloutStatusResponse);
+  rpc TouchRolloutThrottle(TouchRolloutThrottleRequest) returns (TouchRolloutThrottleResponse);
   rpc GetLastRolloutRequestId(GetLastRolloutRequestIdRequest) returns (GetLastRolloutRequestIdResponse);
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
   rpc RequestKill(RequestKillRequest) returns (RequestKillResponse);

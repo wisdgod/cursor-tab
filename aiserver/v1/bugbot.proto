@@ -72,31 +72,6 @@ message StreamBugBotRequest {
   optional bool deep_review = 14;
 }
 
-message FileAndOutline {
-  CodeBlock file = 1;
-  optional string outline = 2;
-}
-
-message RunBugBotPromptProps {
-  StreamBugBotRequest req = 1;
-  string seed = 2;
-  string date = 3;
-  repeated FileAndOutline context_files = 4;
-  optional string file_content_source = 5;
-}
-
-message BugBotDiscriminatorPromptProps {
-  StreamBugBotRequest req = 1;
-  BugReport bug = 2;
-  string date = 3;
-  string seed = 4;
-}
-
-message BugBotDiscriminatorTrainingPromptProps {
-  BugBotDiscriminatorPromptProps props = 1;
-  bool is_real_bug = 2;
-}
-
 message LogDeeplinkEventRequest {
   int32 user_id = 1;
   string bug_id = 2;

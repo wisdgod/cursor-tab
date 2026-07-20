@@ -6,6 +6,7 @@ message GenerateImageArgs {
   string description = 1;
   optional string file_path = 2;
   repeated string reference_image_paths = 5;
+  optional string aspect_ratio = 6;
 }
 
 message GenerateImageResult {

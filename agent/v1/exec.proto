@@ -6,6 +6,7 @@ import "agent/v1/agent.proto";
 import "agent/v1/background_shell_exec.proto";
 import "agent/v1/canvas_diagnostics_exec.proto";
 import "agent/v1/computer_use_tool.proto";
+import "agent/v1/conversation_search_exec.proto";
 import "agent/v1/delete_exec.proto";
 import "agent/v1/diagnostics_exec.proto";
 import "agent/v1/fetch_exec.proto";
@@ -62,12 +63,6 @@ message SpanContext {
   optional string trace_state = 4;
 }
 
-message AbortArgs {
-}
-
-message AbortResult {
-}
-
 message ExecServerMessage {
   uint32 id = 1;
   string exec_id = 15;
@@ -110,6 +105,7 @@ message ExecServerMessage {
     PiGrepExecArgs pi_grep_args = 49;
     PiFindExecArgs pi_find_args = 50;
     PiLsExecArgs pi_ls_args = 51;
+    ConversationSearchArgs conversation_search_args = 53;
   }
 }
 
@@ -156,6 +152,7 @@ message ExecClientMessage {
     PiGrepExecResult pi_grep_result = 50;
     PiFindExecResult pi_find_result = 51;
     PiLsExecResult pi_ls_result = 52;
+    ConversationSearchResult conversation_search_result = 53;
   }
 }
 
@@ -178,6 +175,7 @@ message ExecuteHookRequest {
     BeforeSubmitPromptRequestQuery before_submit_prompt = 7;
     AfterAgentResponseRequestQuery after_agent_response = 8;
     AfterAgentThoughtRequestQuery after_agent_thought = 9;
+    StopRequestQuery stop = 11;
   }
 }
 
@@ -192,5 +190,17 @@ message ExecuteHookResponse {
     BeforeSubmitPromptRequestResponse before_submit_prompt = 7;
     AfterAgentResponseRequestResponse after_agent_response = 8;
     AfterAgentThoughtRequestResponse after_agent_thought = 9;
+    StopRequestResponse stop = 11;
   }
+}
+
+message ExecStreamElement {
+  oneof element {
+    ExecClientMessage exec_client_message = 1;
+    ExecClientControlMessage exec_client_control_message = 2;
+  }
+}
+
+service ExecService {
+  rpc Exec(ExecServerMessage) returns (stream ExecStreamElement);
 }

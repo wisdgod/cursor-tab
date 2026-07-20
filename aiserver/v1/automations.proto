@@ -154,6 +154,7 @@ enum AutomationRunFailureCode {
   AUTOMATION_RUN_FAILURE_CODE_PROTECTED_SCOPE_BLOCKED = 21;
   AUTOMATION_RUN_FAILURE_CODE_CANCELLED_SUPERSEDED_BY_NEWER_EVENT = 22;
   AUTOMATION_RUN_FAILURE_CODE_USER_BLOCKED = 23;
+  AUTOMATION_RUN_FAILURE_CODE_PAYLOAD_TOO_LARGE = 24;
 }
 
 enum AutomationRunRetryIneligibleReason {
@@ -176,6 +177,8 @@ message Trigger {
     MicrosoftTeamsTrigger microsoft_teams_trigger = 16;
     MicrosoftTeamsChannelCreatedTrigger microsoft_teams_channel_created = 17;
     SlackReactionAddedTrigger slack_reaction_added = 18;
+    SlackMentionTrigger slack_mention = 19;
+    SlackAnyReactionAddedTrigger slack_any_reaction_added = 20;
   }
 }
 
@@ -265,6 +268,8 @@ message GitTrigger {
     GitPullRequestReviewEvent pull_request_review = 9;
     GitReviewThreadEvent review_thread = 10;
     GitWorkflowRunEvent workflow_run = 11;
+    GitPullRequestReviewRequestedEvent pull_request_review_requested = 12;
+    GitIssueAssignedEvent issue_assigned = 13;
   }
 }
 
@@ -279,6 +284,14 @@ message GitPullRequestEvent {
   bool comment_contains_is_regex = 10;
   string label_name = 8;
   repeated string orgs = 9;
+}
+
+message GitPullRequestReviewRequestedEvent {
+  repeated string repos = 1;
+}
+
+message GitIssueAssignedEvent {
+  repeated string repos = 1;
 }
 
 message GitPushEvent {
@@ -363,6 +376,18 @@ message SlackReactionAddedTrigger {
   string emoji_name = 3;
   repeated string channels = 5;
   bool block_unauthenticated_slack_users = 6;
+}
+
+message SlackMentionTrigger {
+  string channel = 1;
+  repeated string channels = 2;
+  bool block_unauthenticated_slack_users = 3;
+}
+
+message SlackAnyReactionAddedTrigger {
+  string channel = 1;
+  repeated string channels = 2;
+  bool block_unauthenticated_slack_users = 3;
 }
 
 message LinearTrigger {
@@ -508,50 +533,6 @@ message MicrosoftTeamsAction {
 message ReadMicrosoftTeamsAction {
 }
 
-message PrCommentActionPayload {
-  int32 pr_number = 1;
-  string repo_url = 2;
-  optional string head_sha = 3;
-}
-
-message GitPrActionPayload {
-  optional string pr_url = 1;
-  string repo_url = 2;
-}
-
-message SlackActionPayload {
-  string channel = 1;
-  optional string triggering_pr_url = 2;
-  optional string reply_thread_ts = 4;
-}
-
-message ResolveReviewThreadsActionPayload {
-  int32 pr_number = 1;
-  string repo_url = 2;
-}
-
-message MicrosoftTeamsActionPayload {
-  string tenant_id = 1;
-  string team_id = 2;
-  string channel_id = 3;
-  optional string triggering_pr_url = 4;
-  optional string reply_root_message_id = 5;
-}
-
-message ActionPayload {
-  oneof payload {
-    PrCommentActionPayload pr_comment = 1;
-    GitPrActionPayload git_pr = 2;
-    SlackActionPayload slack = 3;
-    ResolveReviewThreadsActionPayload resolve_review_threads = 4;
-    MicrosoftTeamsActionPayload microsoft_teams = 5;
-  }
-}
-
-message ActionsPayload {
-  repeated ActionPayload payloads = 4;
-}
-
 message PlatformActionEntry {
   PlatformActionScope scope = 1;
   int32 action_index = 2;
@@ -564,68 +545,6 @@ message PlatformActionEntry {
 
 message PlatformActionsPayload {
   repeated PlatformActionEntry actions = 1;
-}
-
-message SlackTriggerPayload {
-  string channel = 1;
-  string message_text = 2;
-  string user_id = 3;
-  string message_ts = 4;
-  optional string thread_ts = 5;
-}
-
-message SlackChannelCreatedTriggerPayload {
-  string channel_id = 1;
-  string channel_name = 2;
-  string creator_id = 3;
-}
-
-message LinearTriggerPayload {
-  string issue_id = 1;
-  string issue_identifier = 2;
-  string project_id = 3;
-  string team_id = 4;
-  oneof event {
-    LinearIssueCreatedPayload issue_created = 5;
-    LinearStatusChangedPayload status_changed = 6;
-    LinearEndOfCyclePayload end_of_cycle = 7;
-  }
-}
-
-message LinearIssueCreatedPayload {
-}
-
-message LinearStatusChangedPayload {
-  string old_status_id = 1;
-  string new_status_id = 2;
-}
-
-message LinearEndOfCyclePayload {
-  string cycle_id = 1;
-  string cycle_name = 2;
-}
-
-message PagerDutyTriggerPayload {
-  string incident_id = 1;
-  string incident_title = 2;
-  string incident_status = 3;
-  string incident_urgency = 4;
-  string service_id = 5;
-  string service_name = 6;
-  string incident_url = 7;
-  string event_type = 8;
-}
-
-message SentryTriggerPayload {
-  string issue_id = 1;
-  string short_id = 2;
-  string title = 3;
-  string issue_url = 4;
-  string project_id = 5;
-  string project_slug = 6;
-  string action = 7;
-  string status = 8;
-  string substatus = 9;
 }
 
 message TriggerMetadataEntry {
@@ -689,10 +608,15 @@ message CreateAutomationRequest {
   optional int32 team_id = 8;
   AutomationCreationSource creation_source = 9;
   optional bool enabled = 10;
+  optional string sand_agent_id = 11;
 }
 
 message CreateAutomationResponse {
   AutomationWithOwner workflow = 1;
+}
+
+message ListSandAutomationsRequest {
+  string sand_agent_id = 1;
 }
 
 message ListAutomationsRequest {
@@ -882,6 +806,7 @@ message AutomationWithOwner {
   int32 user_id = 2;
   string owner_name = 3;
   repeated AutomationMcpAuthState mcp_auth_states = 4;
+  optional int32 team_id = 5;
 }
 
 message ListAutomationRunsRequest {
@@ -1092,6 +1017,8 @@ message UpdateManagedAutomationTeamSettingsRequest {
   int32 team_id = 1;
   bool security_agent_disabled = 2;
   bool approval_agent_disabled = 3;
+  optional bool security_agent_disabled_patch = 4;
+  optional bool approval_agent_disabled_patch = 5;
 }
 
 message UpdateManagedAutomationTeamSettingsResponse {
@@ -1303,6 +1230,11 @@ service AutomationsService {
   rpc ListAutomations(ListAutomationsRequest) returns (ListAutomationsResponse);
   rpc GetAutomation(GetAutomationRequest) returns (GetAutomationResponse);
   rpc UpdateAutomation(UpdateAutomationRequest) returns (UpdateAutomationResponse);
+  rpc CreateSandAutomation(CreateAutomationRequest) returns (CreateAutomationResponse);
+  rpc ListSandAutomations(ListSandAutomationsRequest) returns (ListAutomationsResponse);
+  rpc GetSandAutomation(GetAutomationRequest) returns (GetAutomationResponse);
+  rpc UpdateSandAutomation(UpdateAutomationRequest) returns (UpdateAutomationResponse);
+  rpc DeleteSandAutomation(DeleteAutomationRequest) returns (DeleteAutomationResponse);
   rpc ReassignAutomationOwner(ReassignAutomationOwnerRequest) returns (ReassignAutomationOwnerResponse);
   rpc UpdateAutomationAuthoringMode(UpdateAutomationAuthoringModeRequest) returns (UpdateAutomationAuthoringModeResponse);
   rpc ValidateAutomationSpec(ValidateAutomationSpecRequest) returns (ValidateAutomationSpecResponse);
