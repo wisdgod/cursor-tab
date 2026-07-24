@@ -114,6 +114,7 @@ enum ProtectedGitProvider {
   PROTECTED_GIT_PROVIDER_GITLAB = 2;
   PROTECTED_GIT_PROVIDER_GITHUB_ENTERPRISE = 3;
   PROTECTED_GIT_PROVIDER_GITLAB_SELF_HOSTED = 4;
+  PROTECTED_GIT_PROVIDER_ORIGIN = 5;
 }
 
 enum FirstPartyPluginMode {
@@ -169,6 +170,12 @@ enum TeamFollowupEnabledMode {
   TEAM_FOLLOWUP_ENABLED_MODE_ALL = 3;
 }
 
+enum PreferredRepoSourceMode {
+  PREFERRED_REPO_SOURCE_MODE_UNSPECIFIED = 0;
+  PREFERRED_REPO_SOURCE_MODE_GITHUB = 1;
+  PREFERRED_REPO_SOURCE_MODE_ORIGIN = 2;
+}
+
 enum SandboxingMode {
   SANDBOXING_MODE_UNSPECIFIED = 0;
   SANDBOXING_MODE_ENABLED = 1;
@@ -211,6 +218,13 @@ enum LimitHitStage {
   LIMIT_HIT_STAGE_AUTO_SWITCH = 1;
   LIMIT_HIT_STAGE_SLOW_POOL = 2;
   LIMIT_HIT_STAGE_HARD_BLOCK = 3;
+}
+
+enum SeatUpgradePoolDriver {
+  SEAT_UPGRADE_POOL_DRIVER_UNSPECIFIED = 0;
+  SEAT_UPGRADE_POOL_DRIVER_FIRST_PARTY = 1;
+  SEAT_UPGRADE_POOL_DRIVER_THIRD_PARTY = 2;
+  SEAT_UPGRADE_POOL_DRIVER_BOTH = 3;
 }
 
 enum AllowlistConfig {
@@ -347,6 +361,11 @@ enum AdminNotificationRequestType {
   ADMIN_NOTIFICATION_REQUEST_TYPE_BUGBOT_ENABLE_REPOS = 3;
 }
 
+enum TeamCustomerTelemetryDestinationKind {
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_KIND_UNSPECIFIED = 0;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_KIND_OTLP_HTTP = 1;
+}
+
 enum BugbotMode {
   BUGBOT_MODE_UNSPECIFIED = 0;
   BUGBOT_MODE_DEFAULT = 1;
@@ -418,6 +437,21 @@ enum PluginStatus {
   PLUGIN_STATUS_APPROVED = 3;
   PLUGIN_STATUS_REJECTED = 4;
   PLUGIN_STATUS_UNLISTED = 5;
+}
+
+enum PluginLifecycleState {
+  PLUGIN_LIFECYCLE_STATE_UNSPECIFIED = 0;
+  PLUGIN_LIFECYCLE_STATE_PUBLIC_LISTED = 1;
+  PLUGIN_LIFECYCLE_STATE_PUBLIC_UNLISTED = 2;
+  PLUGIN_LIFECYCLE_STATE_PUBLIC_DRAFT = 3;
+  PLUGIN_LIFECYCLE_STATE_PUBLIC_PENDING = 4;
+  PLUGIN_LIFECYCLE_STATE_PUBLIC_REJECTED = 5;
+  PLUGIN_LIFECYCLE_STATE_PUBLISHER_SUBMISSION = 6;
+  PLUGIN_LIFECYCLE_STATE_PRIVATE_ACTIVE = 7;
+  PLUGIN_LIFECYCLE_STATE_PUBLIC_DEPRECATED = 10;
+  PLUGIN_LIFECYCLE_STATE_PRIVATE_DEPRECATED = 11;
+  PLUGIN_LIFECYCLE_STATE_PUBLIC_INVALID = 12;
+  PLUGIN_LIFECYCLE_STATE_PRIVATE_INVALID = 13;
 }
 
 enum PluginPrimitiveType {
@@ -738,6 +772,7 @@ message DeleteAccountResponse {
 message GetMeRequest {
   optional int32 team_id = 1;
   optional string source_site_hostname = 2;
+  optional bool include_mobile_app_status = 3;
 }
 
 message GetMeResponse {
@@ -758,6 +793,7 @@ message GetMeResponse {
   optional int64 organization_id = 15;
   optional string organization_public_id = 16;
   optional bool is_team_admin = 17;
+  optional bool has_active_mobile_session = 18;
 }
 
 message GetAgenticOnboardingConfigRequest {
@@ -899,6 +935,7 @@ message ListOrganizationIdentityProvidersRequest {
 message ListOrganizationIdentityProvidersResponse {
   repeated OrganizationIdentityProvider providers = 1;
   bool merge_enabled = 2;
+  bool scim_inside_identity_provider_enabled = 3;
 }
 
 message UpdateOrganizationIdentityProviderSsoSettingsRequest {
@@ -1601,6 +1638,8 @@ message GetAvailableMcpServersResponse {
     bool is_required = 12;
     bool managed_by_team_plugin_policy = 13;
     bool disabled_by_team_admin_policy = 14;
+    optional string server_identifier = 15;
+    optional int32 owning_team_id = 16;
   }
   repeated McpServerInfo servers = 1;
 }
@@ -3107,6 +3146,48 @@ message PullRequestPreferences {
   PrReviewOpenDestinationMode pr_review_open_destination = 1;
 }
 
+message GetRepoSourcePreferenceRequest {
+  optional int32 team_id = 1;
+}
+
+message GetRepoSourcePreferenceResponse {
+  PreferredRepoSourceMode user_preference = 1;
+  PreferredRepoSourceMode team_preference = 2;
+  PreferredRepoSourceMode effective_preference = 3;
+  bool can_configure = 4;
+}
+
+message UpdateUserRepoSourcePreferenceRequest {
+  PreferredRepoSourceMode preference = 1;
+}
+
+message UpdateUserRepoSourcePreferenceResponse {
+}
+
+message UpdateTeamRepoSourcePreferenceRequest {
+  int32 team_id = 1;
+  PreferredRepoSourceMode preference = 2;
+}
+
+message UpdateTeamRepoSourcePreferenceResponse {
+}
+
+message ResolvePrCreationForgeRequest {
+  string repo_url = 1;
+  optional int32 team_id = 2;
+}
+
+message ResolvePrCreationForgeResponse {
+  enum PrCreationForge {
+    PR_CREATION_FORGE_UNSPECIFIED = 0;
+    PR_CREATION_FORGE_GITHUB = 1;
+    PR_CREATION_FORGE_ORIGIN = 2;
+  }
+  PrCreationForge forge = 1;
+  string repo_url = 2;
+  bool switched = 3;
+}
+
 message BackgroundAgentSettings {
   repeated string allowlist = 1;
   AllowlistConfig allowlist_config = 2;
@@ -3370,6 +3451,7 @@ message GetTeamAdminSettingsResponse {
   optional string new_chat_nudge_all_to_smart_auto_optimize_for = 55;
   optional bool restrict_invites_to_admins = 56;
   optional bool viewer_can_invite_members = 57;
+  optional bool enforce_hooks_readiness = 58;
 }
 
 message GetBaseTeamAdminSettingsRequest {
@@ -3432,6 +3514,7 @@ message UpdateTeamAdminSettingsRequest {
   optional bool new_chat_nudge_all_to_smart_auto = 53;
   optional bool models_auto_only = 54;
   optional string new_chat_nudge_all_to_smart_auto_optimize_for = 55;
+  optional bool enforce_hooks_readiness = 56;
 }
 
 message UpdateTeamAdminSettingsResponse {
@@ -3913,6 +3996,48 @@ message GetTeamSpendResponse {
   optional bool has_any_spend_limit_overrides = 11;
   optional bool has_any_free_usage = 12;
   optional bool self_serve_tiered_pricing_enabled = 13;
+}
+
+message GetTeamSeatUpgradeRecommendationsRequest {
+  int32 team_id = 1;
+}
+
+message SeatUpgradeRecommendation {
+  int32 user_id = 1;
+  string name = 2;
+  string email = 3;
+  optional string profile_picture_url = 4;
+  TeamRole role = 5;
+  TeamMemberBillingTier billing_tier = 6;
+  bool previous_cycle_savings = 7;
+  bool current_cycle_pacing = 8;
+  SeatUpgradePoolDriver pool_driver = 9;
+  optional int32 previous_cycle_savings_cents = 10;
+  optional int32 projected_current_cycle_savings_cents = 11;
+}
+
+message GetTeamSeatUpgradeRecommendationsResponse {
+  repeated SeatUpgradeRecommendation recommendations = 1;
+  bool enabled = 2;
+  int32 total_monthly_savings_cents = 3;
+}
+
+message GetPendingSeatTierUpgradeRequestsRequest {
+  int32 team_id = 1;
+}
+
+message PendingSeatTierUpgradeRequest {
+  int32 user_id = 1;
+  string name = 2;
+  string email = 3;
+  optional string profile_picture_url = 4;
+  TeamRole role = 5;
+  TeamMemberBillingTier billing_tier = 6;
+  string requested_at = 7;
+}
+
+message GetPendingSeatTierUpgradeRequestsResponse {
+  repeated PendingSeatTierUpgradeRequest requests = 1;
 }
 
 message GetCurrentBillingCycleRequest {
@@ -5692,6 +5817,7 @@ message ScimDirectory {
   int64 created_at = 7;
   int64 updated_at = 8;
   optional bool sync_directory_users_to_root_team = 9;
+  string identity_provider_public_id = 10;
 }
 
 message ListScimDirectoriesRequest {
@@ -5926,6 +6052,67 @@ message MigrateTeamBugbotToUsageBasedBillingRequest {
 }
 
 message MigrateTeamBugbotToUsageBasedBillingResponse {
+}
+
+message TeamCustomerTelemetryDestinationHeaders {
+  map<string, string> values = 1;
+}
+
+message TeamCustomerTelemetryDestination {
+  string id = 1;
+  TeamCustomerTelemetryDestinationKind kind = 2;
+  string endpoint_url = 3;
+  bool enabled = 4;
+  bool metrics_enabled = 5;
+  bool logs_enabled = 6;
+  bool has_credentials = 7;
+  int64 activated_at_epoch_millis = 8;
+  int64 created_at_epoch_millis = 9;
+  int64 updated_at_epoch_millis = 10;
+  repeated string credential_header_names = 11;
+}
+
+message GetTeamCustomerTelemetryDestinationsRequest {
+  int32 team_id = 1;
+}
+
+message GetTeamCustomerTelemetryDestinationsResponse {
+  repeated TeamCustomerTelemetryDestination destinations = 1;
+}
+
+message CreateTeamCustomerTelemetryDestinationRequest {
+  int32 team_id = 1;
+  string endpoint_url = 2;
+  optional TeamCustomerTelemetryDestinationHeaders headers = 3;
+  bool metrics_enabled = 4;
+  bool logs_enabled = 5;
+  bool enabled = 6;
+}
+
+message CreateTeamCustomerTelemetryDestinationResponse {
+  TeamCustomerTelemetryDestination destination = 1;
+}
+
+message UpdateTeamCustomerTelemetryDestinationRequest {
+  int32 team_id = 1;
+  string destination_id = 2;
+  optional string endpoint_url = 3;
+  optional TeamCustomerTelemetryDestinationHeaders headers = 4;
+  optional bool metrics_enabled = 5;
+  optional bool logs_enabled = 6;
+  optional bool enabled = 7;
+}
+
+message UpdateTeamCustomerTelemetryDestinationResponse {
+  TeamCustomerTelemetryDestination destination = 1;
+}
+
+message DeleteTeamCustomerTelemetryDestinationRequest {
+  int32 team_id = 1;
+  string destination_id = 2;
+}
+
+message DeleteTeamCustomerTelemetryDestinationResponse {
 }
 
 message GetBugbotMergedPrScanSummaryRequest {
@@ -6274,6 +6461,7 @@ message GetBackgroundComposerSlashCommandsResponse {
   repeated string command_names = 4;
   repeated SkillDescriptor skills = 5;
   repeated CommandDescriptor commands = 6;
+  optional bool machine_inventory_pending = 8;
 }
 
 message GetCloudAgentPluginsSnapshotRequest {
@@ -7064,6 +7252,7 @@ message Plugin {
   google.protobuf.Struct variables = 38;
   optional TeamMarketplacePluginInstallMode team_marketplace_install_mode = 39;
   google.protobuf.Struct team_marketplace_configured_variables = 40;
+  PluginLifecycleState lifecycle_state = 41;
 }
 
 message UserPluginInstall {
@@ -7251,21 +7440,6 @@ message CreatePluginRequest {
 }
 
 message CreatePluginResponse {
-  Plugin plugin = 1;
-}
-
-message UpdatePluginRequest {
-  int64 plugin_id = 1;
-  bool is_published = 2;
-  repeated SkillDescriptor skills = 3;
-  repeated SubagentDescriptor subagents = 4;
-  repeated HookDescriptor hooks = 5;
-  repeated RuleDescriptor rules = 6;
-  repeated McpDescriptor mcp_servers = 7;
-  repeated CommandDescriptor commands = 8;
-}
-
-message UpdatePluginResponse {
   Plugin plugin = 1;
 }
 
@@ -7887,16 +8061,6 @@ message PreviewTeamMarketplaceMcpImpactResponse {
     repeated string mcp_server_names = 3;
   }
   repeated ImpactedPlugin impacted_plugins = 1;
-}
-
-message DeprecatePluginRequest {
-  int64 plugin_id = 1;
-  optional string deprecation_message = 2;
-  optional int64 replaced_by_plugin_id = 3;
-}
-
-message DeprecatePluginResponse {
-  Plugin plugin = 1;
 }
 
 message GetPullRequestForBranchRequest {
@@ -8611,6 +8775,10 @@ service DashboardService {
   rpc GetTeamAdminSettingsOrEmptyIfNotInTeam(GetTeamAdminSettingsRequest) returns (GetTeamAdminSettingsResponse);
   rpc GetBaseTeamAdminSettings(GetBaseTeamAdminSettingsRequest) returns (GetTeamAdminSettingsResponse);
   rpc UpdateTeamAdminSettings(UpdateTeamAdminSettingsRequest) returns (UpdateTeamAdminSettingsResponse);
+  rpc GetTeamCustomerTelemetryDestinations(GetTeamCustomerTelemetryDestinationsRequest) returns (GetTeamCustomerTelemetryDestinationsResponse);
+  rpc CreateTeamCustomerTelemetryDestination(CreateTeamCustomerTelemetryDestinationRequest) returns (CreateTeamCustomerTelemetryDestinationResponse);
+  rpc UpdateTeamCustomerTelemetryDestination(UpdateTeamCustomerTelemetryDestinationRequest) returns (UpdateTeamCustomerTelemetryDestinationResponse);
+  rpc DeleteTeamCustomerTelemetryDestination(DeleteTeamCustomerTelemetryDestinationRequest) returns (DeleteTeamCustomerTelemetryDestinationResponse);
   rpc SetTeamNoZdrModelConsent(SetTeamNoZdrModelConsentRequest) returns (SetTeamNoZdrModelConsentResponse);
   rpc SetOrganizationNoZdrModelConsent(SetOrganizationNoZdrModelConsentRequest) returns (SetOrganizationNoZdrModelConsentResponse);
   rpc SetUserNoZdrModelConsent(SetUserNoZdrModelConsentRequest) returns (SetUserNoZdrModelConsentResponse);
@@ -8622,6 +8790,7 @@ service DashboardService {
   rpc CreateProtectedGitScope(CreateProtectedGitScopeRequest) returns (CreateProtectedGitScopeResponse);
   rpc DeleteProtectedGitScope(DeleteProtectedGitScopeRequest) returns (DeleteProtectedGitScopeResponse);
   rpc CreateTeamFreeTrialCode(CreateTeamFreeTrialCodeRequest) returns (CreateTeamFreeTrialCodeResponse);
+  rpc CreateTeamFreeTrialCodeInternal(CreateTeamFreeTrialCodeRequest) returns (CreateTeamFreeTrialCodeResponse);
   rpc CreateTeamsTrialV2ReferralCode(CreateTeamsTrialV2ReferralCodeRequest) returns (CreateTeamsTrialV2ReferralCodeResponse);
   rpc GetTeamAnalytics(GetTeamAnalyticsRequest) returns (GetTeamAnalyticsResponse);
   rpc GetUserAnalytics(GetUserAnalyticsRequest) returns (GetUserAnalyticsResponse);
@@ -8640,6 +8809,8 @@ service DashboardService {
   rpc GetTokenUsage(GetTokenUsageRequest) returns (GetTokenUsageResponse);
   rpc ValidateBedrockIamRole(ValidateBedrockIamRoleRequest) returns (ValidateBedrockIamRoleResponse);
   rpc GetTeamSpend(GetTeamSpendRequest) returns (GetTeamSpendResponse);
+  rpc GetTeamSeatUpgradeRecommendations(GetTeamSeatUpgradeRecommendationsRequest) returns (GetTeamSeatUpgradeRecommendationsResponse);
+  rpc GetPendingSeatTierUpgradeRequests(GetPendingSeatTierUpgradeRequestsRequest) returns (GetPendingSeatTierUpgradeRequestsResponse);
   rpc GetCurrentBillingCycle(GetCurrentBillingCycleRequest) returns (GetCurrentBillingCycleResponse);
   rpc GetMonthlyBillingCycle(GetMonthlyBillingCycleRequest) returns (GetMonthlyBillingCycleResponse);
   rpc GetBugbotSettings(GetBugbotSettingsRequest) returns (GetBugbotSettingsResponse);
@@ -8737,6 +8908,10 @@ service DashboardService {
   rpc UpdateUserSmartAutoSettings(UpdateUserSmartAutoSettingsRequest) returns (UpdateUserSmartAutoSettingsResponse);
   rpc GetTeamBackgroundAgentSettings(GetTeamBackgroundAgentSettingsRequest) returns (GetTeamBackgroundAgentSettingsResponse);
   rpc UpdateTeamBackgroundAgentSettings(UpdateTeamBackgroundAgentSettingsRequest) returns (UpdateTeamBackgroundAgentSettingsResponse);
+  rpc GetRepoSourcePreference(GetRepoSourcePreferenceRequest) returns (GetRepoSourcePreferenceResponse);
+  rpc UpdateUserRepoSourcePreference(UpdateUserRepoSourcePreferenceRequest) returns (UpdateUserRepoSourcePreferenceResponse);
+  rpc UpdateTeamRepoSourcePreference(UpdateTeamRepoSourcePreferenceRequest) returns (UpdateTeamRepoSourcePreferenceResponse);
+  rpc ResolvePrCreationForge(ResolvePrCreationForgeRequest) returns (ResolvePrCreationForgeResponse);
   rpc RevokeTeamInviteLink(RevokeTeamInviteLinkRequest) returns (RevokeTeamInviteLinkResponse);
   rpc ListTeamInviteLinks(ListTeamInviteLinksRequest) returns (ListTeamInviteLinksResponse);
   rpc UpdateUserName(UpdateUserNameRequest) returns (UpdateUserNameResponse);
@@ -8847,7 +9022,6 @@ service DashboardService {
   rpc GetTeamMemberProfileByHandle(GetTeamMemberProfileByHandleRequest) returns (GetTeamMemberProfileByHandleResponse);
   rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse);
   rpc CreatePlugin(CreatePluginRequest) returns (CreatePluginResponse);
-  rpc UpdatePlugin(UpdatePluginRequest) returns (UpdatePluginResponse);
   rpc ParseGitHubRepoForPlugins(ParseGitHubRepoForPluginRequest) returns (ParseGitHubRepoForPluginsResponse);
   rpc ParsePluginPublisherRepoInternal(ParsePluginPublisherRepoInternalRequest) returns (ParsePluginPublisherRepoInternalResponse);
   rpc PreviewReindexPluginRepoInternal(PreviewReindexPluginRepoInternalRequest) returns (PreviewReindexPluginRepoResponse);
@@ -8873,7 +9047,6 @@ service DashboardService {
   rpc UninstallTeamPlugin(UninstallTeamPluginRequest) returns (UninstallTeamPluginResponse);
   rpc GetEffectiveUserPlugins(GetEffectiveUserPluginsRequest) returns (GetEffectiveUserPluginsResponse);
   rpc ResolvePluginsByRef(ResolvePluginsByRefRequest) returns (ResolvePluginsByRefResponse);
-  rpc DeprecatePlugin(DeprecatePluginRequest) returns (DeprecatePluginResponse);
   rpc ListMarketplaces(ListMarketplacesRequest) returns (ListMarketplacesResponse);
   rpc AddMarketplace(AddMarketplaceRequest) returns (AddMarketplaceResponse);
   rpc GetOrCreateDefaultTeamMarketplace(GetOrCreateDefaultTeamMarketplaceRequest) returns (GetOrCreateDefaultTeamMarketplaceResponse);

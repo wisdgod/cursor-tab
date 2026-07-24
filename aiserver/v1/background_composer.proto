@@ -207,6 +207,7 @@ enum EnvironmentBuildRowTriggerType {
   ENVIRONMENT_BUILD_ROW_TRIGGER_TYPE_UNSPECIFIED = 0;
   ENVIRONMENT_BUILD_ROW_TRIGGER_TYPE_MANUAL = 1;
   ENVIRONMENT_BUILD_ROW_TRIGGER_TYPE_RECURRING = 2;
+  ENVIRONMENT_BUILD_ROW_TRIGGER_TYPE_CONFIG_CHANGE = 3;
 }
 
 enum EnvironmentBuildRowSource {
@@ -378,6 +379,30 @@ enum AgentStoreEntryKind {
   AGENT_STORE_ENTRY_KIND_UNSPECIFIED = 0;
   AGENT_STORE_ENTRY_KIND_DIRECTORY = 1;
   AGENT_STORE_ENTRY_KIND_FILE = 2;
+}
+
+enum AgentStoreDirectoryListingMode {
+  AGENT_STORE_DIRECTORY_LISTING_MODE_UNSPECIFIED = 0;
+  AGENT_STORE_DIRECTORY_LISTING_MODE_DIRECTORY_PAGE = 1;
+  AGENT_STORE_DIRECTORY_LISTING_MODE_COMPLETE_FLAT_STORE = 2;
+}
+
+enum AgentStoreMultipartOperationFailureCode {
+  AGENT_STORE_MULTIPART_OPERATION_FAILURE_CODE_UNSPECIFIED = 0;
+  AGENT_STORE_MULTIPART_OPERATION_FAILURE_CODE_PRECONDITION_FAILED = 1;
+  AGENT_STORE_MULTIPART_OPERATION_FAILURE_CODE_UPLOAD_NOT_FOUND = 2;
+  AGENT_STORE_MULTIPART_OPERATION_FAILURE_CODE_INVALID_PARTS = 3;
+  AGENT_STORE_MULTIPART_OPERATION_FAILURE_CODE_CHECKSUM_MISMATCH = 4;
+  AGENT_STORE_MULTIPART_OPERATION_FAILURE_CODE_TRANSIENT = 5;
+  AGENT_STORE_MULTIPART_OPERATION_FAILURE_CODE_INTERNAL = 6;
+  AGENT_STORE_MULTIPART_OPERATION_FAILURE_CODE_RESTART_REQUIRED = 7;
+}
+
+enum AgentStoreDeleteFileStatus {
+  AGENT_STORE_DELETE_FILE_STATUS_UNSPECIFIED = 0;
+  AGENT_STORE_DELETE_FILE_STATUS_DELETED = 1;
+  AGENT_STORE_DELETE_FILE_STATUS_ALREADY_DELETED = 2;
+  AGENT_STORE_DELETE_FILE_STATUS_CONFLICT = 3;
 }
 
 enum AgentStoreShareVisibility {
@@ -1145,6 +1170,13 @@ message AdmittedCustomModeState {
   optional string plugin_id = 12;
 }
 
+message EnvironmentSetupRunStartedMetadata {
+  string setup_session_id = 1;
+  optional string surface = 2;
+  optional string entrypoint = 3;
+  bool resumed_session = 4;
+}
+
 message StartBackgroundComposerFromSnapshotRequest {
   message File {
     string relative_workspace_path = 1;
@@ -1241,6 +1273,9 @@ message StartBackgroundComposerFromSnapshotRequest {
   optional string selected_private_worker_id = 112;
   optional bool use_experimental_model_opt_out = 114;
   optional string forked_from_bc_id = 115;
+  optional string requested_environment_build_id = 116;
+  map<string, string> external_metadata = 117;
+  optional EnvironmentSetupRunStartedMetadata environment_setup_run_started_metadata = 118;
 }
 
 message StartBackgroundComposerFromSnapshotResponse {
@@ -1603,6 +1638,7 @@ message SubmitPendingFollowupNowResponse {
 message MarkFollowupEditingRequest {
   string bc_id = 1;
   string followup_id = 2;
+  optional bool editing = 3;
 }
 
 message MarkFollowupEditingResponse {
@@ -1994,6 +2030,8 @@ message EnvironmentBuildRow {
   int64 created_at_ms = 9;
   int64 updated_at_ms = 10;
   optional int64 completed_at_ms = 11;
+  bool is_draft = 12;
+  bool has_ref_overrides = 13;
 }
 
 message EnvironmentBuildsCursor {
@@ -2018,6 +2056,47 @@ message GetEnvironmentBuildRequest {
 
 message GetEnvironmentBuildResponse {
   EnvironmentBuildRow row = 1;
+}
+
+message UpdateEnvironmentBuildRequest {
+  string build_id = 1;
+  optional bool is_draft = 2;
+}
+
+message UpdateEnvironmentBuildResponse {
+  EnvironmentBuildRow row = 1;
+}
+
+message TriggerEnvironmentBuildRequest {
+  string environment_public_id = 1;
+  optional bool is_draft = 2;
+  repeated RepoStartingRef refs = 3;
+}
+
+message TriggerEnvironmentBuildResponse {
+  string build_id = 1;
+}
+
+message EnvironmentBuildSettings {
+  optional bool fast_forward_default_branch = 1;
+}
+
+message GetEnvironmentBuildSettingsRequest {
+  string environment_public_id = 1;
+}
+
+message GetEnvironmentBuildSettingsResponse {
+  EnvironmentBuildSettings settings = 1;
+}
+
+message UpdateEnvironmentBuildSettingsRequest {
+  string environment_public_id = 1;
+  optional bool fast_forward_default_branch = 2;
+  bool clear_fast_forward_default_branch = 3;
+}
+
+message UpdateEnvironmentBuildSettingsResponse {
+  EnvironmentBuildSettings settings = 1;
 }
 
 message ResolveOrCreateMultiRepoEnvironmentRequest {
@@ -2938,6 +3017,10 @@ message CloudAgentStartupWarning {
   string user_facing_message = 2;
 }
 
+message VideoAnnotationsWrapper {
+  repeated VideoAnnotationEntry entries = 1;
+}
+
 message GetBackgroundComposerVmUsageRequest {
   string bc_id = 1;
 }
@@ -3414,6 +3497,31 @@ message ListAgentStoreFilesRequest {
 
 message ListAgentStoreFilesResponse {
   repeated AgentStoreFileEntry files = 1;
+  repeated AgentStoreTombstone tombstones = 2;
+  bool listing_complete = 3;
+}
+
+message AgentStoreTombstone {
+  string rel_path = 1;
+  string tombstone_etag = 2;
+  int64 deleted_at_ms = 3;
+}
+
+message ListAgentStoreDirectoryRequest {
+  optional string store_id = 1;
+  optional string share_id = 2;
+  string relative_path = 3;
+  int32 page_size = 4;
+  string page_token = 5;
+  bool prefer_complete_flat_store = 6;
+}
+
+message ListAgentStoreDirectoryResponse {
+  repeated AgentStoreFileEntry files = 1;
+  repeated string subdirs = 2;
+  string next_page_token = 3;
+  AgentStoreDirectoryListingMode mode = 4;
+  repeated AgentStoreTombstone tombstones = 5;
 }
 
 message AgentStoreReadInstruction {
@@ -3448,6 +3556,13 @@ message AgentStoreConflictWriteInstruction {
   string url = 2;
   map<string, string> headers = 3;
   int64 expires_at_ms = 4;
+  optional AgentStoreMultipartWriteInstruction multipart = 5;
+}
+
+message AgentStoreLockRedirect {
+  optional AgentStoreFileLockHolder holder = 1;
+  string conflict_rel_path = 2;
+  int64 lock_expires_at_ms = 3;
 }
 
 message AgentStoreWriteInstruction {
@@ -3456,16 +3571,185 @@ message AgentStoreWriteInstruction {
   map<string, string> headers = 3;
   int64 expires_at_ms = 4;
   optional AgentStoreConflictWriteInstruction conflict = 5;
+  optional AgentStoreLockRedirect lock_redirect = 6;
+  optional AgentStoreMultipartWriteInstruction multipart = 7;
+  bool primary_precondition_failed = 8;
+}
+
+message AgentStoreMultipartWriteInstruction {
+  AgentStoreMultipartUploadContext context = 1;
+  repeated AgentStoreMultipartUploadPartInstruction parts = 2;
+  int64 part_urls_expires_at_ms = 3;
+}
+
+message AgentStoreMultipartUploadPartInstruction {
+  uint32 part_number = 1;
+  string url = 2;
+  map<string, string> headers = 3;
+  int64 offset_bytes = 4;
+  int64 size_bytes = 5;
+}
+
+message AgentStoreMultipartUploadContext {
+  string upload_id = 1;
+  string store_id = 2;
+  string rel_path = 3;
+  int64 size_bytes = 4;
+  string sha = 5;
+  uint32 expected_part_count = 6;
+  string session_id = 9;
+  oneof precondition {
+    string base_etag = 7;
+    bool expect_absent = 8;
+  }
 }
 
 message PresignAgentStoreWritesRequest {
   string agent_id = 1;
   repeated AgentStoreWriteFileEntry files = 2;
   optional string store_id = 3;
+  optional string lock_token = 4;
+  optional string lock_client_uuid = 5;
 }
 
 message PresignAgentStoreWritesResponse {
   repeated AgentStoreWriteInstruction instructions = 1;
+}
+
+message AgentStoreMultipartUploadedPart {
+  uint32 part_number = 1;
+  string etag = 2;
+}
+
+message AgentStoreMultipartWriteCompletion {
+  AgentStoreMultipartUploadContext context = 1;
+  repeated AgentStoreMultipartUploadedPart parts = 2;
+}
+
+message CompleteAgentStoreMultipartWritesRequest {
+  string store_id = 1;
+  repeated AgentStoreMultipartWriteCompletion completions = 2;
+}
+
+message AgentStoreMultipartWriteSuccess {
+  string etag = 1;
+}
+
+message AgentStoreMultipartOperationFailure {
+  AgentStoreMultipartOperationFailureCode code = 1;
+}
+
+message AgentStoreMultipartWriteResult {
+  uint32 input_index = 1;
+  string rel_path = 2;
+  oneof outcome {
+    AgentStoreMultipartWriteSuccess success = 3;
+    AgentStoreMultipartOperationFailure failure = 4;
+  }
+}
+
+message CompleteAgentStoreMultipartWritesResponse {
+  repeated AgentStoreMultipartWriteResult results = 1;
+}
+
+message AgentStoreMultipartWriteAbort {
+  AgentStoreMultipartUploadContext context = 1;
+}
+
+message AbortAgentStoreMultipartWritesRequest {
+  string store_id = 1;
+  repeated AgentStoreMultipartWriteAbort uploads = 2;
+}
+
+message AgentStoreMultipartAbortSuccess {
+  bool already_finished = 1;
+}
+
+message AgentStoreMultipartAbortResult {
+  uint32 input_index = 1;
+  string rel_path = 2;
+  oneof outcome {
+    AgentStoreMultipartAbortSuccess success = 3;
+    AgentStoreMultipartOperationFailure failure = 4;
+  }
+}
+
+message AbortAgentStoreMultipartWritesResponse {
+  repeated AgentStoreMultipartAbortResult results = 1;
+}
+
+message AgentStoreFileLockHolder {
+  string client_uuid = 1;
+  uint32 pid = 2;
+}
+
+message AcquireAgentStoreFileLockRequest {
+  string store_id = 1;
+  string rel_path = 2;
+  AgentStoreFileLockHolder holder = 3;
+  string acquisition_id = 4;
+  optional int64 ttl_seconds = 5;
+}
+
+message AcquireAgentStoreFileLockResponse {
+  bool acquired = 1;
+  optional string lock_token = 2;
+  optional AgentStoreFileLockHolder current_holder = 3;
+  int64 expires_at_ms = 4;
+}
+
+message RenewAgentStoreFileLockRequest {
+  string store_id = 1;
+  string rel_path = 2;
+  string lock_token = 3;
+}
+
+message RenewAgentStoreFileLockResponse {
+  bool renewed = 1;
+  int64 expires_at_ms = 2;
+}
+
+message ReleaseAgentStoreFileLockRequest {
+  string store_id = 1;
+  string rel_path = 2;
+  string lock_token = 3;
+}
+
+message ReleaseAgentStoreFileLockResponse {
+  bool released = 1;
+}
+
+message GetAgentStoreFileLockRequest {
+  string store_id = 1;
+  string rel_path = 2;
+}
+
+message GetAgentStoreFileLockResponse {
+  bool held = 1;
+  optional AgentStoreFileLockHolder holder = 2;
+  int64 expires_at_ms = 3;
+}
+
+message AgentStoreDeleteFileEntry {
+  string rel_path = 1;
+  string base_etag = 2;
+  optional string mutation_id = 3;
+}
+
+message AgentStoreDeleteFileResult {
+  string rel_path = 1;
+  AgentStoreDeleteFileStatus status = 2;
+  string tombstone_etag = 3;
+  optional string current_etag = 4;
+}
+
+message DeleteAgentStoreFilesRequest {
+  optional string store_id = 1;
+  repeated AgentStoreDeleteFileEntry files = 2;
+}
+
+message DeleteAgentStoreFilesResponse {
+  repeated AgentStoreDeleteFileResult results = 1;
 }
 
 message SharedAgentStoreInfo {
@@ -3525,6 +3809,18 @@ message ListSharedAgentStoresResponse {
   bool has_more = 2;
   optional double next_created_before_ms = 3;
   optional string next_created_before_share_id = 4;
+}
+
+message CloudAgentStatePersistedMetadata {
+  enum PersistedMetadataVersion {
+    PERSISTED_METADATA_VERSION_UNSPECIFIED = 0;
+    PERSISTED_METADATA_VERSION_1 = 1;
+  }
+  bytes cloud_agent_state_blob_id = 1;
+  string offset_key = 2;
+  double timestamp_ms = 3;
+  CloudAgentWorkflowStatus workflow_status = 4;
+  PersistedMetadataVersion version = 5;
 }
 
 service BackgroundComposerService {
@@ -3608,6 +3904,10 @@ service BackgroundComposerService {
   rpc GetEnvironment(GetEnvironmentRequest) returns (GetEnvironmentResponse);
   rpc ListEnvironmentBuilds(ListEnvironmentBuildsRequest) returns (ListEnvironmentBuildsResponse);
   rpc GetEnvironmentBuild(GetEnvironmentBuildRequest) returns (GetEnvironmentBuildResponse);
+  rpc UpdateEnvironmentBuild(UpdateEnvironmentBuildRequest) returns (UpdateEnvironmentBuildResponse);
+  rpc TriggerEnvironmentBuild(TriggerEnvironmentBuildRequest) returns (TriggerEnvironmentBuildResponse);
+  rpc GetEnvironmentBuildSettings(GetEnvironmentBuildSettingsRequest) returns (GetEnvironmentBuildSettingsResponse);
+  rpc UpdateEnvironmentBuildSettings(UpdateEnvironmentBuildSettingsRequest) returns (UpdateEnvironmentBuildSettingsResponse);
   rpc ResolveOrCreateMultiRepoEnvironment(ResolveOrCreateMultiRepoEnvironmentRequest) returns (ResolveOrCreateMultiRepoEnvironmentResponse);
   rpc ResolveOrCreateDraftEnvironment(ResolveOrCreateDraftEnvironmentRequest) returns (ResolveOrCreateDraftEnvironmentResponse);
   rpc SnapshotAndSaveEnvironment(SnapshotAndSaveEnvironmentRequest) returns (SnapshotAndSaveEnvironmentResponse);
@@ -3676,8 +3976,16 @@ service BackgroundComposerService {
   rpc ReadAgentStoreFile(ReadAgentStoreFileRequest) returns (ReadAgentStoreFileResponse);
   rpc MintAgentStoreToken(MintAgentStoreTokenRequest) returns (MintAgentStoreTokenResponse);
   rpc ListAgentStoreFiles(ListAgentStoreFilesRequest) returns (ListAgentStoreFilesResponse);
+  rpc ListAgentStoreDirectory(ListAgentStoreDirectoryRequest) returns (ListAgentStoreDirectoryResponse);
   rpc PresignAgentStoreReads(PresignAgentStoreReadsRequest) returns (PresignAgentStoreReadsResponse);
   rpc PresignAgentStoreWrites(PresignAgentStoreWritesRequest) returns (PresignAgentStoreWritesResponse);
+  rpc CompleteAgentStoreMultipartWrites(CompleteAgentStoreMultipartWritesRequest) returns (CompleteAgentStoreMultipartWritesResponse);
+  rpc AbortAgentStoreMultipartWrites(AbortAgentStoreMultipartWritesRequest) returns (AbortAgentStoreMultipartWritesResponse);
+  rpc AcquireAgentStoreFileLock(AcquireAgentStoreFileLockRequest) returns (AcquireAgentStoreFileLockResponse);
+  rpc RenewAgentStoreFileLock(RenewAgentStoreFileLockRequest) returns (RenewAgentStoreFileLockResponse);
+  rpc ReleaseAgentStoreFileLock(ReleaseAgentStoreFileLockRequest) returns (ReleaseAgentStoreFileLockResponse);
+  rpc GetAgentStoreFileLock(GetAgentStoreFileLockRequest) returns (GetAgentStoreFileLockResponse);
+  rpc DeleteAgentStoreFiles(DeleteAgentStoreFilesRequest) returns (DeleteAgentStoreFilesResponse);
   rpc ShareAgentStore(ShareAgentStoreRequest) returns (ShareAgentStoreResponse);
   rpc UnshareAgentStore(UnshareAgentStoreRequest) returns (UnshareAgentStoreResponse);
   rpc ListSharedAgentStores(ListSharedAgentStoresRequest) returns (ListSharedAgentStoresResponse);

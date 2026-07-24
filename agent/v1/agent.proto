@@ -154,6 +154,7 @@ enum SimulatedMsgReason {
   SIMULATED_MSG_REASON_FSD_PR_INTERRUPT = 27;
   SIMULATED_MSG_REASON_SUBSCRIPTION = 28;
   SIMULATED_MSG_REASON_DIFF_TAB_CREATE_BRANCH = 29;
+  SIMULATED_MSG_REASON_AGENT_STORE_CONFLICT = 30;
 }
 
 enum SubscriptionSource {
@@ -373,6 +374,7 @@ message ConversationAction {
     BackgroundTaskCompletionAction background_task_completion_action = 12;
     BackgroundShellAction background_shell_action = 13;
     BackgroundSubagentAction background_subagent_action = 14;
+    SubscriptionNotificationAction subscription_notification_action = 16;
   }
 }
 
@@ -520,6 +522,12 @@ message UserMessageAction {
   optional ConversationHistory conversation_history = 7;
 }
 
+message SubscriptionNotificationAction {
+  repeated UserMessage notifications = 1;
+  RequestContext request_context = 2;
+  optional bool send_to_interaction_listener = 3;
+}
+
 message SubmittedCustomMode {
   string id = 1;
   string label = 2;
@@ -614,6 +622,21 @@ message ExecutePlanInfo {
   string plan_title = 2;
 }
 
+message ProjectDetails {
+  optional string name = 1;
+  optional ProjectSubagentDetails subagent = 2;
+  optional ProjectSideChatDetails side_chat = 3;
+}
+
+message ProjectSubagentDetails {
+  string report_dir = 1;
+  optional string store_dir = 2;
+}
+
+message ProjectSideChatDetails {
+  string store_dir = 1;
+}
+
 message UserMessage {
   message SimulatedMessageMetadata {
     optional string title = 1;
@@ -642,6 +665,7 @@ message UserMessage {
   optional bytes rich_text_blob_id = 19;
   repeated HookAdditionalContext hook_additional_contexts = 21;
   optional CustomModeIntent custom_mode_intent = 22;
+  optional ProjectDetails project_details = 23;
 }
 
 message AssistantMessage {
@@ -678,6 +702,7 @@ message AgentConversationTurnStructure {
   repeated bytes steps = 2;
   optional string request_id = 3;
   optional string encrypted_model = 4;
+  optional uint32 dynamic_tool_count = 5;
 }
 
 message ShellConversationTurnStructure {
@@ -773,6 +798,7 @@ message SubagentPersistedState {
   SubagentExecutionEnvironment environment = 6;
   optional CloudSubagentReference cloud_subagent = 7;
   optional string first_class_bc_id = 8;
+  optional string cloud_requested_environment_build_id = 9;
 }
 
 message CloudSubagentReference {
@@ -913,6 +939,7 @@ message AgentRunRequest {
 
 message TextDeltaUpdate {
   string text = 1;
+  bool is_server_notice = 2;
 }
 
 message ToolCallStartedUpdate {
@@ -1033,6 +1060,8 @@ message ResponseComparisonStarted {
   string parent_invocation_id = 2;
   string alternate_invocation_id = 3;
   string parent_response = 4;
+  string comparison_config_id = 5;
+  string alternate_model_id = 6;
 }
 
 message ResponseComparisonTextDelta {
@@ -1325,4 +1354,14 @@ message PostToolUseFailureRequestQuery {
 
 message PostToolUseFailureRequestResponse {
   optional string additional_context = 1;
+}
+
+message ShellOutput {
+  string stdout = 1;
+  string stderr = 2;
+  int32 exit_code = 3;
+}
+
+message ConversationSummary {
+  string summary = 1;
 }

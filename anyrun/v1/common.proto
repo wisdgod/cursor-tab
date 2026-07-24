@@ -20,4 +20,5 @@ message EnvironmentBuildBootInfo {
   string snapshot_id = 2;
   WorkspaceGitSetupMode workspace_git_setup_mode = 3;
   WarmForkMode warm_fork_mode = 4;
+  bool fast_forward_default_branch = 5;
 }

@@ -10,6 +10,14 @@ import "agent/v1/mcp.proto";
 import "agent/v1/repo.proto";
 import "agent/v1/subagents.proto";
 
+enum MountedAgentStoreKind {
+  MOUNTED_AGENT_STORE_KIND_UNSPECIFIED = 0;
+  MOUNTED_AGENT_STORE_KIND_SELF = 1;
+  MOUNTED_AGENT_STORE_KIND_PEER = 2;
+  MOUNTED_AGENT_STORE_KIND_SHARE = 3;
+  MOUNTED_AGENT_STORE_KIND_PRINCIPAL = 4;
+}
+
 message RequestContextArgs {
   optional string notes_session_id = 2;
   optional string workspace_id = 3;
@@ -70,6 +78,14 @@ message RequestContextEnv {
   optional bool smart_mode_classifier_auto_mode_enabled = 22;
   optional string dev_force_next_smart_mode_classifier_block_token = 23;
   optional string dev_delay_next_smart_mode_classifier_token = 24;
+  repeated MountedAgentStore mounted_agent_stores = 25;
+}
+
+message MountedAgentStore {
+  string path = 1;
+  MountedAgentStoreKind kind = 2;
+  optional string alias = 3;
+  bool read_only = 4;
 }
 
 message DebugModeConfig {

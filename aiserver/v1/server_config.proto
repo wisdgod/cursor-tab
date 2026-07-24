@@ -313,6 +313,8 @@ message TraceConfig {
   optional int32 buffer_size = 2;
   optional int32 flush_interval_ms = 3;
   optional double sample_rate = 4;
+  optional double internal_sample_rate = 5;
+  optional double internal_ext_host_sample_rate = 6;
 }
 
 message ModelMigration {
@@ -390,7 +392,6 @@ message GetServerConfigResponse {
   bool use_nlb_for_nal = 26;
   AgentUrlConfig agent_url_config = 27;
   optional bool cli_sandbox_default_enabled = 28;
-  optional bool claude_code_hooks_enabled = 29;
   optional TerminalTipConfig terminal_tip_config = 30;
   optional string model_picker_nudge = 31;
   repeated InferenceProviderWarning inference_provider_warnings = 32;

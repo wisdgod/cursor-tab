@@ -28,6 +28,7 @@ message BackgroundShellSpawnResult {
     BackgroundShellSpawnError error = 2;
     ShellRejected rejected = 3;
     ShellPermissionDenied permission_denied = 4;
+    ShellSandboxUnsupported sandbox_unsupported = 5;
   }
 }
 

@@ -10,6 +10,13 @@ enum CompareCommitsStatus {
   COMPARE_COMMITS_STATUS_DIVERGED = 4;
 }
 
+enum CommitFileMode {
+  COMMIT_FILE_MODE_UNSPECIFIED = 0;
+  COMMIT_FILE_MODE_REGULAR = 1;
+  COMMIT_FILE_MODE_EXECUTABLE = 2;
+  COMMIT_FILE_MODE_SYMLINK = 3;
+}
+
 enum GrepLineKind {
   GREP_LINE_KIND_UNSPECIFIED = 0;
   GREP_LINE_KIND_MATCH = 1;
@@ -36,6 +43,10 @@ message GetCommitResponse {
   Commit commit = 1;
 }
 
+message GetBlobResponse {
+  FileContent blob = 1;
+}
+
 message ListCommitsInRangeResponse {
   repeated Commit commits = 1;
   string base_commit_sha = 2;
@@ -59,6 +70,22 @@ message CanMergeResponse {
   repeated string conflicted_paths = 3;
 }
 
+message CommitFileUpsert {
+  bytes content = 1;
+  CommitFileMode mode = 2;
+}
+
+message CommitFileDelete {
+}
+
+message CommitFileOperation {
+  string path = 1;
+  oneof operation {
+    CommitFileUpsert upsert = 2;
+    CommitFileDelete delete = 3;
+  }
+}
+
 message Commit {
   string sha = 1;
   string message = 2;
@@ -66,6 +93,7 @@ message Commit {
   Signature committer = 4;
   repeated string parent_shas = 5;
   string tree_sha = 7;
+  optional string change_id = 8;
 }
 
 message Signature {
@@ -162,6 +190,11 @@ message GetTreeBlameResponse {
 }
 
 message GetFuzzyPathsResponse {
+  repeated string paths = 1;
+  bool has_more = 2;
+}
+
+message ListTreePathsResponse {
   repeated string paths = 1;
   bool has_more = 2;
 }

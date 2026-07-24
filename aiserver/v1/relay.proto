@@ -54,6 +54,35 @@ enum RelayJobExecutionStatus {
   RELAY_JOB_EXECUTION_STATUS_JOB_TIMEOUT = 7;
 }
 
+enum RelayBackfillStatus {
+  RELAY_BACKFILL_STATUS_UNSPECIFIED = 0;
+  RELAY_BACKFILL_STATUS_PENDING = 1;
+  RELAY_BACKFILL_STATUS_RUNNING = 2;
+  RELAY_BACKFILL_STATUS_FINISHED = 3;
+  RELAY_BACKFILL_STATUS_FAILED = 4;
+  RELAY_BACKFILL_STATUS_CANCELED = 5;
+}
+
+enum RelayBackfillExistingRunPolicy {
+  RELAY_BACKFILL_EXISTING_RUN_POLICY_UNSPECIFIED = 0;
+  RELAY_BACKFILL_EXISTING_RUN_POLICY_SKIP_EXISTING_SUCCESS = 1;
+  RELAY_BACKFILL_EXISTING_RUN_POLICY_SKIP_EXISTING_ANY = 2;
+  RELAY_BACKFILL_EXISTING_RUN_POLICY_RERUN_ALL = 3;
+}
+
+enum RelayBackfillFailurePolicy {
+  RELAY_BACKFILL_FAILURE_POLICY_UNSPECIFIED = 0;
+  RELAY_BACKFILL_FAILURE_POLICY_STOP_ON_FAILURE = 1;
+  RELAY_BACKFILL_FAILURE_POLICY_CONTINUE = 2;
+}
+
+enum RelayBackfillWindowDisposition {
+  RELAY_BACKFILL_WINDOW_DISPOSITION_UNSPECIFIED = 0;
+  RELAY_BACKFILL_WINDOW_DISPOSITION_MATERIALIZED = 1;
+  RELAY_BACKFILL_WINDOW_DISPOSITION_SATISFIED_EXISTING = 2;
+  RELAY_BACKFILL_WINDOW_DISPOSITION_UNMATERIALIZED = 3;
+}
+
 message RelayPipelineDefinitionSummary {
   string id = 1;
   string name = 2;
@@ -108,6 +137,7 @@ message RelayPipelineRunRecord {
   bool kill_requested = 18;
   optional string schedule_id = 19;
   google.protobuf.Timestamp scheduled_fire_time = 20;
+  optional string backfill_id = 21;
 }
 
 message RelayScheduleRecord {
@@ -197,6 +227,7 @@ message ListRelayPipelineRunsRequest {
   optional string page_token = 6;
   int32 page_size = 7;
   optional string schedule_id = 8;
+  optional string backfill_id = 9;
 }
 
 message ListRelayPipelineRunsResponse {
@@ -274,6 +305,118 @@ message DeleteRelayScheduleResponse {
   bool deleted = 1;
 }
 
+message RelayBackfillRecord {
+  string id = 1;
+  string pipeline_definition_id = 2;
+  string pipeline_name = 3;
+  string pipeline_version = 4;
+  optional string schedule_id = 5;
+  string dedupe_key = 6;
+  google.protobuf.Timestamp logical_start = 7;
+  google.protobuf.Timestamp logical_end = 8;
+  string interval = 9;
+  RelayBackfillStatus status = 10;
+  RelayBackfillExistingRunPolicy existing_run_policy = 11;
+  RelayBackfillFailurePolicy failure_policy = 12;
+  int32 max_concurrency = 13;
+  optional string retry_of_backfill_id = 14;
+  optional string temporal_workflow_id = 15;
+  google.protobuf.Struct input_template_json = 16;
+  google.protobuf.Struct stats_json = 17;
+  optional string error_message = 18;
+  bool cancel_requested = 19;
+  optional string created_by = 20;
+  google.protobuf.Timestamp created_at = 21;
+  google.protobuf.Timestamp started_at = 22;
+  google.protobuf.Timestamp completed_at = 23;
+  int32 window_count = 24;
+}
+
+message RelayBackfillWindowRecord {
+  int32 index = 1;
+  google.protobuf.Timestamp logical_start = 2;
+  google.protobuf.Timestamp logical_end = 3;
+  RelayBackfillWindowDisposition disposition = 4;
+  optional string run_id = 5;
+  optional RelayPipelineRunStatus run_status = 6;
+  optional string latest_finished_run_id = 7;
+}
+
+message CreateRelayBackfillRequest {
+  string pipeline_name = 1;
+  string pipeline_version = 2;
+  string dedupe_key = 3;
+  google.protobuf.Timestamp logical_start = 4;
+  google.protobuf.Timestamp logical_end = 5;
+  string interval = 6;
+  optional string schedule_id = 7;
+  google.protobuf.Struct input_template_json = 8;
+  RelayBackfillExistingRunPolicy existing_run_policy = 9;
+  RelayBackfillFailurePolicy failure_policy = 10;
+  optional int32 max_concurrency = 11;
+  optional string created_by = 12;
+  bool dry_run = 13;
+  optional bool start_workflow = 14;
+}
+
+message CreateRelayBackfillResponse {
+  bool dry_run = 1;
+  string backfill_action = 2;
+  RelayBackfillRecord backfill = 3;
+  int32 window_count = 4;
+  repeated RelayBackfillWindowRecord windows = 5;
+  repeated string warnings = 6;
+  optional string temporal_workflow_id = 7;
+  optional string temporal_run_id = 8;
+}
+
+message GetRelayBackfillRequest {
+  string backfill_id = 1;
+}
+
+message GetRelayBackfillResponse {
+  RelayBackfillRecord backfill = 1;
+  repeated RelayBackfillWindowRecord windows = 2;
+}
+
+message ListRelayBackfillsRequest {
+  optional string pipeline_name = 1;
+  optional string pipeline_version = 2;
+  optional RelayBackfillStatus status = 3;
+  optional string page_token = 4;
+  int32 page_size = 5;
+}
+
+message ListRelayBackfillsResponse {
+  repeated RelayBackfillRecord backfills = 1;
+  optional string next_page_token = 2;
+}
+
+message RequestRelayBackfillCancelRequest {
+  string backfill_id = 1;
+  optional string requested_by = 2;
+}
+
+message RequestRelayBackfillCancelResponse {
+  RelayBackfillRecord backfill = 1;
+}
+
+message RetryRelayBackfillRequest {
+  string backfill_id = 1;
+  string dedupe_key = 2;
+  RelayBackfillExistingRunPolicy existing_run_policy = 3;
+  RelayBackfillFailurePolicy failure_policy = 4;
+  optional int32 max_concurrency = 5;
+  optional string created_by = 6;
+}
+
+message RetryRelayBackfillResponse {
+  string backfill_action = 1;
+  RelayBackfillRecord backfill = 2;
+  optional string temporal_workflow_id = 3;
+  optional string temporal_run_id = 4;
+}
+
 service RelayService {
   rpc ListPipelineDefinitions(ListRelayPipelineDefinitionsRequest) returns (ListRelayPipelineDefinitionsResponse);
   rpc GetPipelineDefinition(GetRelayPipelineDefinitionRequest) returns (GetRelayPipelineDefinitionResponse);
@@ -287,4 +430,9 @@ service RelayService {
   rpc ListSchedules(ListRelaySchedulesRequest) returns (ListRelaySchedulesResponse);
   rpc UpdateSchedule(UpdateRelayScheduleRequest) returns (UpdateRelayScheduleResponse);
   rpc DeleteSchedule(DeleteRelayScheduleRequest) returns (DeleteRelayScheduleResponse);
+  rpc CreateBackfill(CreateRelayBackfillRequest) returns (CreateRelayBackfillResponse);
+  rpc GetBackfill(GetRelayBackfillRequest) returns (GetRelayBackfillResponse);
+  rpc ListBackfills(ListRelayBackfillsRequest) returns (ListRelayBackfillsResponse);
+  rpc RequestBackfillCancel(RequestRelayBackfillCancelRequest) returns (RequestRelayBackfillCancelResponse);
+  rpc RetryBackfill(RetryRelayBackfillRequest) returns (RetryRelayBackfillResponse);
 }

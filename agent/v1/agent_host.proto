@@ -13,6 +13,13 @@ enum AgentHostSessionStatus {
 message CreateAgentHostSessionRequest {
   string session_id = 1;
   optional ConversationStateStructure conversation_state = 2;
+  optional AgentHostSessionOptions session_options = 3;
+}
+
+message AgentHostSessionOptions {
+  repeated string workspace_paths = 1;
+  optional string worktree_main_path = 2;
+  optional bool is_glass_root = 3;
 }
 
 message CreateAgentHostSessionResponse {
@@ -65,6 +72,7 @@ message SendAgentHostMessageRequest {
   optional string model_id = 3;
   optional ModelDetails model_details = 4;
   optional AgentHostRunOptions run_options = 5;
+  optional RequestedModel requested_model = 6;
 }
 
 message SendAgentHostActionRequest {
@@ -73,6 +81,7 @@ message SendAgentHostActionRequest {
   optional string model_id = 3;
   optional ModelDetails model_details = 4;
   optional AgentHostRunOptions run_options = 5;
+  optional RequestedModel requested_model = 6;
 }
 
 message SendAgentHostMessageResponse {

@@ -3,6 +3,7 @@ syntax = "proto3";
 package agent.v1;
 
 import "agent/v1/agent.proto";
+import "agent/v1/agent_store_conflict_exec.proto";
 import "agent/v1/background_shell_exec.proto";
 import "agent/v1/canvas_diagnostics_exec.proto";
 import "agent/v1/computer_use_tool.proto";
@@ -67,6 +68,7 @@ message ExecServerMessage {
   uint32 id = 1;
   string exec_id = 15;
   optional SpanContext span_context = 19;
+  optional bool accept_hook_additional_contexts = 55;
   oneof message {
     ShellArgs shell_args = 2;
     WriteArgs write_args = 3;
@@ -105,7 +107,9 @@ message ExecServerMessage {
     PiGrepExecArgs pi_grep_args = 49;
     PiFindExecArgs pi_find_args = 50;
     PiLsExecArgs pi_ls_args = 51;
+    ShellArgs mini_swe_agent_bash_args = 52;
     ConversationSearchArgs conversation_search_args = 53;
+    AgentStoreConflictArgs agent_store_conflict_args = 54;
   }
 }
 
@@ -153,6 +157,8 @@ message ExecClientMessage {
     PiFindExecResult pi_find_result = 51;
     PiLsExecResult pi_ls_result = 52;
     ConversationSearchResult conversation_search_result = 53;
+    AgentStoreConflictResult agent_store_conflict_result = 54;
+    ShellResult mini_swe_agent_bash_result = 55;
   }
 }
 

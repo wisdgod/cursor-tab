@@ -35,7 +35,6 @@ message AcquireRequest {
 message AcquireResponse {
   bool granted = 1;
   RateLimitReason reason = 2;
-  int32 replay_count = 3;
   RouteResult route_result = 4;
   bool no_deployment_config = 5;
 }
@@ -45,6 +44,7 @@ message RouteResult {
   DeploymentInfo deployment_info = 2;
   string full_model_id = 3;
   string provider = 4;
+  string canonical_model = 5;
 }
 
 message DeploymentInfo {

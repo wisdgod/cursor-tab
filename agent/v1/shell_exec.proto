@@ -170,6 +170,14 @@ message ShellStreamHookContext {
   repeated HookAdditionalContext hook_additional_contexts = 1;
 }
 
+message ShellSandboxUnsupported {
+  string command = 1;
+  string working_directory = 2;
+  string sandbox_policy_type = 3;
+  string reason = 4;
+  bool is_readonly = 5;
+}
+
 message ShellStream {
   oneof event {
     ShellStreamStdout stdout = 1;
@@ -180,6 +188,7 @@ message ShellStream {
     ShellPermissionDenied permission_denied = 6;
     ShellStreamBackgrounded backgrounded = 7;
     ShellStreamHookContext hook_context = 8;
+    ShellSandboxUnsupported sandbox_unsupported = 9;
   }
 }
 
@@ -198,6 +207,9 @@ message ShellSuccess {
   optional int32 ms_to_wait = 12;
   optional int32 local_execution_time_ms = 13;
   optional ShellBackgroundReason background_reason = 14;
+  optional string output_head = 15;
+  optional string output_tail = 16;
+  optional uint32 elided_chars = 17;
 }
 
 message ShellFailure {
@@ -213,6 +225,9 @@ message ShellFailure {
   optional ShellAbortReason abort_reason = 10;
   bool aborted = 11;
   optional int32 local_execution_time_ms = 12;
+  optional string output_head = 13;
+  optional string output_tail = 14;
+  optional uint32 elided_chars = 15;
 }
 
 message ShellTimeout {

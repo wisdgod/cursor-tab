@@ -20,6 +20,17 @@ enum SandBoxRunState {
   SAND_BOX_RUN_STATE_RUNNING = 3;
 }
 
+message NotifySandAgentTurnFinishedRequest {
+  string agent_id = 1;
+  string agent_name = 2;
+  string message_preview = 3;
+  string last_message_id = 4;
+  bool awaiting_user_response = 5;
+}
+
+message NotifySandAgentTurnFinishedResponse {
+}
+
 message EnsureSandBoxRequest {
 }
 
@@ -47,9 +58,13 @@ message RecreateSandBoxRequest {
   bool force = 2;
 }
 
+message ForceRecreateSandBoxRequest {
+}
+
 message RecreateSandBoxResponse {
   bool started = 1;
   string reason = 2;
+  string operation_id = 3;
 }
 
 message AdminRecreateSandBoxRequest {
@@ -157,6 +172,7 @@ message SandBoxMigrationEvent {
   string detail = 2;
   int64 at_ms = 3;
   string offset_key = 4;
+  string operation_id = 5;
 }
 
 message GetSandBoxRunStateRequest {
@@ -164,6 +180,7 @@ message GetSandBoxRunStateRequest {
 
 message GetSandBoxRunStateResponse {
   SandBoxRunState state = 1;
+  optional bool image_update_available = 2;
 }
 
 message SandBoxDescriptor {
@@ -177,12 +194,85 @@ message ListSandBoxesResponse {
   repeated SandBoxDescriptor boxes = 1;
 }
 
+message SandBoxStoreWriteFile {
+  string rel_path = 1;
+  string sha256 = 2;
+  int64 size_bytes = 3;
+  bool content_addressed = 4;
+  string if_match_etag = 5;
+  bool expect_absent = 6;
+}
+
+message PresignSandBoxStoreWritesRequest {
+  repeated SandBoxStoreWriteFile files = 1;
+}
+
+message SandBoxStoreWriteInstruction {
+  string rel_path = 1;
+  string url = 2;
+  map<string, string> headers = 3;
+  int64 expires_at_ms = 4;
+}
+
+message PresignSandBoxStoreWritesResponse {
+  repeated SandBoxStoreWriteInstruction instructions = 1;
+}
+
+message PresignSandBoxStoreReadsRequest {
+  repeated string rel_paths = 1;
+}
+
+message SandBoxStoreReadInstruction {
+  string rel_path = 1;
+  string url = 2;
+  int64 expires_at_ms = 3;
+}
+
+message PresignSandBoxStoreReadsResponse {
+  repeated SandBoxStoreReadInstruction instructions = 1;
+}
+
+message StatSandBoxStoreObjectRequest {
+  string rel_path = 1;
+}
+
+message StatSandBoxStoreObjectResponse {
+  bool exists = 1;
+  string etag = 2;
+  int64 size_bytes = 3;
+  int64 last_modified_ms = 4;
+}
+
+message ListSandBoxStoreObjectsRequest {
+  string prefix = 1;
+  string cursor = 2;
+  int32 max_entries = 3;
+}
+
+message SandBoxStoreObjectEntry {
+  string rel_path = 1;
+  string etag = 2;
+  int64 size_bytes = 3;
+  int64 last_modified_ms = 4;
+}
+
+message ListSandBoxStoreObjectsResponse {
+  repeated SandBoxStoreObjectEntry entries = 1;
+  string next_cursor = 2;
+  bool truncated = 3;
+}
+
 service SandBoxService {
   rpc EnsureSandBox(EnsureSandBoxRequest) returns (EnsureSandBoxResponse);
   rpc EnsureSandBoxWindow(EnsureSandBoxWindowRequest) returns (EnsureSandBoxResponse);
   rpc RecreateSandBox(RecreateSandBoxRequest) returns (RecreateSandBoxResponse);
+  rpc ForceRecreateSandBox(ForceRecreateSandBoxRequest) returns (RecreateSandBoxResponse);
   rpc AdminRecreateSandBox(AdminRecreateSandBoxRequest) returns (RecreateSandBoxResponse);
   rpc AdminForceRecreateSandBox(AdminForceRecreateSandBoxRequest) returns (RecreateSandBoxResponse);
+  rpc PresignSandBoxStoreWrites(PresignSandBoxStoreWritesRequest) returns (PresignSandBoxStoreWritesResponse);
+  rpc PresignSandBoxStoreReads(PresignSandBoxStoreReadsRequest) returns (PresignSandBoxStoreReadsResponse);
+  rpc StatSandBoxStoreObject(StatSandBoxStoreObjectRequest) returns (StatSandBoxStoreObjectResponse);
+  rpc ListSandBoxStoreObjects(ListSandBoxStoreObjectsRequest) returns (ListSandBoxStoreObjectsResponse);
   rpc AdminGetSandBoxStoreStatus(AdminSandBoxStoreStatusRequest) returns (AdminSandBoxStoreStatusResponse);
   rpc AdminUpdateSandBoxHost(AdminUpdateSandBoxHostRequest) returns (AdminUpdateSandBoxHostResponse);
   rpc AdminGetSandBoxHostStatus(AdminSandBoxHostStatusRequest) returns (AdminSandBoxHostStatusResponse);
@@ -193,4 +283,5 @@ service SandBoxService {
   rpc AdminWatchSandBoxMigration(AdminWatchSandBoxMigrationRequest) returns (stream SandBoxMigrationEvent);
   rpc GetSandBoxRunState(GetSandBoxRunStateRequest) returns (GetSandBoxRunStateResponse);
   rpc ListSandBoxes(ListSandBoxesRequest) returns (ListSandBoxesResponse);
+  rpc NotifySandAgentTurnFinished(NotifySandAgentTurnFinishedRequest) returns (NotifySandAgentTurnFinishedResponse);
 }

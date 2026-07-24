@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message AgentStoreConflictCursor {
+  string journal_epoch = 1;
+  uint64 seq = 2;
+  string last_event_id = 3;
+}
+
+message AgentStoreConflictArgs {
+  optional AgentStoreConflictCursor cursor = 1;
+  optional bool advance = 2;
+}
+
+message AgentStoreConflictEvent {
+  uint32 v = 1;
+  string event_id = 2;
+  string journal_epoch = 3;
+  uint64 seq = 4;
+  uint64 ts_ms = 5;
+  string kind = 6;
+  optional string store_id = 7;
+  optional string original_rel_path = 8;
+  optional string conflict_rel_path = 9;
+  optional string original_abs_path = 10;
+  optional string conflict_abs_path = 11;
+  optional uint64 preserved_bytes = 12;
+}
+
+message AgentStoreConflictResult {
+  oneof result {
+    AgentStoreConflictSuccess success = 1;
+    AgentStoreConflictError error = 2;
+  }
+}
+
+message AgentStoreConflictSuccess {
+  repeated AgentStoreConflictEvent events = 1;
+  AgentStoreConflictCursor next_cursor = 2;
+  bool gap = 3;
+}
+
+message AgentStoreConflictError {
+  string error = 1;
+}

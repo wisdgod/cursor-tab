@@ -39,6 +39,15 @@ enum SCMMergeMethod {
   SCM_MERGE_METHOD_REBASE = 3;
 }
 
+enum PullRequestFileContentsStatus {
+  PULL_REQUEST_FILE_CONTENTS_STATUS_UNSPECIFIED = 0;
+  PULL_REQUEST_FILE_CONTENTS_STATUS_OK = 1;
+  PULL_REQUEST_FILE_CONTENTS_STATUS_NOT_FOUND = 2;
+  PULL_REQUEST_FILE_CONTENTS_STATUS_TOO_LARGE = 3;
+  PULL_REQUEST_FILE_CONTENTS_STATUS_NOT_SUPPORTED = 4;
+  PULL_REQUEST_FILE_CONTENTS_STATUS_ERROR = 5;
+}
+
 enum CheckLogExcerptStatus {
   CHECK_LOG_EXCERPT_STATUS_UNSPECIFIED = 0;
   CHECK_LOG_EXCERPT_STATUS_OK = 1;
@@ -133,6 +142,19 @@ message SCMPullRequestRequestedReviewer {
 
 message GetPullRequestDiffRequest {
   string pr_url = 1;
+}
+
+message GetPullRequestFileContentsRequest {
+  string pr_url = 1;
+  string path = 2;
+  string ref = 3;
+  optional uint32 max_bytes = 4;
+}
+
+message GetPullRequestFileContentsResponse {
+  PullRequestFileContentsStatus status = 1;
+  string content_base64 = 2;
+  uint64 size_bytes = 3;
 }
 
 message GetPullRequestChecksRequest {
@@ -404,6 +426,7 @@ service SCMService {
   rpc BatchGetPullRequests(BatchGetPullRequestsRequest) returns (BatchGetPullRequestsResponse);
   rpc BatchGetPullRequestStatus(BatchGetPullRequestStatusRequest) returns (BatchGetPullRequestStatusResponse);
   rpc GetPullRequestDiff(GetPullRequestDiffRequest) returns (GetPullRequestDiffResponse);
+  rpc GetPullRequestFileContents(GetPullRequestFileContentsRequest) returns (GetPullRequestFileContentsResponse);
   rpc GetPullRequestChecks(GetPullRequestChecksRequest) returns (GetPullRequestChecksResponse);
   rpc GetSCMPullRequestCommits(GetSCMPullRequestCommitsRequest) returns (GetSCMPullRequestCommitsResponse);
   rpc GetSCMPullRequestTimelineEvents(GetSCMPullRequestTimelineEventsRequest) returns (GetSCMPullRequestTimelineEventsResponse);

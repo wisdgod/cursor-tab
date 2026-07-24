@@ -1328,6 +1328,7 @@ message AvailableModelsResponse {
     }
     string label = 1;
     Variant variant = 2;
+    bool dismiss_on_selection = 3;
   }
   message AvailableModel {
     string name = 1;
@@ -1453,8 +1454,6 @@ message AvailableModelsResponse {
   optional int32 disable_unused_models_after_n_hours = 12;
   optional int32 upgrade_unchanged_models_after_n_hours = 13;
   ModelPickerDisplayConfiguration display_configuration = 15;
-  bool non_max_model_defaults_experiment_enabled = 17;
-  bool non_max_model_defaults_experiment_candidate = 18;
   optional string experimental_model_id = 19;
   optional string experimental_model_display_name = 20;
 }

@@ -4,6 +4,11 @@ package aiserver.v1;
 
 import "google/protobuf/struct.proto";
 
+enum AutomationDefaultTool {
+  AUTOMATION_DEFAULT_TOOL_UNSPECIFIED = 0;
+  AUTOMATION_DEFAULT_TOOL_OPEN_GIT_PR = 1;
+}
+
 enum SlackCompletionReactionMode {
   SLACK_COMPLETION_REACTION_MODE_UNSPECIFIED = 0;
   SLACK_COMPLETION_REACTION_MODE_ON = 1;
@@ -234,6 +239,7 @@ message Workflow {
   optional SlackCompletionReactionMode slack_completion_reaction_mode = 16;
   optional string slack_completion_reaction_custom_emoji = 17;
   optional google.protobuf.Struct managed_config = 18;
+  repeated AutomationDefaultTool disabled_default_tools = 19;
 }
 
 message Prompt {
@@ -609,6 +615,7 @@ message CreateAutomationRequest {
   AutomationCreationSource creation_source = 9;
   optional bool enabled = 10;
   optional string sand_agent_id = 11;
+  optional string sand_automation_id = 12;
 }
 
 message CreateAutomationResponse {
@@ -774,6 +781,7 @@ message MicrosoftTeamsChannelCreatedSamplePayload {
 message TestAutomationResponse {
   string message = 1;
   optional string background_composer_id = 2;
+  optional string run_uuid = 3;
 }
 
 message Automation {
@@ -953,6 +961,7 @@ message AutomationRun {
   bool can_retry = 19;
   optional string retry_ineligible_reason = 20;
   optional AutomationRunRetryIneligibleReason retry_ineligible_reason_code = 21;
+  optional string skip_reason = 22;
 }
 
 message GetRunSummaryRequest {

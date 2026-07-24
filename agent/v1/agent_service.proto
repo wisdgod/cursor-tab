@@ -66,7 +66,16 @@ message AgentClientMessage {
   }
 }
 
+message TtftBreakdown {
+  double server_first_token_ms = 1;
+  double pre_stream_setup_ms = 2;
+  double wait_for_first_event_ms = 3;
+  optional double provider_ttft_ms = 4;
+  double slow_pool_wait_ms = 5;
+}
+
 message AgentServerMessage {
+  TtftBreakdown ttft_breakdown = 8;
   oneof message {
     InteractionUpdate interaction_update = 1;
     ExecServerMessage exec_server_message = 2;

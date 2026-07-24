@@ -71,6 +71,18 @@ enum AuthorizedNamespaceAccessReason {
   AUTHORIZED_NAMESPACE_ACCESS_REASON_TEAM_OWNERSHIP = 1;
 }
 
+enum AuthPolicyAppliesTo {
+  AUTH_POLICY_APPLIES_TO_UNSPECIFIED = 0;
+  AUTH_POLICY_APPLIES_TO_REPOSITORY = 1;
+  AUTH_POLICY_APPLIES_TO_NAMESPACE = 2;
+}
+
+enum TeamGroupKind {
+  TEAM_GROUP_KIND_UNSPECIFIED = 0;
+  TEAM_GROUP_KIND_ADMINS = 1;
+  TEAM_GROUP_KIND_MEMBERS = 2;
+}
+
 enum ChangeStatus {
   CHANGE_STATUS_UNSPECIFIED = 0;
   CHANGE_STATUS_DRAFT = 1;
@@ -203,18 +215,6 @@ enum RulesetBypassActorKind {
   RULESET_BYPASS_ACTOR_KIND_APP = 3;
   RULESET_BYPASS_ACTOR_KIND_ORGANIZATION_ADMIN = 4;
   RULESET_BYPASS_ACTOR_KIND_REPOSITORY_ROLE = 5;
-}
-
-enum AuthPolicyAppliesTo {
-  AUTH_POLICY_APPLIES_TO_UNSPECIFIED = 0;
-  AUTH_POLICY_APPLIES_TO_REPOSITORY = 1;
-  AUTH_POLICY_APPLIES_TO_NAMESPACE = 2;
-}
-
-enum TeamGroupKind {
-  TEAM_GROUP_KIND_UNSPECIFIED = 0;
-  TEAM_GROUP_KIND_ADMINS = 1;
-  TEAM_GROUP_KIND_MEMBERS = 2;
 }
 
 message ClientRepoIdentifier {
@@ -424,6 +424,140 @@ message AuthorizedNamespace {
   AuthorizedNamespaceAccessReason access_reason = 2;
 }
 
+message AuthPolicyStatement {
+  string resource_kind = 1;
+  string action = 2;
+}
+
+message HasOriginPermissionRequest {
+  string scope = 1;
+  oneof resource {
+    string namespace_slug = 2;
+    ClientRepoIdentifier repository = 3;
+  }
+}
+
+message HasOriginPermissionResponse {
+  bool allowed = 1;
+}
+
+message AuthPolicySummary {
+  string name = 1;
+  string display_name = 2;
+  string description = 3;
+  AuthPolicyAppliesTo applies_to = 4;
+  bool is_origin_managed = 5;
+  bool is_custom = 6;
+  repeated AuthPolicyStatement statements = 7;
+  int32 user_facing_scope_count = 8;
+}
+
+message ListRepoAssignablePoliciesRequest {
+  ClientRepoIdentifier identifier = 1;
+}
+
+message ListRepoAssignablePoliciesResponse {
+  repeated AuthPolicySummary policies = 1;
+}
+
+message GrantPolicyRef {
+  string name = 1;
+  string display_name = 2;
+}
+
+message TeamGroupAccess {
+  GrantPolicyRef namespace_policy = 1;
+  GrantPolicyRef repo_policy = 2;
+  GrantPolicyRef effective_policy = 3;
+}
+
+message GetRepoTeamAccessRequest {
+  ClientRepoIdentifier identifier = 1;
+}
+
+message GetRepoTeamAccessResponse {
+  OriginNamespace namespace = 1;
+  TeamGroupAccess team_admins = 2;
+  TeamGroupAccess team_members = 3;
+}
+
+message GrantPrincipal {
+  string kind = 1;
+  string external_id = 2;
+  string display_name = 3;
+  string email = 4;
+  int32 group_admin_count = 5;
+  int32 group_member_count = 6;
+}
+
+message RepoGrantRow {
+  GrantPrincipal principal = 1;
+  GrantPolicyRef namespace_policy = 2;
+  GrantPolicyRef repo_policy = 3;
+  GrantPolicyRef effective_policy = 4;
+  bool is_namespace_owned = 5;
+}
+
+message ListRepoGrantsRequest {
+  ClientRepoIdentifier identifier = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string search = 4;
+}
+
+message ListRepoGrantsResponse {
+  repeated RepoGrantRow rows = 1;
+  int32 total_count = 2;
+  bool list_truncated = 3;
+}
+
+message SetRepoTeamAccessRequest {
+  ClientRepoIdentifier identifier = 1;
+  TeamGroupKind group = 2;
+  oneof policy_update {
+    string policy_name = 3;
+    bool clear_override = 4;
+  }
+}
+
+message SetRepoTeamAccessResponse {
+  OriginNamespace namespace = 1;
+  TeamGroupAccess team_admins = 2;
+  TeamGroupAccess team_members = 3;
+}
+
+message NamespaceTeamGroupAccess {
+  GrantPolicyRef policy = 1;
+}
+
+message GetNamespaceTeamAccessRequest {
+  string namespace_slug = 1;
+}
+
+message GetNamespaceTeamAccessResponse {
+  OriginNamespace namespace = 1;
+  NamespaceTeamGroupAccess team_admins = 2;
+  NamespaceTeamGroupAccess team_members = 3;
+}
+
+message NamespaceGrantRow {
+  GrantPrincipal principal = 1;
+  GrantPolicyRef policy = 2;
+}
+
+message ListNamespaceGrantsRequest {
+  string namespace_slug = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string search = 4;
+}
+
+message ListNamespaceGrantsResponse {
+  repeated NamespaceGrantRow rows = 1;
+  int32 total_count = 2;
+  bool list_truncated = 3;
+}
+
 message ResolveRepoPathClientRequest {
   ClientRepoIdentifier identifier = 1;
   string ref_path = 2;
@@ -432,6 +566,17 @@ message ResolveRepoPathClientRequest {
 message GetRepoContentClientRequest {
   ClientRepoIdentifier identifier = 1;
   string ref_path = 2;
+}
+
+message MintRawRepoFileLinkClientRequest {
+  ClientRepoIdentifier identifier = 1;
+  string ref_path = 2;
+}
+
+message MintRawRepoFileLinkClientResponse {
+  string token = 1;
+  git_forge.v1.PathIdentifier path_identifier = 2;
+  string raw_origin = 3;
 }
 
 message GetRepoContentAtShaClientRequest {
@@ -461,6 +606,11 @@ message GetRepoCodeownersResponse {
 message GetCommitClientRequest {
   ClientRepoIdentifier identifier = 1;
   string commit_sha = 2;
+}
+
+message GetBlobClientRequest {
+  ClientRepoIdentifier identifier = 1;
+  string blob_sha = 2;
 }
 
 message GetFileHistoryClientRequest {
@@ -511,6 +661,14 @@ message GetFuzzyPathsClientRequest {
   uint32 limit = 4;
 }
 
+message ListRepoPathsClientRequest {
+  ClientRepoIdentifier identifier = 1;
+  string revision = 2;
+  repeated string includes = 3;
+  repeated string excludes = 4;
+  uint32 limit = 5;
+}
+
 message GrepRepoClientRequest {
   ClientRepoIdentifier identifier = 1;
   string revision = 2;
@@ -537,6 +695,7 @@ message GetCommitDiffClientRequest {
 message ListRefsClientRequest {
   ClientRepoIdentifier identifier = 1;
   git_forge.v1.ListRefsFilter filter = 2;
+  bool names_only = 3;
 }
 
 message CanMergeClientRequest {
@@ -574,6 +733,23 @@ message CreateMergeCommitBypassingChecksResponse {
   string merge_commit_sha = 1;
   string wal_entry_key = 2;
   bool reverse_mirror_push_failed = 3;
+}
+
+message CreateCommitFromFilesClientRequest {
+  ClientRepoIdentifier identifier = 1;
+  string branch = 2;
+  optional string expected_head_sha = 3;
+  string message = 4;
+  git_forge.v1.Signature author = 5;
+  optional git_forge.v1.Signature committer = 6;
+  repeated git_forge.v1.CommitFileOperation files = 7;
+}
+
+message CreateCommitFromFilesClientResponse {
+  string commit_sha = 1;
+  string tree_sha = 2;
+  string old_head_sha = 3;
+  bool reverse_mirror_push_failed = 4;
 }
 
 message CreateGithubPrForReverseMirroredRepoRequest {
@@ -1034,6 +1210,7 @@ message GetSectionOfChangesRequest {
   int32 limit = 4;
   SectionOfChangesSortField sort_field = 5;
   bool sort_is_asc = 6;
+  bool skip_total_count = 7;
 }
 
 message GetSectionOfChangesResponse {
@@ -1250,6 +1427,13 @@ message GetPendingReviewRequest {
 message GetPendingReviewResponse {
   optional Review review = 1;
   uint32 thread_count = 2;
+}
+
+message CheckChangeCreationAccessRequest {
+  ClientRepoIdentifier identifier = 1;
+}
+
+message CheckChangeCreationAccessResponse {
 }
 
 message CommentThread {
@@ -1828,22 +2012,8 @@ message App {
   string updated_at = 11;
   repeated string installation_redirect_uris = 12;
   string icon_url = 13;
-}
-
-message CreateAppRequest {
-  string slug = 1;
-  string display_name = 2;
-  string webhook_url = 3;
-  bool is_public = 5;
-  string namespace_slug = 6;
-  string public_key = 7;
-  repeated string events = 8;
-  repeated AppAuthPolicyStatement auth_policy_statements = 9;
-  repeated string installation_redirect_uris = 10;
-}
-
-message CreateAppResponse {
-  App app = 1;
+  string description = 14;
+  string website_url = 15;
 }
 
 message GetAppRequest {
@@ -1892,25 +2062,15 @@ message GetInstallationResponse {
   Installation installation = 1;
 }
 
-message ListAppInstallationsRequest {
-  string app_id = 1;
-}
-
-message ListAppInstallationsResponse {
-  repeated InstallationRef installations = 1;
-}
-
-message InstallationRef {
-  string id = 1;
-  string namespace_slug = 2;
-}
-
 message ListNamespaceInstallationsRequest {
   string namespace_slug = 1;
+  uint32 page_size = 2;
+  string page_token = 3;
 }
 
 message ListNamespaceInstallationsResponse {
   repeated Installation installations = 1;
+  string next_page_token = 2;
 }
 
 message UpdateAppRequest {
@@ -1921,6 +2081,8 @@ message UpdateAppRequest {
   optional bool is_public = 6;
   optional AppAuthPolicyStatementsReplace auth_policy_statements = 7;
   optional AppInstallationRedirectUrisReplace installation_redirect_uris = 8;
+  optional string description = 9;
+  optional string website_url = 10;
 }
 
 message AppEventsReplace {
@@ -1970,8 +2132,6 @@ message PreviewAppInstallationRequest {
 
 message PreviewAppInstallationScope {
   string scope = 1;
-  string label = 2;
-  string section = 3;
 }
 
 message PreviewAppInstallationResponse {
@@ -1983,12 +2143,32 @@ message PreviewAppInstallationResponse {
   repeated PreviewAppInstallationScope requested_scopes = 6;
   repeated PreviewAppInstallationScope granted_scopes = 7;
   ExistingInstallation existing_installation = 8;
+  string app_description = 9;
+  string app_website_url = 10;
 }
 
 message ExistingInstallation {
   string installation_id = 1;
   RepoSelectionMode repo_selection_mode = 2;
   repeated string repo_ids = 3;
+}
+
+message AppMetadata {
+  string id = 1;
+  string slug = 2;
+  string display_name = 3;
+  string namespace_slug = 4;
+  string icon_url = 5;
+  string description = 6;
+  string website_url = 7;
+}
+
+message GetAppMetadataRequest {
+  string id = 1;
+}
+
+message GetAppMetadataResponse {
+  AppMetadata app = 1;
 }
 
 message BuildkiteTrigger {
@@ -2257,147 +2437,33 @@ message RemoveLabelFromChangeRequest {
 message RemoveLabelFromChangeResponse {
 }
 
-message AuthPolicyStatement {
-  string resource_kind = 1;
-  string action = 2;
-}
-
-message AuthPolicySummary {
-  string name = 1;
-  string display_name = 2;
-  string description = 3;
-  AuthPolicyAppliesTo applies_to = 4;
-  bool is_origin_managed = 5;
-  bool is_custom = 6;
-  repeated AuthPolicyStatement statements = 7;
-  int32 user_facing_scope_count = 8;
-}
-
-message ListRepoAssignablePoliciesRequest {
-  ClientRepoIdentifier identifier = 1;
-}
-
-message ListRepoAssignablePoliciesResponse {
-  repeated AuthPolicySummary policies = 1;
-}
-
-message GrantPolicyRef {
-  string name = 1;
-  string display_name = 2;
-}
-
-message TeamGroupAccess {
-  GrantPolicyRef namespace_policy = 1;
-  GrantPolicyRef repo_policy = 2;
-  GrantPolicyRef effective_policy = 3;
-}
-
-message GetRepoTeamAccessRequest {
-  ClientRepoIdentifier identifier = 1;
-}
-
-message GetRepoTeamAccessResponse {
-  OriginNamespace namespace = 1;
-  TeamGroupAccess team_admins = 2;
-  TeamGroupAccess team_members = 3;
-}
-
-message GrantPrincipal {
-  string kind = 1;
-  string external_id = 2;
-  string display_name = 3;
-  string email = 4;
-  int32 group_admin_count = 5;
-  int32 group_member_count = 6;
-}
-
-message RepoGrantRow {
-  GrantPrincipal principal = 1;
-  GrantPolicyRef namespace_policy = 2;
-  GrantPolicyRef repo_policy = 3;
-  GrantPolicyRef effective_policy = 4;
-  bool is_namespace_owned = 5;
-}
-
-message ListRepoGrantsRequest {
-  ClientRepoIdentifier identifier = 1;
-  int32 page = 2;
-  int32 page_size = 3;
-  string search = 4;
-}
-
-message ListRepoGrantsResponse {
-  repeated RepoGrantRow rows = 1;
-  int32 total_count = 2;
-  bool list_truncated = 3;
-}
-
-message SetRepoTeamAccessRequest {
-  ClientRepoIdentifier identifier = 1;
-  TeamGroupKind group = 2;
-  oneof policy_update {
-    string policy_name = 3;
-    bool clear_override = 4;
-  }
-}
-
-message SetRepoTeamAccessResponse {
-  OriginNamespace namespace = 1;
-  TeamGroupAccess team_admins = 2;
-  TeamGroupAccess team_members = 3;
-}
-
-message NamespaceTeamGroupAccess {
-  GrantPolicyRef policy = 1;
-}
-
-message GetNamespaceTeamAccessRequest {
-  string namespace_slug = 1;
-}
-
-message GetNamespaceTeamAccessResponse {
-  OriginNamespace namespace = 1;
-  NamespaceTeamGroupAccess team_admins = 2;
-  NamespaceTeamGroupAccess team_members = 3;
-}
-
-message NamespaceGrantRow {
-  GrantPrincipal principal = 1;
-  GrantPolicyRef policy = 2;
-}
-
-message ListNamespaceGrantsRequest {
-  string namespace_slug = 1;
-  int32 page = 2;
-  int32 page_size = 3;
-  string search = 4;
-}
-
-message ListNamespaceGrantsResponse {
-  repeated NamespaceGrantRow rows = 1;
-  int32 total_count = 2;
-  bool list_truncated = 3;
-}
-
 service OriginService {
   rpc ListHostedRepos(ListHostedReposRequest) returns (ListHostedReposResponse);
   rpc CreateRepo(CreateRepoRequest) returns (CreateRepoResponse);
   rpc CreateMirroredRepo(CreateMirroredRepoRequest) returns (CreateRepoResponse);
-  rpc DetachRepoMirror(DetachRepoMirrorRequest) returns (DetachRepoMirrorResponse);
-  rpc TransitionRepoMirrorStatus(TransitionRepoMirrorStatusRequest) returns (TransitionRepoMirrorStatusResponse);
-  rpc GetMirrorTransitionJob(GetMirrorTransitionJobRequest) returns (GetMirrorTransitionJobResponse);
-  rpc GetActiveMirrorTransitionJob(GetActiveMirrorTransitionJobRequest) returns (GetActiveMirrorTransitionJobResponse);
   rpc DeleteRepo(DeleteRepoClientRequest) returns (DeleteRepoClientResponse);
   rpc GetRepo(GetRepoRequest) returns (GetRepoResponse);
   rpc GetRepoWithMirrorInfo(GetRepoRequest) returns (GetRepoWithMirrorInfoResponse);
   rpc GetRepoByGithubMirror(GetRepoByGithubMirrorRequest) returns (GetRepoWithMirrorInfoResponse);
+  rpc DetachRepoMirror(DetachRepoMirrorRequest) returns (DetachRepoMirrorResponse);
+  rpc TransitionRepoMirrorStatus(TransitionRepoMirrorStatusRequest) returns (TransitionRepoMirrorStatusResponse);
+  rpc GetMirrorTransitionJob(GetMirrorTransitionJobRequest) returns (GetMirrorTransitionJobResponse);
+  rpc GetActiveMirrorTransitionJob(GetActiveMirrorTransitionJobRequest) returns (GetActiveMirrorTransitionJobResponse);
   rpc GetRepoNamespace(GetRepoNamespaceRequest) returns (GetRepoNamespaceResponse);
   rpc GetAuthorizedNamespaces(GetAuthorizedNamespacesRequest) returns (GetAuthorizedNamespacesResponse);
-  rpc ResolveOriginPullRequestRedirect(ResolveOriginPullRequestRedirectRequest) returns (ResolveOriginPullRequestRedirectResponse);
   rpc CreateOriginNamespace(CreateOriginNamespaceRequest) returns (CreateOriginNamespaceResponse);
+  rpc ListRepoAssignablePolicies(ListRepoAssignablePoliciesRequest) returns (ListRepoAssignablePoliciesResponse);
+  rpc GetRepoTeamAccess(GetRepoTeamAccessRequest) returns (GetRepoTeamAccessResponse);
+  rpc ListRepoGrants(ListRepoGrantsRequest) returns (ListRepoGrantsResponse);
+  rpc SetRepoTeamAccess(SetRepoTeamAccessRequest) returns (SetRepoTeamAccessResponse);
+  rpc HasOriginPermission(HasOriginPermissionRequest) returns (HasOriginPermissionResponse);
+  rpc GetNamespaceTeamAccess(GetNamespaceTeamAccessRequest) returns (GetNamespaceTeamAccessResponse);
+  rpc ListNamespaceGrants(ListNamespaceGrantsRequest) returns (ListNamespaceGrantsResponse);
   rpc GetCommit(GetCommitClientRequest) returns (git_forge.v1.GetCommitResponse);
+  rpc GetBlob(GetBlobClientRequest) returns (git_forge.v1.GetBlobResponse);
   rpc ResolveRepoPath(ResolveRepoPathClientRequest) returns (git_forge.v1.ResolveRefPathResponse);
   rpc GetRepoContent(GetRepoContentClientRequest) returns (git_forge.v1.GetRepoContentResponse);
+  rpc MintRawRepoFileLink(MintRawRepoFileLinkClientRequest) returns (MintRawRepoFileLinkClientResponse);
   rpc GetRepoContentAtSha(GetRepoContentAtShaClientRequest) returns (git_forge.v1.GetRepoContentResponse);
   rpc GetRepoContentDetailsAtSha(GetRepoContentDetailsAtShaClientRequest) returns (git_forge.v1.GetRepoContentDetailsResponse);
   rpc GetRepoCodeowners(GetRepoCodeownersClientRequest) returns (GetRepoCodeownersResponse);
@@ -2405,6 +2471,7 @@ service OriginService {
   rpc GetFileHistoryPage(GetFileHistoryPageClientRequest) returns (GetFileHistoryPageResponse);
   rpc GetFileHistoryPageWithDiffStats(GetFileHistoryPageWithDiffStatsClientRequest) returns (git_forge.v1.GetFileHistoryPageWithDiffStatsResponse);
   rpc GetFuzzyPaths(GetFuzzyPathsClientRequest) returns (git_forge.v1.GetFuzzyPathsResponse);
+  rpc ListRepoPaths(ListRepoPathsClientRequest) returns (git_forge.v1.ListTreePathsResponse);
   rpc GrepRepo(GrepRepoClientRequest) returns (stream git_forge.v1.GrepRepoChunk);
   rpc GetPullRequestDiff(GetPullRequestDiffClientRequest) returns (stream git_forge.v1.PullRequestDiffChunk);
   rpc GetCommitDiff(GetCommitDiffClientRequest) returns (stream git_forge.v1.CommitDiffChunk);
@@ -2415,6 +2482,7 @@ service OriginService {
   rpc ListCommitsInRange(ListCommitsInRangeClientRequest) returns (git_forge.v1.ListCommitsInRangeResponse);
   rpc CanMerge(CanMergeClientRequest) returns (git_forge.v1.CanMergeResponse);
   rpc CreateMergeCommitBypassingChecks(CreateMergeCommitBypassingChecksClientRequest) returns (CreateMergeCommitBypassingChecksResponse);
+  rpc CreateCommitFromFiles(CreateCommitFromFilesClientRequest) returns (CreateCommitFromFilesClientResponse);
   rpc CreateGithubPrForReverseMirroredRepo(CreateGithubPrForReverseMirroredRepoRequest) returns (CreateGithubPrForReverseMirroredRepoResponse);
   rpc GetCollectedPullRequestDiff(GetCollectedPullRequestDiffRequest) returns (GetCollectedPullRequestDiffResponse);
   rpc CreateChange(CreateChangeRequest) returns (CreateChangeResponse);
@@ -2468,6 +2536,7 @@ service OriginService {
   rpc ListChangesByHeadRef(ListChangesByHeadRefRequest) returns (ListChangesByHeadRefResponse);
   rpc BatchGetChanges(BatchGetChangesRequest) returns (BatchGetChangesResponse);
   rpc GetSectionOfChanges(GetSectionOfChangesRequest) returns (GetSectionOfChangesResponse);
+  rpc ResolveOriginPullRequestRedirect(ResolveOriginPullRequestRedirectRequest) returns (ResolveOriginPullRequestRedirectResponse);
   rpc TriggerCi(TriggerCiRequest) returns (TriggerCiResponse);
   rpc GetCiState(GetCiStateRequest) returns (GetCiStateResponse);
   rpc PostCheckRun(PostCheckRunRequest) returns (PostCheckRunResponse);
@@ -2479,12 +2548,11 @@ service OriginService {
   rpc RecordInboundMirrorGithubMergeGithubResult(RecordInboundMirrorGithubMergeGithubResultRequest) returns (RecordInboundMirrorGithubMergeGithubResultResponse);
   rpc RecordInboundMirrorGithubMergeError(RecordInboundMirrorGithubMergeErrorRequest) returns (RecordInboundMirrorGithubMergeErrorResponse);
   rpc RecordInboundMirrorExternalGithubMerge(RecordInboundMirrorExternalGithubMergeRequest) returns (RecordInboundMirrorExternalGithubMergeResponse);
-  rpc CreateApp(CreateAppRequest) returns (CreateAppResponse);
   rpc GetApp(GetAppRequest) returns (GetAppResponse);
+  rpc GetAppMetadata(GetAppMetadataRequest) returns (GetAppMetadataResponse);
   rpc ListNamespaceApps(ListNamespaceAppsRequest) returns (ListNamespaceAppsResponse);
   rpc CreateInstallation(CreateInstallationRequest) returns (CreateInstallationResponse);
   rpc GetInstallation(GetInstallationRequest) returns (GetInstallationResponse);
-  rpc ListAppInstallations(ListAppInstallationsRequest) returns (ListAppInstallationsResponse);
   rpc ListNamespaceInstallations(ListNamespaceInstallationsRequest) returns (ListNamespaceInstallationsResponse);
   rpc UpdateApp(UpdateAppRequest) returns (UpdateAppResponse);
   rpc SetAppIcon(SetAppIconRequest) returns (SetAppIconResponse);
@@ -2509,10 +2577,5 @@ service OriginService {
   rpc GetLabelByName(GetLabelByNameRequest) returns (GetLabelByNameResponse);
   rpc AddLabelToChange(AddLabelToChangeRequest) returns (AddLabelToChangeResponse);
   rpc RemoveLabelFromChange(RemoveLabelFromChangeRequest) returns (RemoveLabelFromChangeResponse);
-  rpc ListRepoAssignablePolicies(ListRepoAssignablePoliciesRequest) returns (ListRepoAssignablePoliciesResponse);
-  rpc GetRepoTeamAccess(GetRepoTeamAccessRequest) returns (GetRepoTeamAccessResponse);
-  rpc ListRepoGrants(ListRepoGrantsRequest) returns (ListRepoGrantsResponse);
-  rpc SetRepoTeamAccess(SetRepoTeamAccessRequest) returns (SetRepoTeamAccessResponse);
-  rpc GetNamespaceTeamAccess(GetNamespaceTeamAccessRequest) returns (GetNamespaceTeamAccessResponse);
-  rpc ListNamespaceGrants(ListNamespaceGrantsRequest) returns (ListNamespaceGrantsResponse);
+  rpc CheckChangeCreationAccess(CheckChangeCreationAccessRequest) returns (CheckChangeCreationAccessResponse);
 }

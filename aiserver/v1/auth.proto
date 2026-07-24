@@ -160,17 +160,6 @@ message EmailValidResponse {
   bool valid = 1;
 }
 
-message DownloadUpdateRequest {
-  string machine_id = 1;
-  string application_name = 2;
-  string version = 3;
-  optional string platform = 4;
-}
-
-message DownloadUpdateResponse {
-  bool can_download = 1;
-}
-
 message SwitchCmdKFractionRequest {
   bool use_turbo = 1;
 }
@@ -207,7 +196,6 @@ service AuthService {
   rpc GetEmail(GetEmailRequest) returns (GetEmailResponse);
   rpc GetUserMeta(GetUserMetaRequest) returns (GetUserMetaResponse);
   rpc EmailValid(EmailValidRequest) returns (EmailValidResponse);
-  rpc DownloadUpdate(DownloadUpdateRequest) returns (DownloadUpdateResponse);
   rpc MarkPrivacy(MarkPrivacyRequest) returns (MarkPrivacyResponse);
   rpc SwitchCmdKFraction(SwitchCmdKFractionRequest) returns (SwitchCmdKFractionResponse);
   rpc GetCustomerId(CustomerIdRequest) returns (CustomerIdResponse);

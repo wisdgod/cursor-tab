@@ -34,6 +34,7 @@ message InferenceStreamRequest {
   optional string invocation_id = 6;
   optional InferenceRequestedModel requested_model = 7;
   optional string conversation_id = 8;
+  repeated string accepted_unadvertised_tool_names = 9;
 }
 
 message InferenceRequestedModel {

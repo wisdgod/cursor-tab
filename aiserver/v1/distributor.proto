@@ -42,8 +42,6 @@ message WorkloadGrant {
   int64 input_tokens = 7;
   int64 output_tokens = 8;
   string model = 9;
-  int64 replay_requests = 10;
-  int64 max_replay_count_per_request = 11;
   bool is_stream = 12;
   RouteResult route_result = 13;
   string canonical_model = 14;

@@ -18,6 +18,16 @@ enum UsageEventKind {
   USAGE_EVENT_KIND_FREE_CREDIT = 10;
 }
 
+message ModelSelectionSnapshot {
+  message ModelParameterValue {
+    string id = 1;
+    string value = 2;
+  }
+  string model_id = 1;
+  bool max_mode = 2;
+  repeated ModelParameterValue parameters = 3;
+}
+
 message UsageEventDetails {
   message PromptHook {
     string model_intent = 1;
@@ -109,6 +119,8 @@ message UsageEventDetails {
   optional int32 override_num_requests_counted = 13;
   optional int32 override_num_requests_counted_millis = 16;
   optional string routed_model = 17;
+  optional ModelSelectionSnapshot requested_model_selection = 18;
+  optional ModelSelectionSnapshot effective_model_selection = 19;
   oneof feature {
     Chat chat = 1;
     ContextChat context_chat = 2;

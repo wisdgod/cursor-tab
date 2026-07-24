@@ -195,6 +195,7 @@ message RefreshGithubAccessTokenRequest {
   string github_access_token = 1;
   string hostname = 2;
   optional string repo_url = 3;
+  optional string clone_username = 4;
 }
 
 message RefreshGithubAccessTokenResponse {
