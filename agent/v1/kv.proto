@@ -14,6 +14,7 @@ message GetBlobArgs {
 
 message GetBlobResult {
   optional bytes blob_data = 1;
+  optional Error error = 2;
 }
 
 message SetBlobArgs {

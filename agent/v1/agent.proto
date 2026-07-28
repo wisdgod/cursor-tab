@@ -361,6 +361,7 @@ message ConversationStep {
 message ConversationAction {
   optional string triggering_auth_id = 11;
   optional TriggeringUserInfo triggering_user_info = 15;
+  optional RequestContextPartReferences request_context_parts = 17;
   oneof action {
     UserMessageAction user_message_action = 1;
     ResumeAction resume_action = 2;

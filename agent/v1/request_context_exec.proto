@@ -181,6 +181,18 @@ message RequestContext {
   optional bool search_conversations_enabled = 50;
 }
 
+message RequestContextPartReferences {
+  bytes rules_blob_id = 1;
+  uint32 rules_byte_length = 2;
+  bytes skills_blob_id = 3;
+  uint32 skills_byte_length = 4;
+  bytes subagents_blob_id = 5;
+  uint32 subagents_byte_length = 6;
+  bytes mcps_blob_id = 7;
+  uint32 mcps_byte_length = 8;
+  RequestContext dynamic_context = 9;
+}
+
 message RecentlyAddedPlugin {
   message CapabilityDescriptor {
     string name = 1;
@@ -206,4 +218,26 @@ message MatchedInstalledPlugin {
   repeated RecentlyAddedPlugin.CapabilityDescriptor rules = 7;
   repeated RecentlyAddedPlugin.CapabilityDescriptor commands = 8;
   repeated string mcp_servers = 9;
+}
+
+message RequestContextRulesPart {
+  repeated CursorRule rules = 1;
+  repeated CursorRule non_file_rules = 2;
+  optional string cloud_rule = 3;
+}
+
+message RequestContextSkillsPart {
+  repeated AgentSkill agent_skills = 1;
+  optional SkillOptions skill_options = 2;
+}
+
+message RequestContextSubagentsPart {
+  repeated CustomSubagent custom_subagents = 1;
+}
+
+message RequestContextMcpsPart {
+  repeated McpToolDefinition tools = 1;
+  repeated McpInstructions mcp_instructions = 2;
+  optional McpFileSystemOptions mcp_file_system_options = 3;
+  optional McpMetaToolOptions mcp_meta_tool_options = 4;
 }

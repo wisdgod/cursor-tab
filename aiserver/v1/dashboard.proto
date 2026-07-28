@@ -3832,6 +3832,11 @@ message GetUsageLimitPolicyStatusResponse {
 }
 
 message GetUsageLimitStatusAndActiveGrantsRequest {
+  optional MidConversationModelRecommendationContext mid_conversation_model_recommendation_context = 1;
+}
+
+message MidConversationModelRecommendationContext {
+  agent.v1.RequestedModel current_model = 1;
 }
 
 message ActiveCreditGrant {
@@ -3877,6 +3882,27 @@ message GetUsageLimitStatusAndActiveGrantsResponse {
   }
   UsageLimitPolicyStatus usage_limit_policy_status = 1;
   repeated ActiveCreditGrant active_grants = 2;
+  optional ThirdPartyUsageNudge third_party_usage_nudge = 3;
+  optional ModelRecommendationNudge model_recommendation_nudge = 4;
+}
+
+message ModelRecommendationNudge {
+  string nudge_id = 1;
+  string experiment_name = 2;
+  string group = 3;
+  agent.v1.RequestedModel source_model = 4;
+  agent.v1.RequestedModel target_model = 5;
+}
+
+message ThirdPartyUsageNudge {
+  string experiment_name = 1;
+  string group = 2;
+  int32 threshold = 3;
+  string cycle_id = 4;
+  string target_model = 5;
+  string label = 6;
+  string cta_label = 7;
+  string nudge_id = 8;
 }
 
 message GetCreditGrantsBalanceRequest {

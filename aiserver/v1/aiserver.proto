@@ -2881,6 +2881,13 @@ message GetLastDefaultModelNudgeResponse {
 }
 
 message GetDefaultModelNudgeDataRequest {
+  enum StartupOpportunity {
+    STARTUP_OPPORTUNITY_UNSPECIFIED = 0;
+    STARTUP_OPPORTUNITY_FIRST_OPEN = 1;
+    STARTUP_OPPORTUNITY_REOPEN = 2;
+  }
+  StartupOpportunity startup_opportunity = 1;
+  agent.v1.RequestedModel current_model = 2;
 }
 
 message GetDefaultModelNudgeDataResponse {
@@ -2888,11 +2895,17 @@ message GetDefaultModelNudgeDataResponse {
     string model_id = 1;
     repeated agent.v1.RequestedModel.ModelParameterValue parameters = 2;
   }
+  message ApplicationOpenModelSwitch {
+    string nudge_id = 1;
+    string experiment_name = 2;
+    InitialModel target_model = 3;
+  }
   string nudge_date = 1;
   bool should_default_switch_on_new_chat = 2;
   repeated string models_with_no_default_switch = 3;
   string conversion_model_override = 4;
   InitialModel initial_model = 5;
+  ApplicationOpenModelSwitch application_open_model_switch = 6;
 }
 
 message GetDefaultModelRequest {
