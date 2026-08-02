@@ -30,6 +30,8 @@ message WorkloadDemand {
   int64 output_tokens = 5;
   bool is_stream = 6;
   string client_protocol = 7;
+  int64 estimated_input_tokens = 8;
+  int64 estimated_input_token_requests = 9;
 }
 
 message WorkloadGrant {

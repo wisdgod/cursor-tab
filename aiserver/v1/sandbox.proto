@@ -2,6 +2,13 @@ syntax = "proto3";
 
 package aiserver.v1;
 
+enum SandSetupManifestScopeKind {
+  SAND_SETUP_MANIFEST_SCOPE_KIND_UNSPECIFIED = 0;
+  SAND_SETUP_MANIFEST_SCOPE_KIND_USER = 1;
+  SAND_SETUP_MANIFEST_SCOPE_KIND_TEAM = 2;
+  SAND_SETUP_MANIFEST_SCOPE_KIND_ORGANIZATION = 3;
+}
+
 enum SandBoxMigrationPhase {
   SAND_BOX_MIGRATION_PHASE_UNSPECIFIED = 0;
   SAND_BOX_MIGRATION_PHASE_BACKING_UP = 1;
@@ -20,6 +27,17 @@ enum SandBoxRunState {
   SAND_BOX_RUN_STATE_RUNNING = 3;
 }
 
+enum SandBoxStoreMultipartOperationFailureCode {
+  SAND_BOX_STORE_MULTIPART_OPERATION_FAILURE_CODE_UNSPECIFIED = 0;
+  SAND_BOX_STORE_MULTIPART_OPERATION_FAILURE_CODE_PRECONDITION_FAILED = 1;
+  SAND_BOX_STORE_MULTIPART_OPERATION_FAILURE_CODE_UPLOAD_NOT_FOUND = 2;
+  SAND_BOX_STORE_MULTIPART_OPERATION_FAILURE_CODE_INVALID_PARTS = 3;
+  SAND_BOX_STORE_MULTIPART_OPERATION_FAILURE_CODE_CHECKSUM_MISMATCH = 4;
+  SAND_BOX_STORE_MULTIPART_OPERATION_FAILURE_CODE_TRANSIENT = 5;
+  SAND_BOX_STORE_MULTIPART_OPERATION_FAILURE_CODE_INTERNAL = 6;
+  SAND_BOX_STORE_MULTIPART_OPERATION_FAILURE_CODE_RESTART_REQUIRED = 7;
+}
+
 message NotifySandAgentTurnFinishedRequest {
   string agent_id = 1;
   string agent_name = 2;
@@ -29,6 +47,62 @@ message NotifySandAgentTurnFinishedRequest {
 }
 
 message NotifySandAgentTurnFinishedResponse {
+}
+
+message ListSandSetupManifestsRequest {
+}
+
+message SandSetupManifestEntry {
+  string id = 1;
+  string setup = 2;
+  optional string check = 3;
+}
+
+message SandAssignedSetupManifest {
+  SandSetupManifestScopeKind scope_kind = 1;
+  string scope_id = 2;
+  string manifest_id = 3;
+  string revision = 4;
+  repeated SandSetupManifestEntry entries = 5;
+}
+
+message ListSandSetupManifestsResponse {
+  uint32 schema_version = 1;
+  repeated SandAssignedSetupManifest manifests = 2;
+}
+
+message SandTeamSetupManifest {
+  string manifest_id = 1;
+  string revision = 2;
+  string etag = 3;
+  repeated SandSetupManifestEntry entries = 4;
+}
+
+message ListTeamSandSetupManifestsRequest {
+}
+
+message ListTeamSandSetupManifestsResponse {
+  string team_id = 1;
+  bool can_manage = 2;
+  repeated SandTeamSetupManifest manifests = 3;
+}
+
+message SaveTeamSandSetupManifestRequest {
+  string manifest_id = 1;
+  string expected_etag = 2;
+  repeated SandSetupManifestEntry entries = 3;
+}
+
+message SaveTeamSandSetupManifestResponse {
+  SandTeamSetupManifest manifest = 1;
+}
+
+message DeleteTeamSandSetupManifestRequest {
+  string manifest_id = 1;
+  string expected_etag = 2;
+}
+
+message DeleteTeamSandSetupManifestResponse {
 }
 
 message EnsureSandBoxRequest {
@@ -129,6 +203,17 @@ message AdminSnapshotSandBoxStoreResponse {
   string reason = 4;
 }
 
+message AdminHibernateSandBoxRequest {
+  string auth_id = 1;
+  string flavor = 2;
+  bool force = 3;
+}
+
+message AdminHibernateSandBoxResponse {
+  bool started = 1;
+  string reason = 2;
+}
+
 message AdminListSandAgentsRequest {
   string auth_id = 1;
   string flavor = 2;
@@ -194,6 +279,12 @@ message ListSandBoxesResponse {
   repeated SandBoxDescriptor boxes = 1;
 }
 
+message SandBoxStoreMultipartPart {
+  uint32 part_number = 1;
+  int64 size_bytes = 2;
+  string sha256 = 3;
+}
+
 message SandBoxStoreWriteFile {
   string rel_path = 1;
   string sha256 = 2;
@@ -201,10 +292,39 @@ message SandBoxStoreWriteFile {
   bool content_addressed = 4;
   string if_match_etag = 5;
   bool expect_absent = 6;
+  repeated SandBoxStoreMultipartPart multipart_parts = 7;
 }
 
 message PresignSandBoxStoreWritesRequest {
   repeated SandBoxStoreWriteFile files = 1;
+}
+
+message SandBoxStoreMultipartUploadPartInstruction {
+  uint32 part_number = 1;
+  string url = 2;
+  map<string, string> headers = 3;
+  int64 offset_bytes = 4;
+  int64 size_bytes = 5;
+}
+
+message SandBoxStoreMultipartUploadContext {
+  string upload_id = 1;
+  string rel_path = 2;
+  int64 size_bytes = 3;
+  string sha256 = 4;
+  uint32 expected_part_count = 5;
+  repeated string part_sha256s = 6;
+  string session_id = 9;
+  oneof precondition {
+    string if_match_etag = 7;
+    bool expect_absent = 8;
+  }
+}
+
+message SandBoxStoreMultipartWriteInstruction {
+  SandBoxStoreMultipartUploadContext context = 1;
+  repeated SandBoxStoreMultipartUploadPartInstruction parts = 2;
+  int64 part_urls_expires_at_ms = 3;
 }
 
 message SandBoxStoreWriteInstruction {
@@ -212,10 +332,71 @@ message SandBoxStoreWriteInstruction {
   string url = 2;
   map<string, string> headers = 3;
   int64 expires_at_ms = 4;
+  optional SandBoxStoreMultipartWriteInstruction multipart = 5;
 }
 
 message PresignSandBoxStoreWritesResponse {
   repeated SandBoxStoreWriteInstruction instructions = 1;
+}
+
+message SandBoxStoreMultipartUploadedPart {
+  uint32 part_number = 1;
+  string etag = 2;
+}
+
+message SandBoxStoreMultipartWriteCompletion {
+  SandBoxStoreMultipartUploadContext context = 1;
+  repeated SandBoxStoreMultipartUploadedPart parts = 2;
+}
+
+message CompleteSandBoxStoreMultipartWritesRequest {
+  repeated SandBoxStoreMultipartWriteCompletion completions = 1;
+}
+
+message SandBoxStoreMultipartWriteSuccess {
+  string etag = 1;
+}
+
+message SandBoxStoreMultipartOperationFailure {
+  SandBoxStoreMultipartOperationFailureCode code = 1;
+}
+
+message SandBoxStoreMultipartWriteResult {
+  uint32 input_index = 1;
+  string rel_path = 2;
+  oneof outcome {
+    SandBoxStoreMultipartWriteSuccess success = 3;
+    SandBoxStoreMultipartOperationFailure failure = 4;
+  }
+}
+
+message CompleteSandBoxStoreMultipartWritesResponse {
+  repeated SandBoxStoreMultipartWriteResult results = 1;
+}
+
+message SandBoxStoreMultipartWriteAbort {
+  SandBoxStoreMultipartUploadContext context = 1;
+}
+
+message AbortSandBoxStoreMultipartWritesRequest {
+  repeated SandBoxStoreMultipartWriteAbort uploads = 1;
+}
+
+message SandBoxStoreMultipartAbortSuccess {
+  bool already_finished = 1;
+}
+
+message SandBoxStoreMultipartAbortResult {
+  uint32 input_index = 1;
+  string rel_path = 2;
+  oneof outcome {
+    SandBoxStoreMultipartAbortSuccess success = 3;
+    SandBoxStoreMultipartOperationFailure failure = 4;
+  }
+}
+
+message AbortSandBoxStoreMultipartWritesResponse {
+  repeated SandBoxStoreMultipartAbortResult results = 1;
 }
 
 message PresignSandBoxStoreReadsRequest {
@@ -270,6 +451,8 @@ service SandBoxService {
   rpc AdminRecreateSandBox(AdminRecreateSandBoxRequest) returns (RecreateSandBoxResponse);
   rpc AdminForceRecreateSandBox(AdminForceRecreateSandBoxRequest) returns (RecreateSandBoxResponse);
   rpc PresignSandBoxStoreWrites(PresignSandBoxStoreWritesRequest) returns (PresignSandBoxStoreWritesResponse);
+  rpc CompleteSandBoxStoreMultipartWrites(CompleteSandBoxStoreMultipartWritesRequest) returns (CompleteSandBoxStoreMultipartWritesResponse);
+  rpc AbortSandBoxStoreMultipartWrites(AbortSandBoxStoreMultipartWritesRequest) returns (AbortSandBoxStoreMultipartWritesResponse);
   rpc PresignSandBoxStoreReads(PresignSandBoxStoreReadsRequest) returns (PresignSandBoxStoreReadsResponse);
   rpc StatSandBoxStoreObject(StatSandBoxStoreObjectRequest) returns (StatSandBoxStoreObjectResponse);
   rpc ListSandBoxStoreObjects(ListSandBoxStoreObjectsRequest) returns (ListSandBoxStoreObjectsResponse);
@@ -277,6 +460,7 @@ service SandBoxService {
   rpc AdminUpdateSandBoxHost(AdminUpdateSandBoxHostRequest) returns (AdminUpdateSandBoxHostResponse);
   rpc AdminGetSandBoxHostStatus(AdminSandBoxHostStatusRequest) returns (AdminSandBoxHostStatusResponse);
   rpc AdminSnapshotSandBoxStore(AdminSnapshotSandBoxStoreRequest) returns (AdminSnapshotSandBoxStoreResponse);
+  rpc AdminHibernateSandBox(AdminHibernateSandBoxRequest) returns (AdminHibernateSandBoxResponse);
   rpc AdminListSandAgents(AdminListSandAgentsRequest) returns (AdminListSandAgentsResponse);
   rpc AdminGetSandAgentTranscriptPage(AdminGetSandAgentTranscriptPageRequest) returns (AdminGetSandAgentTranscriptPageResponse);
   rpc WatchSandBoxMigration(WatchSandBoxMigrationRequest) returns (stream SandBoxMigrationEvent);
@@ -284,4 +468,8 @@ service SandBoxService {
   rpc GetSandBoxRunState(GetSandBoxRunStateRequest) returns (GetSandBoxRunStateResponse);
   rpc ListSandBoxes(ListSandBoxesRequest) returns (ListSandBoxesResponse);
   rpc NotifySandAgentTurnFinished(NotifySandAgentTurnFinishedRequest) returns (NotifySandAgentTurnFinishedResponse);
+  rpc ListSandSetupManifests(ListSandSetupManifestsRequest) returns (ListSandSetupManifestsResponse);
+  rpc ListTeamSandSetupManifests(ListTeamSandSetupManifestsRequest) returns (ListTeamSandSetupManifestsResponse);
+  rpc SaveTeamSandSetupManifest(SaveTeamSandSetupManifestRequest) returns (SaveTeamSandSetupManifestResponse);
+  rpc DeleteTeamSandSetupManifest(DeleteTeamSandSetupManifestRequest) returns (DeleteTeamSandSetupManifestResponse);
 }

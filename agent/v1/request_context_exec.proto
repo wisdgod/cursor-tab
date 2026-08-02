@@ -179,6 +179,30 @@ message RequestContext {
   optional PermissionsAutoRunInstructions admin_permissions_auto_run = 48;
   repeated string disabled_team_rules = 49;
   optional bool search_conversations_enabled = 50;
+  optional bool send_message_enabled = 51;
+  repeated string admin_command_denylist = 52;
+}
+
+message RequestContextRulesPart {
+  repeated CursorRule rules = 1;
+  repeated CursorRule non_file_rules = 2;
+  optional string cloud_rule = 3;
+}
+
+message RequestContextSkillsPart {
+  repeated AgentSkill agent_skills = 1;
+  optional SkillOptions skill_options = 2;
+}
+
+message RequestContextSubagentsPart {
+  repeated CustomSubagent custom_subagents = 1;
+}
+
+message RequestContextMcpsPart {
+  repeated McpToolDefinition tools = 1;
+  repeated McpInstructions mcp_instructions = 2;
+  optional McpFileSystemOptions mcp_file_system_options = 3;
+  optional McpMetaToolOptions mcp_meta_tool_options = 4;
 }
 
 message RequestContextPartReferences {
@@ -218,26 +242,4 @@ message MatchedInstalledPlugin {
   repeated RecentlyAddedPlugin.CapabilityDescriptor rules = 7;
   repeated RecentlyAddedPlugin.CapabilityDescriptor commands = 8;
   repeated string mcp_servers = 9;
-}
-
-message RequestContextRulesPart {
-  repeated CursorRule rules = 1;
-  repeated CursorRule non_file_rules = 2;
-  optional string cloud_rule = 3;
-}
-
-message RequestContextSkillsPart {
-  repeated AgentSkill agent_skills = 1;
-  optional SkillOptions skill_options = 2;
-}
-
-message RequestContextSubagentsPart {
-  repeated CustomSubagent custom_subagents = 1;
-}
-
-message RequestContextMcpsPart {
-  repeated McpToolDefinition tools = 1;
-  repeated McpInstructions mcp_instructions = 2;
-  optional McpFileSystemOptions mcp_file_system_options = 3;
-  optional McpMetaToolOptions mcp_meta_tool_options = 4;
 }

@@ -30,6 +30,7 @@ message AcquireRequest {
   bool is_stream = 8;
   string canonical_model = 9;
   string client_protocol = 10;
+  int64 estimated_input_tokens = 11;
 }
 
 message AcquireResponse {

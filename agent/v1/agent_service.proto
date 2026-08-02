@@ -41,6 +41,7 @@ message PrewarmRequest {
   optional bool can_create_cloud_subagents = 20;
   optional bool suppress_subagent_progress_update_tool = 21;
   optional bool client_supports_send_to_user = 22;
+  optional string computer_use_coordinate_mode = 23;
 }
 
 message ExecServerAbort {

@@ -19,6 +19,7 @@ import "agent/v1/fetch_tool.proto";
 import "agent/v1/generate_image_tool.proto";
 import "agent/v1/get_mcp_tools_tool.proto";
 import "agent/v1/glob_tool.proto";
+import "agent/v1/goal_tool.proto";
 import "agent/v1/grep_tool.proto";
 import "agent/v1/hook_additional_context.proto";
 import "agent/v1/ls_tool.proto";
@@ -155,6 +156,8 @@ enum SimulatedMsgReason {
   SIMULATED_MSG_REASON_SUBSCRIPTION = 28;
   SIMULATED_MSG_REASON_DIFF_TAB_CREATE_BRANCH = 29;
   SIMULATED_MSG_REASON_AGENT_STORE_CONFLICT = 30;
+  SIMULATED_MSG_REASON_GOAL_CONTINUATION = 31;
+  SIMULATED_MSG_REASON_PROJECT_KICKOFF = 32;
 }
 
 enum SubscriptionSource {
@@ -195,6 +198,38 @@ message TaskArgs {
   TaskMode mode = 8;
   repeated string responding_to_message_ids = 9;
   SubagentExecutionEnvironment environment = 10;
+  optional TargetMachine machine = 11;
+}
+
+message TargetMachine {
+  oneof machine {
+    SameMachineTarget same_machine = 1;
+    NewCloudVmTarget new_cloud_vm = 2;
+    SelfHostedWorkerTarget self_hosted_worker = 3;
+    SelfHostedPoolTarget self_hosted_pool = 4;
+  }
+}
+
+message SameMachineTarget {
+}
+
+message NewCloudVmTarget {
+  optional string environment_build_id = 1;
+  optional string base_branch = 2;
+}
+
+message SelfHostedWorkerTarget {
+  string worker_id = 1;
+}
+
+message SelfHostedPoolTarget {
+  optional string pool = 1;
+  repeated SelfHostedWorkerLabel labels = 2;
+}
+
+message SelfHostedWorkerLabel {
+  string key = 1;
+  string value = 2;
 }
 
 message TaskSuccess {
@@ -221,6 +256,7 @@ message TaskResult {
 message TaskToolCall {
   TaskArgs args = 1;
   TaskResult result = 2;
+  optional string cloud_agent_bc_id = 3;
 }
 
 message TaskToolCallDelta {
@@ -315,6 +351,8 @@ message ToolCall {
     PiLsToolCall pi_ls_tool_call = 67;
     ConnectScmToolCall connect_scm_tool_call = 68;
     SearchConversationsToolCall search_conversations_tool_call = 69;
+    CreateGoalToolCall create_goal_tool_call = 70;
+    UpdateGoalToolCall update_goal_tool_call = 71;
   }
 }
 
@@ -376,6 +414,8 @@ message ConversationAction {
     BackgroundShellAction background_shell_action = 13;
     BackgroundSubagentAction background_subagent_action = 14;
     SubscriptionNotificationAction subscription_notification_action = 16;
+    GoalContinuationAction goal_continuation_action = 18;
+    InjectContextAction inject_context_action = 19;
   }
 }
 
@@ -529,6 +569,57 @@ message SubscriptionNotificationAction {
   optional bool send_to_interaction_listener = 3;
 }
 
+message GoalContinuationAction {
+}
+
+message InjectContextAction {
+  string injection_id = 1;
+  string expected_run_id = 2;
+  oneof payload {
+    UserContextInjection user_context = 3;
+    SystemContextInjection system_context = 4;
+  }
+}
+
+message UserContextInjection {
+  UserMessage user_message = 1;
+  RequestContext request_context = 2;
+}
+
+message SystemContextInjection {
+  string producer = 1;
+  string content = 2;
+}
+
+message ContextInjectionState {
+  oneof state {
+    ContextInjectionQueued queued = 1;
+    ContextInjectionDelivered delivered = 2;
+    ContextInjectionQueuedForNextTurn queued_for_next_turn = 3;
+    ContextInjectionCancelled cancelled = 4;
+    ContextInjectionRejected rejected = 5;
+  }
+}
+
+message ContextInjectionQueued {
+}
+
+message ContextInjectionDelivered {
+  int32 step = 1;
+  string delivery_batch_id = 2;
+  int64 delivered_at_ms = 3;
+}
+
+message ContextInjectionQueuedForNextTurn {
+}
+
+message ContextInjectionCancelled {
+}
+
+message ContextInjectionRejected {
+  string reason = 1;
+}
+
 message SubmittedCustomMode {
   string id = 1;
   string label = 2;
@@ -630,7 +721,6 @@ message ProjectDetails {
 }
 
 message ProjectSubagentDetails {
-  string report_dir = 1;
   optional string store_dir = 2;
 }
 
@@ -682,6 +772,12 @@ message ShellCommand {
   string command = 1;
 }
 
+message ShellOutput {
+  string stdout = 1;
+  string stderr = 2;
+  int32 exit_code = 3;
+}
+
 message ConversationPlan {
   string plan = 1;
 }
@@ -689,6 +785,16 @@ message ConversationPlan {
 message PlanRegistryEntry {
   string id = 1;
   string path = 2;
+}
+
+message GoalState {
+  string conversation_id = 1;
+  string goal_id = 2;
+  string objective = 3;
+  GoalStatus status = 4;
+  uint32 idle_continuations_without_tool_calls = 5;
+  optional uint64 active_duration_ms = 6;
+  optional uint64 last_accrued_at_ms = 7;
 }
 
 message ConversationTurnStructure {
@@ -709,6 +815,10 @@ message AgentConversationTurnStructure {
 message ShellConversationTurnStructure {
   bytes shell_command = 1;
   bytes shell_output = 2;
+}
+
+message ConversationSummary {
+  string summary = 1;
 }
 
 message ConversationSummaryArchive {
@@ -843,6 +953,7 @@ message ConversationStateStructure {
   optional uint64 conversation_started_timestamp_ms = 26;
   optional string conversation_started_time_zone = 27;
   map<string, bytes> subagent_state_refs = 31;
+  optional GoalState goal_state = 32;
 }
 
 message ThinkingDetails {
@@ -936,6 +1047,8 @@ message AgentRunRequest {
   optional bool can_create_cloud_subagents = 21;
   optional bool suppress_subagent_progress_update_tool = 22;
   optional bool client_supports_send_to_user = 23;
+  optional string computer_use_coordinate_mode = 24;
+  optional string run_id = 25;
 }
 
 message TextDeltaUpdate {
@@ -1110,7 +1223,13 @@ message InteractionUpdate {
     ActiveBranchChange active_branch_change = 20;
     FeedbackRequestUpdate feedback_request = 21;
     ResponseComparisonUpdate response_comparison = 22;
+    ContextInjectionStateUpdate context_injection_state = 23;
   }
+}
+
+message ContextInjectionStateUpdate {
+  string injection_id = 1;
+  ContextInjectionState state = 2;
 }
 
 message PostRequestPromptUpdate {
@@ -1355,14 +1474,4 @@ message PostToolUseFailureRequestQuery {
 
 message PostToolUseFailureRequestResponse {
   optional string additional_context = 1;
-}
-
-message ShellOutput {
-  string stdout = 1;
-  string stderr = 2;
-  int32 exit_code = 3;
-}
-
-message ConversationSummary {
-  string summary = 1;
 }

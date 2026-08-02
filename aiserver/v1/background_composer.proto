@@ -201,6 +201,7 @@ enum EnvironmentBuildRowStatus {
   ENVIRONMENT_BUILD_ROW_STATUS_IN_PROGRESS = 1;
   ENVIRONMENT_BUILD_ROW_STATUS_SUCCEEDED = 2;
   ENVIRONMENT_BUILD_ROW_STATUS_FAILED = 3;
+  ENVIRONMENT_BUILD_ROW_STATUS_CANCELLED = 4;
 }
 
 enum EnvironmentBuildRowTriggerType {
@@ -346,6 +347,12 @@ enum PrivateWorkerListScope {
   PRIVATE_WORKER_LIST_SCOPE_ALL = 1;
   PRIVATE_WORKER_LIST_SCOPE_TEAM_POOL = 2;
   PRIVATE_WORKER_LIST_SCOPE_PERSONAL = 3;
+}
+
+enum PrivateWorkerPoolScope {
+  PRIVATE_WORKER_POOL_SCOPE_UNSPECIFIED = 0;
+  PRIVATE_WORKER_POOL_SCOPE_USER = 1;
+  PRIVATE_WORKER_POOL_SCOPE_TEAM = 2;
 }
 
 enum PrivateWorkerStatusFilter {
@@ -1343,6 +1350,16 @@ message StreamConversationRequest {
   optional bool send_stream_signal_after_prefetch = 7;
   optional uint32 max_blobs_after_prefetch = 8;
   optional bool allow_streaming_when_terminal_status = 9;
+  optional PreFetchedBlobFilter pre_fetched_blob_filter = 10;
+}
+
+message PreFetchedBlobFilter {
+  uint32 seed = 1;
+  uint32 segment_length = 2;
+  uint32 segment_count = 3;
+  uint32 fingerprint_bits = 4;
+  uint32 slot_count = 5;
+  bytes packed_fingerprints = 6;
 }
 
 message ReadOnlySharedPodLifecycleEvent {
@@ -1559,6 +1576,24 @@ message AddAsyncFollowupBackgroundComposerRequest {
 
 message AddAsyncFollowupBackgroundComposerResponse {
   string run_id = 1;
+}
+
+message InjectBackgroundComposerContextRequest {
+  string bc_id = 1;
+  agent.v1.InjectContextAction inject_context_action = 2;
+  BackgroundComposerSource source = 3;
+  ConversationMessage followup_message = 4;
+  string promote_followup_id = 5;
+}
+
+message InjectBackgroundComposerContextResponse {
+  enum Outcome {
+    OUTCOME_UNSPECIFIED = 0;
+    OUTCOME_QUEUED = 1;
+    OUTCOME_QUEUED_FOR_NEXT_TURN = 2;
+    OUTCOME_REJECTED = 3;
+  }
+  Outcome outcome = 1;
 }
 
 message SubmitInteractionResponseBackgroundComposerRequest {
@@ -1988,6 +2023,7 @@ message ListEnvironmentsRequest {
   optional int32 limit = 1;
   optional bool include_environment_json = 2;
   repeated string repository_scope_repo_urls = 3;
+  optional bool include_repository_scope_environments = 4;
 }
 
 message LogicalEnvironment {
@@ -2018,6 +2054,12 @@ message GetEnvironmentResponse {
   optional LogicalEnvironment environment = 1;
 }
 
+message EnvironmentBuildRepoCommit {
+  string repo_url = 1;
+  string workspace_root_path = 2;
+  string commit_hash_hex = 3;
+}
+
 message EnvironmentBuildRow {
   string build_id = 1;
   string environment_public_id = 2;
@@ -2032,6 +2074,10 @@ message EnvironmentBuildRow {
   optional int64 completed_at_ms = 11;
   bool is_draft = 12;
   bool has_ref_overrides = 13;
+  repeated RepoStartingRef requested_refs = 14;
+  repeated EnvironmentBuildRepoCommit repo_commits = 15;
+  optional string created_by_display = 16;
+  bool will_adopt_environment_settings_on_activate = 17;
 }
 
 message EnvironmentBuildsCursor {
@@ -2077,8 +2123,29 @@ message TriggerEnvironmentBuildResponse {
   string build_id = 1;
 }
 
+message AttachEnvironmentBuildLogRequest {
+  string build_id = 1;
+  optional string cursor = 2;
+}
+
+message AttachEnvironmentBuildLogResponse {
+  string text = 1;
+  string next_cursor = 2;
+  EnvironmentBuildRowStatus status = 3;
+  bool log_complete = 4;
+}
+
+message CancelEnvironmentBuildRequest {
+  string build_id = 1;
+}
+
+message CancelEnvironmentBuildResponse {
+  EnvironmentBuildRow row = 1;
+}
+
 message EnvironmentBuildSettings {
   optional bool fast_forward_default_branch = 1;
+  optional bool builds_enabled = 2;
 }
 
 message GetEnvironmentBuildSettingsRequest {
@@ -2093,6 +2160,8 @@ message UpdateEnvironmentBuildSettingsRequest {
   string environment_public_id = 1;
   optional bool fast_forward_default_branch = 2;
   bool clear_fast_forward_default_branch = 3;
+  optional bool builds_enabled = 4;
+  bool clear_builds_enabled = 5;
 }
 
 message UpdateEnvironmentBuildSettingsResponse {
@@ -2926,6 +2995,18 @@ message UpdatePullRequestBranchResponse {
   optional string new_head_sha = 3;
 }
 
+message CloudAgentStatePersistedMetadata {
+  enum PersistedMetadataVersion {
+    PERSISTED_METADATA_VERSION_UNSPECIFIED = 0;
+    PERSISTED_METADATA_VERSION_1 = 1;
+  }
+  bytes cloud_agent_state_blob_id = 1;
+  string offset_key = 2;
+  double timestamp_ms = 3;
+  CloudAgentWorkflowStatus workflow_status = 4;
+  PersistedMetadataVersion version = 5;
+}
+
 message CloudAgentState {
   agent.v1.ConversationStateStructure conversation_state = 1;
   uint32 num_prior_interaction_updates = 2;
@@ -2978,6 +3059,7 @@ message CloudAgentState {
   bytes pending_summarization_state_blob_id = 50;
   bytes pending_summarization_snapshot_blob_id = 51;
   bytes admitted_custom_mode_state_blob_id = 52;
+  optional bool agent_store_artifacts_symlink_enabled = 53;
 }
 
 message OptimizedDiffState {
@@ -3331,6 +3413,40 @@ message PrivateWorkerLabel {
   string value = 2;
 }
 
+message PrivateWorkerPool {
+  PrivateWorkerPoolScope scope = 1;
+  int32 owner_id = 2;
+  string pool_name = 3;
+  optional string repo_owner = 4;
+  optional string repo_name = 5;
+  optional string repo_url = 6;
+  int32 connected_worker_count = 7;
+  int32 in_use_worker_count = 8;
+  double first_seen_at_ms = 9;
+  double last_seen_at_ms = 10;
+  bool is_stale = 11;
+}
+
+message ListPrivateWorkerPoolsRequest {
+  PrivateWorkerListScope list_scope = 1;
+  bool include_stale = 2;
+}
+
+message ListPrivateWorkerPoolsResponse {
+  repeated PrivateWorkerPool pools = 1;
+}
+
+message DeregisterPrivateWorkerPoolRequest {
+  PrivateWorkerPoolScope scope = 1;
+  string pool_name = 2;
+  optional string repo_owner = 3;
+  optional string repo_name = 4;
+}
+
+message DeregisterPrivateWorkerPoolResponse {
+  bool deregistered = 1;
+}
+
 message PrivateWorkerOwnerFilter {
   int32 owner_cursor_user_id = 1;
 }
@@ -3541,10 +3657,18 @@ message PresignAgentStoreReadsResponse {
   repeated AgentStoreReadInstruction instructions = 1;
 }
 
+message AgentStoreMultipartUploadPartDescriptor {
+  uint32 part_number = 1;
+  int64 offset_bytes = 2;
+  int64 size_bytes = 3;
+  bytes checksum_sha256 = 4;
+}
+
 message AgentStoreWriteFileEntry {
   string rel_path = 1;
   int64 size_bytes = 2;
   string sha = 3;
+  repeated AgentStoreMultipartUploadPartDescriptor multipart_parts = 6;
   oneof precondition {
     string base_etag = 4;
     bool expect_absent = 5;
@@ -3619,6 +3743,7 @@ message PresignAgentStoreWritesResponse {
 message AgentStoreMultipartUploadedPart {
   uint32 part_number = 1;
   string etag = 2;
+  bytes checksum_sha256 = 3;
 }
 
 message AgentStoreMultipartWriteCompletion {
@@ -3811,18 +3936,6 @@ message ListSharedAgentStoresResponse {
   optional string next_created_before_share_id = 4;
 }
 
-message CloudAgentStatePersistedMetadata {
-  enum PersistedMetadataVersion {
-    PERSISTED_METADATA_VERSION_UNSPECIFIED = 0;
-    PERSISTED_METADATA_VERSION_1 = 1;
-  }
-  bytes cloud_agent_state_blob_id = 1;
-  string offset_key = 2;
-  double timestamp_ms = 3;
-  CloudAgentWorkflowStatus workflow_status = 4;
-  PersistedMetadataVersion version = 5;
-}
-
 service BackgroundComposerService {
   rpc ListBackgroundComposers(ListBackgroundComposersRequest) returns (ListBackgroundComposersResponse);
   rpc AttachBackgroundComposer(AttachBackgroundComposerRequest) returns (stream AttachBackgroundComposerResponse);
@@ -3837,6 +3950,7 @@ service BackgroundComposerService {
   rpc OpenPRBackgroundComposer(OpenPRBackgroundComposerRequest) returns (OpenPRBackgroundComposerResponse);
   rpc GetBackgroundComposerStatus(GetBackgroundComposerStatusRequest) returns (GetBackgroundComposerStatusResponse);
   rpc AddAsyncFollowupBackgroundComposer(AddAsyncFollowupBackgroundComposerRequest) returns (AddAsyncFollowupBackgroundComposerResponse);
+  rpc InjectBackgroundComposerContext(InjectBackgroundComposerContextRequest) returns (InjectBackgroundComposerContextResponse);
   rpc SubmitInteractionResponseBackgroundComposer(SubmitInteractionResponseBackgroundComposerRequest) returns (SubmitInteractionResponseBackgroundComposerResponse);
   rpc ListPendingFollowups(ListPendingFollowupsRequest) returns (ListPendingFollowupsResponse);
   rpc UpdatePendingFollowup(UpdatePendingFollowupRequest) returns (UpdatePendingFollowupResponse);
@@ -3906,6 +4020,8 @@ service BackgroundComposerService {
   rpc GetEnvironmentBuild(GetEnvironmentBuildRequest) returns (GetEnvironmentBuildResponse);
   rpc UpdateEnvironmentBuild(UpdateEnvironmentBuildRequest) returns (UpdateEnvironmentBuildResponse);
   rpc TriggerEnvironmentBuild(TriggerEnvironmentBuildRequest) returns (TriggerEnvironmentBuildResponse);
+  rpc AttachEnvironmentBuildLog(AttachEnvironmentBuildLogRequest) returns (stream AttachEnvironmentBuildLogResponse);
+  rpc CancelEnvironmentBuild(CancelEnvironmentBuildRequest) returns (CancelEnvironmentBuildResponse);
   rpc GetEnvironmentBuildSettings(GetEnvironmentBuildSettingsRequest) returns (GetEnvironmentBuildSettingsResponse);
   rpc UpdateEnvironmentBuildSettings(UpdateEnvironmentBuildSettingsRequest) returns (UpdateEnvironmentBuildSettingsResponse);
   rpc ResolveOrCreateMultiRepoEnvironment(ResolveOrCreateMultiRepoEnvironmentRequest) returns (ResolveOrCreateMultiRepoEnvironmentResponse);
@@ -3965,6 +4081,8 @@ service BackgroundComposerService {
   rpc CreateAgentShare(CreateAgentShareRequest) returns (CreateAgentShareResponse);
   rpc GetAgentSharePreview(GetAgentSharePreviewRequest) returns (GetAgentSharePreviewResponse);
   rpc ListPrivateWorkers(ListPrivateWorkersRequest) returns (ListPrivateWorkersResponse);
+  rpc ListPrivateWorkerPools(ListPrivateWorkerPoolsRequest) returns (ListPrivateWorkerPoolsResponse);
+  rpc DeregisterPrivateWorkerPool(DeregisterPrivateWorkerPoolRequest) returns (DeregisterPrivateWorkerPoolResponse);
   rpc AdminListUserPrivateWorkers(AdminListUserPrivateWorkersRequest) returns (AdminListUserPrivateWorkersResponse);
   rpc ListPendingPrivateWorkerRequests(ListPendingPrivateWorkerRequestsRequest) returns (ListPendingPrivateWorkerRequestsResponse);
   rpc GetPrivateWorkersSummary(GetPrivateWorkersSummaryRequest) returns (GetPrivateWorkersSummaryResponse);

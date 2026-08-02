@@ -16,6 +16,7 @@ message AwaitTaskComplete {
   bool regex_requested = 5;
   optional string regex_match = 6;
   optional sint32 exit_code = 7;
+  optional string wake_reason = 8;
 }
 
 message AwaitTaskStillRunning {
@@ -25,6 +26,7 @@ message AwaitTaskStillRunning {
   uint64 output_length = 4;
   bool regex_requested = 5;
   optional string regex_match = 6;
+  optional string wake_reason = 7;
 }
 
 message AwaitError {

@@ -5,6 +5,7 @@ package aiserver.v1;
 import "agent/v1/agent.proto";
 import "agent/v1/mcp.proto";
 import "agent/v1/mcp_exec.proto";
+import "agent/v1/smart_mode_classifier_exec.proto";
 import "aiserver/v1/chat.proto";
 import "aiserver/v1/full_self_driving.proto";
 import "aiserver/v1/mcp.proto";
@@ -366,12 +367,44 @@ enum TeamCustomerTelemetryDestinationKind {
   TEAM_CUSTOMER_TELEMETRY_DESTINATION_KIND_OTLP_HTTP = 1;
 }
 
+enum TeamCustomerTelemetryDestinationTestSignal {
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_TEST_SIGNAL_UNSPECIFIED = 0;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_TEST_SIGNAL_LOGS = 1;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_TEST_SIGNAL_METRICS = 2;
+}
+
+enum TeamCustomerTelemetryDestinationTestOutcome {
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_TEST_OUTCOME_UNSPECIFIED = 0;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_TEST_OUTCOME_OK = 1;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_TEST_OUTCOME_VALIDATION_ERROR = 2;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_TEST_OUTCOME_HTTP_ERROR = 3;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_TEST_OUTCOME_REDIRECT = 4;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_TEST_OUTCOME_TIMED_OUT = 5;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_TEST_OUTCOME_TLS_ERROR = 6;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_TEST_OUTCOME_NETWORK_ERROR = 7;
+}
+
+enum TeamCustomerTelemetryDestinationHealthStatus {
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_HEALTH_STATUS_UNSPECIFIED = 0;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_HEALTH_STATUS_HEALTHY = 1;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_HEALTH_STATUS_DEGRADED = 2;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_HEALTH_STATUS_FAILING = 3;
+  TEAM_CUSTOMER_TELEMETRY_DESTINATION_HEALTH_STATUS_IDLE = 4;
+}
+
 enum BugbotMode {
   BUGBOT_MODE_UNSPECIFIED = 0;
   BUGBOT_MODE_DEFAULT = 1;
   BUGBOT_MODE_HIGH = 2;
   BUGBOT_MODE_AUTO = 3;
   BUGBOT_MODE_FRONTIER = 4;
+}
+
+enum TeamRuleAgentType {
+  TEAM_RULE_AGENT_TYPE_UNSPECIFIED = 0;
+  TEAM_RULE_AGENT_TYPE_ALL = 1;
+  TEAM_RULE_AGENT_TYPE_SAND = 2;
+  TEAM_RULE_AGENT_TYPE_CURSOR = 3;
 }
 
 enum GlobalCommandAvailability {
@@ -452,6 +485,7 @@ enum PluginLifecycleState {
   PLUGIN_LIFECYCLE_STATE_PRIVATE_DEPRECATED = 11;
   PLUGIN_LIFECYCLE_STATE_PUBLIC_INVALID = 12;
   PLUGIN_LIFECYCLE_STATE_PRIVATE_INVALID = 13;
+  PLUGIN_LIFECYCLE_STATE_PRIVATE_PUBLISHED = 14;
 }
 
 enum PluginPrimitiveType {
@@ -1640,6 +1674,12 @@ message GetAvailableMcpServersResponse {
     bool disabled_by_team_admin_policy = 14;
     optional string server_identifier = 15;
     optional int32 owning_team_id = 16;
+    repeated McpAccountInfo accounts = 17;
+  }
+  message McpAccountInfo {
+    string account_key = 1;
+    string server_identifier = 2;
+    bool user_has_access_token = 3;
   }
   repeated McpServerInfo servers = 1;
 }
@@ -1713,6 +1753,7 @@ message StoreMcpOAuthTokenRequest {
   optional string service_account_id = 7;
   optional int64 client_token_created_at_ms = 8;
   optional string source = 9;
+  string account_key = 10;
 }
 
 message StoreMcpOAuthTokenResponse {
@@ -1724,6 +1765,7 @@ message StoreMcpOAuthTokenResponse {
 message GetMcpOAuthTokensRequest {
   repeated string server_urls = 1;
   optional string service_account_id = 2;
+  string account_key = 3;
 }
 
 message GetMcpOAuthTokensResponse {
@@ -1731,6 +1773,7 @@ message GetMcpOAuthTokensResponse {
     string server_url = 1;
     McpOAuthStoredData token_data = 2;
     int64 updated_at_ms = 3;
+    string account_key = 4;
   }
   repeated Entry entries = 1;
 }
@@ -1744,6 +1787,8 @@ message ListSandMcpToolsResponse {
     string server_identifier = 1;
     string status = 2;
     repeated agent.v1.McpToolDefinition tools = 3;
+    string account_label = 4;
+    string row_server_identifier = 5;
   }
   repeated Server servers = 1;
 }
@@ -1753,10 +1798,71 @@ message ExecuteSandMcpToolRequest {
   string tool_name = 2;
   google.protobuf.Struct args = 3;
   string tool_call_id = 4;
+  string agent_id = 5;
+  string turn_id = 6;
+}
+
+message ClassifySandAutoReviewRequest {
+  agent.v1.SmartModeClassifierArgs args = 1;
+  optional uint32 attempt_index = 2;
+  optional string mode = 3;
+}
+
+message ClassifySandAutoReviewResponse {
+  agent.v1.SmartModeClassifierResult result = 1;
 }
 
 message ExecuteSandMcpToolResponse {
   agent.v1.McpResult result = 1;
+}
+
+message SandAuditEvent {
+  message McpToolCall {
+    string tool_call_id = 1;
+    string server_identifier = 2;
+    string server_name = 3;
+    string tool_name = 4;
+    string status = 5;
+    int64 duration_ms = 6;
+  }
+  message ShellCommand {
+    string command = 1;
+    string kind = 2;
+    string target = 3;
+    bool allowed = 4;
+    string blocked_reason = 5;
+    repeated string classification_reasons = 6;
+  }
+  message BrowserNavigation {
+    string url = 1;
+    string page_title = 2;
+  }
+  message ComputerUseSession {
+    string tool_call_id = 1;
+    int64 action_count = 2;
+    map<string, int64> action_counts = 3;
+    int64 duration_ms = 4;
+    int64 screenshot_count = 5;
+  }
+  string event_id = 1;
+  int64 occurred_at_ms = 2;
+  string agent_id = 3;
+  string turn_id = 4;
+  string box_id = 5;
+  oneof action {
+    McpToolCall mcp_tool_call = 6;
+    ShellCommand shell_command = 7;
+    BrowserNavigation browser_navigation = 8;
+    ComputerUseSession computer_use_session = 9;
+  }
+}
+
+message RecordSandAuditEventsRequest {
+  repeated SandAuditEvent events = 1;
+}
+
+message RecordSandAuditEventsResponse {
+  int32 recorded_count = 1;
 }
 
 message McpOAuthRefreshLockBeginRequest {
@@ -1765,6 +1871,7 @@ message McpOAuthRefreshLockBeginRequest {
   string executor_id = 3;
   optional int64 observed_updated_at_ms = 4;
   optional string service_account_id = 5;
+  string account_key = 6;
 }
 
 message McpOAuthRefreshLockBeginResponse {
@@ -1785,20 +1892,27 @@ message DeleteMcpOAuthTokenRequest {
   string server_url = 1;
   optional string service_account_id = 2;
   optional string source = 3;
+  string account_key = 4;
 }
 
 message DeleteMcpOAuthTokenResponse {
 }
 
 message ValidateMcpOAuthTokensRequest {
+  message Target {
+    string server_url = 1;
+    string account_key = 2;
+  }
   repeated string server_urls = 1;
   optional string service_account_id = 2;
+  repeated Target targets = 3;
 }
 
 message ValidateMcpOAuthTokensResponse {
   message Result {
     string server_url = 1;
     bool has_valid_token = 2;
+    string account_key = 3;
   }
   repeated Result results = 1;
 }
@@ -1811,6 +1925,7 @@ message CheckHttpMcpStatusRequest {
   bool force_reauth = 5;
   optional string service_account_type = 6;
   optional string post_auth_return_url = 7;
+  string account_key = 8;
 }
 
 message CheckHttpMcpStatusResponse {
@@ -1832,6 +1947,7 @@ message StoreMcpOAuthPendingStateRequest {
   optional string client_secret = 4;
   optional string redirect_uri = 5;
   optional string service_account_id = 6;
+  string account_key = 7;
 }
 
 message StoreMcpOAuthPendingStateResponse {
@@ -1850,6 +1966,7 @@ message GetMcpOAuthPendingStateResponse {
   optional string redirect_uri = 5;
   optional string service_account_id = 6;
   optional string post_auth_return_url = 7;
+  string account_key = 8;
 }
 
 message CompleteMcpOAuthRequest {
@@ -1859,6 +1976,24 @@ message CompleteMcpOAuthRequest {
 
 message CompleteMcpOAuthResponse {
   string post_auth_return_url = 1;
+  string account_key = 2;
+}
+
+message RenameMcpOAuthAccountRequest {
+  int32 server_id = 1;
+  string account_key = 2;
+  string new_account_key = 3;
+}
+
+message RenameMcpOAuthAccountResponse {
+}
+
+message DeleteMcpOAuthAccountRequest {
+  int32 server_id = 1;
+  string account_key = 2;
+}
+
+message DeleteMcpOAuthAccountResponse {
 }
 
 message GetPluginMcpConfigRequest {
@@ -2451,6 +2586,7 @@ message GetTeamInviteMetadataResponse {
   string inviter_name = 3;
   string inviter_email = 4;
   bool invitee_email_matches_authenticated_user = 5;
+  optional bool invite_has_bound_recipient = 6;
 }
 
 message CreateTeamApiKeyRequest {
@@ -3095,6 +3231,10 @@ message GetTeamAdminSettingsRequest {
   optional int32 team_id = 1;
 }
 
+message AdminCommandDenylist {
+  repeated string rules = 1;
+}
+
 message AutoRunControls {
   bool enabled = 1;
   repeated string allowed = 2;
@@ -3107,6 +3247,7 @@ message AutoRunControls {
   bool browser_protection = 9;
   optional bool enable_smart_auto = 10;
   optional bool enable_allowlist_mode = 11;
+  AdminCommandDenylist admin_command_denylist = 12;
 }
 
 message AutoReviewInstructions {
@@ -3210,6 +3351,8 @@ message BackgroundAgentSettings {
   DataRetentionPolicy data_retention = 19;
   optional bool restrict_team_environment_writes_to_admins = 20;
   optional bool allow_remote_control = 21;
+  optional bool allow_private_worker_github_token_mint = 22;
+  optional bool allow_private_worker_secret_sync = 23;
 }
 
 message DataRetentionPolicy {
@@ -3393,6 +3536,27 @@ message ModelAllowlist {
   optional ModelAllowlistByok byok = 4;
 }
 
+message LlmGatewaySettings {
+  bool enabled = 1;
+  map<string, string> endpoints = 2;
+  string audience = 3;
+  LlmGatewayRouting routing = 4;
+  bool can_enable = 5;
+}
+
+message LlmGatewayRouting {
+  map<string, LlmGatewayRoutingProviderEntry> providers = 1;
+}
+
+message LlmGatewayRoutingProviderEntry {
+  bool enabled = 1;
+  map<string, LlmGatewayRoutedModelEntry> models = 2;
+}
+
+message LlmGatewayRoutedModelEntry {
+  bool enabled = 1;
+}
+
 message GetTeamAdminSettingsResponse {
   repeated string allowed_models = 1;
   repeated string blocked_models = 2;
@@ -3452,6 +3616,7 @@ message GetTeamAdminSettingsResponse {
   optional bool restrict_invites_to_admins = 56;
   optional bool viewer_can_invite_members = 57;
   optional bool enforce_hooks_readiness = 58;
+  optional LlmGatewaySettings llm_gateway = 59;
 }
 
 message GetBaseTeamAdminSettingsRequest {
@@ -3506,6 +3671,7 @@ message UpdateTeamAdminSettingsRequest {
   repeated string remote_permissions_file_paths = 46;
   repeated string local_permissions_file_path = 45;
   optional bool permissions_file_overrides_auto_run = 47;
+  optional bool update_permissions_file_paths = 57;
   optional SharedCanvasSettings shared_canvas_settings = 43;
   optional ExtensionInstallCooldownSettings extension_install_cooldown_settings = 48;
   optional PublicProfileSettings public_profile_settings = 50;
@@ -3515,6 +3681,7 @@ message UpdateTeamAdminSettingsRequest {
   optional bool models_auto_only = 54;
   optional string new_chat_nudge_all_to_smart_auto_optimize_for = 55;
   optional bool enforce_hooks_readiness = 56;
+  optional LlmGatewaySettings llm_gateway = 58;
 }
 
 message UpdateTeamAdminSettingsResponse {
@@ -3739,6 +3906,41 @@ message GetCurrentPeriodUsageResponse {
   optional string auto_model_selected_display_message = 11;
   optional string named_model_selected_display_message = 12;
   repeated string auto_bucket_models = 13;
+}
+
+message UseSandBankedResetRequest {
+  int64 expected_current_period_start_ms = 1;
+}
+
+message UseSandBankedResetResponse {
+  google.protobuf.Timestamp new_current_period_start = 1;
+}
+
+message ListSandBankedResetsRequest {
+}
+
+message SandBankedReset {
+  int64 id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  optional google.protobuf.Timestamp expires_at = 3;
+}
+
+message ListSandBankedResetsResponse {
+  repeated SandBankedReset resets = 1;
+}
+
+message GetSandUsageStatusRequest {
+}
+
+message GetSandUsageStatusResponse {
+  google.protobuf.Timestamp current_period_start = 1;
+  google.protobuf.Timestamp next_reset_timestamp_utc = 2;
+  optional double usage_percent = 3;
+  bool included_limit_zero = 4;
+  int64 available_banked_reset_count = 5;
+  bool uses_pooled_enterprise_allowance = 6;
+  bool has_available_usage = 7;
+  bool has_non_zero_included_limit = 8;
 }
 
 message GetPlanInfoRequest {
@@ -4240,6 +4442,7 @@ message InstallationSettings {
   bool enable_draft = 11;
   bool fail_github_action_on_bugbot_findings = 12;
   repeated string bugbot_autofix_severity_filter = 13;
+  optional bool is_pr_risk_score_enabled = 14;
 }
 
 message RepoSettings {
@@ -4515,6 +4718,8 @@ message GetBugbotUserSettingsResponse {
   repeated string installation_default_bugbot_autofix_severity_filter = 13;
   optional bool is_incremental_review_enabled = 14;
   optional bool team_default_is_incremental_review_enabled = 15;
+  optional bool is_pr_risk_score_enabled = 16;
+  optional bool installation_default_is_pr_risk_score_enabled = 17;
 }
 
 message UpdateBugbotUserSettingsRequest {
@@ -4528,6 +4733,7 @@ message UpdateBugbotUserSettingsRequest {
   bool fail_github_action_on_bugbot_findings = 8;
   repeated string bugbot_autofix_severity_filter = 9;
   optional bool is_incremental_review_enabled = 10;
+  optional bool is_pr_risk_score_enabled = 11;
 }
 
 message UpdateBugbotUserSettingsResponse {
@@ -5597,6 +5803,7 @@ message GetDailySpendByCategoryRequest {
   optional string automation_id = 9;
   optional string automation_managed_type = 10;
   optional string client_type = 11;
+  repeated string products = 12;
 }
 
 message DailySpendByCategory {
@@ -5624,6 +5831,7 @@ message GetOrgDailySpendByCategoryRequest {
   optional string automation_id = 9;
   optional string automation_managed_type = 10;
   optional string client_type = 11;
+  repeated string products = 12;
 }
 
 message Group {
@@ -6084,6 +6292,18 @@ message TeamCustomerTelemetryDestinationHeaders {
   map<string, string> values = 1;
 }
 
+message TeamCustomerTelemetryDestinationFamilyList {
+  repeated string ids = 1;
+}
+
+message TeamCustomerTelemetryDestinationFamily {
+  string id = 1;
+  string display_name = 2;
+  string description = 3;
+  bool metrics = 4;
+  bool logs = 5;
+}
+
 message TeamCustomerTelemetryDestination {
   string id = 1;
   TeamCustomerTelemetryDestinationKind kind = 2;
@@ -6096,6 +6316,9 @@ message TeamCustomerTelemetryDestination {
   int64 created_at_epoch_millis = 9;
   int64 updated_at_epoch_millis = 10;
   repeated string credential_header_names = 11;
+  repeated string disabled_families = 12;
+  repeated string enabled_families = 13;
+  bool auto_enable_new_families = 14;
 }
 
 message GetTeamCustomerTelemetryDestinationsRequest {
@@ -6104,6 +6327,7 @@ message GetTeamCustomerTelemetryDestinationsRequest {
 
 message GetTeamCustomerTelemetryDestinationsResponse {
   repeated TeamCustomerTelemetryDestination destinations = 1;
+  repeated TeamCustomerTelemetryDestinationFamily available_families = 2;
 }
 
 message CreateTeamCustomerTelemetryDestinationRequest {
@@ -6113,6 +6337,9 @@ message CreateTeamCustomerTelemetryDestinationRequest {
   bool metrics_enabled = 4;
   bool logs_enabled = 5;
   bool enabled = 6;
+  optional TeamCustomerTelemetryDestinationFamilyList disabled_families = 7;
+  optional TeamCustomerTelemetryDestinationFamilyList enabled_families = 8;
+  optional bool auto_enable_new_families = 9;
 }
 
 message CreateTeamCustomerTelemetryDestinationResponse {
@@ -6127,6 +6354,9 @@ message UpdateTeamCustomerTelemetryDestinationRequest {
   optional bool metrics_enabled = 5;
   optional bool logs_enabled = 6;
   optional bool enabled = 7;
+  optional TeamCustomerTelemetryDestinationFamilyList disabled_families = 8;
+  optional TeamCustomerTelemetryDestinationFamilyList enabled_families = 9;
+  optional bool auto_enable_new_families = 10;
 }
 
 message UpdateTeamCustomerTelemetryDestinationResponse {
@@ -6139,6 +6369,53 @@ message DeleteTeamCustomerTelemetryDestinationRequest {
 }
 
 message DeleteTeamCustomerTelemetryDestinationResponse {
+}
+
+message TestTeamCustomerTelemetryDestinationConnectionRequest {
+  int32 team_id = 1;
+  string endpoint_url = 2;
+  optional TeamCustomerTelemetryDestinationHeaders headers = 3;
+  TeamCustomerTelemetryDestinationTestSignal signal = 4;
+}
+
+message TestTeamCustomerTelemetryDestinationConnectionResponse {
+  bool ok = 1;
+  TeamCustomerTelemetryDestinationTestOutcome outcome = 2;
+  optional int32 status_code = 3;
+  optional int64 latency_ms = 4;
+  string message = 5;
+}
+
+message TeamCustomerTelemetryDestinationHealthBucket {
+  int64 bucket_start_epoch_millis = 1;
+  int64 exported = 2;
+  int64 failed = 3;
+  int64 dropped = 4;
+}
+
+message TeamCustomerTelemetryDestinationRecentError {
+  int64 at_epoch_millis = 1;
+  string error_class = 2;
+  optional int32 status_code = 3;
+  string signal = 4;
+}
+
+message GetTeamCustomerTelemetryDestinationHealthRequest {
+  int32 team_id = 1;
+  string destination_id = 2;
+}
+
+message GetTeamCustomerTelemetryDestinationHealthResponse {
+  TeamCustomerTelemetryDestinationHealthStatus status = 1;
+  repeated TeamCustomerTelemetryDestinationHealthBucket buckets = 2;
+  optional int64 last_success_at_epoch_millis = 3;
+  optional int64 last_error_at_epoch_millis = 4;
+  string last_error_class = 5;
+  optional int32 last_error_status = 6;
+  int64 queue_depth = 7;
+  string breaker_state = 8;
+  int64 oldest_batch_age_ms = 9;
+  repeated TeamCustomerTelemetryDestinationRecentError recent_errors = 10;
 }
 
 message GetBugbotMergedPrScanSummaryRequest {
@@ -6291,6 +6568,7 @@ message Rule {
   repeated string globs = 6;
   bool is_active = 4;
   bool is_required = 5;
+  TeamRuleAgentType agent_type = 7;
 }
 
 message GetTeamRulesRequest {
@@ -6309,6 +6587,7 @@ message CreateTeamRuleRequest {
   bool is_active = 3;
   bool is_required = 4;
   optional int32 team_id = 6;
+  TeamRuleAgentType agent_type = 7;
 }
 
 message CreateTeamRuleResponse {
@@ -6323,6 +6602,7 @@ message UpdateTeamRuleRequest {
   optional bool is_active = 4;
   optional bool is_required = 5;
   optional int32 team_id = 7;
+  optional TeamRuleAgentType agent_type = 8;
 }
 
 message UpdateTeamRuleResponse {
@@ -6936,11 +7216,17 @@ message GetTeamSmartAutoSettingsResponse {
   SmartAutoSettings settings = 1;
   bool can_enable = 2;
   repeated SmartAutoRequiredModel required_models = 3;
+  optional bool new_chat_nudge_all_to_smart_auto = 4;
+  optional bool models_auto_only = 5;
+  optional string new_chat_nudge_all_to_smart_auto_optimize_for = 6;
 }
 
 message UpdateTeamSmartAutoSettingsRequest {
   int32 team_id = 1;
   SmartAutoSettings settings = 2;
+  optional bool new_chat_nudge_all_to_smart_auto = 3;
+  optional bool models_auto_only = 4;
+  optional string new_chat_nudge_all_to_smart_auto_optimize_for = 5;
 }
 
 message UpdateTeamSmartAutoSettingsResponse {
@@ -7469,6 +7755,31 @@ message CreatePluginResponse {
   Plugin plugin = 1;
 }
 
+message PublishPluginRequest {
+  int32 team_id = 1;
+  string name = 2;
+  string display_name = 3;
+  string description = 4;
+  bytes plugin_tar_gz = 5;
+  optional string commit_message = 6;
+}
+
+message PublishPluginResponse {
+  int64 plugin_id = 1;
+  int64 marketplace_id = 2;
+  string commit_sha = 3;
+}
+
+message UnpublishPluginRequest {
+  int64 plugin_id = 1;
+  optional int32 team_id = 2;
+  optional string commit_message = 3;
+}
+
+message UnpublishPluginResponse {
+  string commit_sha = 1;
+}
+
 message ParseGitHubRepoForPluginRequest {
   string git_url = 1;
   optional string git_ref = 2;
@@ -7806,6 +8117,7 @@ message UninstallTeamPluginResponse {
 message GetEffectiveUserPluginsRequest {
   optional bool use_replica = 1;
   optional int32 team_id = 2;
+  bool exclude_configured_variables = 4;
 }
 
 message EffectivePlugin {
@@ -8127,6 +8439,7 @@ message GetCursorUserStateResponse {
 
 message SetJobDataRequest {
   string job_role = 1;
+  optional string use_case = 2;
 }
 
 message SetJobDataResponse {
@@ -8720,6 +9033,8 @@ service DashboardService {
   rpc GetMcpOAuthTokens(GetMcpOAuthTokensRequest) returns (GetMcpOAuthTokensResponse);
   rpc ListSandMcpTools(ListSandMcpToolsRequest) returns (ListSandMcpToolsResponse);
   rpc ExecuteSandMcpTool(ExecuteSandMcpToolRequest) returns (ExecuteSandMcpToolResponse);
+  rpc ClassifySandAutoReview(ClassifySandAutoReviewRequest) returns (ClassifySandAutoReviewResponse);
+  rpc RecordSandAuditEvents(RecordSandAuditEventsRequest) returns (RecordSandAuditEventsResponse);
   rpc McpOAuthRefreshLockBegin(McpOAuthRefreshLockBeginRequest) returns (McpOAuthRefreshLockBeginResponse);
   rpc McpOAuthRefreshLockRelease(McpOAuthRefreshLockReleaseRequest) returns (McpOAuthRefreshLockReleaseResponse);
   rpc DeleteMcpOAuthToken(DeleteMcpOAuthTokenRequest) returns (DeleteMcpOAuthTokenResponse);
@@ -8727,6 +9042,8 @@ service DashboardService {
   rpc CheckHttpMcpStatus(CheckHttpMcpStatusRequest) returns (CheckHttpMcpStatusResponse);
   rpc StoreMcpOAuthPendingState(StoreMcpOAuthPendingStateRequest) returns (StoreMcpOAuthPendingStateResponse);
   rpc GetMcpOAuthPendingState(GetMcpOAuthPendingStateRequest) returns (GetMcpOAuthPendingStateResponse);
+  rpc RenameMcpOAuthAccount(RenameMcpOAuthAccountRequest) returns (RenameMcpOAuthAccountResponse);
+  rpc DeleteMcpOAuthAccount(DeleteMcpOAuthAccountRequest) returns (DeleteMcpOAuthAccountResponse);
   rpc CompleteMcpOAuth(CompleteMcpOAuthRequest) returns (CompleteMcpOAuthResponse);
   rpc GetPluginMcpConfig(GetPluginMcpConfigRequest) returns (GetPluginMcpConfigResponse);
   rpc BatchGetPluginMcpConfig(BatchGetPluginMcpConfigRequest) returns (BatchGetPluginMcpConfigResponse);
@@ -8805,6 +9122,8 @@ service DashboardService {
   rpc CreateTeamCustomerTelemetryDestination(CreateTeamCustomerTelemetryDestinationRequest) returns (CreateTeamCustomerTelemetryDestinationResponse);
   rpc UpdateTeamCustomerTelemetryDestination(UpdateTeamCustomerTelemetryDestinationRequest) returns (UpdateTeamCustomerTelemetryDestinationResponse);
   rpc DeleteTeamCustomerTelemetryDestination(DeleteTeamCustomerTelemetryDestinationRequest) returns (DeleteTeamCustomerTelemetryDestinationResponse);
+  rpc TestTeamCustomerTelemetryDestinationConnection(TestTeamCustomerTelemetryDestinationConnectionRequest) returns (TestTeamCustomerTelemetryDestinationConnectionResponse);
+  rpc GetTeamCustomerTelemetryDestinationHealth(GetTeamCustomerTelemetryDestinationHealthRequest) returns (GetTeamCustomerTelemetryDestinationHealthResponse);
   rpc SetTeamNoZdrModelConsent(SetTeamNoZdrModelConsentRequest) returns (SetTeamNoZdrModelConsentResponse);
   rpc SetOrganizationNoZdrModelConsent(SetOrganizationNoZdrModelConsentRequest) returns (SetOrganizationNoZdrModelConsentResponse);
   rpc SetUserNoZdrModelConsent(SetUserNoZdrModelConsentRequest) returns (SetUserNoZdrModelConsentResponse);
@@ -8823,6 +9142,9 @@ service DashboardService {
   rpc GetTeamRawData(GetTeamRawDataRequest) returns (GetTeamRawDataResponse);
   rpc GetClientUsageData(GetClientUsageDataRequest) returns (GetClientUsageDataResponse);
   rpc GetCurrentPeriodUsage(GetCurrentPeriodUsageRequest) returns (GetCurrentPeriodUsageResponse);
+  rpc UseSandBankedReset(UseSandBankedResetRequest) returns (UseSandBankedResetResponse);
+  rpc ListSandBankedResets(ListSandBankedResetsRequest) returns (ListSandBankedResetsResponse);
+  rpc GetSandUsageStatus(GetSandUsageStatusRequest) returns (GetSandUsageStatusResponse);
   rpc GetUsageSignalsProjectionSnapshot(GetProjectionSnapshotRequest) returns (GetProjectionSnapshotResponse);
   rpc GetPlanInfo(GetPlanInfoRequest) returns (GetPlanInfoResponse);
   rpc VerifyAppleTransaction(VerifyAppleTransactionRequest) returns (VerifyAppleTransactionResponse);
@@ -9027,7 +9349,7 @@ service DashboardService {
   rpc IsAllowedFreeTrialUsage(IsAllowedFreeTrialUsageRequest) returns (IsAllowedFreeTrialUsageResponse);
   rpc IsNextSetupRunFree(IsNextSetupRunFreeRequest) returns (IsNextSetupRunFreeResponse);
   rpc CompletedLinkSlackAccount(CompletedLinkSlackAccountRequest) returns (CompletedLinkSlackAccountResponse);
-  rpc NotifyTeamAdmins(NotifyTeamAdminsRequest) returns (NotifyTeamAdminsResponse);
+  rpc NotifyBugbotTeamAdmins(NotifyTeamAdminsRequest) returns (NotifyTeamAdminsResponse);
   rpc GetAdminNotificationStatus(GetAdminNotificationStatusRequest) returns (GetAdminNotificationStatusResponse);
   rpc OptOutNewPricing(OptOutNewPricingRequest) returns (OptOutNewPricingResponse);
   rpc SubmitFeedback(SubmitFeedbackRequest) returns (SubmitFeedbackResponse);
@@ -9048,6 +9370,8 @@ service DashboardService {
   rpc GetTeamMemberProfileByHandle(GetTeamMemberProfileByHandleRequest) returns (GetTeamMemberProfileByHandleResponse);
   rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse);
   rpc CreatePlugin(CreatePluginRequest) returns (CreatePluginResponse);
+  rpc PublishPlugin(PublishPluginRequest) returns (PublishPluginResponse);
+  rpc UnpublishPlugin(UnpublishPluginRequest) returns (UnpublishPluginResponse);
   rpc ParseGitHubRepoForPlugins(ParseGitHubRepoForPluginRequest) returns (ParseGitHubRepoForPluginsResponse);
   rpc ParsePluginPublisherRepoInternal(ParsePluginPublisherRepoInternalRequest) returns (ParsePluginPublisherRepoInternalResponse);
   rpc PreviewReindexPluginRepoInternal(PreviewReindexPluginRepoInternalRequest) returns (PreviewReindexPluginRepoResponse);

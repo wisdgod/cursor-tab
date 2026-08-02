@@ -51,7 +51,11 @@ message WaterfallUpdate {
     SpanLog span_log = 4;
     SpanStatusUpdate span_status_update = 5;
     SpanUpdate span_update = 6;
+    SetupWaterfallSentinel sentinel = 8;
   }
+}
+
+message SetupWaterfallSentinel {
 }
 
 message SpanStart {

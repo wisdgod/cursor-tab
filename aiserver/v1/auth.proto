@@ -83,7 +83,13 @@ message CheckSessionTokenRequest {
 }
 
 message CheckSessionTokenResponse {
+  enum Validity {
+    VALIDITY_UNSPECIFIED = 0;
+    VALIDITY_VALID = 1;
+    VALIDITY_INVALID = 2;
+  }
   bool valid = 1;
+  Validity validity = 2;
 }
 
 message CreateMobileSessionRequest {
@@ -139,6 +145,7 @@ message GetEmailResponse {
   SignUpType sign_up_type = 2;
   optional string job_role = 3;
   optional bool is_recently_created_user = 4;
+  optional string use_case = 5;
 }
 
 message GetUserMetaRequest {

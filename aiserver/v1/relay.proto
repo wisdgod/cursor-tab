@@ -10,6 +10,7 @@ enum RelayRunKind {
   RELAY_RUN_KIND_MANUAL = 1;
   RELAY_RUN_KIND_SCHEDULED = 2;
   RELAY_RUN_KIND_BACKFILL = 3;
+  RELAY_RUN_KIND_RETRY = 4;
 }
 
 enum RelayPipelineRunStatus {
@@ -138,6 +139,8 @@ message RelayPipelineRunRecord {
   optional string schedule_id = 19;
   google.protobuf.Timestamp scheduled_fire_time = 20;
   optional string backfill_id = 21;
+  optional string retry_of_run_id = 22;
+  optional string retried_by_run_id = 23;
 }
 
 message RelayScheduleRecord {
@@ -417,6 +420,19 @@ message RetryRelayBackfillResponse {
   optional string temporal_run_id = 4;
 }
 
+message RetryRelayPipelineRunRequest {
+  string run_id = 1;
+  optional string created_by = 2;
+}
+
+message RetryRelayPipelineRunResponse {
+  string run_action = 1;
+  RelayPipelineRunRecord run = 2;
+  optional string temporal_workflow_id = 3;
+  optional string temporal_run_id = 4;
+  optional string output_prefix = 5;
+}
+
 service RelayService {
   rpc ListPipelineDefinitions(ListRelayPipelineDefinitionsRequest) returns (ListRelayPipelineDefinitionsResponse);
   rpc GetPipelineDefinition(GetRelayPipelineDefinitionRequest) returns (GetRelayPipelineDefinitionResponse);
@@ -435,4 +451,5 @@ service RelayService {
   rpc ListBackfills(ListRelayBackfillsRequest) returns (ListRelayBackfillsResponse);
   rpc RequestBackfillCancel(RequestRelayBackfillCancelRequest) returns (RequestRelayBackfillCancelResponse);
   rpc RetryBackfill(RetryRelayBackfillRequest) returns (RetryRelayBackfillResponse);
+  rpc RetryPipelineRun(RetryRelayPipelineRunRequest) returns (RetryRelayPipelineRunResponse);
 }

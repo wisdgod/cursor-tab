@@ -8,11 +8,38 @@ enum AgentHostSessionStatus {
   AGENT_HOST_SESSION_STATUS_UNSPECIFIED = 0;
   AGENT_HOST_SESSION_STATUS_IDLE = 1;
   AGENT_HOST_SESSION_STATUS_RUNNING = 2;
+  AGENT_HOST_SESSION_STATUS_AWAITING_INPUT = 3;
+}
+
+enum AgentHostInteractionResponseStatus {
+  AGENT_HOST_INTERACTION_RESPONSE_STATUS_UNSPECIFIED = 0;
+  AGENT_HOST_INTERACTION_RESPONSE_STATUS_ACCEPTED = 1;
+  AGENT_HOST_INTERACTION_RESPONSE_STATUS_ALREADY_RESOLVED = 2;
+  AGENT_HOST_INTERACTION_RESPONSE_STATUS_NOT_FOUND = 3;
+}
+
+enum AgentHostBackgroundWorkKind {
+  AGENT_HOST_BACKGROUND_WORK_KIND_UNSPECIFIED = 0;
+  AGENT_HOST_BACKGROUND_WORK_KIND_SHELL = 1;
+  AGENT_HOST_BACKGROUND_WORK_KIND_SUBAGENT = 2;
+}
+
+enum AgentHostBackgroundWorkState {
+  AGENT_HOST_BACKGROUND_WORK_STATE_UNSPECIFIED = 0;
+  AGENT_HOST_BACKGROUND_WORK_STATE_RUNNING = 1;
+  AGENT_HOST_BACKGROUND_WORK_STATE_QUEUED = 2;
+}
+
+enum AgentHostTurnOutcome {
+  AGENT_HOST_TURN_OUTCOME_UNSPECIFIED = 0;
+  AGENT_HOST_TURN_OUTCOME_COMPLETED = 1;
+  AGENT_HOST_TURN_OUTCOME_INTERRUPTED = 2;
+  AGENT_HOST_TURN_OUTCOME_FAILED = 3;
 }
 
 message CreateAgentHostSessionRequest {
   string session_id = 1;
-  optional ConversationStateStructure conversation_state = 2;
+  optional ConversationStateStructure initial_history = 2;
   optional AgentHostSessionOptions session_options = 3;
 }
 
@@ -23,6 +50,15 @@ message AgentHostSessionOptions {
 }
 
 message CreateAgentHostSessionResponse {
+}
+
+message ForkAgentHostSessionRequest {
+  string session_id = 1;
+  optional string last_turn_id = 2;
+}
+
+message ForkAgentHostSessionResponse {
+  string session_id = 1;
 }
 
 message ListAgentHostSessionsRequest {
@@ -39,6 +75,7 @@ message AgentHostSession {
   string session_id = 1;
   AgentHostSessionStatus status = 2;
   uint64 last_event_id = 3;
+  optional string forked_from_session_id = 4;
 }
 
 message WatchAgentHostSessionsEvent {
@@ -71,7 +108,7 @@ message SendAgentHostMessageRequest {
   string text = 2;
   optional string model_id = 3;
   optional ModelDetails model_details = 4;
-  optional AgentHostRunOptions run_options = 5;
+  optional AgentHostTurnOptions turn_options = 5;
   optional RequestedModel requested_model = 6;
 }
 
@@ -80,16 +117,17 @@ message SendAgentHostActionRequest {
   ConversationAction action = 2;
   optional string model_id = 3;
   optional ModelDetails model_details = 4;
-  optional AgentHostRunOptions run_options = 5;
+  optional AgentHostTurnOptions turn_options = 5;
   optional RequestedModel requested_model = 6;
+  optional ConversationStateStructure base_history = 7;
 }
 
 message SendAgentHostMessageResponse {
-  string run_id = 1;
+  string turn_id = 1;
 }
 
 message SendAgentHostActionResponse {
-  string run_id = 1;
+  string turn_id = 1;
 }
 
 message DeleteAgentHostSessionRequest {
@@ -99,32 +137,89 @@ message DeleteAgentHostSessionRequest {
 message DeleteAgentHostSessionResponse {
 }
 
-message CancelAgentHostRunRequest {
+message InterruptAgentHostTurnRequest {
   string session_id = 1;
-  string run_id = 2;
+  string turn_id = 2;
   optional string reason = 3;
 }
 
-message CancelAgentHostRunResponse {
+message InterruptAgentHostTurnResponse {
+  bool interrupted = 1;
+}
+
+message CancelQueuedAgentHostTurnRequest {
+  string session_id = 1;
+  string turn_id = 2;
+  optional string reason = 3;
+}
+
+message CancelQueuedAgentHostTurnResponse {
+  bool cancelled = 1;
+}
+
+message RespondToAgentHostInteractionRequest {
+  string session_id = 1;
+  string interaction_id = 2;
+  InteractionResponse response = 3;
+}
+
+message RespondToAgentHostInteractionResponse {
+  AgentHostInteractionResponseStatus status = 1;
+}
+
+message AgentHostPendingInteraction {
+  string interaction_id = 1;
+  string turn_id = 2;
+  InteractionQuery query = 3;
+}
+
+message WatchAgentHostSessionInteractionsRequest {
+  string session_id = 1;
+}
+
+message WatchAgentHostSessionInteractionsEvent {
+  oneof event {
+    AgentHostSessionInteractionsSnapshot snapshot = 1;
+    AgentHostSessionInteractionsState state = 2;
+  }
+}
+
+message AgentHostSessionInteractionsSnapshot {
+  repeated AgentHostPendingInteraction interactions = 1;
+}
+
+message AgentHostSessionInteractionsState {
+  repeated AgentHostPendingInteraction interactions = 1;
 }
 
 message AgentHostBackgroundWork {
   string id = 1;
-  string kind = 2;
-  string state = 3;
+  AgentHostBackgroundWorkKind kind = 2;
+  AgentHostBackgroundWorkState state = 3;
   optional string owner_id = 4;
   bool has_abort = 5;
   map<string, string> metadata = 6;
 }
 
-message ListAgentHostBackgroundWorkRequest {
+message WatchAgentHostSessionBackgroundWorkRequest {
   string session_id = 1;
-  optional string kind = 2;
-  optional string state = 3;
+  optional AgentHostBackgroundWorkKind kind = 2;
+  optional AgentHostBackgroundWorkState state = 3;
   optional string owner_id = 4;
 }
 
-message ListAgentHostBackgroundWorkResponse {
+message WatchAgentHostSessionBackgroundWorkEvent {
+  oneof event {
+    AgentHostSessionBackgroundWorkSnapshot snapshot = 1;
+    AgentHostSessionBackgroundWorkState state = 2;
+  }
+}
+
+message AgentHostSessionBackgroundWorkSnapshot {
+  repeated AgentHostBackgroundWork work = 1;
+}
+
+message AgentHostSessionBackgroundWorkState {
   repeated AgentHostBackgroundWork work = 1;
 }
 
@@ -139,8 +234,8 @@ message AbortAgentHostBackgroundWorkResponse {
 
 message AbortAllAgentHostBackgroundWorkRequest {
   string session_id = 1;
-  optional string kind = 2;
-  optional string state = 3;
+  optional AgentHostBackgroundWorkKind kind = 2;
+  optional AgentHostBackgroundWorkState state = 3;
   optional string owner_id = 4;
 }
 
@@ -158,32 +253,49 @@ message AgentHostSessionEvent {
   oneof event {
     InteractionUpdate interaction_update = 2;
     ConversationStateStructure conversation_state = 3;
-    AgentHostRunStarted run_started = 4;
-    AgentHostRunCompleted run_completed = 5;
-    AgentHostRunFailed run_failed = 6;
-    AgentHostRunCancelled run_cancelled = 7;
+    AgentHostTurnStarted turn_started = 4;
+    AgentHostTurnAwaitingInput turn_awaiting_input = 8;
+    AgentHostTurnSettled turn_settled = 9;
+    AgentHostInteractionResolved interaction_resolved = 10;
   }
 }
 
-message AgentHostRunStarted {
-  string run_id = 1;
+message AgentHostTurnStarted {
+  string turn_id = 1;
 }
 
-message AgentHostRunCompleted {
-  string run_id = 1;
+message AgentHostTurnAwaitingInput {
+  string turn_id = 1;
+  string request_id = 2;
+  string interaction_id = 3;
+  InteractionQuery query = 4;
 }
 
-message AgentHostRunFailed {
-  string run_id = 1;
-  string error = 2;
+message AgentHostInteractionCancelled {
+  optional string reason = 1;
 }
 
-message AgentHostRunCancelled {
-  string run_id = 1;
-  optional string reason = 2;
+message AgentHostInteractionFailed {
+  string error = 1;
 }
 
-message AgentHostRunOptions {
+message AgentHostInteractionResolved {
+  string turn_id = 1;
+  string interaction_id = 2;
+  oneof resolution {
+    InteractionResponse responded = 3;
+    AgentHostInteractionCancelled cancelled = 4;
+    AgentHostInteractionFailed failed = 5;
+  }
+}
+
+message AgentHostTurnSettled {
+  string turn_id = 1;
+  AgentHostTurnOutcome outcome = 2;
+  optional string detail = 3;
+}
+
+message AgentHostTurnOptions {
   optional string generation_uuid = 1;
   optional string custom_system_prompt = 2;
   optional bool exclude_workspace_context = 3;
@@ -194,13 +306,17 @@ message AgentHostRunOptions {
 
 service AgentHostService {
   rpc CreateSession(CreateAgentHostSessionRequest) returns (CreateAgentHostSessionResponse);
+  rpc ForkSession(ForkAgentHostSessionRequest) returns (ForkAgentHostSessionResponse);
   rpc ListSessions(ListAgentHostSessionsRequest) returns (ListAgentHostSessionsResponse);
   rpc WatchSessions(WatchAgentHostSessionsRequest) returns (stream WatchAgentHostSessionsEvent);
   rpc SendMessage(SendAgentHostMessageRequest) returns (SendAgentHostMessageResponse);
   rpc SendAction(SendAgentHostActionRequest) returns (SendAgentHostActionResponse);
   rpc DeleteSession(DeleteAgentHostSessionRequest) returns (DeleteAgentHostSessionResponse);
-  rpc CancelRun(CancelAgentHostRunRequest) returns (CancelAgentHostRunResponse);
-  rpc ListBackgroundWork(ListAgentHostBackgroundWorkRequest) returns (ListAgentHostBackgroundWorkResponse);
+  rpc InterruptTurn(InterruptAgentHostTurnRequest) returns (InterruptAgentHostTurnResponse);
+  rpc CancelQueuedTurn(CancelQueuedAgentHostTurnRequest) returns (CancelQueuedAgentHostTurnResponse);
+  rpc RespondToInteraction(RespondToAgentHostInteractionRequest) returns (RespondToAgentHostInteractionResponse);
+  rpc WatchSessionInteractions(WatchAgentHostSessionInteractionsRequest) returns (stream WatchAgentHostSessionInteractionsEvent);
+  rpc WatchSessionBackgroundWork(WatchAgentHostSessionBackgroundWorkRequest) returns (stream WatchAgentHostSessionBackgroundWorkEvent);
   rpc AbortBackgroundWork(AbortAgentHostBackgroundWorkRequest) returns (AbortAgentHostBackgroundWorkResponse);
   rpc AbortAllBackgroundWork(AbortAllAgentHostBackgroundWorkRequest) returns (AbortAllAgentHostBackgroundWorkResponse);
   rpc AttachSession(AttachAgentHostSessionRequest) returns (stream AgentHostSessionEvent);

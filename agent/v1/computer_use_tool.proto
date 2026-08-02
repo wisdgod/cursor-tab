@@ -27,6 +27,7 @@ message Coordinate {
 message ComputerUseArgs {
   string tool_call_id = 1;
   repeated ComputerUseAction actions = 2;
+  optional string description = 3;
 }
 
 message ComputerUseAction {
@@ -67,6 +68,7 @@ message MouseUpAction {
 message DragAction {
   repeated Coordinate path = 1;
   MouseButton button = 2;
+  optional string modifier_keys = 3;
 }
 
 message ScrollAction {

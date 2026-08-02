@@ -260,6 +260,7 @@ message CreateRepoRequest {
   ClientRepoIdentifier identifier = 1;
   optional string default_branch = 2;
   optional string forge_environment = 6;
+  optional RepoKind repo_kind = 7;
 }
 
 message CreateRepoResponse {
@@ -271,6 +272,14 @@ message CreateMirroredRepoRequest {
   string target_namespace = 2;
   optional string forge_environment = 3;
   optional RepoKind repo_kind = 4;
+}
+
+message FilterMirrorableGithubReposRequest {
+  repeated GithubRepoIdentifier repos = 1;
+}
+
+message FilterMirrorableGithubReposResponse {
+  repeated GithubRepoIdentifier mirrorable_repos = 1;
 }
 
 message DetachRepoMirrorRequest {
@@ -331,6 +340,14 @@ message DeleteRepoClientRequest {
 }
 
 message DeleteRepoClientResponse {
+  string repo_uuid = 1;
+}
+
+message DeleteMirroredRepoRequest {
+  ClientRepoIdentifier identifier = 1;
+}
+
+message DeleteMirroredRepoResponse {
   string repo_uuid = 1;
 }
 
@@ -558,6 +575,14 @@ message ListNamespaceGrantsResponse {
   bool list_truncated = 3;
 }
 
+message ListNamespaceAssignablePoliciesRequest {
+  string namespace_slug = 1;
+}
+
+message ListNamespaceAssignablePoliciesResponse {
+  repeated AuthPolicySummary policies = 1;
+}
+
 message ResolveRepoPathClientRequest {
   ClientRepoIdentifier identifier = 1;
   string ref_path = 2;
@@ -611,6 +636,17 @@ message GetCommitClientRequest {
 message GetBlobClientRequest {
   ClientRepoIdentifier identifier = 1;
   string blob_sha = 2;
+}
+
+message GetTagClientRequest {
+  ClientRepoIdentifier identifier = 1;
+  string tag_sha = 2;
+}
+
+message GetTreeClientRequest {
+  ClientRepoIdentifier identifier = 1;
+  string tree_sha = 2;
+  bool recursive = 3;
 }
 
 message GetFileHistoryClientRequest {
@@ -682,6 +718,9 @@ message GetPullRequestDiffClientRequest {
   string head_commit_sha = 2;
   string base_commit_sha = 3;
   optional bool include_patches = 4;
+  optional bool include_file_stats = 5;
+  optional uint32 page_size = 6;
+  optional string page_cursor = 7;
 }
 
 message GetCommitDiffClientRequest {
@@ -690,12 +729,15 @@ message GetCommitDiffClientRequest {
   optional string base_commit_sha = 3;
   bool include_patches = 4;
   repeated string paths = 5;
+  optional uint32 page_size = 6;
+  optional string page_cursor = 7;
 }
 
 message ListRefsClientRequest {
   ClientRepoIdentifier identifier = 1;
   git_forge.v1.ListRefsFilter filter = 2;
   bool names_only = 3;
+  string prefix = 4;
 }
 
 message CanMergeClientRequest {
@@ -780,11 +822,22 @@ message GetCollectedPullRequestDiffRequest {
   string head_commit_sha = 2;
   string base_commit_sha = 3;
   optional bool include_patches = 4;
+  optional bool include_file_stats = 5;
+  optional uint32 page_size = 6;
+  optional string page_cursor = 7;
 }
 
 message GetCollectedPullRequestDiffResponse {
   string merge_base_sha = 1;
   repeated CollectedFileDiff files = 2;
+  optional string next_page_cursor = 4;
+}
+
+message ActorWithDisplay {
+  string id = 1;
+  string kind = 2;
+  string display_name = 3;
+  string avatar_url = 4;
 }
 
 message Change {
@@ -809,6 +862,8 @@ message Change {
   string author_avatar_url = 19;
   optional string merged_by_id = 20;
   optional string merged_by_kind = 21;
+  ActorWithDisplay author = 22;
+  ActorWithDisplay merged_by = 23;
 }
 
 message Version {
@@ -921,6 +976,7 @@ message Review {
   string author_avatar_url = 11;
   optional google.protobuf.Timestamp submitted_at = 12;
   optional ReviewDismissal dismissal = 13;
+  ActorWithDisplay author = 14;
 }
 
 message Comment {
@@ -937,6 +993,7 @@ message Comment {
   string author_display_name = 11;
   string author_avatar_url = 12;
   repeated CommentReactionGroup reaction_groups = 13;
+  ActorWithDisplay author = 14;
 }
 
 message CommentReactionGroup {
@@ -952,6 +1009,7 @@ message CommentReaction {
   string reactor_display_name = 4;
   string reactor_avatar_url = 5;
   bool viewer_is_reactor = 6;
+  ActorWithDisplay reactor = 7;
 }
 
 message CreateReviewRequest {
@@ -1250,6 +1308,7 @@ message SectionOfChanges {
   string author_kind = 28;
   string author_display_name = 29;
   string author_avatar_url = 30;
+  ActorWithDisplay author = 31;
 }
 
 message SectionOfChangesReviewer {
@@ -1259,6 +1318,7 @@ message SectionOfChangesReviewer {
   string author_kind = 4;
   string author_display_name = 5;
   string author_avatar_url = 6;
+  ActorWithDisplay author = 7;
 }
 
 message SectionOfChangesFilter {
@@ -1455,6 +1515,7 @@ message CommentThread {
   string resolved_by_kind = 16;
   string resolved_by_display_name = 17;
   string resolved_by_avatar_url = 18;
+  ActorWithDisplay resolved_by = 19;
 }
 
 message CreateCommentThreadRequest {
@@ -1671,15 +1732,6 @@ message DisableChangeMergeWhenReadyRequest {
 }
 
 message DisableChangeMergeWhenReadyResponse {
-}
-
-message TriggerCiRequest {
-  ClientRepoIdentifier identifier = 1;
-  string ref = 2;
-  string sha = 3;
-}
-
-message TriggerCiResponse {
 }
 
 message GetCiStateRequest {
@@ -1973,6 +2025,21 @@ message RecordInboundMirrorExternalGithubMergeResponse {
   Change change = 1;
 }
 
+message PrepareInboundStackMergeCommitRequest {
+  ChangeIdentifier change = 1;
+  string operation_id = 2;
+  string lease_token = 3;
+  string ours_sha = 4;
+  string message = 5;
+  optional string author_name = 6;
+  optional string author_email = 7;
+}
+
+message PrepareInboundStackMergeCommitResponse {
+  string merge_commit_sha = 1;
+  string exported_ref = 2;
+}
+
 message GetChangeStackPageDataRequest {
   ChangeIdentifier change = 1;
 }
@@ -2026,10 +2093,13 @@ message GetAppResponse {
 
 message ListNamespaceAppsRequest {
   string namespace_slug = 1;
+  uint32 page_size = 2;
+  string page_token = 3;
 }
 
 message ListNamespaceAppsResponse {
   repeated App apps = 1;
+  string next_page_token = 2;
 }
 
 message Installation {
@@ -2041,6 +2111,7 @@ message Installation {
   RepoSelectionMode repo_selection_mode = 6;
   repeated string repo_ids = 7;
   repeated string accepted_scopes = 8;
+  optional string suspended_at = 9;
 }
 
 message CreateInstallationRequest {
@@ -2126,7 +2197,7 @@ message PreviewAppInstallationRequest {
   string app_id = 2;
   repeated string requested_scopes = 3;
   string summary = 4;
-  string redirect_uri = 5;
+  optional string redirect_uri = 5;
   PreviewAppInstallationOptions options = 6;
 }
 
@@ -2169,6 +2240,20 @@ message GetAppMetadataRequest {
 
 message GetAppMetadataResponse {
   AppMetadata app = 1;
+}
+
+message SuspendInstallationRequest {
+  string id = 1;
+}
+
+message SuspendInstallationResponse {
+}
+
+message UnsuspendInstallationRequest {
+  string id = 1;
+}
+
+message UnsuspendInstallationResponse {
 }
 
 message BuildkiteTrigger {
@@ -2437,11 +2522,29 @@ message RemoveLabelFromChangeRequest {
 message RemoveLabelFromChangeResponse {
 }
 
+message WatchChangeSyncEventsRequest {
+  ClientRepoIdentifier identifier = 1;
+  uint64 change_number = 2;
+}
+
+message WatchChangeSyncEventsResponse {
+  oneof frame {
+    string snapshot_json = 1;
+    string event_json = 2;
+    SyncEventHeartbeat heartbeat = 3;
+  }
+}
+
+message SyncEventHeartbeat {
+}
+
 service OriginService {
   rpc ListHostedRepos(ListHostedReposRequest) returns (ListHostedReposResponse);
   rpc CreateRepo(CreateRepoRequest) returns (CreateRepoResponse);
   rpc CreateMirroredRepo(CreateMirroredRepoRequest) returns (CreateRepoResponse);
+  rpc FilterMirrorableGithubRepos(FilterMirrorableGithubReposRequest) returns (FilterMirrorableGithubReposResponse);
   rpc DeleteRepo(DeleteRepoClientRequest) returns (DeleteRepoClientResponse);
+  rpc DeleteMirroredRepo(DeleteMirroredRepoRequest) returns (DeleteMirroredRepoResponse);
   rpc GetRepo(GetRepoRequest) returns (GetRepoResponse);
   rpc GetRepoWithMirrorInfo(GetRepoRequest) returns (GetRepoWithMirrorInfoResponse);
   rpc GetRepoByGithubMirror(GetRepoByGithubMirrorRequest) returns (GetRepoWithMirrorInfoResponse);
@@ -2459,8 +2562,11 @@ service OriginService {
   rpc HasOriginPermission(HasOriginPermissionRequest) returns (HasOriginPermissionResponse);
   rpc GetNamespaceTeamAccess(GetNamespaceTeamAccessRequest) returns (GetNamespaceTeamAccessResponse);
   rpc ListNamespaceGrants(ListNamespaceGrantsRequest) returns (ListNamespaceGrantsResponse);
+  rpc ListNamespaceAssignablePolicies(ListNamespaceAssignablePoliciesRequest) returns (ListNamespaceAssignablePoliciesResponse);
   rpc GetCommit(GetCommitClientRequest) returns (git_forge.v1.GetCommitResponse);
   rpc GetBlob(GetBlobClientRequest) returns (git_forge.v1.GetBlobResponse);
+  rpc GetTag(GetTagClientRequest) returns (git_forge.v1.GetTagResponse);
+  rpc GetTree(GetTreeClientRequest) returns (git_forge.v1.GetTreeResponse);
   rpc ResolveRepoPath(ResolveRepoPathClientRequest) returns (git_forge.v1.ResolveRefPathResponse);
   rpc GetRepoContent(GetRepoContentClientRequest) returns (git_forge.v1.GetRepoContentResponse);
   rpc MintRawRepoFileLink(MintRawRepoFileLinkClientRequest) returns (MintRawRepoFileLinkClientResponse);
@@ -2537,7 +2643,6 @@ service OriginService {
   rpc BatchGetChanges(BatchGetChangesRequest) returns (BatchGetChangesResponse);
   rpc GetSectionOfChanges(GetSectionOfChangesRequest) returns (GetSectionOfChangesResponse);
   rpc ResolveOriginPullRequestRedirect(ResolveOriginPullRequestRedirectRequest) returns (ResolveOriginPullRequestRedirectResponse);
-  rpc TriggerCi(TriggerCiRequest) returns (TriggerCiResponse);
   rpc GetCiState(GetCiStateRequest) returns (GetCiStateResponse);
   rpc PostCheckRun(PostCheckRunRequest) returns (PostCheckRunResponse);
   rpc GetChangesetMergeability(GetChangesetMergeabilityRequest) returns (GetChangesetMergeabilityResponse);
@@ -2548,6 +2653,7 @@ service OriginService {
   rpc RecordInboundMirrorGithubMergeGithubResult(RecordInboundMirrorGithubMergeGithubResultRequest) returns (RecordInboundMirrorGithubMergeGithubResultResponse);
   rpc RecordInboundMirrorGithubMergeError(RecordInboundMirrorGithubMergeErrorRequest) returns (RecordInboundMirrorGithubMergeErrorResponse);
   rpc RecordInboundMirrorExternalGithubMerge(RecordInboundMirrorExternalGithubMergeRequest) returns (RecordInboundMirrorExternalGithubMergeResponse);
+  rpc PrepareInboundStackMergeCommit(PrepareInboundStackMergeCommitRequest) returns (PrepareInboundStackMergeCommitResponse);
   rpc GetApp(GetAppRequest) returns (GetAppResponse);
   rpc GetAppMetadata(GetAppMetadataRequest) returns (GetAppMetadataResponse);
   rpc ListNamespaceApps(ListNamespaceAppsRequest) returns (ListNamespaceAppsResponse);
@@ -2557,6 +2663,8 @@ service OriginService {
   rpc UpdateApp(UpdateAppRequest) returns (UpdateAppResponse);
   rpc SetAppIcon(SetAppIconRequest) returns (SetAppIconResponse);
   rpc DeleteInstallation(DeleteInstallationRequest) returns (DeleteInstallationResponse);
+  rpc SuspendInstallation(SuspendInstallationRequest) returns (SuspendInstallationResponse);
+  rpc UnsuspendInstallation(UnsuspendInstallationRequest) returns (UnsuspendInstallationResponse);
   rpc PreviewAppInstallation(PreviewAppInstallationRequest) returns (PreviewAppInstallationResponse);
   rpc UpsertBuildkiteTrigger(UpsertBuildkiteTriggerRequest) returns (UpsertBuildkiteTriggerResponse);
   rpc ListBuildkiteTriggers(ListBuildkiteTriggersRequest) returns (ListBuildkiteTriggersResponse);
@@ -2578,4 +2686,5 @@ service OriginService {
   rpc AddLabelToChange(AddLabelToChangeRequest) returns (AddLabelToChangeResponse);
   rpc RemoveLabelFromChange(RemoveLabelFromChangeRequest) returns (RemoveLabelFromChangeResponse);
   rpc CheckChangeCreationAccess(CheckChangeCreationAccessRequest) returns (CheckChangeCreationAccessResponse);
+  rpc WatchChangeSyncEvents(WatchChangeSyncEventsRequest) returns (stream WatchChangeSyncEventsResponse);
 }

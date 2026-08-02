@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package agent.v1;
+
+enum GoalStatus {
+  GOAL_STATUS_UNSPECIFIED = 0;
+  GOAL_STATUS_ACTIVE = 1;
+  GOAL_STATUS_PAUSED = 2;
+  GOAL_STATUS_COMPLETE = 3;
+  GOAL_STATUS_CLEARED = 4;
+}
+
+message CreateGoalArgs {
+  string objective = 1;
+}
+
+message CreateGoalSuccess {
+}
+
+message GoalError {
+  string error = 1;
+}
+
+message CreateGoalResult {
+  oneof result {
+    CreateGoalSuccess success = 1;
+    GoalError error = 2;
+  }
+}
+
+message CreateGoalToolCall {
+  CreateGoalArgs args = 1;
+  CreateGoalResult result = 2;
+}
+
+message UpdateGoalArgs {
+  GoalStatus status = 1;
+}
+
+message UpdateGoalSuccess {
+  GoalStatus status = 1;
+}
+
+message UpdateGoalResult {
+  oneof result {
+    UpdateGoalSuccess success = 1;
+    GoalError error = 2;
+  }
+}
+
+message UpdateGoalToolCall {
+  UpdateGoalArgs args = 1;
+  UpdateGoalResult result = 2;
+}

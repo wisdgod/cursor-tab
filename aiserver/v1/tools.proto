@@ -1700,6 +1700,7 @@ message TaskV2Params {
 message TaskV2Result {
   optional string agent_id = 1;
   bool is_background = 2;
+  optional string cloud_agent_bc_id = 3;
 }
 
 message TaskV2Stream {

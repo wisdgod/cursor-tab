@@ -13,6 +13,10 @@ message InstallPluginAndPrefillPromptPayload {
   int64 plugin_id = 3;
 }
 
+message PrefillPromptPayload {
+  string prompt = 1;
+}
+
 message RecommendedAction {
   string action_id = 1;
   string title = 2;
@@ -22,6 +26,7 @@ message RecommendedAction {
   RecommendedActionSurface surface = 6;
   oneof payload {
     InstallPluginAndPrefillPromptPayload install_plugin_and_prefill_prompt = 7;
+    PrefillPromptPayload prefill_prompt = 8;
   }
 }
 

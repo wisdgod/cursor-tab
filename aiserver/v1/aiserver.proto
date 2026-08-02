@@ -308,6 +308,7 @@ message NameTabRequest {
   repeated ConversationMessage messages = 1;
   bool is_project = 2;
   string conversation_id = 6;
+  bool is_side_chat = 7;
   oneof credentials {
     agent.v1.ApiKeyCredentials api_key_credentials = 3;
     agent.v1.AzureCredentials azure_credentials = 4;
@@ -1439,6 +1440,9 @@ message AvailableModelsResponse {
     }
     RoutedModelViewConfig routed_model_view_config = 1;
     NamedModelsViewConfig named_models_view_config = 2;
+    optional bool hide_search_bar = 3;
+    optional bool hide_add_models = 4;
+    optional string model_selection_restriction_message = 5;
   }
   repeated AvailableModel models = 2;
   repeated string model_names = 1;
@@ -1456,6 +1460,7 @@ message AvailableModelsResponse {
   ModelPickerDisplayConfiguration display_configuration = 15;
   optional string experimental_model_id = 19;
   optional string experimental_model_display_name = 20;
+  optional string nudge_new_chats_to_auto_optimize_for = 21;
 }
 
 message ModelParameterDefinition {
@@ -3075,6 +3080,36 @@ message ProcessMetricsV2RowRequest {
 message ReportProcessMetricsV2Response {
 }
 
+message ReportSandProcessMetricsRequest {
+  int64 sample_start = 1;
+  int64 sample_end = 2;
+  int32 num_subsamples = 3;
+  int64 sample_seqno = 4;
+  string session_id = 5;
+  repeated SandProcessMetricsRowRequest rows = 6;
+  string os = 7;
+  string os_version = 8;
+  string arch = 9;
+  string client_version = 10;
+  string client_id = 11;
+}
+
+message SandProcessMetricsRowRequest {
+  int32 pid = 1;
+  int32 ppid = 2;
+  string process_name = 3;
+  string process_name_hash = 4;
+  int64 sample_cpu_time_ms = 5;
+  double sample_avg_mem_mb = 6;
+  double sample_peak_mem_mb = 7;
+  double session_peak_mem_mb = 8;
+  double memory_during_sample_peak_mb = 9;
+  double cpu_during_sample_peak_pct = 10;
+}
+
+message ReportSandProcessMetricsResponse {
+}
+
 message ReportClientNumericMetricsRequest {
   repeated ClientNumericMetric metrics = 1;
 }
@@ -3414,6 +3449,7 @@ service AiService {
   rpc ReportAiCodeChangeMetrics(ReportAiCodeChangeMetricsRequest) returns (ReportAiCodeChangeMetricsResponse);
   rpc ReportProcessMetrics(ReportProcessMetricsRequest) returns (ReportProcessMetricsResponse);
   rpc ReportProcessMetricsV2(ReportProcessMetricsV2Request) returns (ReportProcessMetricsV2Response);
+  rpc ReportSandProcessMetrics(ReportSandProcessMetricsRequest) returns (ReportSandProcessMetricsResponse);
   rpc ReportClientNumericMetrics(ReportClientNumericMetricsRequest) returns (ReportClientNumericMetricsResponse);
   rpc PotentiallyGenerateMemory(PotentiallyGenerateMemoryRequest) returns (PotentiallyGenerateMemoryResponse);
   rpc KnowledgeBaseAdd(KnowledgeBaseAddRequest) returns (KnowledgeBaseAddResponse);

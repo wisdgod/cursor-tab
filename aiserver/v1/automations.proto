@@ -382,6 +382,7 @@ message SlackReactionAddedTrigger {
   string emoji_name = 3;
   repeated string channels = 5;
   bool block_unauthenticated_slack_users = 6;
+  bool only_owner_reactions = 9;
 }
 
 message SlackMentionTrigger {
@@ -394,6 +395,7 @@ message SlackAnyReactionAddedTrigger {
   string channel = 1;
   repeated string channels = 2;
   bool block_unauthenticated_slack_users = 3;
+  bool only_owner_reactions = 4;
 }
 
 message LinearTrigger {

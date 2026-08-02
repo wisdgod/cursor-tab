@@ -146,6 +146,22 @@ message ReadBinaryFileResponse {
   bytes content = 1;
 }
 
+message ExportFileRequest {
+  string path = 1;
+  string workspace_root_path = 2;
+}
+
+message ExportFileMetadata {
+  uint64 total_bytes = 1;
+}
+
+message ExportFileResponse {
+  oneof payload {
+    bytes content_chunk = 1;
+    ExportFileMetadata metadata = 2;
+  }
+}
+
 message WriteBinaryFileRequest {
   string path = 1;
   bytes content = 2;
@@ -343,6 +359,7 @@ service ControlService {
   rpc WriteTextFile(WriteTextFileRequest) returns (WriteTextFileResponse);
   rpc ReadBinaryFile(ReadBinaryFileRequest) returns (ReadBinaryFileResponse);
   rpc WriteBinaryFile(WriteBinaryFileRequest) returns (WriteBinaryFileResponse);
+  rpc ExportFile(ExportFileRequest) returns (stream ExportFileResponse);
   rpc GetDiff(aiserver.v1.GetDiffRequest) returns (aiserver.v1.GetDiffResponse);
   rpc BatchGetDiff(BatchGetDiffRequest) returns (BatchGetDiffResponse);
   rpc GetWorkspaceChangesHash(GetWorkspaceChangesHashRequest) returns (GetWorkspaceChangesHashResponse);

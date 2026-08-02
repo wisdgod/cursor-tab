@@ -285,6 +285,7 @@ message UpsertRunRolloutStatusRequest {
   optional double env_prep_ms = 20;
   optional double agent_loop_ms = 21;
   optional double scoring_ms = 22;
+  optional string reused_from_rollout_request_id = 24;
 }
 
 message TouchRolloutThrottleRequest {

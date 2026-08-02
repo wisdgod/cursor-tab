@@ -23,6 +23,14 @@ enum GrepLineKind {
   GREP_LINE_KIND_CONTEXT = 2;
 }
 
+enum FileMode {
+  FILE_MODE_UNSPECIFIED = 0;
+  FILE_MODE_REGULAR = 1;
+  FILE_MODE_EXECUTABLE = 2;
+  FILE_MODE_SYMLINK = 3;
+  FILE_MODE_GITLINK = 4;
+}
+
 enum ChangeKind {
   CHANGE_KIND_UNSPECIFIED = 0;
   CHANGE_KIND_ADDED = 1;
@@ -45,6 +53,37 @@ message GetCommitResponse {
 
 message GetBlobResponse {
   FileContent blob = 1;
+}
+
+message GetTagResponse {
+  Tag tag = 1;
+}
+
+message GetTreeResponse {
+  Tree tree = 1;
+}
+
+message Tree {
+  string sha = 1;
+  repeated TreeEntry tree = 2;
+  bool truncated = 3;
+}
+
+message TreeEntry {
+  string path = 1;
+  string mode = 2;
+  string type = 3;
+  string sha = 4;
+  optional uint64 size = 5;
+}
+
+message Tag {
+  string sha = 1;
+  string name = 2;
+  string message = 3;
+  Signature tagger = 4;
+  string object_sha = 5;
+  string object_type = 6;
 }
 
 message ListCommitsInRangeResponse {
@@ -256,6 +295,8 @@ message CommitDiffHeader {
   optional string base_commit_sha = 2;
   CommitDiffStats stats = 3;
   repeated ChangedFileWithStats changed_files = 4;
+  bool has_more = 5;
+  optional string next_page_cursor = 6;
 }
 
 message CommitDiffChunk {
@@ -267,12 +308,18 @@ message DiffHeader {
   string merge_base_commit_sha = 1;
   repeated ChangedFile files = 2;
   repeated ChangedFileWithStats files_with_stats = 3;
+  bool has_more = 4;
+  optional string next_page_cursor = 5;
 }
 
 message ChangedFile {
   string path = 1;
   optional string old_path = 2;
   ChangeKind change_kind = 3;
+  optional FileMode old_mode = 4;
+  optional FileMode new_mode = 5;
+  optional string old_sha = 6;
+  optional string new_sha = 7;
 }
 
 message CommitDiffStats {
@@ -288,6 +335,10 @@ message ChangedFileWithStats {
   bool is_binary = 4;
   int32 additions = 5;
   int32 deletions = 6;
+  optional FileMode old_mode = 7;
+  optional FileMode new_mode = 8;
+  optional string old_sha = 9;
+  optional string new_sha = 10;
 }
 
 message FileDiff {
@@ -297,11 +348,17 @@ message FileDiff {
   string patch = 4;
   int32 additions = 5;
   int32 deletions = 6;
+  optional FileMode old_mode = 7;
+  optional FileMode new_mode = 8;
+  optional string old_sha = 9;
+  optional string new_sha = 10;
 }
 
 message RefInfo {
   string name = 1;
   string target_sha = 2;
+  string object_sha = 3;
+  string object_type = 4;
 }
 
 message ListRefsResponse {

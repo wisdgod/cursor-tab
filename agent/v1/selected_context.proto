@@ -265,6 +265,7 @@ message SelectedAgenticGitActionPushParams {
 
 message SelectedAgenticGitActionFixMergeConflictsParams {
   optional string base_branch = 1;
+  optional string pr_url = 2;
 }
 
 message SelectedAgenticGitActionBabysitPrInCloudParams {
