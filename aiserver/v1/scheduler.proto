@@ -57,6 +57,7 @@ message DeploymentInfo {
   string auth_header = 6;
   string auth_prefix = 7;
   bool safe_tokenization = 8;
+  bool raw_slop_wire_format = 9;
 }
 
 message ReportUsageRequest {

@@ -4,6 +4,13 @@ package agent.v1;
 
 import "agent/v1/agent.proto";
 
+enum SubagentInteractionPolicy {
+  SUBAGENT_INTERACTION_POLICY_UNSPECIFIED = 0;
+  SUBAGENT_INTERACTION_POLICY_AUTO_REJECT = 1;
+  SUBAGENT_INTERACTION_POLICY_BUBBLE_TO_PARENT = 2;
+  SUBAGENT_INTERACTION_POLICY_SURFACE_TO_USER = 3;
+}
+
 enum AgentHostSessionStatus {
   AGENT_HOST_SESSION_STATUS_UNSPECIFIED = 0;
   AGENT_HOST_SESSION_STATUS_IDLE = 1;
@@ -47,6 +54,7 @@ message AgentHostSessionOptions {
   repeated string workspace_paths = 1;
   optional string worktree_main_path = 2;
   optional bool is_glass_root = 3;
+  optional SubagentInteractionPolicy interaction_policy = 4;
 }
 
 message CreateAgentHostSessionResponse {
@@ -62,6 +70,8 @@ message ForkAgentHostSessionResponse {
 }
 
 message ListAgentHostSessionsRequest {
+  optional bool include_children = 1;
+  optional string parent_session_id = 2;
 }
 
 message ListAgentHostSessionsResponse {
@@ -71,11 +81,18 @@ message ListAgentHostSessionsResponse {
 message WatchAgentHostSessionsRequest {
 }
 
+message SessionParent {
+  string parent_session_id = 1;
+  string parent_tool_call_id = 2;
+  string root_session_id = 3;
+}
+
 message AgentHostSession {
   string session_id = 1;
   AgentHostSessionStatus status = 2;
   uint64 last_event_id = 3;
   optional string forked_from_session_id = 4;
+  optional SessionParent parent = 5;
 }
 
 message WatchAgentHostSessionsEvent {
@@ -257,7 +274,15 @@ message AgentHostSessionEvent {
     AgentHostTurnAwaitingInput turn_awaiting_input = 8;
     AgentHostTurnSettled turn_settled = 9;
     AgentHostInteractionResolved interaction_resolved = 10;
+    AgentHostSubagentStarted subagent_started = 11;
   }
+}
+
+message AgentHostSubagentStarted {
+  string turn_id = 1;
+  string parent_tool_call_id = 2;
+  string child_session_id = 3;
+  string root_session_id = 4;
 }
 
 message AgentHostTurnStarted {
@@ -302,6 +327,7 @@ message AgentHostTurnOptions {
   optional bool enable_agent_retries = 4;
   optional uint32 fixed_retry_delay_ms = 5;
   optional bool endless_retries = 6;
+  optional string agent_session_id = 7;
 }
 
 service AgentHostService {

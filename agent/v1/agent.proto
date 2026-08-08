@@ -108,6 +108,11 @@ enum BackgroundTaskCompletionReason {
   BACKGROUND_TASK_COMPLETION_REASON_TASK_PROGRESS = 2;
 }
 
+enum BackgroundTaskNotificationContext {
+  BACKGROUND_TASK_NOTIFICATION_CONTEXT_UNSPECIFIED = 0;
+  BACKGROUND_TASK_NOTIFICATION_CONTEXT_USER_DRIVEN_INTERACTIVE_CHILD = 1;
+}
+
 enum SubagentRunStatus {
   SUBAGENT_RUN_STATUS_UNSPECIFIED = 0;
   SUBAGENT_RUN_STATUS_RUNNING = 1;
@@ -164,6 +169,7 @@ enum SubscriptionSource {
   SUBSCRIPTION_SOURCE_UNSPECIFIED = 0;
   SUBSCRIPTION_SOURCE_SLACK = 1;
   SUBSCRIPTION_SOURCE_GITHUB = 2;
+  SUBSCRIPTION_SOURCE_LINEAR = 3;
 }
 
 enum ThinkingStyle {
@@ -439,6 +445,7 @@ message BackgroundTaskCompletion {
   BackgroundTaskCompletionReason reason = 8;
   optional string subagent_id = 9;
   optional string tool_call_id = 10;
+  BackgroundTaskNotificationContext notification_context = 11;
 }
 
 message SubagentRunState {
@@ -702,6 +709,12 @@ message ExecutePlanAction {
   optional string plan_file_path = 8;
 }
 
+message SubscriptionEventDisplay {
+  optional string display_label = 1;
+  optional string resource_url = 2;
+  optional string subscription_id = 3;
+}
+
 message UserDisplayInfo {
   int32 user_id = 1;
   optional string display_name = 2;
@@ -735,6 +748,7 @@ message UserMessage {
     optional string fsd_finding_action = 3;
     optional string url = 4;
     optional SubscriptionSource subscription_source = 5;
+    optional SubscriptionEventDisplay subscription_event_display = 6;
   }
   string text = 1;
   string message_id = 2;
@@ -795,6 +809,8 @@ message GoalState {
   uint32 idle_continuations_without_tool_calls = 5;
   optional uint64 active_duration_ms = 6;
   optional uint64 last_accrued_at_ms = 7;
+  uint32 continuation_count = 8;
+  optional string agent_session_id = 9;
 }
 
 message ConversationTurnStructure {
@@ -810,6 +826,7 @@ message AgentConversationTurnStructure {
   optional string request_id = 3;
   optional string encrypted_model = 4;
   optional uint32 dynamic_tool_count = 5;
+  repeated uint32 send_message_step_indices = 6;
 }
 
 message ShellConversationTurnStructure {
@@ -867,11 +884,17 @@ message PromptContextUsageTree {
   repeated PromptContextNode nodes = 2;
 }
 
+message PromptContextUsageSnapshot {
+  PromptContextUsageTree prompt_context_usage_tree = 1;
+  repeated bytes root_prompt_messages_json = 2;
+}
+
 message ConversationTokenDetails {
   uint32 used_tokens = 1;
   uint32 max_tokens = 2;
   optional PromptTokenBreakdownSnapshot breakdown = 3;
   optional PromptContextUsageTree prompt_context_usage_tree = 4;
+  optional bytes prompt_context_usage_snapshot_blob_id = 5;
 }
 
 message FileState {
@@ -910,6 +933,7 @@ message SubagentPersistedState {
   optional CloudSubagentReference cloud_subagent = 7;
   optional string first_class_bc_id = 8;
   optional string cloud_requested_environment_build_id = 9;
+  optional TargetMachine machine = 10;
 }
 
 message CloudSubagentReference {
@@ -954,6 +978,7 @@ message ConversationStateStructure {
   optional string conversation_started_time_zone = 27;
   map<string, bytes> subagent_state_refs = 31;
   optional GoalState goal_state = 32;
+  optional bool is_root_project_conversation = 33;
 }
 
 message ThinkingDetails {
@@ -1049,6 +1074,8 @@ message AgentRunRequest {
   optional bool client_supports_send_to_user = 23;
   optional string computer_use_coordinate_mode = 24;
   optional string run_id = 25;
+  optional string agent_session_id = 26;
+  optional bool client_supports_prompt_context_usage_rpc = 27;
 }
 
 message TextDeltaUpdate {

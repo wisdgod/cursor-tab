@@ -8,6 +8,7 @@ enum AgentStoreClaimMountKind {
   AGENT_STORE_CLAIM_MOUNT_KIND_USER = 2;
   AGENT_STORE_CLAIM_MOUNT_KIND_TEAM = 3;
   AGENT_STORE_CLAIM_MOUNT_KIND_AUTOMATION = 4;
+  AGENT_STORE_CLAIM_MOUNT_KIND_CLOUD_PEER = 5;
 }
 
 message Empty {
@@ -16,6 +17,7 @@ message Empty {
 message AgentStoreClaimConfig {
   AgentStoreSelfClaimConfig self = 1;
   repeated AgentStoreClaimMount mounts = 2;
+  optional bool store_backed_artifacts_enabled = 3;
 }
 
 message AgentStoreSelfClaimConfig {

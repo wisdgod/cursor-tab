@@ -29,6 +29,7 @@ message CreatePrAction {
   repeated string add_labels = 6;
   optional string repo_url = 7;
   optional bool skip_branch_prefix_check = 8;
+  optional int64 stack_on_pr_number = 9;
 }
 
 message UpdatePrAction {
@@ -40,6 +41,9 @@ message UpdatePrAction {
   repeated string add_labels = 6;
   repeated string remove_labels = 7;
   optional string repo_url = 8;
+  optional int64 stack_on_pr_number = 9;
+  optional bool clear_stack = 10;
+  optional bool draft = 11;
 }
 
 message PostCommentAction {
@@ -52,6 +56,7 @@ message PostCommentAction {
   optional int32 line = 7;
   optional int32 start_line = 8;
   optional string side = 9;
+  optional string reply_to_reference = 10;
 }
 
 message ResolveCommentAction {
@@ -59,6 +64,7 @@ message ResolveCommentAction {
   optional string branch_name = 2;
   int64 comment_id = 3;
   optional string repo_url = 4;
+  optional string comment_reference = 5;
 }
 
 message GetCiStatusAction {

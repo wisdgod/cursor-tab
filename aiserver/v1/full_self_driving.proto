@@ -220,6 +220,7 @@ message RunFullSelfDrivingWorkflowSuggestionRequest {
   string pr_url = 1;
   string bc_id = 2;
   string stable_key = 3;
+  string event_id = 4;
 }
 
 message RunFullSelfDrivingWorkflowSuggestionResponse {

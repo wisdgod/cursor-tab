@@ -23,6 +23,11 @@ import "anyrun/v1/snapshot.proto";
 import "google/protobuf/empty.proto";
 import "internapi/v1/blob.proto";
 
+enum WakeBackgroundComposerReason {
+  WAKE_BACKGROUND_COMPOSER_REASON_UNSPECIFIED = 0;
+  WAKE_BACKGROUND_COMPOSER_REASON_FOLLOWUP_COMPOSE = 1;
+}
+
 enum BackgroundComposerStatus {
   BACKGROUND_COMPOSER_STATUS_UNSPECIFIED = 0;
   BACKGROUND_COMPOSER_STATUS_RUNNING = 1;
@@ -76,6 +81,7 @@ enum BackgroundComposerSource {
   BACKGROUND_COMPOSER_SOURCE_AS_SUBAGENT_FROM_CLOUD = 29;
   BACKGROUND_COMPOSER_SOURCE_ENVIRONMENT_SETUP_ONBOARDING_AUTO = 30;
   BACKGROUND_COMPOSER_SOURCE_ORIGIN = 31;
+  BACKGROUND_COMPOSER_SOURCE_AS_SIDE_CHAT_FROM_CLOUD = 32;
 }
 
 enum OwnerType {
@@ -405,6 +411,15 @@ enum AgentStoreMultipartOperationFailureCode {
   AGENT_STORE_MULTIPART_OPERATION_FAILURE_CODE_RESTART_REQUIRED = 7;
 }
 
+enum PromptUploadCompletionStatus {
+  PROMPT_UPLOAD_COMPLETION_STATUS_UNSPECIFIED = 0;
+  PROMPT_UPLOAD_COMPLETION_STATUS_COMPLETED = 1;
+  PROMPT_UPLOAD_COMPLETION_STATUS_NOT_FOUND = 2;
+  PROMPT_UPLOAD_COMPLETION_STATUS_NO_PARTS = 3;
+  PROMPT_UPLOAD_COMPLETION_STATUS_INVALID_PARTS = 5;
+  PROMPT_UPLOAD_COMPLETION_STATUS_SIZE_MISMATCH = 4;
+}
+
 enum AgentStoreDeleteFileStatus {
   AGENT_STORE_DELETE_FILE_STATUS_UNSPECIFIED = 0;
   AGENT_STORE_DELETE_FILE_STATUS_DELETED = 1;
@@ -506,9 +521,11 @@ message PreWarmPodResponse {
 
 message WakeBackgroundComposerRequest {
   string bc_id = 1;
+  WakeBackgroundComposerReason reason = 2;
 }
 
 message WakeBackgroundComposerResponse {
+  bool signaled = 1;
 }
 
 message AttachBackgroundComposerPodRequest {
@@ -1283,6 +1300,7 @@ message StartBackgroundComposerFromSnapshotRequest {
   optional string requested_environment_build_id = 116;
   map<string, string> external_metadata = 117;
   optional EnvironmentSetupRunStartedMetadata environment_setup_run_started_metadata = 118;
+  optional agent.v1.ProjectDetails project_details = 119;
 }
 
 message StartBackgroundComposerFromSnapshotResponse {
@@ -1351,6 +1369,7 @@ message StreamConversationRequest {
   optional uint32 max_blobs_after_prefetch = 8;
   optional bool allow_streaming_when_terminal_status = 9;
   optional PreFetchedBlobFilter pre_fetched_blob_filter = 10;
+  optional bool include_stream_heartbeats = 11;
 }
 
 message PreFetchedBlobFilter {
@@ -1425,6 +1444,8 @@ message StreamConversationResponse {
   message DevBannerMessage {
     string text = 1;
   }
+  message StreamHeartbeat {
+  }
   message WorkerLifecycleEventWithOffset {
     string offset_key = 1;
     WorkerLifecycleEvent worker_lifecycle_event = 2;
@@ -1445,6 +1466,7 @@ message StreamConversationResponse {
     WorkerLifecycleEventWithOffset worker_lifecycle_event_with_offset = 11;
     InteractionQueryWithOffset interaction_query_with_offset = 12;
     ReadOnlySharedPodLifecycleEventWithOffset read_only_shared_pod_lifecycle_event_with_offset = 13;
+    StreamHeartbeat stream_heartbeat = 14;
   }
 }
 
@@ -2054,6 +2076,14 @@ message GetEnvironmentResponse {
   optional LogicalEnvironment environment = 1;
 }
 
+message RenameEnvironmentRequest {
+  string public_id = 1;
+  optional string name = 2;
+}
+
+message RenameEnvironmentResponse {
+}
+
 message EnvironmentBuildRepoCommit {
   string repo_url = 1;
   string workspace_root_path = 2;
@@ -2094,6 +2124,7 @@ message ListEnvironmentBuildsResponse {
   repeated EnvironmentBuildRow rows = 1;
   bool has_more = 2;
   optional EnvironmentBuildsCursor next_cursor = 3;
+  optional string latest_boot_build_id = 4;
 }
 
 message GetEnvironmentBuildRequest {
@@ -2145,6 +2176,7 @@ message CancelEnvironmentBuildResponse {
 
 message EnvironmentBuildSettings {
   optional bool fast_forward_default_branch = 1;
+  optional int32 auto_fast_forward_staleness_hours = 3;
   optional bool builds_enabled = 2;
 }
 
@@ -2162,6 +2194,8 @@ message UpdateEnvironmentBuildSettingsRequest {
   bool clear_fast_forward_default_branch = 3;
   optional bool builds_enabled = 4;
   bool clear_builds_enabled = 5;
+  optional int32 auto_fast_forward_staleness_hours = 6;
+  bool clear_auto_fast_forward_staleness_hours = 7;
 }
 
 message UpdateEnvironmentBuildSettingsResponse {
@@ -2348,6 +2382,8 @@ message SnapshotAndSaveEnvironmentRequest {
   optional EnvironmentRepoConfig repo_config = 9;
   optional string environment_public_id = 10;
   optional EgressConfig egress_config = 11;
+  optional string start_command = 12;
+  optional string environment_build_id = 13;
 }
 
 message SnapshotAndSaveEnvironmentResponse {
@@ -3060,6 +3096,7 @@ message CloudAgentState {
   bytes pending_summarization_snapshot_blob_id = 51;
   bytes admitted_custom_mode_state_blob_id = 52;
   optional bool agent_store_artifacts_symlink_enabled = 53;
+  optional agent.v1.ProjectDetails project_details = 54;
 }
 
 message OptimizedDiffState {
@@ -3383,6 +3420,16 @@ message PendingPrivateWorkerRequest {
   double created_at_ms = 8;
 }
 
+message ClaimPendingPrivateWorkerRequestRequest {
+  string bc_id = 1;
+  string worker_id = 2;
+}
+
+message ClaimPendingPrivateWorkerRequestResponse {
+  string bc_id = 1;
+  string worker_id = 2;
+}
+
 message PrivateWorkerRepo {
   string owner = 1;
   string name = 2;
@@ -3434,6 +3481,18 @@ message ListPrivateWorkerPoolsRequest {
 
 message ListPrivateWorkerPoolsResponse {
   repeated PrivateWorkerPool pools = 1;
+}
+
+message RegisterPrivateWorkerPoolRequest {
+  PrivateWorkerPoolScope scope = 1;
+  string pool_name = 2;
+  optional string repo_owner = 3;
+  optional string repo_name = 4;
+  optional string repo_url = 5;
+}
+
+message RegisterPrivateWorkerPoolResponse {
+  bool registered = 1;
 }
 
 message DeregisterPrivateWorkerPoolRequest {
@@ -3803,6 +3862,51 @@ message AbortAgentStoreMultipartWritesResponse {
   repeated AgentStoreMultipartAbortResult results = 1;
 }
 
+message PromptUploadPart {
+  int32 part_number = 1;
+  string url = 2;
+  int64 offset_bytes = 3;
+  int64 size_bytes = 4;
+}
+
+message PresignPromptUploadRequest {
+  string filename = 1;
+  string mime_type = 2;
+  int64 content_length_bytes = 3;
+  optional int32 team_id = 4;
+}
+
+message PresignPromptUploadResponse {
+  message Multipart {
+    string s3_upload_id = 1;
+    repeated PromptUploadPart parts = 2;
+    int64 part_size_bytes = 3;
+  }
+  string upload_id = 1;
+  int64 urls_expire_at_ms = 3;
+  oneof upload {
+    Multipart multipart = 5;
+  }
+}
+
+message CompletePromptUploadRequest {
+  string upload_id = 1;
+  string s3_upload_id = 2;
+}
+
+message CompletePromptUploadResponse {
+  PromptUploadCompletionStatus status = 1;
+  int64 size_bytes = 2;
+}
+
+message AbortPromptUploadRequest {
+  string upload_id = 1;
+  string s3_upload_id = 2;
+}
+
+message AbortPromptUploadResponse {
+}
+
 message AgentStoreFileLockHolder {
   string client_uuid = 1;
   uint32 pid = 2;
@@ -4016,6 +4120,7 @@ service BackgroundComposerService {
   rpc RestoreEnvironmentVersion(RestoreEnvironmentVersionRequest) returns (RestoreEnvironmentVersionResponse);
   rpc ListEnvironments(ListEnvironmentsRequest) returns (ListEnvironmentsResponse);
   rpc GetEnvironment(GetEnvironmentRequest) returns (GetEnvironmentResponse);
+  rpc RenameEnvironment(RenameEnvironmentRequest) returns (RenameEnvironmentResponse);
   rpc ListEnvironmentBuilds(ListEnvironmentBuildsRequest) returns (ListEnvironmentBuildsResponse);
   rpc GetEnvironmentBuild(GetEnvironmentBuildRequest) returns (GetEnvironmentBuildResponse);
   rpc UpdateEnvironmentBuild(UpdateEnvironmentBuildRequest) returns (UpdateEnvironmentBuildResponse);
@@ -4082,9 +4187,11 @@ service BackgroundComposerService {
   rpc GetAgentSharePreview(GetAgentSharePreviewRequest) returns (GetAgentSharePreviewResponse);
   rpc ListPrivateWorkers(ListPrivateWorkersRequest) returns (ListPrivateWorkersResponse);
   rpc ListPrivateWorkerPools(ListPrivateWorkerPoolsRequest) returns (ListPrivateWorkerPoolsResponse);
+  rpc RegisterPrivateWorkerPool(RegisterPrivateWorkerPoolRequest) returns (RegisterPrivateWorkerPoolResponse);
   rpc DeregisterPrivateWorkerPool(DeregisterPrivateWorkerPoolRequest) returns (DeregisterPrivateWorkerPoolResponse);
   rpc AdminListUserPrivateWorkers(AdminListUserPrivateWorkersRequest) returns (AdminListUserPrivateWorkersResponse);
   rpc ListPendingPrivateWorkerRequests(ListPendingPrivateWorkerRequestsRequest) returns (ListPendingPrivateWorkerRequestsResponse);
+  rpc ClaimPendingPrivateWorkerRequest(ClaimPendingPrivateWorkerRequestRequest) returns (ClaimPendingPrivateWorkerRequestResponse);
   rpc GetPrivateWorkersSummary(GetPrivateWorkersSummaryRequest) returns (GetPrivateWorkersSummaryResponse);
   rpc GetPrivateWorker(GetPrivateWorkerRequest) returns (GetPrivateWorkerResponse);
   rpc ReleasePrivateWorker(ReleasePrivateWorkerRequest) returns (ReleasePrivateWorkerResponse);
@@ -4099,6 +4206,9 @@ service BackgroundComposerService {
   rpc PresignAgentStoreWrites(PresignAgentStoreWritesRequest) returns (PresignAgentStoreWritesResponse);
   rpc CompleteAgentStoreMultipartWrites(CompleteAgentStoreMultipartWritesRequest) returns (CompleteAgentStoreMultipartWritesResponse);
   rpc AbortAgentStoreMultipartWrites(AbortAgentStoreMultipartWritesRequest) returns (AbortAgentStoreMultipartWritesResponse);
+  rpc PresignPromptUpload(PresignPromptUploadRequest) returns (PresignPromptUploadResponse);
+  rpc CompletePromptUpload(CompletePromptUploadRequest) returns (CompletePromptUploadResponse);
+  rpc AbortPromptUpload(AbortPromptUploadRequest) returns (AbortPromptUploadResponse);
   rpc AcquireAgentStoreFileLock(AcquireAgentStoreFileLockRequest) returns (AcquireAgentStoreFileLockResponse);
   rpc RenewAgentStoreFileLock(RenewAgentStoreFileLockRequest) returns (RenewAgentStoreFileLockResponse);
   rpc ReleaseAgentStoreFileLock(ReleaseAgentStoreFileLockRequest) returns (ReleaseAgentStoreFileLockResponse);

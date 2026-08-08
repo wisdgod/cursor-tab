@@ -67,6 +67,7 @@ message GetSessionTokenRequest {
   optional string code = 4;
   optional string code_verifier = 5;
   optional string redirect_uri = 6;
+  optional bool issue_refresh_token = 7;
 }
 
 message GetSessionTokenResponse {
@@ -75,6 +76,31 @@ message GetSessionTokenResponse {
   bool should_show_trial = 3;
   bool enable_trial_for_deep_control = 4;
   bool was_auto_enrolled = 5;
+  optional string refresh_token = 6;
+}
+
+message RefreshMobileSessionRequest {
+  string refresh_token = 1;
+}
+
+message RefreshMobileSessionResponse {
+  string session_token = 1;
+  string refresh_token = 2;
+}
+
+message RevokeMobileSessionFamilyRequest {
+  string refresh_token = 1;
+}
+
+message RevokeMobileSessionFamilyResponse {
+}
+
+message ConvertMobileSessionToRefreshPairRequest {
+}
+
+message ConvertMobileSessionToRefreshPairResponse {
+  string session_token = 1;
+  string refresh_token = 2;
 }
 
 message CheckSessionTokenRequest {
@@ -211,6 +237,9 @@ service AuthService {
   rpc CheckSessionToken(CheckSessionTokenRequest) returns (CheckSessionTokenResponse);
   rpc CreateMobileSession(CreateMobileSessionRequest) returns (CreateMobileSessionResponse);
   rpc UpgradeMobileSession(UpgradeMobileSessionRequest) returns (UpgradeMobileSessionResponse);
+  rpc RefreshMobileSession(RefreshMobileSessionRequest) returns (RefreshMobileSessionResponse);
+  rpc RevokeMobileSessionFamily(RevokeMobileSessionFamilyRequest) returns (RevokeMobileSessionFamilyResponse);
+  rpc ConvertMobileSessionToRefreshPair(ConvertMobileSessionToRefreshPairRequest) returns (ConvertMobileSessionToRefreshPairResponse);
   rpc ListActiveSessions(ListActiveSessionsRequest) returns (ListActiveSessionsResponse);
   rpc RevokeSession(RevokeSessionRequest) returns (RevokeSessionResponse);
   rpc RevokeCurrentSession(RevokeCurrentSessionRequest) returns (RevokeCurrentSessionResponse);

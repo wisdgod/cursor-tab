@@ -119,6 +119,7 @@ message ShellArgs {
   optional SmartModeApproval smart_mode_approval = 19;
   optional ShellHookApprovalRequirement hook_approval_requirement = 20;
   optional string conversation_id = 21;
+  repeated string admin_command_denylist = 22;
 }
 
 message ShellResult {

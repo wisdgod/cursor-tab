@@ -599,7 +599,13 @@ message UpgradeAction {
 }
 
 message SwitchModelAction {
+  message ModelParameterValue {
+    string id = 1;
+    string value = 2;
+  }
   optional string suggested_model = 1;
+  repeated ModelParameterValue parameters = 2;
+  optional bool max_mode = 3;
 }
 
 message ConfigureSpendLimitAction {

@@ -114,6 +114,7 @@ message ListEnterpriseContractsResponse {
 message EnableTokenBasedPricingRequest {
   int32 team_id = 1;
   optional string target_membership_type = 2;
+  optional int64 organization_id = 3;
 }
 
 message EnableTokenBasedPricingResponse {

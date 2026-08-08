@@ -34,6 +34,10 @@ message SelectedImage {
   }
 }
 
+message PromptUploadRef {
+  string upload_id = 1;
+}
+
 message SelectedDocument {
   message BlobIdWithData {
     bytes blob_id = 1;
@@ -47,6 +51,7 @@ message SelectedDocument {
     bytes blob_id = 1;
     bytes data = 8;
     BlobIdWithData blob_id_with_data = 9;
+    PromptUploadRef prompt_upload_ref = 10;
   }
 }
 

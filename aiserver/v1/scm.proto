@@ -413,6 +413,24 @@ message GetPullRequestCodeownersResponse {
   repeated PullRequestPathCodeowners entries = 1;
 }
 
+message StreamPullRequestUpdatesRequest {
+  repeated string pr_urls = 1;
+}
+
+message PullRequestUpdatedNotification {
+  string pr_url = 1;
+}
+
+message PullRequestUpdatesHeartbeat {
+}
+
+message PullRequestUpdatedEvent {
+  oneof event {
+    PullRequestUpdatedNotification updated = 1;
+    PullRequestUpdatesHeartbeat heartbeat = 2;
+  }
+}
+
 message GetPullRequestCheckLogExcerptResponse {
   CheckLogExcerptStatus status = 1;
   string excerpt = 2;
@@ -446,4 +464,5 @@ service SCMService {
   rpc EnablePullRequestAutoMerge(SCMEnablePullRequestAutoMergeRequest) returns (SCMEnablePullRequestAutoMergeResponse);
   rpc DisablePullRequestAutoMerge(SCMDisablePullRequestAutoMergeRequest) returns (SCMDisablePullRequestAutoMergeResponse);
   rpc GetPullRequestCodeowners(GetPullRequestCodeownersRequest) returns (GetPullRequestCodeownersResponse);
+  rpc StreamPullRequestUpdates(StreamPullRequestUpdatesRequest) returns (stream PullRequestUpdatedEvent);
 }

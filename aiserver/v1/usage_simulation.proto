@@ -88,6 +88,8 @@ message AddSyntheticUsageRequest {
   int32 cache_read_tokens = 5;
   int32 cache_write_tokens = 6;
   optional int64 revenue_milli_cents = 7;
+  optional string status = 8;
+  optional string usage_uuid = 9;
 }
 
 message AddSyntheticUsageResponse {

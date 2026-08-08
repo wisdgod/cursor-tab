@@ -1282,6 +1282,7 @@ message AvailableModelsRequest {
   optional bool variants_will_be_shown_in_exploded_list = 8;
   optional bool for_automations = 9;
   optional AvailableModelsScope scope = 10;
+  optional bool byok_enabled = 14;
   optional bool use_react_model_picker = 11;
   optional bool use_cloud_agent_effort_modes = 12;
   optional string admin_settings_group_public_id = 13;

@@ -41,6 +41,7 @@ message McpToolDescriptor {
   optional string description = 3;
   optional google.protobuf.Value input_schema = 4;
   optional string input_schema_json = 5;
+  optional string annotations_json = 6;
 }
 
 message McpFileSystemOptions {

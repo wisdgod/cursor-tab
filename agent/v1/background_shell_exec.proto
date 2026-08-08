@@ -20,6 +20,7 @@ message BackgroundShellSpawnArgs {
   optional ShellHookApprovalRequirement hook_approval_requirement = 11;
   bool skip_approval = 12;
   optional string conversation_id = 13;
+  repeated string admin_command_denylist = 14;
 }
 
 message BackgroundShellSpawnResult {

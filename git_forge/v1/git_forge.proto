@@ -10,6 +10,12 @@ enum CompareCommitsStatus {
   COMPARE_COMMITS_STATUS_DIVERGED = 4;
 }
 
+enum MergeMode {
+  MERGE_MODE_UNSPECIFIED = 0;
+  MERGE_MODE_MERGE_COMMIT = 1;
+  MERGE_MODE_SQUASH = 2;
+}
+
 enum CommitFileMode {
   COMMIT_FILE_MODE_UNSPECIFIED = 0;
   COMMIT_FILE_MODE_REGULAR = 1;
@@ -190,16 +196,10 @@ message GetFileHistoryResponse {
   repeated ShortCommit commits = 1;
 }
 
-message FileHistoryPathStats {
-  int32 additions = 1;
-  int32 deletions = 2;
-  bool is_binary = 3;
-}
-
 message FileHistoryCommitEntry {
   ShortCommit commit = 1;
   optional string diff_base_commit_sha = 2;
-  optional FileHistoryPathStats path_stats = 8;
+  optional FileStats path_stats = 8;
 }
 
 message GetFileHistoryPageWithDiffStatsResponse {
@@ -287,32 +287,37 @@ message RepoContentEntry {
 
 message PullRequestDiffChunk {
   optional DiffHeader header = 1;
-  repeated FileDiff file_diffs = 2;
+  repeated DiffEntry entries = 3;
 }
 
 message CommitDiffHeader {
   Commit commit = 1;
   optional string base_commit_sha = 2;
   CommitDiffStats stats = 3;
-  repeated ChangedFileWithStats changed_files = 4;
   bool has_more = 5;
   optional string next_page_cursor = 6;
+  repeated DiffEntry entries = 7;
 }
 
 message CommitDiffChunk {
   optional CommitDiffHeader header = 1;
-  repeated FileDiff file_diffs = 2;
+  repeated DiffEntry entries = 3;
 }
 
 message DiffHeader {
   string merge_base_commit_sha = 1;
-  repeated ChangedFile files = 2;
-  repeated ChangedFileWithStats files_with_stats = 3;
   bool has_more = 4;
   optional string next_page_cursor = 5;
+  repeated DiffEntry entries = 6;
 }
 
-message ChangedFile {
+message FileStats {
+  int32 additions = 1;
+  int32 deletions = 2;
+  bool is_binary = 3;
+}
+
+message DiffEntry {
   string path = 1;
   optional string old_path = 2;
   ChangeKind change_kind = 3;
@@ -320,38 +325,14 @@ message ChangedFile {
   optional FileMode new_mode = 5;
   optional string old_sha = 6;
   optional string new_sha = 7;
+  optional FileStats stats = 8;
+  optional string patch = 9;
 }
 
 message CommitDiffStats {
   uint32 files_changed = 1;
   int32 additions = 2;
   int32 deletions = 3;
-}
-
-message ChangedFileWithStats {
-  string path = 1;
-  optional string old_path = 2;
-  ChangeKind change_kind = 3;
-  bool is_binary = 4;
-  int32 additions = 5;
-  int32 deletions = 6;
-  optional FileMode old_mode = 7;
-  optional FileMode new_mode = 8;
-  optional string old_sha = 9;
-  optional string new_sha = 10;
-}
-
-message FileDiff {
-  string path = 1;
-  optional string old_path = 2;
-  bool is_binary = 3;
-  string patch = 4;
-  int32 additions = 5;
-  int32 deletions = 6;
-  optional FileMode old_mode = 7;
-  optional FileMode new_mode = 8;
-  optional string old_sha = 9;
-  optional string new_sha = 10;
 }
 
 message RefInfo {
@@ -364,4 +345,6 @@ message RefInfo {
 message ListRefsResponse {
   repeated string refs = 1;
   repeated RefInfo ref_infos = 2;
+  optional uint32 total_count = 3;
+  optional uint32 next_offset = 4;
 }

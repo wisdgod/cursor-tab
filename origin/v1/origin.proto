@@ -22,6 +22,12 @@ enum RepoKind {
   REPO_KIND_CURSOR_MARKETPLACE = 2;
 }
 
+enum RepoVisibility {
+  REPO_VISIBILITY_UNSPECIFIED = 0;
+  REPO_VISIBILITY_INTERNAL = 1;
+  REPO_VISIBILITY_PRIVATE = 2;
+}
+
 enum RepoMirrorTransition {
   REPO_MIRROR_TRANSITION_UNSPECIFIED = 0;
   REPO_MIRROR_TRANSITION_INBOUND_TO_OUTBOUND = 1;
@@ -64,6 +70,7 @@ enum MirrorStatus {
 enum OriginNamespaceOwnerType {
   ORIGIN_NAMESPACE_OWNER_TYPE_UNSPECIFIED = 0;
   ORIGIN_NAMESPACE_OWNER_TYPE_TEAM = 1;
+  ORIGIN_NAMESPACE_OWNER_TYPE_USER = 2;
 }
 
 enum AuthorizedNamespaceAccessReason {
@@ -116,6 +123,12 @@ enum ChangeAssignmentCreatedVia {
   CHANGE_ASSIGNMENT_CREATED_VIA_SYSTEM = 3;
 }
 
+enum ReviewRequestEventAction {
+  REVIEW_REQUEST_EVENT_ACTION_UNSPECIFIED = 0;
+  REVIEW_REQUEST_EVENT_ACTION_REQUESTED = 1;
+  REVIEW_REQUEST_EVENT_ACTION_REMOVED = 2;
+}
+
 enum SectionOfChangesSortField {
   SECTION_OF_CHANGES_SORT_FIELD_UNSPECIFIED = 0;
   SECTION_OF_CHANGES_SORT_FIELD_UPDATED_AT = 1;
@@ -154,6 +167,18 @@ enum CommentSide {
   COMMENT_SIDE_UNSPECIFIED = 0;
   COMMENT_SIDE_LEFT = 1;
   COMMENT_SIDE_RIGHT = 2;
+}
+
+enum CommentThreadPortingStatus {
+  COMMENT_THREAD_PORTING_STATUS_UNSPECIFIED = 0;
+  COMMENT_THREAD_PORTING_STATUS_PORTED = 1;
+  COMMENT_THREAD_PORTING_STATUS_ORPHANED = 2;
+}
+
+enum PullRequestViewedCursor {
+  PULL_REQUEST_VIEWED_CURSOR_UNSPECIFIED = 0;
+  PULL_REQUEST_VIEWED_CURSOR_OPENED = 1;
+  PULL_REQUEST_VIEWED_CURSOR_TIMELINE = 2;
 }
 
 enum CheckRunLifecycleStatus {
@@ -240,6 +265,9 @@ message RepoSummary {
   optional google.protobuf.Timestamp last_pushed_at = 10;
   string forge_environment = 11;
   string origin_namespace_id = 12;
+  bool allow_merge_commit = 13;
+  bool allow_squash_merge = 14;
+  RepoVisibility visibility = 15;
 }
 
 message ListHostedReposRequest {
@@ -261,6 +289,7 @@ message CreateRepoRequest {
   optional string default_branch = 2;
   optional string forge_environment = 6;
   optional RepoKind repo_kind = 7;
+  optional RepoVisibility visibility = 8;
 }
 
 message CreateRepoResponse {
@@ -367,6 +396,29 @@ message Repo {
   optional string owner_type = 14;
   string forge_environment = 15;
   string origin_namespace_id = 16;
+  bool allow_merge_commit = 17;
+  bool allow_squash_merge = 18;
+  RepoVisibility visibility = 19;
+  bool delete_branch_on_merge = 20;
+}
+
+message UpdateRepoMergeSettingsRequest {
+  ClientRepoIdentifier identifier = 1;
+  bool allow_merge_commit = 2;
+  bool allow_squash_merge = 3;
+}
+
+message UpdateRepoMergeSettingsResponse {
+  Repo repository = 1;
+}
+
+message UpdateRepoBranchDeletionSettingRequest {
+  ClientRepoIdentifier identifier = 1;
+  optional bool delete_branch_on_merge = 2;
+}
+
+message UpdateRepoBranchDeletionSettingResponse {
+  Repo repository = 1;
 }
 
 message GetRepoRequest {
@@ -420,6 +472,18 @@ message CreateOriginNamespaceResponse {
   OriginNamespace origin_namespace = 1;
 }
 
+message SetupTeamNamespaceRequest {
+  OriginNamespaceOwnerType owner_type = 1;
+  int64 owner_entity_id = 2;
+  string namespace = 3;
+}
+
+message SetupTeamNamespaceResponse {
+  OriginNamespace origin_namespace = 1;
+  bool namespace_created = 2;
+  bool grants_changed = 3;
+}
+
 message GetRepoNamespaceRequest {
   OriginNamespaceOwnerType owner_type = 1;
   int64 owner_entity_id = 2;
@@ -427,6 +491,14 @@ message GetRepoNamespaceRequest {
 
 message GetRepoNamespaceResponse {
   OriginNamespace origin_namespace = 1;
+}
+
+message DoesNamespaceExistForTeamRequest {
+  int64 team_id = 1;
+}
+
+message DoesNamespaceExistForTeamResponse {
+  bool exists = 1;
 }
 
 message GetAuthorizedNamespacesRequest {
@@ -581,6 +653,24 @@ message ListNamespaceAssignablePoliciesRequest {
 
 message ListNamespaceAssignablePoliciesResponse {
   repeated AuthPolicySummary policies = 1;
+}
+
+message SshPublicKey {
+  string id = 1;
+  string name = 2;
+  string algo = 3;
+  string fingerprint = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp last_used_at = 6;
+}
+
+message AddSshPublicKeyRequest {
+  string public_key = 1;
+  string name = 2;
+}
+
+message AddSshPublicKeyResponse {
+  SshPublicKey ssh_public_key = 1;
 }
 
 message ResolveRepoPathClientRequest {
@@ -769,6 +859,7 @@ message CreateMergeCommitBypassingChecksClientRequest {
   string message = 6;
   git_forge.v1.Signature author = 7;
   git_forge.v1.Signature committer = 8;
+  git_forge.v1.MergeMode mode = 9;
 }
 
 message CreateMergeCommitBypassingChecksResponse {
@@ -815,6 +906,7 @@ message CollectedFileDiff {
   string patch = 5;
   int32 additions = 6;
   int32 deletions = 7;
+  optional bool is_generated = 8;
 }
 
 message GetCollectedPullRequestDiffRequest {
@@ -831,6 +923,20 @@ message GetCollectedPullRequestDiffResponse {
   string merge_base_sha = 1;
   repeated CollectedFileDiff files = 2;
   optional string next_page_cursor = 4;
+}
+
+message FastForwardBranchClientRequest {
+  ClientRepoIdentifier identifier = 1;
+  string branch = 2;
+  string expected_head_sha = 3;
+  string new_head_sha = 4;
+}
+
+message FastForwardBranchClientResponse {
+  string old_head_sha = 1;
+  string new_head_sha = 2;
+  bool unchanged = 3;
+  bool reverse_mirror_push_failed = 4;
 }
 
 message ActorWithDisplay {
@@ -1081,6 +1187,27 @@ message ChangeAssignment {
   google.protobuf.Timestamp updated_at = 9;
 }
 
+message ReviewRequestEvent {
+  string id = 1;
+  string change_id = 2;
+  ChangeAssignmentKind kind = 3;
+  ReviewRequestEventAction action = 4;
+  string assigned_auth_id = 5;
+  string assigned_group_id = 6;
+  ChangeAssignmentCreatedVia created_via = 7;
+  string actor_auth_id = 8;
+  google.protobuf.Timestamp created_at = 9;
+  ActorWithDisplay actor = 10;
+}
+
+message ListReviewRequestEventsRequest {
+  ChangeIdentifier change = 1;
+}
+
+message ListReviewRequestEventsResponse {
+  repeated ReviewRequestEvent events = 1;
+}
+
 message RequestReviewRequest {
   ChangeIdentifier change = 1;
   oneof target {
@@ -1193,6 +1320,21 @@ message GetChangeResponse {
   repeated Version versions = 2;
   repeated ChangeAssignment assignments = 3;
   repeated ChangeLabel labels = 4;
+  optional google.protobuf.Timestamp viewer_last_viewed_at = 5;
+  optional google.protobuf.Timestamp viewer_timeline_viewed_at = 6;
+}
+
+message GetChangeStackRequest {
+  ChangeIdentifier change = 1;
+}
+
+message GetChangeStackResponse {
+  repeated Change changes = 1;
+  optional string stack_id = 6;
+  optional string convergence_state = 2;
+  optional uint64 convergence_conflicted_change_number = 3;
+  repeated string convergence_conflicted_paths = 4;
+  optional string convergence_blocked_reason = 5;
 }
 
 message GetProjectedLatestVersionsRequest {
@@ -1309,6 +1451,7 @@ message SectionOfChanges {
   string author_display_name = 29;
   string author_avatar_url = 30;
   ActorWithDisplay author = 31;
+  optional google.protobuf.Timestamp viewer_last_viewed_at = 32;
 }
 
 message SectionOfChangesReviewer {
@@ -1516,6 +1659,11 @@ message CommentThread {
   string resolved_by_display_name = 17;
   string resolved_by_avatar_url = 18;
   ActorWithDisplay resolved_by = 19;
+  uint64 ported_to_version_number = 20;
+  CommentThreadPortingStatus porting_status = 21;
+  string ported_path = 22;
+  uint32 ported_start_line = 23;
+  uint32 ported_end_line = 24;
 }
 
 message CreateCommentThreadRequest {
@@ -1607,6 +1755,7 @@ message MarkFileAsViewedRequest {
   ChangeIdentifier change = 1;
   string file_path = 2;
   string version_id = 3;
+  string head_commit_sha = 4;
 }
 
 message MarkFileAsViewedResponse {
@@ -1658,6 +1807,18 @@ message ListFileViewedStatesResponse {
 message FileViewedState {
   string file_path = 1;
   string version_id = 2;
+  optional bool stale = 3;
+}
+
+message MarkPullRequestAsViewedRequest {
+  ChangeIdentifier change = 1;
+  google.protobuf.Timestamp viewed_at = 2;
+  PullRequestViewedCursor cursor = 3;
+}
+
+message MarkPullRequestAsViewedResponse {
+  google.protobuf.Timestamp viewed_at = 1;
+  optional google.protobuf.Timestamp timeline_viewed_at = 2;
 }
 
 message GeneratedCodeTour {
@@ -1742,6 +1903,21 @@ message GetCiStateRequest {
 
 message GetCiStateResponse {
   repeated CheckRunGroup check_run_groups = 1;
+  repeated MissingRequiredCheck missing_required_checks = 2;
+}
+
+message GetCheckRunRequest {
+  ClientRepoIdentifier identifier = 1;
+  string check_run_id = 2;
+}
+
+message GetCheckRunResponse {
+  CheckRunStatus check_run = 1;
+}
+
+message MissingRequiredCheck {
+  string display_name = 1;
+  string identity_path = 2;
 }
 
 message CheckRunActor {
@@ -1752,10 +1928,15 @@ message CheckRunActor {
   string icon_url = 5;
 }
 
+message CheckRunOutput {
+  optional string title = 1;
+  optional string summary = 2;
+  optional string text = 3;
+}
+
 message CheckRunStatus {
   string id = 1;
   string name = 2;
-  optional string description = 3;
   optional string details_url = 4;
   CheckRunLifecycleStatus status = 5;
   optional CheckRunConclusion conclusion = 6;
@@ -1763,6 +1944,7 @@ message CheckRunStatus {
   optional int64 completed_at_unix_ms = 8;
   string external_id = 9;
   optional bool required = 10;
+  optional CheckRunOutput output = 11;
 }
 
 message CheckRunGroup {
@@ -1802,8 +1984,8 @@ message CheckRunInput {
   int64 external_updated_at_unix_ms = 6;
   optional int64 started_at_unix_ms = 7;
   optional int64 completed_at_unix_ms = 8;
-  optional string description = 9;
   optional string details_url = 10;
+  optional CheckRunOutput output = 11;
 }
 
 message PostCheckRunResponse {
@@ -1811,6 +1993,14 @@ message PostCheckRunResponse {
   string sha = 2;
   string check_run_group_id = 3;
   string check_run_id = 4;
+}
+
+message RebuildBuildkiteCheckRunRequest {
+  ChangeIdentifier change = 1;
+  string check_run_id = 2;
+}
+
+message RebuildBuildkiteCheckRunResponse {
 }
 
 message GetChangesetMergeabilityRequest {
@@ -1910,6 +2100,10 @@ message StackMergeability {
   string verdict = 4;
   repeated ChangesetMergeBlocker blockers = 5;
   repeated StackMemberEvaluation member_evaluations = 6;
+  optional string convergence_state = 7;
+  optional uint64 convergence_conflicted_change_number = 8;
+  repeated string convergence_conflicted_paths = 9;
+  optional string convergence_updated_at = 10;
 }
 
 message StackMemberEvaluation {
@@ -1921,6 +2115,7 @@ message StackMemberEvaluation {
 message MergeStackRequest {
   ClientRepoIdentifier identifier = 1;
   uint64 top_change_number = 2;
+  git_forge.v1.MergeMode mode = 3;
 }
 
 message MergeStackResponse {
@@ -1935,6 +2130,17 @@ message RestackStackRequest {
 
 message RestackStackResponse {
   repeated uint64 restacked_change_numbers = 1;
+}
+
+message ClaimInboundConvergenceIntentRequest {
+  ClientRepoIdentifier identifier = 1;
+  uint64 top_change_number = 2;
+  string intent_token = 3;
+  repeated string authorized_author_ids = 4;
+  repeated string authorized_change_ids = 5;
+}
+
+message ClaimInboundConvergenceIntentResponse {
 }
 
 message InboundMirrorMergeStack {
@@ -2114,6 +2320,11 @@ message Installation {
   optional string suspended_at = 9;
 }
 
+message InstallationReference {
+  string id = 1;
+  string app_id = 2;
+}
+
 message CreateInstallationRequest {
   string app_id = 1;
   string namespace_slug = 2;
@@ -2142,6 +2353,7 @@ message ListNamespaceInstallationsRequest {
 message ListNamespaceInstallationsResponse {
   repeated Installation installations = 1;
   string next_page_token = 2;
+  repeated InstallationReference installation_references = 3;
 }
 
 message UpdateAppRequest {
@@ -2538,6 +2750,59 @@ message WatchChangeSyncEventsResponse {
 message SyncEventHeartbeat {
 }
 
+message ChangeSyncTarget {
+  ClientRepoIdentifier identifier = 1;
+  uint64 change_number = 2;
+}
+
+message WatchChangeSyncEventsV2Request {
+  repeated ChangeSyncTarget subscriptions = 1;
+}
+
+message WatchSyncSessionStarted {
+  string connection_id = 1;
+}
+
+message TaggedSyncSnapshot {
+  ChangeSyncTarget target = 1;
+  string snapshot_json = 2;
+}
+
+message TaggedSyncEvent {
+  ChangeSyncTarget target = 1;
+  string event_json = 2;
+}
+
+message WatchSyncSubscriptionNack {
+  ChangeSyncTarget target = 1;
+  string reason = 2;
+  string message = 3;
+}
+
+message WatchSyncSubscriptionRemoved {
+  ChangeSyncTarget target = 1;
+}
+
+message WatchChangeSyncEventsV2Response {
+  oneof frame {
+    WatchSyncSessionStarted session = 1;
+    TaggedSyncSnapshot snapshot = 2;
+    TaggedSyncEvent event = 3;
+    SyncEventHeartbeat heartbeat = 4;
+    WatchSyncSubscriptionNack nack = 5;
+    WatchSyncSubscriptionRemoved removed = 6;
+  }
+}
+
+message UpdateWatchChangeSyncSubscriptionsRequest {
+  string connection_id = 1;
+  repeated ChangeSyncTarget add = 2;
+  repeated ChangeSyncTarget remove = 3;
+}
+
+message UpdateWatchChangeSyncSubscriptionsResponse {
+}
+
 service OriginService {
   rpc ListHostedRepos(ListHostedReposRequest) returns (ListHostedReposResponse);
   rpc CreateRepo(CreateRepoRequest) returns (CreateRepoResponse);
@@ -2548,13 +2813,17 @@ service OriginService {
   rpc GetRepo(GetRepoRequest) returns (GetRepoResponse);
   rpc GetRepoWithMirrorInfo(GetRepoRequest) returns (GetRepoWithMirrorInfoResponse);
   rpc GetRepoByGithubMirror(GetRepoByGithubMirrorRequest) returns (GetRepoWithMirrorInfoResponse);
+  rpc UpdateRepoMergeSettings(UpdateRepoMergeSettingsRequest) returns (UpdateRepoMergeSettingsResponse);
+  rpc UpdateRepoBranchDeletionSetting(UpdateRepoBranchDeletionSettingRequest) returns (UpdateRepoBranchDeletionSettingResponse);
   rpc DetachRepoMirror(DetachRepoMirrorRequest) returns (DetachRepoMirrorResponse);
   rpc TransitionRepoMirrorStatus(TransitionRepoMirrorStatusRequest) returns (TransitionRepoMirrorStatusResponse);
   rpc GetMirrorTransitionJob(GetMirrorTransitionJobRequest) returns (GetMirrorTransitionJobResponse);
   rpc GetActiveMirrorTransitionJob(GetActiveMirrorTransitionJobRequest) returns (GetActiveMirrorTransitionJobResponse);
   rpc GetRepoNamespace(GetRepoNamespaceRequest) returns (GetRepoNamespaceResponse);
+  rpc DoesNamespaceExistForTeam(DoesNamespaceExistForTeamRequest) returns (DoesNamespaceExistForTeamResponse);
   rpc GetAuthorizedNamespaces(GetAuthorizedNamespacesRequest) returns (GetAuthorizedNamespacesResponse);
   rpc CreateOriginNamespace(CreateOriginNamespaceRequest) returns (CreateOriginNamespaceResponse);
+  rpc SetupTeamNamespace(SetupTeamNamespaceRequest) returns (SetupTeamNamespaceResponse);
   rpc ListRepoAssignablePolicies(ListRepoAssignablePoliciesRequest) returns (ListRepoAssignablePoliciesResponse);
   rpc GetRepoTeamAccess(GetRepoTeamAccessRequest) returns (GetRepoTeamAccessResponse);
   rpc ListRepoGrants(ListRepoGrantsRequest) returns (ListRepoGrantsResponse);
@@ -2563,6 +2832,7 @@ service OriginService {
   rpc GetNamespaceTeamAccess(GetNamespaceTeamAccessRequest) returns (GetNamespaceTeamAccessResponse);
   rpc ListNamespaceGrants(ListNamespaceGrantsRequest) returns (ListNamespaceGrantsResponse);
   rpc ListNamespaceAssignablePolicies(ListNamespaceAssignablePoliciesRequest) returns (ListNamespaceAssignablePoliciesResponse);
+  rpc AddSshPublicKey(AddSshPublicKeyRequest) returns (AddSshPublicKeyResponse);
   rpc GetCommit(GetCommitClientRequest) returns (git_forge.v1.GetCommitResponse);
   rpc GetBlob(GetBlobClientRequest) returns (git_forge.v1.GetBlobResponse);
   rpc GetTag(GetTagClientRequest) returns (git_forge.v1.GetTagResponse);
@@ -2609,6 +2879,7 @@ service OriginService {
   rpc ApplyReviewRequestChanges(ApplyReviewRequestChangesRequest) returns (ApplyReviewRequestChangesResponse);
   rpc RequestReviews(RequestReviewsRequest) returns (RequestReviewsResponse);
   rpc CloseReviewRequest(CloseReviewRequestRequest) returns (CloseReviewRequestResponse);
+  rpc ListReviewRequestEvents(ListReviewRequestEventsRequest) returns (ListReviewRequestEventsResponse);
   rpc AddAssignee(AddAssigneeRequest) returns (AddAssigneeResponse);
   rpc RemoveAssignee(RemoveAssigneeRequest) returns (RemoveAssigneeResponse);
   rpc ListOriginRepoReviewerCandidates(ListOriginRepoReviewerCandidatesRequest) returns (ListOriginRepoReviewerCandidatesResponse);
@@ -2629,6 +2900,7 @@ service OriginService {
   rpc MarkAllFilesAsViewed(MarkAllFilesAsViewedRequest) returns (MarkAllFilesAsViewedResponse);
   rpc UnmarkAllFilesAsViewed(UnmarkAllFilesAsViewedRequest) returns (UnmarkAllFilesAsViewedResponse);
   rpc ListFileViewedStates(ListFileViewedStatesRequest) returns (ListFileViewedStatesResponse);
+  rpc MarkPullRequestAsViewed(MarkPullRequestAsViewedRequest) returns (MarkPullRequestAsViewedResponse);
   rpc GetGeneratedCodeTour(GetGeneratedCodeTourRequest) returns (GetGeneratedCodeTourResponse);
   rpc UpsertGeneratedCodeTour(UpsertGeneratedCodeTourRequest) returns (UpsertGeneratedCodeTourResponse);
   rpc EnableChangeMergeWhenReady(EnableChangeMergeWhenReadyRequest) returns (EnableChangeMergeWhenReadyResponse);
@@ -2637,6 +2909,7 @@ service OriginService {
   rpc GetChange(GetChangeRequest) returns (GetChangeResponse);
   rpc GetProjectedLatestVersions(GetProjectedLatestVersionsRequest) returns (GetProjectedLatestVersionsResponse);
   rpc GetChangeStackPageData(GetChangeStackPageDataRequest) returns (GetChangeStackPageDataResponse);
+  rpc GetChangeStack(GetChangeStackRequest) returns (GetChangeStackResponse);
   rpc ListChangeCommits(ListChangeCommitsRequest) returns (ListChangeCommitsResponse);
   rpc ListChanges(ListChangesRequest) returns (ListChangesResponse);
   rpc ListChangesByHeadRef(ListChangesByHeadRefRequest) returns (ListChangesByHeadRefResponse);
@@ -2644,10 +2917,13 @@ service OriginService {
   rpc GetSectionOfChanges(GetSectionOfChangesRequest) returns (GetSectionOfChangesResponse);
   rpc ResolveOriginPullRequestRedirect(ResolveOriginPullRequestRedirectRequest) returns (ResolveOriginPullRequestRedirectResponse);
   rpc GetCiState(GetCiStateRequest) returns (GetCiStateResponse);
+  rpc GetCheckRun(GetCheckRunRequest) returns (GetCheckRunResponse);
   rpc PostCheckRun(PostCheckRunRequest) returns (PostCheckRunResponse);
+  rpc RebuildBuildkiteCheckRun(RebuildBuildkiteCheckRunRequest) returns (RebuildBuildkiteCheckRunResponse);
   rpc GetChangesetMergeability(GetChangesetMergeabilityRequest) returns (GetChangesetMergeabilityResponse);
   rpc MergeStack(MergeStackRequest) returns (MergeStackResponse);
   rpc RestackStack(RestackStackRequest) returns (RestackStackResponse);
+  rpc ClaimInboundConvergenceIntent(ClaimInboundConvergenceIntentRequest) returns (ClaimInboundConvergenceIntentResponse);
   rpc ClaimInboundMirrorGithubMergeOperation(ClaimInboundMirrorGithubMergeOperationRequest) returns (ClaimInboundMirrorGithubMergeOperationResponse);
   rpc RecordInboundMirrorGithubMergeGithubPr(RecordInboundMirrorGithubMergeGithubPrRequest) returns (RecordInboundMirrorGithubMergeGithubPrResponse);
   rpc RecordInboundMirrorGithubMergeGithubResult(RecordInboundMirrorGithubMergeGithubResultRequest) returns (RecordInboundMirrorGithubMergeGithubResultResponse);
@@ -2687,4 +2963,7 @@ service OriginService {
   rpc RemoveLabelFromChange(RemoveLabelFromChangeRequest) returns (RemoveLabelFromChangeResponse);
   rpc CheckChangeCreationAccess(CheckChangeCreationAccessRequest) returns (CheckChangeCreationAccessResponse);
   rpc WatchChangeSyncEvents(WatchChangeSyncEventsRequest) returns (stream WatchChangeSyncEventsResponse);
+  rpc WatchChangeSyncEventsV2(WatchChangeSyncEventsV2Request) returns (stream WatchChangeSyncEventsV2Response);
+  rpc UpdateWatchChangeSyncSubscriptions(UpdateWatchChangeSyncSubscriptionsRequest) returns (UpdateWatchChangeSyncSubscriptionsResponse);
+  rpc FastForwardBranch(FastForwardBranchClientRequest) returns (FastForwardBranchClientResponse);
 }

@@ -42,6 +42,8 @@ message PrewarmRequest {
   optional bool suppress_subagent_progress_update_tool = 21;
   optional bool client_supports_send_to_user = 22;
   optional string computer_use_coordinate_mode = 23;
+  optional string agent_session_id = 24;
+  optional bool client_supports_prompt_context_usage_rpc = 25;
 }
 
 message ExecServerAbort {
@@ -103,6 +105,15 @@ message UpdateConversationMetadataRequest {
 }
 
 message UpdateConversationMetadataResponse {
+}
+
+message GetPromptContextUsageRequest {
+  string conversation_id = 1;
+  bytes snapshot_blob_id = 2;
+}
+
+message GetPromptContextUsageResponse {
+  PromptContextUsageSnapshot snapshot = 1;
 }
 
 message CreateTranscriptOverviewRequest {
@@ -290,4 +301,5 @@ service AgentService {
   rpc NotifyConversationClone(NotifyConversationCloneRequest) returns (NotifyConversationCloneResponse);
   rpc GetNewChatNudgeLegacyModelPicker(GetNewChatNudgeLegacyModelPickerRequest) returns (GetNewChatNudgeLegacyModelPickerResponse);
   rpc GetNewChatNudgeParameterizedModelPicker(GetNewChatNudgeParameterizedModelPickerRequest) returns (GetNewChatNudgeParameterizedModelPickerResponse);
+  rpc GetPromptContextUsage(GetPromptContextUsageRequest) returns (GetPromptContextUsageResponse);
 }

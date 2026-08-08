@@ -105,6 +105,45 @@ message DeleteTeamSandSetupManifestRequest {
 message DeleteTeamSandSetupManifestResponse {
 }
 
+message ListTeamMemberSandBoxesRequest {
+  int32 team_id = 1;
+  int32 user_id = 2;
+}
+
+message TeamMemberSandBoxPod {
+  string cluster = 1;
+  string pod_id = 2;
+  string tenant_id = 3;
+  string flavor = 4;
+  string run_state = 5;
+  optional string image_tag = 6;
+  optional int64 created_at_ms = 7;
+  optional int64 last_active_at_ms = 8;
+  optional string node_id = 9;
+  optional string failure_reason = 10;
+}
+
+message ListTeamMemberSandBoxesResponse {
+  int32 user_id = 1;
+  string email = 2;
+  string name = 3;
+  repeated TeamMemberSandBoxPod boxes = 4;
+  bool scan_incomplete = 5;
+}
+
+message KillTeamMemberSandBoxRequest {
+  int32 team_id = 1;
+  int32 user_id = 2;
+  string pod_id = 3;
+  string cluster = 4;
+}
+
+message KillTeamMemberSandBoxResponse {
+  bool killed = 1;
+  string reason = 2;
+  uint32 deleted_count = 3;
+}
+
 message EnsureSandBoxRequest {
 }
 
@@ -472,4 +511,6 @@ service SandBoxService {
   rpc ListTeamSandSetupManifests(ListTeamSandSetupManifestsRequest) returns (ListTeamSandSetupManifestsResponse);
   rpc SaveTeamSandSetupManifest(SaveTeamSandSetupManifestRequest) returns (SaveTeamSandSetupManifestResponse);
   rpc DeleteTeamSandSetupManifest(DeleteTeamSandSetupManifestRequest) returns (DeleteTeamSandSetupManifestResponse);
+  rpc ListTeamMemberSandBoxes(ListTeamMemberSandBoxesRequest) returns (ListTeamMemberSandBoxesResponse);
+  rpc KillTeamMemberSandBox(KillTeamMemberSandBoxRequest) returns (KillTeamMemberSandBoxResponse);
 }
