@@ -307,3 +307,23 @@ service MetricsService {
   rpc ReportDistribution(ReportMetricsRequest) returns (ReportMetricsResponse);
   rpc ReportGauge(ReportMetricsRequest) returns (ReportMetricsResponse);
 }
+
+service PerformanceEventService {
+  rpc SubmitPerformanceEvents(SubmitPerformanceEventsRequest) returns (SubmitPerformanceEventsResponse);
+}
+
+service ProfilingService {
+  rpc SubmitProfile(SubmitProfileRequest) returns (SubmitProfileResponse);
+}
+
+service WebProfilingService {
+  rpc SubmitInteractionWindow(SubmitInteractionWindowRequest) returns (SubmitInteractionWindowResponse);
+}
+
+service TraceService {
+  rpc SubmitSpans(SubmitSpansRequest) returns (SubmitSpansResponse);
+}
+
+service ToolCallEventService {
+  rpc SubmitToolCallEvents(SubmitToolCallEventsRequest) returns (SubmitToolCallEventsResponse);
+}

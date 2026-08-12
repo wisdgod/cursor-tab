@@ -141,6 +141,7 @@ enum CloudSubagentParentSpawnKind {
   CLOUD_SUBAGENT_PARENT_SPAWN_KIND_UNSPECIFIED = 0;
   CLOUD_SUBAGENT_PARENT_SPAWN_KIND_TASK = 1;
   CLOUD_SUBAGENT_PARENT_SPAWN_KIND_EVENT_SUBSCRIPTION = 2;
+  CLOUD_SUBAGENT_PARENT_SPAWN_KIND_ADOPTED = 3;
 }
 
 enum EnsembleStatus {
@@ -481,6 +482,16 @@ message RenameBackgroundComposerRequest {
 
 message RenameBackgroundComposerResponse {
   string name = 1;
+}
+
+message ReparentBackgroundComposerRequest {
+  string bc_id = 1;
+  string parent_agent_id = 2;
+  CloudSubagentParentAgentType parent_agent_type = 3;
+  string subagent_type = 4;
+}
+
+message ReparentBackgroundComposerResponse {
 }
 
 message UpdateBackgroundComposerExperimentalModelOptOutRequest {
@@ -4105,6 +4116,7 @@ service BackgroundComposerService {
   rpc WatchBackgroundComposerSnapshotState(WatchBackgroundComposerSnapshotStateRequest) returns (stream WatchBackgroundComposerSnapshotStateResponse);
   rpc GetBackgroundComposerConversation(GetBackgroundComposerConversationRequest) returns (GetBackgroundComposerConversationResponse);
   rpc RenameBackgroundComposer(RenameBackgroundComposerRequest) returns (RenameBackgroundComposerResponse);
+  rpc ReparentBackgroundComposer(ReparentBackgroundComposerRequest) returns (ReparentBackgroundComposerResponse);
   rpc UpdateBackgroundComposerExperimentalModelOptOut(UpdateBackgroundComposerExperimentalModelOptOutRequest) returns (UpdateBackgroundComposerExperimentalModelOptOutResponse);
   rpc CommitBackgroundComposer(CommitBackgroundComposerRequest) returns (CommitBackgroundComposerResponse);
   rpc SetPersonalEnvironmentJson(SetPersonalEnvironmentJsonRequest) returns (SetPersonalEnvironmentJsonResponse);

@@ -39,6 +39,13 @@ enum SCMMergeMethod {
   SCM_MERGE_METHOD_REBASE = 3;
 }
 
+enum SCMPullRequestStackSource {
+  SCM_PULL_REQUEST_STACK_SOURCE_UNSPECIFIED = 0;
+  SCM_PULL_REQUEST_STACK_SOURCE_ORIGIN = 1;
+  SCM_PULL_REQUEST_STACK_SOURCE_GRAPHITE = 2;
+  SCM_PULL_REQUEST_STACK_SOURCE_GITHUB_NATIVE = 3;
+}
+
 enum PullRequestFileContentsStatus {
   PULL_REQUEST_FILE_CONTENTS_STATUS_UNSPECIFIED = 0;
   PULL_REQUEST_FILE_CONTENTS_STATUS_OK = 1;
@@ -65,6 +72,31 @@ message GetPullRequestRequest {
 
 message GetPullRequestResponse {
   SCMPullRequest pull_request = 1;
+}
+
+message GetPullRequestStackRequest {
+  string pr_url = 1;
+}
+
+message GetPullRequestStackResponse {
+  optional SCMPullRequestStack stack = 1;
+}
+
+message SCMPullRequestStack {
+  SCMPullRequestStackSource source = 1;
+  repeated SCMPullRequestStackMember members = 2;
+  repeated SCMPullRequestStackEdge edges = 3;
+  optional string base_ref_name = 4;
+}
+
+message SCMPullRequestStackMember {
+  SCMPullRequest pull_request = 1;
+  optional int32 position = 2;
+}
+
+message SCMPullRequestStackEdge {
+  string parent_pr_url = 1;
+  string child_pr_url = 2;
 }
 
 message BatchGetPullRequestsRequest {
@@ -441,6 +473,7 @@ message GetPullRequestCheckLogExcerptResponse {
 
 service SCMService {
   rpc GetPullRequest(GetPullRequestRequest) returns (GetPullRequestResponse);
+  rpc GetPullRequestStack(GetPullRequestStackRequest) returns (GetPullRequestStackResponse);
   rpc BatchGetPullRequests(BatchGetPullRequestsRequest) returns (BatchGetPullRequestsResponse);
   rpc BatchGetPullRequestStatus(BatchGetPullRequestStatusRequest) returns (BatchGetPullRequestStatusResponse);
   rpc GetPullRequestDiff(GetPullRequestDiffRequest) returns (GetPullRequestDiffResponse);
