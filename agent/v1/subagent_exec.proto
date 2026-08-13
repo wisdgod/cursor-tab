@@ -30,6 +30,7 @@ message SubagentArgs {
   optional bool direct_meta_parent_child_subagent = 18;
   SubagentExecutionEnvironment environment = 19;
   optional string cloud_base_branch = 20;
+  repeated RequestedModel.ModelParameterValue model_parameters = 21;
   oneof credentials {
     ApiKeyCredentials api_key_credentials = 10;
     AzureCredentials azure_credentials = 11;

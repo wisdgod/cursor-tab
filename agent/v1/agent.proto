@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package agent.v1;
 
+import "agent/v1/adopt_tool.proto";
 import "agent/v1/ai_attribution_tool.proto";
 import "agent/v1/apply_agent_diff_tool.proto";
 import "agent/v1/ask_question_tool.proto";
@@ -10,6 +11,7 @@ import "agent/v1/blame_by_file_path_tool.proto";
 import "agent/v1/communicate_update_tool.proto";
 import "agent/v1/computer_use_tool.proto";
 import "agent/v1/connect_scm_tool.proto";
+import "agent/v1/coordinator_tools.proto";
 import "agent/v1/create_plan_tool.proto";
 import "agent/v1/delete_tool.proto";
 import "agent/v1/edit_pr_labels_tool.proto";
@@ -170,6 +172,7 @@ enum SubscriptionSource {
   SUBSCRIPTION_SOURCE_SLACK = 1;
   SUBSCRIPTION_SOURCE_GITHUB = 2;
   SUBSCRIPTION_SOURCE_LINEAR = 3;
+  SUBSCRIPTION_SOURCE_ORIGIN = 4;
 }
 
 enum ThinkingStyle {
@@ -359,6 +362,12 @@ message ToolCall {
     SearchConversationsToolCall search_conversations_tool_call = 69;
     CreateGoalToolCall create_goal_tool_call = 70;
     UpdateGoalToolCall update_goal_tool_call = 71;
+    AdoptToolCall adopt_tool_call = 72;
+    GetAgentStatusToolCall get_agent_status_tool_call = 73;
+    SendToAgentToolCall send_to_agent_tool_call = 74;
+    ReadAgentTranscriptToolCall read_agent_transcript_tool_call = 75;
+    CreateAgentToolCall create_agent_tool_call = 76;
+    StopAgentToolCall stop_agent_tool_call = 77;
   }
 }
 
@@ -1076,11 +1085,16 @@ message AgentRunRequest {
   optional string run_id = 25;
   optional string agent_session_id = 26;
   optional bool client_supports_prompt_context_usage_rpc = 27;
+  optional bool client_supports_routed_model_update = 28;
 }
 
 message TextDeltaUpdate {
   string text = 1;
   bool is_server_notice = 2;
+}
+
+message RoutedModelUpdate {
+  string display_name = 1;
 }
 
 message ToolCallStartedUpdate {
@@ -1251,6 +1265,7 @@ message InteractionUpdate {
     FeedbackRequestUpdate feedback_request = 21;
     ResponseComparisonUpdate response_comparison = 22;
     ContextInjectionStateUpdate context_injection_state = 23;
+    RoutedModelUpdate routed_model = 24;
   }
 }
 

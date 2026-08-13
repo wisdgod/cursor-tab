@@ -327,6 +327,7 @@ message DiffEntry {
   optional string new_sha = 7;
   optional FileStats stats = 8;
   optional string patch = 9;
+  optional bool is_generated = 10;
 }
 
 message CommitDiffStats {
@@ -345,6 +346,5 @@ message RefInfo {
 message ListRefsResponse {
   repeated string refs = 1;
   repeated RefInfo ref_infos = 2;
-  optional uint32 total_count = 3;
-  optional uint32 next_offset = 4;
+  optional string next_page_token = 5;
 }

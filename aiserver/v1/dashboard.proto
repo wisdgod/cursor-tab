@@ -224,6 +224,12 @@ enum LocalToolPermissionCeiling {
   LOCAL_TOOL_PERMISSION_CEILING_ALWAYS = 3;
 }
 
+enum LlmGatewayAuthMode {
+  LLM_GATEWAY_AUTH_MODE_UNSPECIFIED = 0;
+  LLM_GATEWAY_AUTH_MODE_JWT_ACCESS = 1;
+  LLM_GATEWAY_AUTH_MODE_CUSTOMER_MANAGED = 2;
+}
+
 enum TrialType {
   TRIAL_TYPE_UNSPECIFIED = 0;
   TRIAL_TYPE_REQUEST = 1;
@@ -234,6 +240,11 @@ enum FreeTrialCodePurpose {
   FREE_TRIAL_CODE_PURPOSE_UNSPECIFIED = 0;
   FREE_TRIAL_CODE_PURPOSE_FREE_TRIAL = 1;
   FREE_TRIAL_CODE_PURPOSE_ORG_INVITE = 2;
+}
+
+enum UserAccessRequestKind {
+  USER_ACCESS_REQUEST_KIND_UNSPECIFIED = 0;
+  USER_ACCESS_REQUEST_KIND_SAND_TEAM_ACCESS = 1;
 }
 
 enum LimitHitStage {
@@ -288,6 +299,15 @@ enum LinearActor {
   LINEAR_ACTOR_UNSPECIFIED = 0;
   LINEAR_ACTOR_APP = 1;
   LINEAR_ACTOR_USER = 2;
+}
+
+enum XaiCreditTransferOutcome {
+  XAI_CREDIT_TRANSFER_OUTCOME_UNSPECIFIED = 0;
+  XAI_CREDIT_TRANSFER_OUTCOME_SUCCEEDED = 1;
+  XAI_CREDIT_TRANSFER_OUTCOME_NOT_CONFIGURED = 2;
+  XAI_CREDIT_TRANSFER_OUTCOME_FAILED = 3;
+  XAI_CREDIT_TRANSFER_OUTCOME_NEEDS_RECONCILIATION = 4;
+  XAI_CREDIT_TRANSFER_OUTCOME_PENDING = 5;
 }
 
 enum LinearRunOption {
@@ -382,6 +402,7 @@ enum AdminNotificationRequestType {
   ADMIN_NOTIFICATION_REQUEST_TYPE_PRIVACY_MODE = 1;
   ADMIN_NOTIFICATION_REQUEST_TYPE_BUGBOT = 2;
   ADMIN_NOTIFICATION_REQUEST_TYPE_BUGBOT_ENABLE_REPOS = 3;
+  ADMIN_NOTIFICATION_REQUEST_TYPE_ORIGIN = 4;
 }
 
 enum TeamCustomerTelemetryDestinationKind {
@@ -420,6 +441,15 @@ enum BugbotMode {
   BUGBOT_MODE_HIGH = 2;
   BUGBOT_MODE_AUTO = 3;
   BUGBOT_MODE_FRONTIER = 4;
+}
+
+enum EventCodeClaimState {
+  EVENT_CODE_CLAIM_STATE_UNSPECIFIED = 0;
+  EVENT_CODE_CLAIM_STATE_UPCOMING = 1;
+  EVENT_CODE_CLAIM_STATE_OPEN = 2;
+  EVENT_CODE_CLAIM_STATE_FULL = 3;
+  EVENT_CODE_CLAIM_STATE_CLOSED = 4;
+  EVENT_CODE_CLAIM_STATE_DISABLED = 5;
 }
 
 enum TeamRuleAgentType {
@@ -2346,6 +2376,7 @@ message GetHardLimitResponse {
   bool is_setup_promo_active = 7;
   optional int32 setup_promo_amount_cents = 8;
   optional int32 setup_promo_credit_validity_days = 9;
+  bool on_demand_spend_disabled_by_organization = 10;
 }
 
 message SetHardLimitRequest {
@@ -2557,6 +2588,21 @@ message GetTeamCustomerPortalUrlRequest {
 
 message GetTeamCustomerPortalUrlResponse {
   string portal_url = 1;
+}
+
+message CancelPendingTeamSubscriptionNowRequest {
+  int32 team_id = 1;
+}
+
+message CancelPendingTeamSubscriptionNowResponse {
+}
+
+message CreatePendingTeamProCheckoutRequest {
+  int32 team_id = 1;
+}
+
+message CreatePendingTeamProCheckoutResponse {
+  string checkout_url = 1;
 }
 
 message SetSlackAuthRequest {
@@ -3116,6 +3162,8 @@ message GetSignUpTypeResponse {
     SIGN_UP_TYPE_GOOGLE = 2;
     SIGN_UP_TYPE_GITHUB = 3;
     SIGN_UP_TYPE_WORKOS = 4;
+    SIGN_UP_TYPE_GROK = 5;
+    SIGN_UP_TYPE_X = 6;
   }
   SignUpType sign_up_type = 1;
 }
@@ -3496,6 +3544,7 @@ message GetRepoSourcePreferenceResponse {
   PreferredRepoSourceMode team_preference = 2;
   PreferredRepoSourceMode effective_preference = 3;
   bool can_configure = 4;
+  bool origin_repos_enabled = 5;
 }
 
 message UpdateUserRepoSourcePreferenceRequest {
@@ -3745,12 +3794,58 @@ message ModelAllowlist {
   optional ModelAllowlistByok byok = 4;
 }
 
+message LlmGatewayTeamCredentialStatus {
+  bool configured = 1;
+}
+
+message TeamLlmGatewayCredentialStatus {
+  bool configured = 1;
+  optional int32 credential_version = 2;
+  optional int64 updated_at_epoch_millis = 3;
+}
+
+message GetTeamLlmGatewayCredentialStatusRequest {
+  int32 team_id = 1;
+}
+
+message GetTeamLlmGatewayCredentialStatusResponse {
+  TeamLlmGatewayCredentialStatus status = 1;
+}
+
+message SetTeamLlmGatewayCredentialRequest {
+  int32 team_id = 1;
+  string credential = 2;
+}
+
+message SetTeamLlmGatewayCredentialResponse {
+  TeamLlmGatewayCredentialStatus status = 1;
+}
+
+message ReplaceTeamLlmGatewayCredentialRequest {
+  int32 team_id = 1;
+  string credential = 2;
+}
+
+message ReplaceTeamLlmGatewayCredentialResponse {
+  TeamLlmGatewayCredentialStatus status = 1;
+}
+
+message ClearTeamLlmGatewayCredentialRequest {
+  int32 team_id = 1;
+}
+
+message ClearTeamLlmGatewayCredentialResponse {
+  TeamLlmGatewayCredentialStatus status = 1;
+}
+
 message LlmGatewaySettings {
   bool enabled = 1;
   map<string, string> endpoints = 2;
   string audience = 3;
   LlmGatewayRouting routing = 4;
   bool can_enable = 5;
+  LlmGatewayAuthMode auth_mode = 6;
+  LlmGatewayTeamCredentialStatus team_credential_status = 7;
 }
 
 message LlmGatewayRouting {
@@ -3828,7 +3923,12 @@ message GetTeamAdminSettingsResponse {
   optional bool viewer_can_invite_members = 57;
   optional bool enforce_hooks_readiness = 58;
   optional LlmGatewaySettings llm_gateway = 59;
-  optional bool dot_onboarding_completed = 62;
+  optional SandOnboardingState sand_onboarding = 62;
+}
+
+message SandOnboardingState {
+  bool completed = 1;
+  bool seen = 2;
 }
 
 message GetBaseTeamAdminSettingsRequest {
@@ -3917,12 +4017,19 @@ message UpdateTeamMemberInviteSettingRequest {
 message UpdateTeamMemberInviteSettingResponse {
 }
 
-message UpdateTeamDotOnboardingCompletedRequest {
+message UpdateTeamSandOnboardingCompletedRequest {
   int32 team_id = 1;
   bool completed = 2;
 }
 
-message UpdateTeamDotOnboardingCompletedResponse {
+message UpdateTeamSandOnboardingCompletedResponse {
+}
+
+message MarkTeamSandOnboardingSeenRequest {
+  int32 team_id = 1;
+}
+
+message MarkTeamSandOnboardingSeenResponse {
 }
 
 message CreateTeamFreeTrialCodeRequest {
@@ -4081,6 +4188,7 @@ message GetClientUsageDataResponse {
 
 message GetCurrentPeriodUsageRequest {
   optional int32 team_id = 1;
+  optional bool include_pooled_usage = 2;
 }
 
 message GetCurrentPeriodUsageResponse {
@@ -4167,11 +4275,54 @@ message GetSandAccessStatusResponse {
     SAND_PURCHASE_CHANNEL_MANAGE_IN_CURSOR = 2;
     SAND_PURCHASE_CHANNEL_MANAGE_ON_WEB = 3;
   }
+  enum SandAccessBlockReason {
+    SAND_ACCESS_BLOCK_REASON_UNSPECIFIED = 0;
+    SAND_ACCESS_BLOCK_REASON_NONE = 1;
+    SAND_ACCESS_BLOCK_REASON_TEAM_PRIVACY_MODE = 2;
+    SAND_ACCESS_BLOCK_REASON_TEAM_SETUP_REQUIRED = 3;
+    SAND_ACCESS_BLOCK_REASON_TEAM_ACCESS_REQUIRED = 4;
+    SAND_ACCESS_BLOCK_REASON_NOT_OFFERED = 5;
+    SAND_ACCESS_BLOCK_REASON_FREE_TRIAL_AVAILABLE = 6;
+    SAND_ACCESS_BLOCK_REASON_PAYWALL_INDIVIDUAL = 7;
+    SAND_ACCESS_BLOCK_REASON_PAYWALL_TEAM_MEMBER = 8;
+    SAND_ACCESS_BLOCK_REASON_PAYWALL_TEAM_ADMIN = 9;
+  }
   SandAccessState state = 1;
   SandPurchaseChannel purchase_channel = 2;
+  SandAccessBlockReason block_reason = 3;
+}
+
+message RequestSandTeamAccessRequest {
+  int32 team_id = 1;
+}
+
+message RequestSandTeamAccessResponse {
+}
+
+message ListPendingUserAccessRequestsRequest {
+  int32 team_id = 1;
+}
+
+message PendingUserAccessRequest {
+  int64 id = 1;
+  UserAccessRequestKind kind = 2;
+  int32 requester_user_id = 3;
+  string requester_name = 4;
+  string requester_email = 5;
+  google.protobuf.Timestamp requested_at = 6;
+  string summary = 7;
+}
+
+message ListPendingUserAccessRequestsResponse {
+  repeated PendingUserAccessRequest requests = 1;
 }
 
 message GetSandUsageStatusRequest {
+}
+
+message SandUpgradeRecommendation {
+  ErrorButton cta = 1;
+  bool disabled = 2;
 }
 
 message GetSandUsageStatusResponse {
@@ -4183,6 +4334,8 @@ message GetSandUsageStatusResponse {
   bool uses_pooled_enterprise_allowance = 6;
   bool has_available_usage = 7;
   bool has_non_zero_included_limit = 8;
+  optional SandUpgradeRecommendation upgrade_recommendation = 9;
+  optional google.protobuf.Timestamp sand_trial_expires_at = 10;
 }
 
 message StartSandTrialRequest {
@@ -4200,6 +4353,28 @@ message StartSandTrialResponse {
     Activated activated = 1;
     CardVerificationRequired card_verification_required = 2;
   }
+}
+
+message IsEligibleForSandTrialRequest {
+}
+
+message IsEligibleForSandTrialResponse {
+  bool is_eligible = 1;
+}
+
+message GetSandTrialClaimStatusRequest {
+}
+
+message GetSandTrialClaimStatusResponse {
+  enum SandTrialClaimStatus {
+    SAND_TRIAL_CLAIM_STATUS_UNSPECIFIED = 0;
+    SAND_TRIAL_CLAIM_STATUS_NONE = 1;
+    SAND_TRIAL_CLAIM_STATUS_PENDING_CARD = 2;
+    SAND_TRIAL_CLAIM_STATUS_GRANTED = 3;
+    SAND_TRIAL_CLAIM_STATUS_REJECTED_DUPLICATE_CARD = 4;
+    SAND_TRIAL_CLAIM_STATUS_BLOCKED = 5;
+  }
+  SandTrialClaimStatus status = 1;
 }
 
 message GetPlanInfoRequest {
@@ -4657,6 +4832,11 @@ message BugbotAutofixCapabilities {
   bool side_branch_delivery = 2;
 }
 
+message BugbotSettingsCapabilities {
+  bool auto_enable_new_repos = 1;
+  bool learned_rules = 2;
+}
+
 message GetGithubInstallationsResponse {
   message Repository {
     int64 installation_id = 1;
@@ -4680,6 +4860,8 @@ message GetGithubInstallationsResponse {
     optional string account_login = 11;
     optional BugbotAutofixCapabilities autofix_capabilities = 12;
     optional bool team_owned = 13;
+    optional BugbotSettingsCapabilities settings_capabilities = 14;
+    optional bool azure_devops_managed = 15;
   }
   repeated Installation installations = 1;
   bool github_connected = 2;
@@ -5424,6 +5606,7 @@ message InvoiceInfo {
   int32 refund_amount = 7;
   string description = 8;
   bool is_mid_month_invoice = 9;
+  string invoice_pdf_url = 10;
 }
 
 message ListInvoicesResponse {
@@ -5554,6 +5737,23 @@ message SetOrganizationNoZdrModelConsentRequest {
 
 message SetOrganizationNoZdrModelConsentResponse {
   bool consented = 1;
+}
+
+message GetOrganizationOnDemandSpendDisabledRequest {
+  string organization_id = 1;
+}
+
+message GetOrganizationOnDemandSpendDisabledResponse {
+  bool disabled = 1;
+}
+
+message SetOrganizationOnDemandSpendDisabledRequest {
+  string organization_id = 1;
+  bool disabled = 2;
+}
+
+message SetOrganizationOnDemandSpendDisabledResponse {
+  bool disabled = 1;
 }
 
 message SetUserNoZdrModelConsentRequest {
@@ -5701,6 +5901,89 @@ message DisconnectLinearRequest {
 }
 
 message DisconnectLinearResponse {
+}
+
+message GetXaiTeamLinkStatusRequest {
+  string organization_id = 1;
+}
+
+message GetXaiTeamLinkStatusResponse {
+  bool enabled = 1;
+  bool linked = 2;
+  string xai_team_id = 3;
+  optional int64 linked_at_ms = 4;
+  bool has_pending_proposal = 5;
+  string proposed_xai_team_id = 6;
+  optional int64 proposal_expires_at_ms = 7;
+  bool can_confirm_proposal = 8;
+}
+
+message StartXaiTeamLinkRequest {
+  string organization_id = 1;
+}
+
+message StartXaiTeamLinkResponse {
+  string connect_url = 1;
+}
+
+message ConfirmXaiTeamLinkRequest {
+  string organization_id = 1;
+  string xai_team_id = 2;
+}
+
+message ConfirmXaiTeamLinkResponse {
+  bool linked = 1;
+  string xai_team_id = 2;
+}
+
+message CancelXaiTeamLinkProposalRequest {
+  string organization_id = 1;
+}
+
+message CancelXaiTeamLinkProposalResponse {
+}
+
+message UnlinkXaiTeamRequest {
+  string organization_id = 1;
+}
+
+message UnlinkXaiTeamResponse {
+}
+
+message TransferXaiCreditsRequest {
+  string organization_id = 1;
+  int64 amount_cents = 2;
+  string transfer_id = 3;
+}
+
+message TransferXaiCreditsResponse {
+  XaiCreditTransferOutcome outcome = 1;
+  string transfer_id = 2;
+}
+
+message GetXaiCreditTransferStatusRequest {
+  string organization_id = 1;
+  string transfer_id = 2;
+}
+
+message ListXaiCreditTransfersRequest {
+  string organization_id = 1;
+  int32 page_size = 2;
+}
+
+message XaiCreditTransfer {
+  string transfer_id = 1;
+  int64 created_at_ms = 2;
+  int64 amount_cents = 3;
+  string status = 4;
+  XaiCreditTransferOutcome outcome = 5;
+  optional int32 requested_by_user_id = 6;
+  string requested_by_user_display_name = 7;
+  string requested_by_user_email = 8;
+}
+
+message ListXaiCreditTransfersResponse {
+  repeated XaiCreditTransfer transfers = 1;
 }
 
 message GetLinearTeamsRequest {
@@ -5976,6 +6259,35 @@ message UpdateSlackRepoRoutingRuleRequest {
 
 message UpdateSlackRepoRoutingRuleResponse {
   SlackRepoRoutingRule rule = 1;
+}
+
+message SlackDefaultWorkerRule {
+  int32 id = 1;
+  string repo = 2;
+  string worker_name = 3;
+}
+
+message GetSlackDefaultWorkerRulesRequest {
+}
+
+message GetSlackDefaultWorkerRulesResponse {
+  repeated SlackDefaultWorkerRule rules = 1;
+}
+
+message SetSlackDefaultWorkerRuleRequest {
+  string repo = 1;
+  string worker_name = 2;
+}
+
+message SetSlackDefaultWorkerRuleResponse {
+  SlackDefaultWorkerRule rule = 1;
+}
+
+message DeleteSlackDefaultWorkerRuleRequest {
+  string repo = 1;
+}
+
+message DeleteSlackDefaultWorkerRuleResponse {
 }
 
 message IsOnNewPricingRequest {
@@ -6828,6 +7140,32 @@ message RedeemGiftCodeResponse {
   optional string currency = 4;
 }
 
+message GetEventCodeInfoRequest {
+  string code = 1;
+}
+
+message GetEventCodeInfoResponse {
+  bool found = 1;
+  string event_name = 2;
+  int64 credit_cents = 3;
+  EventCodeClaimState claim_state = 4;
+  int64 claim_starts_at_ms = 5;
+  int64 claim_ends_at_ms = 6;
+  int32 credit_ttl_days = 7;
+}
+
+message RedeemEventCodeRequest {
+  string code = 1;
+}
+
+message RedeemEventCodeResponse {
+  bool success = 1;
+  EventCodeClaimState claim_state = 2;
+  bool already_claimed = 3;
+  int64 credit_cents = 4;
+  int64 grant_expires_at_ms = 5;
+}
+
 message GetActiveOffboardingBannerRequest {
   optional int32 team_id = 1;
 }
@@ -7317,6 +7655,7 @@ message SharedConversationMetadata {
   SharedConversationVisibility visibility = 3;
   string created_at = 4;
   SharedConversationCreator creator = 5;
+  optional string conversation_id = 6;
 }
 
 message SharedConversationLatestPlan {
@@ -7434,6 +7773,7 @@ message ListSharedConversationsRequest {
   optional string created_before = 3;
   repeated SharedConversationVisibility visibilities = 4;
   optional int32 team_id = 5;
+  optional string conversation_id = 6;
 }
 
 message ListSharedConversationsResponse {
@@ -7632,6 +7972,7 @@ message UsageAlert {
   optional int32 resource_threshold_cents = 17;
   optional string resource_threshold_level = 18;
   repeated string notification_channels = 19;
+  optional string spend_bucket = 20;
 }
 
 message ListUsageAlertsRequest {
@@ -7658,6 +7999,7 @@ message CreateUsageAlertsRequest {
   optional string resource_threshold_id = 13;
   optional string resource_threshold_level = 14;
   repeated string notification_channels = 15;
+  optional string spend_bucket = 16;
 }
 
 message CreateUsageAlertsResponse {
@@ -7885,6 +8227,7 @@ message Plugin {
   google.protobuf.Struct team_marketplace_configured_variables = 40;
   PluginLifecycleState lifecycle_state = 41;
   optional PluginMinClientVersions min_client_versions = 42;
+  bool published_by_user = 43;
 }
 
 message PluginMinClientVersions {
@@ -8077,6 +8420,16 @@ message CreatePluginRequest {
 }
 
 message CreatePluginResponse {
+  Plugin plugin = 1;
+}
+
+message UpdatePluginMcpConfigRequest {
+  int64 plugin_id = 1;
+  string mcp_config_json = 2;
+  optional int32 team_id = 3;
+}
+
+message UpdatePluginMcpConfigResponse {
   Plugin plugin = 1;
 }
 
@@ -9318,6 +9671,8 @@ service DashboardService {
   rpc CheckPromotionEligibility(CheckPromotionEligibilityRequest) returns (CheckPromotionEligibilityResponse);
   rpc ActivatePromotion(ActivatePromotionRequest) returns (ActivatePromotionResponse);
   rpc GetTeamCustomerPortalUrl(GetTeamCustomerPortalUrlRequest) returns (GetTeamCustomerPortalUrlResponse);
+  rpc CancelPendingTeamSubscriptionNow(CancelPendingTeamSubscriptionNowRequest) returns (CancelPendingTeamSubscriptionNowResponse);
+  rpc CreatePendingTeamProCheckout(CreatePendingTeamProCheckoutRequest) returns (CreatePendingTeamProCheckoutResponse);
   rpc GetTeamMembers(GetTeamMembersRequest) returns (GetTeamMembersResponse);
   rpc SendTeamInvite(SendTeamInviteRequest) returns (SendTeamInviteResponse);
   rpc GetTeamInviteLink(GetTeamInviteLinkRequest) returns (GetTeamInviteLinkResponse);
@@ -9434,6 +9789,8 @@ service DashboardService {
   rpc CheckReferralAllowlist(CheckReferralAllowlistRequest) returns (CheckReferralAllowlistResponse);
   rpc CheckReferralCode(CheckReferralCodeRequest) returns (CheckReferralCodeResponse);
   rpc RedeemGiftCode(RedeemGiftCodeRequest) returns (RedeemGiftCodeResponse);
+  rpc GetEventCodeInfo(GetEventCodeInfoRequest) returns (GetEventCodeInfoResponse);
+  rpc RedeemEventCode(RedeemEventCodeRequest) returns (RedeemEventCodeResponse);
   rpc GetTeamRepos(GetTeamReposRequest) returns (GetTeamReposResponse);
   rpc GetTeamReposOrEmptyIfNotInTeam(GetTeamReposRequest) returns (GetTeamReposResponse);
   rpc GetTeamRules(GetTeamRulesRequest) returns (GetTeamRulesResponse);
@@ -9481,14 +9838,21 @@ service DashboardService {
   rpc DeleteTeamCustomerTelemetryDestination(DeleteTeamCustomerTelemetryDestinationRequest) returns (DeleteTeamCustomerTelemetryDestinationResponse);
   rpc TestTeamCustomerTelemetryDestinationConnection(TestTeamCustomerTelemetryDestinationConnectionRequest) returns (TestTeamCustomerTelemetryDestinationConnectionResponse);
   rpc GetTeamCustomerTelemetryDestinationHealth(GetTeamCustomerTelemetryDestinationHealthRequest) returns (GetTeamCustomerTelemetryDestinationHealthResponse);
+  rpc GetTeamLlmGatewayCredentialStatus(GetTeamLlmGatewayCredentialStatusRequest) returns (GetTeamLlmGatewayCredentialStatusResponse);
+  rpc SetTeamLlmGatewayCredential(SetTeamLlmGatewayCredentialRequest) returns (SetTeamLlmGatewayCredentialResponse);
+  rpc ReplaceTeamLlmGatewayCredential(ReplaceTeamLlmGatewayCredentialRequest) returns (ReplaceTeamLlmGatewayCredentialResponse);
+  rpc ClearTeamLlmGatewayCredential(ClearTeamLlmGatewayCredentialRequest) returns (ClearTeamLlmGatewayCredentialResponse);
   rpc SetTeamNoZdrModelConsent(SetTeamNoZdrModelConsentRequest) returns (SetTeamNoZdrModelConsentResponse);
   rpc SetOrganizationNoZdrModelConsent(SetOrganizationNoZdrModelConsentRequest) returns (SetOrganizationNoZdrModelConsentResponse);
+  rpc GetOrganizationOnDemandSpendDisabled(GetOrganizationOnDemandSpendDisabledRequest) returns (GetOrganizationOnDemandSpendDisabledResponse);
+  rpc SetOrganizationOnDemandSpendDisabled(SetOrganizationOnDemandSpendDisabledRequest) returns (SetOrganizationOnDemandSpendDisabledResponse);
   rpc SetUserNoZdrModelConsent(SetUserNoZdrModelConsentRequest) returns (SetUserNoZdrModelConsentResponse);
   rpc SetTeamMemberNoZdrModelConsent(SetTeamMemberNoZdrModelConsentRequest) returns (SetTeamMemberNoZdrModelConsentResponse);
   rpc GetNoZdrModelConsentStatus(GetNoZdrModelConsentStatusRequest) returns (GetNoZdrModelConsentStatusResponse);
   rpc UpdateTeamInviteLinkTTLSetting(UpdateTeamInviteLinkTTLSettingRequest) returns (UpdateTeamInviteLinkTTLSettingResponse);
   rpc UpdateTeamMemberInviteSetting(UpdateTeamMemberInviteSettingRequest) returns (UpdateTeamMemberInviteSettingResponse);
-  rpc UpdateTeamDotOnboardingCompleted(UpdateTeamDotOnboardingCompletedRequest) returns (UpdateTeamDotOnboardingCompletedResponse);
+  rpc UpdateTeamSandOnboardingCompleted(UpdateTeamSandOnboardingCompletedRequest) returns (UpdateTeamSandOnboardingCompletedResponse);
+  rpc MarkTeamSandOnboardingSeen(MarkTeamSandOnboardingSeenRequest) returns (MarkTeamSandOnboardingSeenResponse);
   rpc GetProtectedGitScopes(GetProtectedGitScopesRequest) returns (GetProtectedGitScopesResponse);
   rpc CreateProtectedGitScope(CreateProtectedGitScopeRequest) returns (CreateProtectedGitScopeResponse);
   rpc DeleteProtectedGitScope(DeleteProtectedGitScopeRequest) returns (DeleteProtectedGitScopeResponse);
@@ -9504,7 +9868,11 @@ service DashboardService {
   rpc ListSandBankedResets(ListSandBankedResetsRequest) returns (ListSandBankedResetsResponse);
   rpc GetSandUsageStatus(GetSandUsageStatusRequest) returns (GetSandUsageStatusResponse);
   rpc StartSandTrial(StartSandTrialRequest) returns (StartSandTrialResponse);
+  rpc IsEligibleForSandTrial(IsEligibleForSandTrialRequest) returns (IsEligibleForSandTrialResponse);
+  rpc GetSandTrialClaimStatus(GetSandTrialClaimStatusRequest) returns (GetSandTrialClaimStatusResponse);
   rpc GetSandAccessStatus(GetSandAccessStatusRequest) returns (GetSandAccessStatusResponse);
+  rpc RequestSandTeamAccess(RequestSandTeamAccessRequest) returns (RequestSandTeamAccessResponse);
+  rpc ListPendingUserAccessRequests(ListPendingUserAccessRequestsRequest) returns (ListPendingUserAccessRequestsResponse);
   rpc GetUsageSignalsProjectionSnapshot(GetProjectionSnapshotRequest) returns (GetProjectionSnapshotResponse);
   rpc GetPlanInfo(GetPlanInfoRequest) returns (GetPlanInfoResponse);
   rpc VerifyAppleTransaction(VerifyAppleTransactionRequest) returns (VerifyAppleTransactionResponse);
@@ -9666,6 +10034,9 @@ service DashboardService {
   rpc CreateSlackRepoRoutingRule(CreateSlackRepoRoutingRuleRequest) returns (CreateSlackRepoRoutingRuleResponse);
   rpc UpdateSlackRepoRoutingRule(UpdateSlackRepoRoutingRuleRequest) returns (UpdateSlackRepoRoutingRuleResponse);
   rpc DeleteSlackRepoRoutingRule(DeleteSlackRepoRoutingRuleRequest) returns (DeleteSlackRepoRoutingRuleResponse);
+  rpc GetSlackDefaultWorkerRules(GetSlackDefaultWorkerRulesRequest) returns (GetSlackDefaultWorkerRulesResponse);
+  rpc SetSlackDefaultWorkerRule(SetSlackDefaultWorkerRuleRequest) returns (SetSlackDefaultWorkerRuleResponse);
+  rpc DeleteSlackDefaultWorkerRule(DeleteSlackDefaultWorkerRuleRequest) returns (DeleteSlackDefaultWorkerRuleResponse);
   rpc IsOnNewPricing(IsOnNewPricingRequest) returns (IsOnNewPricingResponse);
   rpc GetLinearAuthUrl(GetLinearAuthUrlRequest) returns (GetLinearAuthUrlResponse);
   rpc ConnectLinearCallback(ConnectLinearCallbackRequest) returns (ConnectLinearCallbackResponse);
@@ -9679,6 +10050,14 @@ service DashboardService {
   rpc UpdateLinearProjectSetting(UpdateLinearProjectSettingRequest) returns (UpdateLinearProjectSettingResponse);
   rpc GetLinearLabels(GetLinearLabelsRequest) returns (GetLinearLabelsResponse);
   rpc GetLinearIssues(GetLinearIssuesRequest) returns (GetLinearIssuesResponse);
+  rpc GetXaiTeamLinkStatus(GetXaiTeamLinkStatusRequest) returns (GetXaiTeamLinkStatusResponse);
+  rpc StartXaiTeamLink(StartXaiTeamLinkRequest) returns (StartXaiTeamLinkResponse);
+  rpc ConfirmXaiTeamLink(ConfirmXaiTeamLinkRequest) returns (ConfirmXaiTeamLinkResponse);
+  rpc CancelXaiTeamLinkProposal(CancelXaiTeamLinkProposalRequest) returns (CancelXaiTeamLinkProposalResponse);
+  rpc UnlinkXaiTeam(UnlinkXaiTeamRequest) returns (UnlinkXaiTeamResponse);
+  rpc TransferXaiCredits(TransferXaiCreditsRequest) returns (TransferXaiCreditsResponse);
+  rpc GetXaiCreditTransferStatus(GetXaiCreditTransferStatusRequest) returns (TransferXaiCreditsResponse);
+  rpc ListXaiCreditTransfers(ListXaiCreditTransfersRequest) returns (ListXaiCreditTransfersResponse);
   rpc GetPagerDutyAuthUrl(GetPagerDutyAuthUrlRequest) returns (GetPagerDutyAuthUrlResponse);
   rpc ConnectPagerDutyCallback(ConnectPagerDutyCallbackRequest) returns (ConnectPagerDutyCallbackResponse);
   rpc GetPagerDutyStatus(GetPagerDutyStatusRequest) returns (GetPagerDutyStatusResponse);
@@ -9732,6 +10111,7 @@ service DashboardService {
   rpc GetTeamMemberProfileByHandle(GetTeamMemberProfileByHandleRequest) returns (GetTeamMemberProfileByHandleResponse);
   rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse);
   rpc CreatePlugin(CreatePluginRequest) returns (CreatePluginResponse);
+  rpc UpdatePluginMcpConfig(UpdatePluginMcpConfigRequest) returns (UpdatePluginMcpConfigResponse);
   rpc PublishPlugin(PublishPluginRequest) returns (PublishPluginResponse);
   rpc UnpublishPlugin(UnpublishPluginRequest) returns (UnpublishPluginResponse);
   rpc ParseGitHubRepoForPlugins(ParseGitHubRepoForPluginRequest) returns (ParseGitHubRepoForPluginsResponse);

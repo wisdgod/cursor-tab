@@ -44,6 +44,7 @@ message PrewarmRequest {
   optional string computer_use_coordinate_mode = 23;
   optional string agent_session_id = 24;
   optional bool client_supports_prompt_context_usage_rpc = 25;
+  optional bool client_supports_routed_model_update = 26;
 }
 
 message ExecServerAbort {

@@ -30,8 +30,13 @@ message RecommendedAction {
   }
 }
 
+message RecommendedActionOwnerScope {
+  optional int64 team_id = 1;
+}
+
 message ListRecommendedActionsRequest {
   RecommendedActionSurface surface = 1;
+  RecommendedActionOwnerScope owner_scope = 2;
 }
 
 message ListRecommendedActionsResponse {
@@ -40,6 +45,7 @@ message ListRecommendedActionsResponse {
 
 message DismissRecommendedActionRequest {
   string action_id = 1;
+  RecommendedActionOwnerScope owner_scope = 2;
 }
 
 message DismissRecommendedActionResponse {
@@ -47,6 +53,7 @@ message DismissRecommendedActionResponse {
 
 message CompleteRecommendedActionRequest {
   string action_id = 1;
+  RecommendedActionOwnerScope owner_scope = 2;
 }
 
 message CompleteRecommendedActionResponse {

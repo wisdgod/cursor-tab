@@ -103,6 +103,7 @@ message FullSelfDrivingFinding {
   string dismissed_reason = 13;
   string kind = 14;
   string action = 15;
+  string dedupe_key = 16;
 }
 
 message ListFullSelfDrivingFindingsResponse {
@@ -199,6 +200,7 @@ message ApplyFullSelfDrivingSuggestionRequest {
   string pr_url = 1;
   string bc_id = 2;
   string head_commit_sha = 3;
+  string stable_key = 4;
 }
 
 message ApplyFullSelfDrivingSuggestionResponse {
@@ -283,6 +285,101 @@ message EnrollExternalFullSelfDrivingRunResponse {
   bool enrolled = 1;
 }
 
+message FullSelfDrivingPrScopedSuggestion {
+  FullSelfDrivingFinding finding = 1;
+  string producer = 2;
+  string producer_run_id = 3;
+  int64 created_by_user_id = 4;
+  optional int64 created_by_team_id = 5;
+}
+
+message RecordFullSelfDrivingPrScopedSuggestionRequest {
+  string pr_url = 1;
+  string producer = 2;
+  string producer_run_id = 3;
+  FullSelfDrivingOutputInput output = 4;
+}
+
+message RecordFullSelfDrivingPrScopedSuggestionResponse {
+  FullSelfDrivingPrScopedSuggestion suggestion = 1;
+}
+
+message ListFullSelfDrivingPrScopedSuggestionsRequest {
+  string pr_url = 1;
+  optional int32 limit = 2;
+  bool include_superseded = 3;
+  repeated string kinds = 4;
+}
+
+message ListFullSelfDrivingPrScopedSuggestionsResponse {
+  repeated FullSelfDrivingPrScopedSuggestion suggestions = 1;
+}
+
+message UpdateFullSelfDrivingPrScopedSuggestionStatusRequest {
+  string pr_url = 1;
+  string stable_key = 2;
+  string status = 3;
+  optional string reason = 4;
+}
+
+message UpdateFullSelfDrivingPrScopedSuggestionStatusResponse {
+  FullSelfDrivingPrScopedSuggestion suggestion = 1;
+}
+
+message ApplyFullSelfDrivingPrScopedSuggestionRequest {
+  string pr_url = 1;
+  string stable_key = 2;
+  string head_commit_sha = 3;
+  string event_id = 4;
+}
+
+message ApplyFullSelfDrivingPrScopedSuggestionResponse {
+  string new_pr_head_sha = 1;
+  FullSelfDrivingPrScopedSuggestion suggestion = 2;
+}
+
+message FullSelfDrivingAutoApplyConfig {
+  string match_kind = 1;
+  string match_key = 2;
+  string scope = 3;
+  string repo_owner = 4;
+  string repo_name = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message RecordFullSelfDrivingAutoApplyConfigRequest {
+  string match_kind = 1;
+  string match_key = 2;
+  string scope = 3;
+  string repo_owner = 4;
+  string repo_name = 5;
+}
+
+message RecordFullSelfDrivingAutoApplyConfigResponse {
+  FullSelfDrivingAutoApplyConfig config = 1;
+}
+
+message DeleteFullSelfDrivingAutoApplyConfigRequest {
+  string match_kind = 1;
+  string match_key = 2;
+  string scope = 3;
+  string repo_owner = 4;
+  string repo_name = 5;
+}
+
+message DeleteFullSelfDrivingAutoApplyConfigResponse {
+  bool deleted = 1;
+}
+
+message ListFullSelfDrivingAutoApplyConfigsRequest {
+  optional string repo_owner = 1;
+  optional string repo_name = 2;
+}
+
+message ListFullSelfDrivingAutoApplyConfigsResponse {
+  repeated FullSelfDrivingAutoApplyConfig configs = 1;
+}
+
 service FullSelfDrivingService {
   rpc SetFullSelfDrivingConfig(SetFullSelfDrivingConfigRequest) returns (SetFullSelfDrivingConfigResponse);
   rpc GetFullSelfDrivingConfig(GetFullSelfDrivingConfigRequest) returns (GetFullSelfDrivingConfigResponse);
@@ -301,4 +398,11 @@ service FullSelfDrivingService {
   rpc PrepareLocalFullSelfDrivingRun(PrepareLocalFullSelfDrivingRunRequest) returns (PrepareLocalFullSelfDrivingRunResponse);
   rpc RunFullSelfDrivingCloudCommand(RunFullSelfDrivingCloudCommandRequest) returns (RunFullSelfDrivingCloudCommandResponse);
   rpc EnrollExternalFullSelfDrivingRun(EnrollExternalFullSelfDrivingRunRequest) returns (EnrollExternalFullSelfDrivingRunResponse);
+  rpc ListFullSelfDrivingPrScopedSuggestions(ListFullSelfDrivingPrScopedSuggestionsRequest) returns (ListFullSelfDrivingPrScopedSuggestionsResponse);
+  rpc RecordFullSelfDrivingPrScopedSuggestion(RecordFullSelfDrivingPrScopedSuggestionRequest) returns (RecordFullSelfDrivingPrScopedSuggestionResponse);
+  rpc UpdateFullSelfDrivingPrScopedSuggestionStatus(UpdateFullSelfDrivingPrScopedSuggestionStatusRequest) returns (UpdateFullSelfDrivingPrScopedSuggestionStatusResponse);
+  rpc ApplyFullSelfDrivingPrScopedSuggestion(ApplyFullSelfDrivingPrScopedSuggestionRequest) returns (ApplyFullSelfDrivingPrScopedSuggestionResponse);
+  rpc RecordFullSelfDrivingAutoApplyConfig(RecordFullSelfDrivingAutoApplyConfigRequest) returns (RecordFullSelfDrivingAutoApplyConfigResponse);
+  rpc DeleteFullSelfDrivingAutoApplyConfig(DeleteFullSelfDrivingAutoApplyConfigRequest) returns (DeleteFullSelfDrivingAutoApplyConfigResponse);
+  rpc ListFullSelfDrivingAutoApplyConfigs(ListFullSelfDrivingAutoApplyConfigsRequest) returns (ListFullSelfDrivingAutoApplyConfigsResponse);
 }

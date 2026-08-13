@@ -3,6 +3,7 @@ syntax = "proto3";
 package agent.v1;
 
 import "agent/v1/agent.proto";
+import "aiserver/v1/utils.proto";
 
 enum SubagentInteractionPolicy {
   SUBAGENT_INTERACTION_POLICY_UNSPECIFIED = 0;
@@ -232,6 +233,20 @@ message WatchAgentHostSessionBackgroundWorkEvent {
   }
 }
 
+message WatchAgentHostSessionTurnLifecycleRequest {
+  string session_id = 1;
+}
+
+message WatchAgentHostSessionTurnLifecycleEvent {
+  oneof event {
+    AgentHostTurnLifecycleWatchReady ready = 1;
+    AgentHostTurnLifecycle lifecycle = 2;
+  }
+}
+
+message AgentHostTurnLifecycleWatchReady {
+}
+
 message AgentHostSessionBackgroundWorkSnapshot {
   repeated AgentHostBackgroundWork work = 1;
 }
@@ -263,6 +278,7 @@ message AbortAllAgentHostBackgroundWorkResponse {
 message AttachAgentHostSessionRequest {
   string session_id = 1;
   optional uint64 last_event_id = 2;
+  optional bool background_task_completions_only = 3;
 }
 
 message AgentHostSessionEvent {
@@ -275,7 +291,87 @@ message AgentHostSessionEvent {
     AgentHostTurnSettled turn_settled = 9;
     AgentHostInteractionResolved interaction_resolved = 10;
     AgentHostSubagentStarted subagent_started = 11;
+    AgentHostBackgroundTaskCompleted background_task_completed = 12;
   }
+}
+
+message AgentHostBackgroundTaskCompleted {
+  BackgroundTaskCompletion completion = 1;
+}
+
+message AgentHostTurnLifecycle {
+  string turn_id = 1;
+  oneof event {
+    AgentHostNetworkPhaseStarted network_phase_started = 2;
+    AgentHostResponseMetadata response_metadata = 3;
+    AgentHostConnectionStateChanged connection_state_changed = 4;
+    AgentHostFirstMessage first_message = 5;
+    AgentHostFirstMessageNetwork first_message_network = 6;
+    AgentHostFirstNonHeartbeatResponse first_non_heartbeat_response = 7;
+    AgentHostTtftBreakdown ttft_breakdown = 8;
+    AgentHostTurnLifecycleFinished finished = 9;
+  }
+}
+
+message AgentHostTurnLifecycleFinished {
+}
+
+message AgentHostNetworkPhaseStarted {
+}
+
+message AgentHostResponseMetadata {
+  optional string server_region = 1;
+  optional string transport_mode = 2;
+}
+
+message AgentHostReconnectTrigger {
+  optional string error_class = 1;
+  optional uint32 connect_code = 2;
+  optional string connect_code_name = 3;
+  optional uint32 error_code = 4;
+  optional bool count_as_server_error = 5;
+  optional bool count_as_transport_error = 6;
+  optional bool stall_aborted = 7;
+  optional string originating_request_id = 8;
+  optional string attempt_request_id = 9;
+  optional string endpoint_url = 10;
+}
+
+message AgentHostConnectionStateChanged {
+  oneof state {
+    AgentHostConnected connected = 1;
+    AgentHostReconnecting reconnecting = 2;
+  }
+}
+
+message AgentHostConnected {
+}
+
+message AgentHostReconnecting {
+  uint32 attempt = 1;
+  optional AgentHostReconnectTrigger trigger = 2;
+}
+
+message AgentHostFirstMessage {
+  double elapsed_ms = 1;
+}
+
+message AgentHostFirstMessageNetwork {
+  double elapsed_ms = 1;
+}
+
+message AgentHostFirstNonHeartbeatResponse {
+  double handshake_ms = 1;
+  uint32 attempt = 2;
+}
+
+message AgentHostTtftBreakdown {
+  double server_first_token_ms = 1;
+  double pre_stream_setup_ms = 2;
+  double wait_for_first_event_ms = 3;
+  optional double provider_ttft_ms = 4;
+  double slow_pool_wait_ms = 5;
+  uint32 attempt = 6;
 }
 
 message AgentHostSubagentStarted {
@@ -318,6 +414,18 @@ message AgentHostTurnSettled {
   string turn_id = 1;
   AgentHostTurnOutcome outcome = 2;
   optional string detail = 3;
+  optional AgentHostTurnError error = 4;
+}
+
+message AgentHostTurnError {
+  optional string kind = 1;
+  optional string title = 2;
+  optional string detail = 3;
+  optional bool is_retryable = 4;
+  optional uint32 connect_code = 5;
+  optional string inference_request_error_type = 6;
+  optional string request_id = 7;
+  optional aiserver.v1.ErrorDetails error_details = 8;
 }
 
 message AgentHostTurnOptions {
@@ -328,6 +436,9 @@ message AgentHostTurnOptions {
   optional uint32 fixed_retry_delay_ms = 5;
   optional bool endless_retries = 6;
   optional string agent_session_id = 7;
+  optional bool is_running_in_test = 8;
+  optional uint32 stall_advisory_timeout_ms = 9;
+  optional uint32 stall_fail_timeout_ms = 10;
 }
 
 service AgentHostService {
@@ -343,6 +454,7 @@ service AgentHostService {
   rpc RespondToInteraction(RespondToAgentHostInteractionRequest) returns (RespondToAgentHostInteractionResponse);
   rpc WatchSessionInteractions(WatchAgentHostSessionInteractionsRequest) returns (stream WatchAgentHostSessionInteractionsEvent);
   rpc WatchSessionBackgroundWork(WatchAgentHostSessionBackgroundWorkRequest) returns (stream WatchAgentHostSessionBackgroundWorkEvent);
+  rpc WatchSessionTurnLifecycle(WatchAgentHostSessionTurnLifecycleRequest) returns (stream WatchAgentHostSessionTurnLifecycleEvent);
   rpc AbortBackgroundWork(AbortAgentHostBackgroundWorkRequest) returns (AbortAgentHostBackgroundWorkResponse);
   rpc AbortAllBackgroundWork(AbortAllAgentHostBackgroundWorkRequest) returns (AbortAllAgentHostBackgroundWorkResponse);
   rpc AttachSession(AttachAgentHostSessionRequest) returns (stream AgentHostSessionEvent);

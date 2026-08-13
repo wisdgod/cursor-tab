@@ -638,6 +638,7 @@ message ListAutomationsResponse {
 
 message GetAutomationRequest {
   string automation_id = 2;
+  optional int32 team_id = 3;
 }
 
 message RestrictedAutomationSummary {

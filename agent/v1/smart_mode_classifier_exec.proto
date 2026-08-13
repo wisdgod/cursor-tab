@@ -37,6 +37,7 @@ message SmartModeClassifierResult {
 message SmartModeClassifierSuccess {
   SmartModeClassifierDecision decision = 1;
   optional string block_reason = 2;
+  optional string proposed_allow_rule = 3;
 }
 
 message SmartModeClassifierError {

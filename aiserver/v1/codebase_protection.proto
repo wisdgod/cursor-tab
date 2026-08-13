@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package aiserver.v1;
+
+message CodebaseRepositoryIdentity {
+  string host = 1;
+  string repository_path = 2;
+}
+
+message ReportWorkspaceRepositoriesRequest {
+  repeated CodebaseRepositoryIdentity identities = 1;
+}
+
+message ReportWorkspaceRepositoriesResponse {
+}
+
+message CheckCodebaseTelemetryPolicyRequest {
+  repeated CodebaseRepositoryIdentity identities = 1;
+}
+
+message CheckCodebaseTelemetryPolicyResponse {
+  bool telemetry_allowed = 1;
+}
+
+service CodebaseProtectionService {
+  rpc ReportWorkspaceRepositories(ReportWorkspaceRepositoriesRequest) returns (ReportWorkspaceRepositoriesResponse);
+  rpc CheckCodebaseTelemetryPolicy(CheckCodebaseTelemetryPolicyRequest) returns (CheckCodebaseTelemetryPolicyResponse);
+}

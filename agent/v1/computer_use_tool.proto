@@ -28,6 +28,7 @@ message ComputerUseArgs {
   string tool_call_id = 1;
   repeated ComputerUseAction actions = 2;
   optional string description = 3;
+  optional bool bind_unmapped_characters = 4;
 }
 
 message ComputerUseAction {

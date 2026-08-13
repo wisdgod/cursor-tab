@@ -1,0 +1,157 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message GetAgentStatusArgs {
+  string tool_call_id = 1;
+  repeated string agent_ids = 2;
+}
+
+message GetAgentStatusWorker {
+  string bc_id = 1;
+  string name = 2;
+  string lifecycle = 3;
+  bool turn_in_flight = 4;
+  string last_terminal_turn_status = 5;
+  string pr_url = 6;
+  uint64 last_activity_at_ms = 7;
+}
+
+message GetAgentStatusSuccess {
+  repeated GetAgentStatusWorker workers = 1;
+  string message = 2;
+}
+
+message GetAgentStatusError {
+  string error = 1;
+}
+
+message GetAgentStatusResult {
+  oneof result {
+    GetAgentStatusSuccess success = 1;
+    GetAgentStatusError error = 2;
+  }
+}
+
+message GetAgentStatusToolCall {
+  GetAgentStatusArgs args = 1;
+  GetAgentStatusResult result = 2;
+}
+
+message SendToAgentArgs {
+  string tool_call_id = 1;
+  string agent_id = 2;
+  string message = 3;
+  string delivery = 4;
+  string title = 5;
+}
+
+message SendToAgentSuccess {
+  string worker_bc_id = 1;
+  string delivered_as = 2;
+  string message = 3;
+}
+
+message SendToAgentError {
+  string error = 1;
+}
+
+message SendToAgentResult {
+  oneof result {
+    SendToAgentSuccess success = 1;
+    SendToAgentError error = 2;
+  }
+}
+
+message SendToAgentToolCall {
+  SendToAgentArgs args = 1;
+  SendToAgentResult result = 2;
+}
+
+message ReadAgentTranscriptArgs {
+  string tool_call_id = 1;
+  string agent_id = 2;
+  string mode = 3;
+  uint32 max_turns = 4;
+}
+
+message ReadAgentTranscriptSuccess {
+  string transcript = 1;
+  bool truncated = 2;
+}
+
+message ReadAgentTranscriptError {
+  string error = 1;
+}
+
+message ReadAgentTranscriptResult {
+  oneof result {
+    ReadAgentTranscriptSuccess success = 1;
+    ReadAgentTranscriptError error = 2;
+  }
+}
+
+message ReadAgentTranscriptToolCall {
+  ReadAgentTranscriptArgs args = 1;
+  ReadAgentTranscriptResult result = 2;
+}
+
+message CreateAgentArgs {
+  string tool_call_id = 1;
+  string prompt = 2;
+  optional string name = 3;
+  optional string model = 4;
+  optional string base_branch = 5;
+  optional string machine_type = 6;
+  optional string worker_id = 7;
+  optional string pool = 8;
+  map<string, string> labels = 9;
+  optional string environment_build_id = 10;
+}
+
+message CreateAgentSuccess {
+  string agent_id = 1;
+  string message = 2;
+}
+
+message CreateAgentError {
+  string error = 1;
+}
+
+message CreateAgentResult {
+  oneof result {
+    CreateAgentSuccess success = 1;
+    CreateAgentError error = 2;
+  }
+}
+
+message CreateAgentToolCall {
+  CreateAgentArgs args = 1;
+  CreateAgentResult result = 2;
+}
+
+message StopAgentArgs {
+  string tool_call_id = 1;
+  string agent_id = 2;
+}
+
+message StopAgentSuccess {
+  string worker_bc_id = 1;
+  string message = 2;
+}
+
+message StopAgentError {
+  string error = 1;
+}
+
+message StopAgentResult {
+  oneof result {
+    StopAgentSuccess success = 1;
+    StopAgentError error = 2;
+  }
+}
+
+message StopAgentToolCall {
+  StopAgentArgs args = 1;
+  StopAgentResult result = 2;
+}

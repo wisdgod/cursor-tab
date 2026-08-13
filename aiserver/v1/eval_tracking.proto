@@ -749,6 +749,18 @@ message UpsertDatagenRLPipelineRunStageResponse {
   string stage_id = 2;
 }
 
+message ClaimDatagenRLPipelineRunRequest {
+  string run_id = 1;
+  optional string ray_job_name = 2;
+  optional string ray_job_namespace = 3;
+}
+
+message ClaimDatagenRLPipelineRunResponse {
+  bool claimed = 1;
+  string reject_reason = 2;
+  string reject_message = 3;
+}
+
 service EvalTrackingService {
   rpc CreateEval(CreateEvalRequest) returns (CreateEvalResponse);
   rpc GetEvalByName(GetEvalByNameRequest) returns (GetEvalByNameResponse);
@@ -787,4 +799,5 @@ service EvalTrackingService {
   rpc UpdateDatagenRLPipelineRun(UpdateDatagenRLPipelineRunRequest) returns (UpdateDatagenRLPipelineRunResponse);
   rpc DatagenRLPipelineRunHeartbeat(DatagenRLPipelineRunHeartbeatRequest) returns (DatagenRLPipelineRunHeartbeatResponse);
   rpc UpsertDatagenRLPipelineRunStage(UpsertDatagenRLPipelineRunStageRequest) returns (UpsertDatagenRLPipelineRunStageResponse);
+  rpc ClaimDatagenRLPipelineRun(ClaimDatagenRLPipelineRunRequest) returns (ClaimDatagenRLPipelineRunResponse);
 }

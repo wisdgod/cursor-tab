@@ -20,6 +20,8 @@ enum RepoKind {
   REPO_KIND_UNSPECIFIED = 0;
   REPO_KIND_STANDARD = 1;
   REPO_KIND_CURSOR_MARKETPLACE = 2;
+  REPO_KIND_ORIGIN_NATIVE_CURSOR_MARKETPLACE = 3;
+  REPO_KIND_AGENT_TEMP = 4;
 }
 
 enum RepoVisibility {
@@ -76,12 +78,14 @@ enum OriginNamespaceOwnerType {
 enum AuthorizedNamespaceAccessReason {
   AUTHORIZED_NAMESPACE_ACCESS_REASON_UNSPECIFIED = 0;
   AUTHORIZED_NAMESPACE_ACCESS_REASON_TEAM_OWNERSHIP = 1;
+  AUTHORIZED_NAMESPACE_ACCESS_REASON_USER_OWNERSHIP = 2;
 }
 
 enum AuthPolicyAppliesTo {
   AUTH_POLICY_APPLIES_TO_UNSPECIFIED = 0;
   AUTH_POLICY_APPLIES_TO_REPOSITORY = 1;
   AUTH_POLICY_APPLIES_TO_NAMESPACE = 2;
+  AUTH_POLICY_APPLIES_TO_ALL_REPOS = 3;
 }
 
 enum TeamGroupKind {
@@ -296,6 +300,14 @@ message CreateRepoResponse {
   Repo repository = 3;
 }
 
+message PublishAgentTempRepoRequest {
+  ClientRepoIdentifier identifier = 1;
+}
+
+message PublishAgentTempRepoResponse {
+  bool published = 1;
+}
+
 message CreateMirroredRepoRequest {
   GithubRepoIdentifier github_source = 1;
   string target_namespace = 2;
@@ -418,6 +430,15 @@ message UpdateRepoBranchDeletionSettingRequest {
 }
 
 message UpdateRepoBranchDeletionSettingResponse {
+  Repo repository = 1;
+}
+
+message UpdateRepoVisibilityRequest {
+  ClientRepoIdentifier identifier = 1;
+  optional RepoVisibility visibility = 2;
+}
+
+message UpdateRepoVisibilityResponse {
   Repo repository = 1;
 }
 
@@ -615,6 +636,18 @@ message SetRepoTeamAccessResponse {
   TeamGroupAccess team_members = 3;
 }
 
+message SetRepoUserAccessRequest {
+  ClientRepoIdentifier identifier = 1;
+  string user_id = 2;
+  oneof policy_update {
+    string policy_name = 3;
+    bool clear_access = 4;
+  }
+}
+
+message SetRepoUserAccessResponse {
+}
+
 message NamespaceTeamGroupAccess {
   GrantPolicyRef policy = 1;
 }
@@ -627,6 +660,23 @@ message GetNamespaceTeamAccessResponse {
   OriginNamespace namespace = 1;
   NamespaceTeamGroupAccess team_admins = 2;
   NamespaceTeamGroupAccess team_members = 3;
+}
+
+message SetNamespaceTeamAccessRequest {
+  string namespace_slug = 1;
+  TeamGroupKind group = 2;
+  bool retain_self_admin = 5;
+  oneof policy_update {
+    string policy_name = 3;
+    bool clear_access = 4;
+  }
+}
+
+message SetNamespaceTeamAccessResponse {
+  OriginNamespace namespace = 1;
+  NamespaceTeamGroupAccess team_admins = 2;
+  NamespaceTeamGroupAccess team_members = 3;
+  bool self_admin_granted = 4;
 }
 
 message NamespaceGrantRow {
@@ -645,6 +695,36 @@ message ListNamespaceGrantsResponse {
   repeated NamespaceGrantRow rows = 1;
   int32 total_count = 2;
   bool list_truncated = 3;
+}
+
+message SetNamespaceUserAccessRequest {
+  string namespace_slug = 1;
+  repeated string user_ids = 2;
+  bool retain_self_admin = 5;
+  oneof policy_update {
+    string policy_name = 3;
+    bool clear_access = 4;
+  }
+}
+
+message SetNamespaceUserAccessResponse {
+  OriginNamespace namespace = 1;
+  bool self_admin_granted = 2;
+}
+
+message SetNamespaceGroupAccessRequest {
+  string namespace_slug = 1;
+  repeated string group_ids = 2;
+  bool retain_self_admin = 5;
+  oneof policy_update {
+    string policy_name = 3;
+    bool clear_access = 4;
+  }
+}
+
+message SetNamespaceGroupAccessResponse {
+  OriginNamespace namespace = 1;
+  bool self_admin_granted = 2;
 }
 
 message ListNamespaceAssignablePoliciesRequest {
@@ -671,6 +751,20 @@ message AddSshPublicKeyRequest {
 
 message AddSshPublicKeyResponse {
   SshPublicKey ssh_public_key = 1;
+}
+
+message ListSshPublicKeysRequest {
+}
+
+message ListSshPublicKeysResponse {
+  repeated SshPublicKey ssh_public_keys = 1;
+}
+
+message DeleteSshPublicKeyRequest {
+  string id = 1;
+}
+
+message DeleteSshPublicKeyResponse {
 }
 
 message ResolveRepoPathClientRequest {
@@ -828,6 +922,8 @@ message ListRefsClientRequest {
   git_forge.v1.ListRefsFilter filter = 2;
   bool names_only = 3;
   string prefix = 4;
+  optional uint32 limit = 5;
+  optional string page_token = 7;
 }
 
 message CanMergeClientRequest {
@@ -1004,6 +1100,18 @@ message ChangeIdentifier {
   uint64 change_number = 2;
 }
 
+message RevertPullRequestRequest {
+  ChangeIdentifier change = 1;
+  optional string title = 2;
+  optional string description = 3;
+  bool draft = 4;
+}
+
+message RevertPullRequestResponse {
+  Change change = 1;
+  bool reverse_mirror_push_failed = 2;
+}
+
 message UpdateChangeRequest {
   ChangeIdentifier change = 1;
   optional string head_ref = 2;
@@ -1031,6 +1139,22 @@ message UpdateChangeBranchResponse {
   bool unchanged = 3;
 }
 
+message DeleteChangeHeadBranchRequest {
+  ChangeIdentifier change = 1;
+}
+
+message DeleteChangeHeadBranchResponse {
+  bool already_deleted = 1;
+}
+
+message RestorePullRequestBranchRequest {
+  ChangeIdentifier change = 1;
+}
+
+message RestorePullRequestBranchResponse {
+  bool already_restored = 1;
+}
+
 message RetargetChangeRequest {
   ChangeIdentifier change = 1;
   string base_ref = 2;
@@ -1040,6 +1164,13 @@ message RetargetChangeResponse {
   Change change = 1;
   Version latest_version = 2;
   bool unchanged = 3;
+}
+
+message FoldChangeRequest {
+  ChangeIdentifier change = 1;
+}
+
+message FoldChangeResponse {
 }
 
 message UpdateChangeMetadataRequest {
@@ -1185,6 +1316,8 @@ message ChangeAssignment {
   string created_by_auth_id = 7;
   google.protobuf.Timestamp created_at = 8;
   google.protobuf.Timestamp updated_at = 9;
+  int64 cursor_user_id = 10;
+  int64 cursor_group_id = 11;
 }
 
 message ReviewRequestEvent {
@@ -1213,6 +1346,8 @@ message RequestReviewRequest {
   oneof target {
     string auth_id = 2;
     string group_id = 3;
+    int64 cursor_user_id = 4;
+    int64 cursor_group_id = 5;
   }
 }
 
@@ -1224,6 +1359,8 @@ message ReviewRequestTarget {
   oneof target {
     string auth_id = 1;
     string group_id = 2;
+    int64 cursor_user_id = 3;
+    int64 cursor_group_id = 4;
   }
 }
 
@@ -1250,6 +1387,8 @@ message CloseReviewRequestRequest {
   oneof target {
     string auth_id = 2;
     string group_id = 3;
+    int64 cursor_user_id = 4;
+    int64 cursor_group_id = 5;
   }
 }
 
@@ -1261,6 +1400,8 @@ message AddAssigneeRequest {
   oneof target {
     string auth_id = 2;
     string group_id = 3;
+    int64 cursor_user_id = 4;
+    int64 cursor_group_id = 5;
   }
 }
 
@@ -1273,6 +1414,8 @@ message RemoveAssigneeRequest {
   oneof target {
     string auth_id = 2;
     string group_id = 3;
+    int64 cursor_user_id = 4;
+    int64 cursor_group_id = 5;
   }
 }
 
@@ -1285,6 +1428,8 @@ message OriginReviewerCandidateUser {
   string last_name = 4;
   string email = 5;
   string avatar_url = 6;
+  int64 cursor_user_id = 7;
+  string user_id = 8;
 }
 
 message OriginReviewerCandidateGroup {
@@ -1293,6 +1438,8 @@ message OriginReviewerCandidateGroup {
   string group_slug = 3;
   string name = 4;
   repeated string member_auth_ids = 5;
+  int64 cursor_group_id = 6;
+  repeated string member_user_ids = 7;
 }
 
 message ListOriginRepoReviewerCandidatesRequest {
@@ -1361,6 +1508,17 @@ message ListChangeCommitsResponse {
   repeated git_forge.v1.Commit commits = 1;
   string merge_base_sha = 2;
   bool truncated = 3;
+  map<string, CommitActorDisplays> actor_displays_by_sha = 4;
+}
+
+message CommitActorDisplays {
+  CommitActorDisplay author = 1;
+  CommitActorDisplay committer = 2;
+}
+
+message CommitActorDisplay {
+  string display_name = 1;
+  string avatar_url = 2;
 }
 
 message ListChangesRequest {
@@ -1797,6 +1955,7 @@ message UnmarkAllFilesAsViewedResponse {
 
 message ListFileViewedStatesRequest {
   ChangeIdentifier change = 1;
+  string head_commit_sha = 2;
 }
 
 message ListFileViewedStatesResponse {
@@ -1913,6 +2072,28 @@ message GetCheckRunRequest {
 
 message GetCheckRunResponse {
   CheckRunStatus check_run = 1;
+}
+
+message ListRepoCheckSourcesRequest {
+  ClientRepoIdentifier identifier = 1;
+}
+
+message RepoCheckSourceRun {
+  string run_key = 1;
+  string name = 2;
+}
+
+message RepoCheckSource {
+  CheckRunActor actor = 1;
+  string group_key = 2;
+  string suite_name = 3;
+  repeated RepoCheckSourceRun runs = 4;
+  int64 last_seen_at_unix_ms = 5;
+  string actor_id_uuid = 6;
+}
+
+message ListRepoCheckSourcesResponse {
+  repeated RepoCheckSource sources = 1;
 }
 
 message MissingRequiredCheck {
@@ -2132,17 +2313,6 @@ message RestackStackResponse {
   repeated uint64 restacked_change_numbers = 1;
 }
 
-message ClaimInboundConvergenceIntentRequest {
-  ClientRepoIdentifier identifier = 1;
-  uint64 top_change_number = 2;
-  string intent_token = 3;
-  repeated string authorized_author_ids = 4;
-  repeated string authorized_change_ids = 5;
-}
-
-message ClaimInboundConvergenceIntentResponse {
-}
-
 message InboundMirrorMergeStack {
   repeated uint64 change_numbers = 1;
   string root_base_ref = 2;
@@ -2266,27 +2436,42 @@ message ChangeStackPageItem {
   int32 unresolved_thread_count = 7;
 }
 
-message AppAuthPolicyStatement {
-  string resource_kind = 1;
-  string action = 2;
-}
-
 message App {
   string id = 1;
   string slug = 2;
   string display_name = 3;
   string webhook_url = 4;
-  string public_key = 5;
   bool is_public = 6;
   string namespace_slug = 7;
   repeated string events = 8;
-  repeated AppAuthPolicyStatement auth_policy_statements = 9;
   string created_at = 10;
   string updated_at = 11;
   repeated string installation_redirect_uris = 12;
   string icon_url = 13;
   string description = 14;
   string website_url = 15;
+  repeated string default_scopes = 16;
+}
+
+message AppStats {
+  uint32 installation_count = 1;
+}
+
+message CreateAppRequest {
+  string slug = 1;
+  string display_name = 2;
+  string webhook_url = 3;
+  string namespace_slug = 6;
+  string public_key = 7;
+  repeated string events = 8;
+  repeated string installation_redirect_uris = 10;
+  string description = 11;
+  string website_url = 12;
+  repeated string default_scopes = 13;
+}
+
+message CreateAppResponse {
+  App app = 1;
 }
 
 message GetAppRequest {
@@ -2295,6 +2480,7 @@ message GetAppRequest {
 
 message GetAppResponse {
   App app = 1;
+  AppStats stats = 2;
 }
 
 message ListNamespaceAppsRequest {
@@ -2305,6 +2491,24 @@ message ListNamespaceAppsRequest {
 
 message ListNamespaceAppsResponse {
   repeated App apps = 1;
+  string next_page_token = 2;
+}
+
+message AppDisplayMetadata {
+  string id = 1;
+  string slug = 2;
+  string display_name = 3;
+  optional string icon_url = 4;
+  optional string description = 5;
+}
+
+message ListPublicAppsRequest {
+  uint32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListPublicAppsResponse {
+  repeated AppDisplayMetadata apps = 1;
   string next_page_token = 2;
 }
 
@@ -2323,6 +2527,7 @@ message Installation {
 message InstallationReference {
   string id = 1;
   string app_id = 2;
+  AppDisplayMetadata app_metadata = 3;
 }
 
 message CreateInstallationRequest {
@@ -2362,10 +2567,10 @@ message UpdateAppRequest {
   optional string webhook_url = 3;
   optional AppEventsReplace events = 5;
   optional bool is_public = 6;
-  optional AppAuthPolicyStatementsReplace auth_policy_statements = 7;
   optional AppInstallationRedirectUrisReplace installation_redirect_uris = 8;
   optional string description = 9;
   optional string website_url = 10;
+  optional AppDefaultScopesReplace default_scopes = 11;
 }
 
 message AppEventsReplace {
@@ -2376,8 +2581,8 @@ message AppInstallationRedirectUrisReplace {
   repeated string installation_redirect_uris = 1;
 }
 
-message AppAuthPolicyStatementsReplace {
-  repeated AppAuthPolicyStatement statements = 1;
+message AppDefaultScopesReplace {
+  repeated string scopes = 1;
 }
 
 message UpdateAppResponse {
@@ -2444,6 +2649,8 @@ message AppMetadata {
   string icon_url = 5;
   string description = 6;
   string website_url = 7;
+  repeated string default_scopes = 8;
+  string install_redirect_uri = 9;
 }
 
 message GetAppMetadataRequest {
@@ -2452,6 +2659,7 @@ message GetAppMetadataRequest {
 
 message GetAppMetadataResponse {
   AppMetadata app = 1;
+  AppStats stats = 2;
 }
 
 message SuspendInstallationRequest {
@@ -2466,6 +2674,17 @@ message UnsuspendInstallationRequest {
 }
 
 message UnsuspendInstallationResponse {
+}
+
+message ListRepoInstallationsRequest {
+  string repo_id = 1;
+  uint32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListRepoInstallationsResponse {
+  repeated InstallationReference installations = 1;
+  string next_page_token = 2;
 }
 
 message BuildkiteTrigger {
@@ -2806,6 +3025,7 @@ message UpdateWatchChangeSyncSubscriptionsResponse {
 service OriginService {
   rpc ListHostedRepos(ListHostedReposRequest) returns (ListHostedReposResponse);
   rpc CreateRepo(CreateRepoRequest) returns (CreateRepoResponse);
+  rpc PublishAgentTempRepo(PublishAgentTempRepoRequest) returns (PublishAgentTempRepoResponse);
   rpc CreateMirroredRepo(CreateMirroredRepoRequest) returns (CreateRepoResponse);
   rpc FilterMirrorableGithubRepos(FilterMirrorableGithubReposRequest) returns (FilterMirrorableGithubReposResponse);
   rpc DeleteRepo(DeleteRepoClientRequest) returns (DeleteRepoClientResponse);
@@ -2815,6 +3035,7 @@ service OriginService {
   rpc GetRepoByGithubMirror(GetRepoByGithubMirrorRequest) returns (GetRepoWithMirrorInfoResponse);
   rpc UpdateRepoMergeSettings(UpdateRepoMergeSettingsRequest) returns (UpdateRepoMergeSettingsResponse);
   rpc UpdateRepoBranchDeletionSetting(UpdateRepoBranchDeletionSettingRequest) returns (UpdateRepoBranchDeletionSettingResponse);
+  rpc UpdateRepoVisibility(UpdateRepoVisibilityRequest) returns (UpdateRepoVisibilityResponse);
   rpc DetachRepoMirror(DetachRepoMirrorRequest) returns (DetachRepoMirrorResponse);
   rpc TransitionRepoMirrorStatus(TransitionRepoMirrorStatusRequest) returns (TransitionRepoMirrorStatusResponse);
   rpc GetMirrorTransitionJob(GetMirrorTransitionJobRequest) returns (GetMirrorTransitionJobResponse);
@@ -2828,11 +3049,17 @@ service OriginService {
   rpc GetRepoTeamAccess(GetRepoTeamAccessRequest) returns (GetRepoTeamAccessResponse);
   rpc ListRepoGrants(ListRepoGrantsRequest) returns (ListRepoGrantsResponse);
   rpc SetRepoTeamAccess(SetRepoTeamAccessRequest) returns (SetRepoTeamAccessResponse);
+  rpc SetRepoUserAccess(SetRepoUserAccessRequest) returns (SetRepoUserAccessResponse);
   rpc HasOriginPermission(HasOriginPermissionRequest) returns (HasOriginPermissionResponse);
   rpc GetNamespaceTeamAccess(GetNamespaceTeamAccessRequest) returns (GetNamespaceTeamAccessResponse);
+  rpc SetNamespaceTeamAccess(SetNamespaceTeamAccessRequest) returns (SetNamespaceTeamAccessResponse);
   rpc ListNamespaceGrants(ListNamespaceGrantsRequest) returns (ListNamespaceGrantsResponse);
+  rpc SetNamespaceUserAccess(SetNamespaceUserAccessRequest) returns (SetNamespaceUserAccessResponse);
+  rpc SetNamespaceGroupAccess(SetNamespaceGroupAccessRequest) returns (SetNamespaceGroupAccessResponse);
   rpc ListNamespaceAssignablePolicies(ListNamespaceAssignablePoliciesRequest) returns (ListNamespaceAssignablePoliciesResponse);
   rpc AddSshPublicKey(AddSshPublicKeyRequest) returns (AddSshPublicKeyResponse);
+  rpc ListSshPublicKeys(ListSshPublicKeysRequest) returns (ListSshPublicKeysResponse);
+  rpc DeleteSshPublicKey(DeleteSshPublicKeyRequest) returns (DeleteSshPublicKeyResponse);
   rpc GetCommit(GetCommitClientRequest) returns (git_forge.v1.GetCommitResponse);
   rpc GetBlob(GetBlobClientRequest) returns (git_forge.v1.GetBlobResponse);
   rpc GetTag(GetTagClientRequest) returns (git_forge.v1.GetTagResponse);
@@ -2864,7 +3091,10 @@ service OriginService {
   rpc CreateChange(CreateChangeRequest) returns (CreateChangeResponse);
   rpc UpdateChange(UpdateChangeRequest) returns (UpdateChangeResponse);
   rpc UpdateChangeBranch(UpdateChangeBranchRequest) returns (UpdateChangeBranchResponse);
+  rpc DeleteChangeHeadBranch(DeleteChangeHeadBranchRequest) returns (DeleteChangeHeadBranchResponse);
+  rpc RestorePullRequestBranch(RestorePullRequestBranchRequest) returns (RestorePullRequestBranchResponse);
   rpc RetargetChange(RetargetChangeRequest) returns (RetargetChangeResponse);
+  rpc FoldChange(FoldChangeRequest) returns (FoldChangeResponse);
   rpc UpdateChangeMetadata(UpdateChangeMetadataRequest) returns (UpdateChangeMetadataResponse);
   rpc UpdateChangeStatus(UpdateChangeStatusRequest) returns (UpdateChangeStatusResponse);
   rpc CreateReview(CreateReviewRequest) returns (CreateReviewResponse);
@@ -2918,12 +3148,13 @@ service OriginService {
   rpc ResolveOriginPullRequestRedirect(ResolveOriginPullRequestRedirectRequest) returns (ResolveOriginPullRequestRedirectResponse);
   rpc GetCiState(GetCiStateRequest) returns (GetCiStateResponse);
   rpc GetCheckRun(GetCheckRunRequest) returns (GetCheckRunResponse);
+  rpc ListRepoCheckSources(ListRepoCheckSourcesRequest) returns (ListRepoCheckSourcesResponse);
   rpc PostCheckRun(PostCheckRunRequest) returns (PostCheckRunResponse);
   rpc RebuildBuildkiteCheckRun(RebuildBuildkiteCheckRunRequest) returns (RebuildBuildkiteCheckRunResponse);
   rpc GetChangesetMergeability(GetChangesetMergeabilityRequest) returns (GetChangesetMergeabilityResponse);
   rpc MergeStack(MergeStackRequest) returns (MergeStackResponse);
+  rpc RevertPullRequest(RevertPullRequestRequest) returns (RevertPullRequestResponse);
   rpc RestackStack(RestackStackRequest) returns (RestackStackResponse);
-  rpc ClaimInboundConvergenceIntent(ClaimInboundConvergenceIntentRequest) returns (ClaimInboundConvergenceIntentResponse);
   rpc ClaimInboundMirrorGithubMergeOperation(ClaimInboundMirrorGithubMergeOperationRequest) returns (ClaimInboundMirrorGithubMergeOperationResponse);
   rpc RecordInboundMirrorGithubMergeGithubPr(RecordInboundMirrorGithubMergeGithubPrRequest) returns (RecordInboundMirrorGithubMergeGithubPrResponse);
   rpc RecordInboundMirrorGithubMergeGithubResult(RecordInboundMirrorGithubMergeGithubResultRequest) returns (RecordInboundMirrorGithubMergeGithubResultResponse);
@@ -2931,11 +3162,14 @@ service OriginService {
   rpc RecordInboundMirrorExternalGithubMerge(RecordInboundMirrorExternalGithubMergeRequest) returns (RecordInboundMirrorExternalGithubMergeResponse);
   rpc PrepareInboundStackMergeCommit(PrepareInboundStackMergeCommitRequest) returns (PrepareInboundStackMergeCommitResponse);
   rpc GetApp(GetAppRequest) returns (GetAppResponse);
+  rpc CreateApp(CreateAppRequest) returns (CreateAppResponse);
   rpc GetAppMetadata(GetAppMetadataRequest) returns (GetAppMetadataResponse);
   rpc ListNamespaceApps(ListNamespaceAppsRequest) returns (ListNamespaceAppsResponse);
+  rpc ListPublicApps(ListPublicAppsRequest) returns (ListPublicAppsResponse);
   rpc CreateInstallation(CreateInstallationRequest) returns (CreateInstallationResponse);
   rpc GetInstallation(GetInstallationRequest) returns (GetInstallationResponse);
   rpc ListNamespaceInstallations(ListNamespaceInstallationsRequest) returns (ListNamespaceInstallationsResponse);
+  rpc ListRepoInstallations(ListRepoInstallationsRequest) returns (ListRepoInstallationsResponse);
   rpc UpdateApp(UpdateAppRequest) returns (UpdateAppResponse);
   rpc SetAppIcon(SetAppIconRequest) returns (SetAppIconResponse);
   rpc DeleteInstallation(DeleteInstallationRequest) returns (DeleteInstallationResponse);

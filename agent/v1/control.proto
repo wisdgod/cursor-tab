@@ -241,6 +241,7 @@ message ArtifactUploadMetadata {
   int64 last_started_at_unix_ms = 8;
   int64 last_finished_at_unix_ms = 9;
   string upload_id = 10;
+  optional string artifact_relative_path = 11;
 }
 
 message ArtifactPathError {
@@ -267,6 +268,7 @@ message ArtifactUploadInstruction {
   optional string content_type = 5;
   optional string slack_upload_url = 6;
   optional string slack_file_id = 7;
+  optional string artifact_relative_path = 8;
 }
 
 message ArtifactUploadDispatchResult {
@@ -284,6 +286,7 @@ message RestoreArtifactInstruction {
   string absolute_path = 1;
   string download_url = 2;
   int64 updated_at_unix_ms = 3;
+  optional string artifact_relative_path = 4;
 }
 
 message RestoreArtifactResult {

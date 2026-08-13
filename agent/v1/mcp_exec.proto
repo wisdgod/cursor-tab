@@ -101,6 +101,7 @@ message McpStateServer {
   repeated McpToolDefinition tools = 5;
   repeated McpInstructions instructions = 6;
   optional string status = 7;
+  optional string error_message = 8;
 }
 
 message McpStateSuccess {

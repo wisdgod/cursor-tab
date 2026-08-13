@@ -228,6 +228,7 @@ message AdminSandBoxHostStatusResponse {
   optional bool host_update_available = 3;
   optional string latest_host_version = 4;
   optional bool is_busy = 5;
+  optional int64 last_busy_at_ms = 6;
 }
 
 message AdminSnapshotSandBoxStoreRequest {
@@ -283,6 +284,7 @@ message AdminGetSandAgentTranscriptPageResponse {
 
 message WatchSandBoxMigrationRequest {
   string from_offset_key = 1;
+  bool include_finished = 2;
 }
 
 message AdminWatchSandBoxMigrationRequest {
@@ -483,6 +485,39 @@ message ListSandBoxStoreObjectsResponse {
 }
 
 service SandBoxService {
+  rpc EnsureSandBox(EnsureSandBoxRequest) returns (EnsureSandBoxResponse);
+  rpc EnsureSandBoxWindow(EnsureSandBoxWindowRequest) returns (EnsureSandBoxResponse);
+  rpc RecreateSandBox(RecreateSandBoxRequest) returns (RecreateSandBoxResponse);
+  rpc ForceRecreateSandBox(ForceRecreateSandBoxRequest) returns (RecreateSandBoxResponse);
+  rpc AdminRecreateSandBox(AdminRecreateSandBoxRequest) returns (RecreateSandBoxResponse);
+  rpc AdminForceRecreateSandBox(AdminForceRecreateSandBoxRequest) returns (RecreateSandBoxResponse);
+  rpc PresignSandBoxStoreWrites(PresignSandBoxStoreWritesRequest) returns (PresignSandBoxStoreWritesResponse);
+  rpc CompleteSandBoxStoreMultipartWrites(CompleteSandBoxStoreMultipartWritesRequest) returns (CompleteSandBoxStoreMultipartWritesResponse);
+  rpc AbortSandBoxStoreMultipartWrites(AbortSandBoxStoreMultipartWritesRequest) returns (AbortSandBoxStoreMultipartWritesResponse);
+  rpc PresignSandBoxStoreReads(PresignSandBoxStoreReadsRequest) returns (PresignSandBoxStoreReadsResponse);
+  rpc StatSandBoxStoreObject(StatSandBoxStoreObjectRequest) returns (StatSandBoxStoreObjectResponse);
+  rpc ListSandBoxStoreObjects(ListSandBoxStoreObjectsRequest) returns (ListSandBoxStoreObjectsResponse);
+  rpc AdminGetSandBoxStoreStatus(AdminSandBoxStoreStatusRequest) returns (AdminSandBoxStoreStatusResponse);
+  rpc AdminUpdateSandBoxHost(AdminUpdateSandBoxHostRequest) returns (AdminUpdateSandBoxHostResponse);
+  rpc AdminGetSandBoxHostStatus(AdminSandBoxHostStatusRequest) returns (AdminSandBoxHostStatusResponse);
+  rpc AdminSnapshotSandBoxStore(AdminSnapshotSandBoxStoreRequest) returns (AdminSnapshotSandBoxStoreResponse);
+  rpc AdminHibernateSandBox(AdminHibernateSandBoxRequest) returns (AdminHibernateSandBoxResponse);
+  rpc AdminListSandAgents(AdminListSandAgentsRequest) returns (AdminListSandAgentsResponse);
+  rpc AdminGetSandAgentTranscriptPage(AdminGetSandAgentTranscriptPageRequest) returns (AdminGetSandAgentTranscriptPageResponse);
+  rpc WatchSandBoxMigration(WatchSandBoxMigrationRequest) returns (stream SandBoxMigrationEvent);
+  rpc AdminWatchSandBoxMigration(AdminWatchSandBoxMigrationRequest) returns (stream SandBoxMigrationEvent);
+  rpc GetSandBoxRunState(GetSandBoxRunStateRequest) returns (GetSandBoxRunStateResponse);
+  rpc ListSandBoxes(ListSandBoxesRequest) returns (ListSandBoxesResponse);
+  rpc NotifySandAgentTurnFinished(NotifySandAgentTurnFinishedRequest) returns (NotifySandAgentTurnFinishedResponse);
+  rpc ListSandSetupManifests(ListSandSetupManifestsRequest) returns (ListSandSetupManifestsResponse);
+  rpc ListTeamSandSetupManifests(ListTeamSandSetupManifestsRequest) returns (ListTeamSandSetupManifestsResponse);
+  rpc SaveTeamSandSetupManifest(SaveTeamSandSetupManifestRequest) returns (SaveTeamSandSetupManifestResponse);
+  rpc DeleteTeamSandSetupManifest(DeleteTeamSandSetupManifestRequest) returns (DeleteTeamSandSetupManifestResponse);
+  rpc ListTeamMemberSandBoxes(ListTeamMemberSandBoxesRequest) returns (ListTeamMemberSandBoxesResponse);
+  rpc KillTeamMemberSandBox(KillTeamMemberSandBoxRequest) returns (KillTeamMemberSandBoxResponse);
+}
+
+service GrokBotService {
   rpc EnsureSandBox(EnsureSandBoxRequest) returns (EnsureSandBoxResponse);
   rpc EnsureSandBoxWindow(EnsureSandBoxWindowRequest) returns (EnsureSandBoxResponse);
   rpc RecreateSandBox(RecreateSandBoxRequest) returns (RecreateSandBoxResponse);

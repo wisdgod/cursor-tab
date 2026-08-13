@@ -5,6 +5,11 @@ package aiserver.v1;
 import "google/protobuf/empty.proto";
 import "google/protobuf/struct.proto";
 
+enum InferenceReason {
+  INFERENCE_REASON_UNSPECIFIED = 0;
+  INFERENCE_REASON_GEMINI_VIDEO_SUBAGENT = 1;
+}
+
 enum InferenceMessageRole {
   INFERENCE_MESSAGE_ROLE_UNSPECIFIED = 0;
   INFERENCE_MESSAGE_ROLE_USER = 1;
@@ -36,6 +41,7 @@ message InferenceStreamRequest {
   optional string conversation_id = 8;
   repeated string accepted_unadvertised_tool_names = 9;
   optional string automation_id = 10;
+  optional InferenceReason inference_reason = 11;
 }
 
 message InferenceRequestedModel {
@@ -211,6 +217,7 @@ message InferenceResponseMessage {
   optional string content = 3;
   repeated InferenceToolCall tool_calls = 4;
   optional InferenceToolResultContent tool_result = 5;
+  repeated InferenceReasoningPart reasoning_parts = 6;
 }
 
 message InferenceToolResultContent {

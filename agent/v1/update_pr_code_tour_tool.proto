@@ -2,6 +2,13 @@ syntax = "proto3";
 
 package agent.v1;
 
+enum UpdatePrCodeTourExecutionMode {
+  UPDATE_PR_CODE_TOUR_EXECUTION_MODE_UNSPECIFIED = 0;
+  UPDATE_PR_CODE_TOUR_EXECUTION_MODE_SERVER_SCHEDULED = 1;
+  UPDATE_PR_CODE_TOUR_EXECUTION_MODE_CLIENT_REQUIRED = 2;
+  UPDATE_PR_CODE_TOUR_EXECUTION_MODE_SKIPPED = 3;
+}
+
 message UpdatePrCodeTourArgs {
   string feedback = 1;
   string tool_call_id = 2;
@@ -17,6 +24,7 @@ message UpdatePrCodeTourResult {
 message UpdatePrCodeTourSuccess {
   string revision_id = 1;
   string message = 2;
+  UpdatePrCodeTourExecutionMode execution_mode = 3;
 }
 
 message UpdatePrCodeTourError {

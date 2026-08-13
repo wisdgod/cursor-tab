@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package agent.v1;
+
+enum AdoptOutcome {
+  ADOPT_OUTCOME_UNSPECIFIED = 0;
+  ADOPT_OUTCOME_ALREADY_PARENTED = 1;
+  ADOPT_OUTCOME_EDGE_ONLY = 2;
+  ADOPT_OUTCOME_STORE_IMPORT_COMPLETED = 3;
+}
+
+message AdoptArgs {
+  string source_agent_id = 1;
+}
+
+message AdoptResult {
+  string source_agent_id = 1;
+  string target_agent_id = 2;
+  string project_root_id = 3;
+  oneof result {
+    AdoptOutcome success = 4;
+    string error = 5;
+  }
+}
+
+message AdoptToolCall {
+  AdoptArgs args = 1;
+  AdoptResult result = 2;
+}

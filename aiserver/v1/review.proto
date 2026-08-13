@@ -151,6 +151,7 @@ message StreamCodeTourRequest {
   optional bool diff_references_only = 9;
   optional PromptConstructionMode prompt_construction_mode = 10;
   optional string raw_user_prompt = 11;
+  optional string background_composer_id = 12;
 }
 
 message StreamCodeTourResponse {

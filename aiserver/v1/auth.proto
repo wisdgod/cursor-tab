@@ -166,6 +166,8 @@ message GetEmailResponse {
     SIGN_UP_TYPE_GITHUB = 2;
     SIGN_UP_TYPE_GOOGLE = 3;
     SIGN_UP_TYPE_WORKOS = 4;
+    SIGN_UP_TYPE_GROK = 5;
+    SIGN_UP_TYPE_X = 6;
   }
   string email = 1;
   SignUpType sign_up_type = 2;

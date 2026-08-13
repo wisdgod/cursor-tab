@@ -23,9 +23,27 @@ import "anyrun/v1/snapshot.proto";
 import "google/protobuf/empty.proto";
 import "internapi/v1/blob.proto";
 
+enum CoordinatorSpawnKind {
+  COORDINATOR_SPAWN_KIND_UNSPECIFIED = 0;
+  COORDINATOR_SPAWN_KIND_CREATED = 1;
+  COORDINATOR_SPAWN_KIND_ADOPTED = 2;
+}
+
 enum WakeBackgroundComposerReason {
   WAKE_BACKGROUND_COMPOSER_REASON_UNSPECIFIED = 0;
   WAKE_BACKGROUND_COMPOSER_REASON_FOLLOWUP_COMPOSE = 1;
+}
+
+enum PrCodeTourRevisionStatus {
+  PR_CODE_TOUR_REVISION_STATUS_UNSPECIFIED = 0;
+  PR_CODE_TOUR_REVISION_STATUS_GENERATING = 1;
+  PR_CODE_TOUR_REVISION_STATUS_COMPLETE = 2;
+  PR_CODE_TOUR_REVISION_STATUS_ERROR = 3;
+}
+
+enum PrCodeTourRevisionSource {
+  PR_CODE_TOUR_REVISION_SOURCE_UNSPECIFIED = 0;
+  PR_CODE_TOUR_REVISION_SOURCE_AGENT = 1;
 }
 
 enum BackgroundComposerStatus {
@@ -82,6 +100,7 @@ enum BackgroundComposerSource {
   BACKGROUND_COMPOSER_SOURCE_ENVIRONMENT_SETUP_ONBOARDING_AUTO = 30;
   BACKGROUND_COMPOSER_SOURCE_ORIGIN = 31;
   BACKGROUND_COMPOSER_SOURCE_AS_SIDE_CHAT_FROM_CLOUD = 32;
+  BACKGROUND_COMPOSER_SOURCE_GROK_BOT = 33;
 }
 
 enum OwnerType {
@@ -156,6 +175,12 @@ enum ForkBackgroundComposerMode {
   FORK_BACKGROUND_COMPOSER_MODE_POD = 2;
 }
 
+enum StreamConversationPurpose {
+  STREAM_CONVERSATION_PURPOSE_UNSPECIFIED = 0;
+  STREAM_CONVERSATION_PURPOSE_LIVE = 1;
+  STREAM_CONVERSATION_PURPOSE_PREWARM = 2;
+}
+
 enum PlanFollowupType {
   PLAN_FOLLOWUP_TYPE_UNSPECIFIED = 0;
   PLAN_FOLLOWUP_TYPE_PLAN = 1;
@@ -209,6 +234,7 @@ enum EnvironmentBuildRowStatus {
   ENVIRONMENT_BUILD_ROW_STATUS_SUCCEEDED = 2;
   ENVIRONMENT_BUILD_ROW_STATUS_FAILED = 3;
   ENVIRONMENT_BUILD_ROW_STATUS_CANCELLED = 4;
+  ENVIRONMENT_BUILD_ROW_STATUS_SKIPPED = 5;
 }
 
 enum EnvironmentBuildRowTriggerType {
@@ -494,6 +520,23 @@ message ReparentBackgroundComposerRequest {
 message ReparentBackgroundComposerResponse {
 }
 
+message SetWorkerCoordinatorRequest {
+  string worker_bc_id = 1;
+  string coordinator_bc_id = 2;
+  CoordinatorSpawnKind spawn_kind = 3;
+  optional string tool_call_id = 4;
+}
+
+message SetWorkerCoordinatorResponse {
+}
+
+message ClearWorkerCoordinatorRequest {
+  string worker_bc_id = 1;
+}
+
+message ClearWorkerCoordinatorResponse {
+}
+
 message UpdateBackgroundComposerExperimentalModelOptOutRequest {
   string bc_id = 1;
   bool use_experimental_model_opt_out = 2;
@@ -672,6 +715,52 @@ message GetBackgroundComposerDiffDetailsResponse {
   string base_branch = 2;
   repeated BackgroundComposerFullDiff diffs = 3;
   repeated GitDiff git_diffs = 4;
+}
+
+message ListPrCodeTourRevisionsRequest {
+  string bc_id = 1;
+  optional bool include_markdown = 2;
+}
+
+message PrCodeTourRevisionInfo {
+  string revision_id = 1;
+  PrCodeTourRevisionSource source = 2;
+  string feedback = 3;
+  PrCodeTourRevisionStatus status = 4;
+  string markdown = 5;
+  string error_message = 6;
+  int64 created_at_ms = 7;
+  int64 updated_at_ms = 8;
+  string head_sha = 9;
+  string base_sha = 10;
+}
+
+message ListPrCodeTourRevisionsResponse {
+  repeated PrCodeTourRevisionInfo revisions = 1;
+}
+
+message SideChatInfo {
+  string parent_bc_id = 1;
+  int32 seed_turn_count = 2;
+}
+
+message StartSideChatBackgroundComposerRequest {
+  string parent_bc_id = 1;
+  optional string name = 2;
+  BackgroundComposerSource creation_source = 3;
+  optional string creation_id = 4;
+}
+
+message StartSideChatBackgroundComposerResponse {
+  BackgroundComposer composer = 1;
+}
+
+message ListBackgroundComposerChildrenRequest {
+  string parent_bc_id = 1;
+}
+
+message ListBackgroundComposerChildrenResponse {
+  repeated BackgroundComposer composers = 1;
 }
 
 message OwnerIdentifier {
@@ -919,6 +1008,7 @@ message ListBackgroundComposersRequest {
   optional int32 team_id = 12;
   repeated BackgroundComposerSource include_hidden_sources = 13;
   optional string preferred_workspace_binding_id = 14;
+  optional bool include_pinned_state = 15;
 }
 
 message BackgroundComposer {
@@ -977,6 +1067,9 @@ message BackgroundComposer {
   optional string private_worker_display_name = 65;
   optional AgentWorkspaceBinding workspace_binding = 66;
   optional bool use_experimental_model_opt_out = 67;
+  optional SideChatInfo side_chat_info = 68;
+  optional string coordinator_agent_id = 69;
+  bool initiated_env_setup = 70;
 }
 
 message BackgroundComposerParticipant {
@@ -1045,6 +1138,7 @@ message EventSubscription {
 
 message ListEventSubscriptionsRequest {
   string named_agent_id = 1;
+  string bc_id = 2;
 }
 
 message ListEventSubscriptionsResponse {
@@ -1129,12 +1223,28 @@ message GitlabSourceMetadata {
   optional string mr_web_url = 3;
 }
 
+message PinBackgroundComposersRequest {
+  repeated string bc_ids = 1;
+}
+
+message PinBackgroundComposersResponse {
+}
+
+message UnpinBackgroundComposersRequest {
+  repeated string bc_ids = 1;
+}
+
+message UnpinBackgroundComposersResponse {
+}
+
 message ListBackgroundComposersResponse {
   repeated BackgroundComposer composers = 1;
   bool did_load_status = 2;
   bool has_more = 3;
   optional double next_page_offset = 4;
   repeated BackgroundComposerParticipant participants = 5;
+  repeated string pinned_bc_ids = 6;
+  bool did_load_pinned_state = 7;
 }
 
 message EnvironmentRepoEntry {
@@ -1312,6 +1422,7 @@ message StartBackgroundComposerFromSnapshotRequest {
   map<string, string> external_metadata = 117;
   optional EnvironmentSetupRunStartedMetadata environment_setup_run_started_metadata = 118;
   optional agent.v1.ProjectDetails project_details = 119;
+  optional bool disable_pr_management_tool = 120;
 }
 
 message StartBackgroundComposerFromSnapshotResponse {
@@ -1381,6 +1492,7 @@ message StreamConversationRequest {
   optional bool allow_streaming_when_terminal_status = 9;
   optional PreFetchedBlobFilter pre_fetched_blob_filter = 10;
   optional bool include_stream_heartbeats = 11;
+  optional StreamConversationPurpose purpose = 12;
 }
 
 message PreFetchedBlobFilter {
@@ -1948,6 +2060,17 @@ message CommitBackgroundComposerResponse {
   string commit_hash = 1;
 }
 
+message LiveEgressReapplyResult {
+  enum Outcome {
+    OUTCOME_UNSPECIFIED = 0;
+    OUTCOME_APPLIED = 1;
+    OUTCOME_NOT_APPLICABLE = 2;
+    OUTCOME_STORED_NOT_APPLIED = 3;
+    OUTCOME_FAILED = 4;
+  }
+  Outcome outcome = 1;
+}
+
 message SetPersonalEnvironmentJsonRequest {
   string environment_json = 1;
   string repo_url = 2;
@@ -1961,6 +2084,7 @@ message SetPersonalEnvironmentJsonRequest {
 
 message SetPersonalEnvironmentJsonResponse {
   optional LogicalEnvironment environment = 1;
+  optional LiveEgressReapplyResult live_egress_reapply = 2;
 }
 
 message GetPersonalEnvironmentJsonRequest {
@@ -2370,6 +2494,7 @@ message SetTeamEnvironmentJsonRequest {
 
 message SetTeamEnvironmentJsonResponse {
   optional LogicalEnvironment environment = 1;
+  optional LiveEgressReapplyResult live_egress_reapply = 2;
 }
 
 message SnapshotAndSaveEnvironmentRequest {
@@ -4053,6 +4178,8 @@ message ListSharedAgentStoresResponse {
 
 service BackgroundComposerService {
   rpc ListBackgroundComposers(ListBackgroundComposersRequest) returns (ListBackgroundComposersResponse);
+  rpc PinBackgroundComposers(PinBackgroundComposersRequest) returns (PinBackgroundComposersResponse);
+  rpc UnpinBackgroundComposers(UnpinBackgroundComposersRequest) returns (UnpinBackgroundComposersResponse);
   rpc AttachBackgroundComposer(AttachBackgroundComposerRequest) returns (stream AttachBackgroundComposerResponse);
   rpc StreamConversation(StreamConversationRequest) returns (stream StreamConversationResponse);
   rpc GetLatestAgentConversationState(GetLatestAgentConversationStateRequest) returns (GetLatestAgentConversationStateResponse);
@@ -4061,6 +4188,8 @@ service BackgroundComposerService {
   rpc AttachAgentStartupTrace(AttachAgentStartupTraceRequest) returns (stream AttachAgentStartupTraceResponse);
   rpc StartBackgroundComposerFromSnapshot(StartBackgroundComposerFromSnapshotRequest) returns (StartBackgroundComposerFromSnapshotResponse);
   rpc ForkBackgroundComposer(ForkBackgroundComposerRequest) returns (ForkBackgroundComposerResponse);
+  rpc StartSideChatBackgroundComposer(StartSideChatBackgroundComposerRequest) returns (StartSideChatBackgroundComposerResponse);
+  rpc ListBackgroundComposerChildren(ListBackgroundComposerChildrenRequest) returns (ListBackgroundComposerChildrenResponse);
   rpc MakePRBackgroundComposer(MakePRBackgroundComposerRequest) returns (MakePRBackgroundComposerResponse);
   rpc OpenPRBackgroundComposer(OpenPRBackgroundComposerRequest) returns (OpenPRBackgroundComposerResponse);
   rpc GetBackgroundComposerStatus(GetBackgroundComposerStatusRequest) returns (GetBackgroundComposerStatusResponse);
@@ -4102,6 +4231,7 @@ service BackgroundComposerService {
   rpc MakeGithubRequest(MakeGithubRequestRequest) returns (MakeGithubRequestResponse);
   rpc GetBackgroundComposerDiffDetails(GetBackgroundComposerDiffDetailsRequest) returns (GetBackgroundComposerDiffDetailsResponse);
   rpc GetOptimizedDiffDetails(GetOptimizedDiffDetailsRequest) returns (GetOptimizedDiffDetailsResponse);
+  rpc ListPrCodeTourRevisions(ListPrCodeTourRevisionsRequest) returns (ListPrCodeTourRevisionsResponse);
   rpc GetBackgroundComposerChangesHash(GetBackgroundComposerChangesHashRequest) returns (GetBackgroundComposerChangesHashResponse);
   rpc GetBackgroundComposerPullRequest(GetBackgroundComposerPullRequestRequest) returns (GetBackgroundComposerPullRequestResponse);
   rpc RefreshGithubAccessTokenInBackgroundComposer(RefreshGithubAccessTokenInBackgroundComposerRequest) returns (RefreshGithubAccessTokenInBackgroundComposerResponse);
@@ -4117,6 +4247,8 @@ service BackgroundComposerService {
   rpc GetBackgroundComposerConversation(GetBackgroundComposerConversationRequest) returns (GetBackgroundComposerConversationResponse);
   rpc RenameBackgroundComposer(RenameBackgroundComposerRequest) returns (RenameBackgroundComposerResponse);
   rpc ReparentBackgroundComposer(ReparentBackgroundComposerRequest) returns (ReparentBackgroundComposerResponse);
+  rpc SetWorkerCoordinator(SetWorkerCoordinatorRequest) returns (SetWorkerCoordinatorResponse);
+  rpc ClearWorkerCoordinator(ClearWorkerCoordinatorRequest) returns (ClearWorkerCoordinatorResponse);
   rpc UpdateBackgroundComposerExperimentalModelOptOut(UpdateBackgroundComposerExperimentalModelOptOutRequest) returns (UpdateBackgroundComposerExperimentalModelOptOutResponse);
   rpc CommitBackgroundComposer(CommitBackgroundComposerRequest) returns (CommitBackgroundComposerResponse);
   rpc SetPersonalEnvironmentJson(SetPersonalEnvironmentJsonRequest) returns (SetPersonalEnvironmentJsonResponse);

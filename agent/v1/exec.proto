@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package agent.v1;
 
+import "agent/v1/adopt_tool.proto";
 import "agent/v1/agent.proto";
 import "agent/v1/agent_store_conflict_exec.proto";
 import "agent/v1/background_shell_exec.proto";
@@ -110,6 +111,7 @@ message ExecServerMessage {
     ShellArgs mini_swe_agent_bash_args = 52;
     ConversationSearchArgs conversation_search_args = 53;
     AgentStoreConflictArgs agent_store_conflict_args = 54;
+    AdoptArgs adopt_args = 56;
   }
 }
 
@@ -159,6 +161,7 @@ message ExecClientMessage {
     ConversationSearchResult conversation_search_result = 53;
     AgentStoreConflictResult agent_store_conflict_result = 54;
     ShellResult mini_swe_agent_bash_result = 55;
+    AdoptResult adopt_result = 56;
   }
 }
 

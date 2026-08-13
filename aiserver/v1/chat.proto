@@ -721,6 +721,7 @@ message ConversationMessage {
   repeated Thinking all_thinking_blocks = 46;
   optional ThinkingStyle thinking_style = 85;
   optional StreamUnifiedChatRequest.UnifiedMode unified_mode = 47;
+  optional agent.v1.AgentMode agent_mode = 98;
   repeated DiffSinceLastApply diffs_since_last_apply = 48;
   repeated DeletedFile deleted_files = 49;
   optional string usage_uuid = 50;

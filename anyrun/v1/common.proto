@@ -17,10 +17,19 @@ enum WarmForkMode {
   WARM_FORK_MODE_COLD_FALLBACK_LAZY_LOAD = 5;
 }
 
+enum EnvironmentBuildResolution {
+  ENVIRONMENT_BUILD_RESOLUTION_UNSPECIFIED = 0;
+  ENVIRONMENT_BUILD_RESOLUTION_RESOLVED = 1;
+  ENVIRONMENT_BUILD_RESOLUTION_NO_FINISHED_BUILDS = 2;
+  ENVIRONMENT_BUILD_RESOLUTION_NO_HEALTHY_BUILDS = 3;
+}
+
 message EnvironmentBuildBootInfo {
-  string build_id = 1;
+  optional string build_id = 1;
   string snapshot_id = 2;
   WorkspaceGitSetupMode workspace_git_setup_mode = 3;
   WarmForkMode warm_fork_mode = 4;
   bool fast_forward_default_branch = 5;
+  EnvironmentBuildResolution resolution = 6;
+  bool default_image_fallback = 7;
 }
