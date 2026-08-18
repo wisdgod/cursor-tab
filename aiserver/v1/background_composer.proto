@@ -23,10 +23,10 @@ import "anyrun/v1/snapshot.proto";
 import "google/protobuf/empty.proto";
 import "internapi/v1/blob.proto";
 
-enum CoordinatorSpawnKind {
-  COORDINATOR_SPAWN_KIND_UNSPECIFIED = 0;
-  COORDINATOR_SPAWN_KIND_CREATED = 1;
-  COORDINATOR_SPAWN_KIND_ADOPTED = 2;
+enum ManagerSpawnKind {
+  MANAGER_SPAWN_KIND_UNSPECIFIED = 0;
+  MANAGER_SPAWN_KIND_CREATED = 1;
+  MANAGER_SPAWN_KIND_ADOPTED = 2;
 }
 
 enum WakeBackgroundComposerReason {
@@ -510,6 +510,23 @@ message RenameBackgroundComposerResponse {
   string name = 1;
 }
 
+message PublishBackgroundComposerTempRepoRequest {
+  enum Visibility {
+    VISIBILITY_UNSPECIFIED = 0;
+    VISIBILITY_PRIVATE = 1;
+    VISIBILITY_INTERNAL = 2;
+  }
+  string bc_id = 1;
+  string new_name = 2;
+  Visibility visibility = 3;
+}
+
+message PublishBackgroundComposerTempRepoResponse {
+  string owner = 1;
+  string name = 2;
+  string canonical_repo_url = 3;
+}
+
 message ReparentBackgroundComposerRequest {
   string bc_id = 1;
   string parent_agent_id = 2;
@@ -520,21 +537,33 @@ message ReparentBackgroundComposerRequest {
 message ReparentBackgroundComposerResponse {
 }
 
-message SetWorkerCoordinatorRequest {
+message SetWorkerManagerRequest {
   string worker_bc_id = 1;
-  string coordinator_bc_id = 2;
-  CoordinatorSpawnKind spawn_kind = 3;
+  string manager_bc_id = 2;
+  ManagerSpawnKind spawn_kind = 3;
   optional string tool_call_id = 4;
 }
 
-message SetWorkerCoordinatorResponse {
+message SetWorkerManagerResponse {
 }
 
-message ClearWorkerCoordinatorRequest {
+message CreateProjectWorkerRequest {
+  string manager_bc_id = 1;
+  string creation_id = 2;
+  StartBackgroundComposerFromSnapshotRequest start_request = 3;
+}
+
+message CreateProjectWorkerResponse {
+  BackgroundComposer composer = 1;
+  optional bool was_swapped_to_default = 2;
+  optional string initial_run_id = 3;
+}
+
+message ClearWorkerManagerRequest {
   string worker_bc_id = 1;
 }
 
-message ClearWorkerCoordinatorResponse {
+message ClearWorkerManagerResponse {
 }
 
 message UpdateBackgroundComposerExperimentalModelOptOutRequest {
@@ -1068,8 +1097,9 @@ message BackgroundComposer {
   optional AgentWorkspaceBinding workspace_binding = 66;
   optional bool use_experimental_model_opt_out = 67;
   optional SideChatInfo side_chat_info = 68;
-  optional string coordinator_agent_id = 69;
+  optional string manager_agent_id = 69;
   bool initiated_env_setup = 70;
+  bool started_as_new_project = 71;
 }
 
 message BackgroundComposerParticipant {
@@ -1744,9 +1774,17 @@ message InjectBackgroundComposerContextResponse {
 message SubmitInteractionResponseBackgroundComposerRequest {
   string bc_id = 1;
   agent.v1.InteractionResponse interaction_response = 2;
+  optional string ask_question_tool_call_id = 3;
 }
 
 message SubmitInteractionResponseBackgroundComposerResponse {
+  enum ResolutionOutcome {
+    RESOLUTION_OUTCOME_UNSPECIFIED = 0;
+    RESOLUTION_OUTCOME_SIGNAL_ENQUEUED = 1;
+    RESOLUTION_OUTCOME_NOT_PAUSED = 2;
+    RESOLUTION_OUTCOME_QUERY_ID_SIGNAL_ENQUEUED = 3;
+  }
+  ResolutionOutcome resolution_outcome = 1;
 }
 
 message ListPendingFollowupsRequest {
@@ -3233,6 +3271,8 @@ message CloudAgentState {
   bytes admitted_custom_mode_state_blob_id = 52;
   optional bool agent_store_artifacts_symlink_enabled = 53;
   optional agent.v1.ProjectDetails project_details = 54;
+  optional bool uses_coordinator_membership = 55;
+  repeated string suggested_repo_names = 56;
 }
 
 message OptimizedDiffState {
@@ -4246,9 +4286,11 @@ service BackgroundComposerService {
   rpc WatchBackgroundComposerSnapshotState(WatchBackgroundComposerSnapshotStateRequest) returns (stream WatchBackgroundComposerSnapshotStateResponse);
   rpc GetBackgroundComposerConversation(GetBackgroundComposerConversationRequest) returns (GetBackgroundComposerConversationResponse);
   rpc RenameBackgroundComposer(RenameBackgroundComposerRequest) returns (RenameBackgroundComposerResponse);
+  rpc PublishBackgroundComposerTempRepo(PublishBackgroundComposerTempRepoRequest) returns (PublishBackgroundComposerTempRepoResponse);
   rpc ReparentBackgroundComposer(ReparentBackgroundComposerRequest) returns (ReparentBackgroundComposerResponse);
-  rpc SetWorkerCoordinator(SetWorkerCoordinatorRequest) returns (SetWorkerCoordinatorResponse);
-  rpc ClearWorkerCoordinator(ClearWorkerCoordinatorRequest) returns (ClearWorkerCoordinatorResponse);
+  rpc SetWorkerManager(SetWorkerManagerRequest) returns (SetWorkerManagerResponse);
+  rpc CreateProjectWorker(CreateProjectWorkerRequest) returns (CreateProjectWorkerResponse);
+  rpc ClearWorkerManager(ClearWorkerManagerRequest) returns (ClearWorkerManagerResponse);
   rpc UpdateBackgroundComposerExperimentalModelOptOut(UpdateBackgroundComposerExperimentalModelOptOutRequest) returns (UpdateBackgroundComposerExperimentalModelOptOutResponse);
   rpc CommitBackgroundComposer(CommitBackgroundComposerRequest) returns (CommitBackgroundComposerResponse);
   rpc SetPersonalEnvironmentJson(SetPersonalEnvironmentJsonRequest) returns (SetPersonalEnvironmentJsonResponse);

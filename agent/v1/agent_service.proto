@@ -45,6 +45,8 @@ message PrewarmRequest {
   optional string agent_session_id = 24;
   optional bool client_supports_prompt_context_usage_rpc = 25;
   optional bool client_supports_routed_model_update = 26;
+  optional bool client_supports_preview_card = 28;
+  optional bool started_as_new_project = 29;
 }
 
 message ExecServerAbort {

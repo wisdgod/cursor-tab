@@ -4484,6 +4484,8 @@ message GetUsageLimitStatusAndActiveGrantsRequest {
 
 message MidConversationModelRecommendationContext {
   agent.v1.RequestedModel current_model = 1;
+  optional bool supports_third_party_usage_nudge = 2;
+  optional bool model_nudges_enabled = 3;
 }
 
 message ActiveCreditGrant {

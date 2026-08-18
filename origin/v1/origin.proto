@@ -272,6 +272,7 @@ message RepoSummary {
   bool allow_merge_commit = 13;
   bool allow_squash_merge = 14;
   RepoVisibility visibility = 15;
+  optional RepoGithubMirrorInfo github_mirror_info = 16;
 }
 
 message ListHostedReposRequest {
@@ -280,6 +281,7 @@ message ListHostedReposRequest {
   string search = 3;
   ListHostedReposOrderBy order_by = 4;
   string namespace = 5;
+  bool include_github_mirror_info = 6;
 }
 
 message ListHostedReposResponse {
@@ -3025,6 +3027,7 @@ message UpdateWatchChangeSyncSubscriptionsResponse {
 service OriginService {
   rpc ListHostedRepos(ListHostedReposRequest) returns (ListHostedReposResponse);
   rpc CreateRepo(CreateRepoRequest) returns (CreateRepoResponse);
+  rpc CreateRepoAndEnsureUserNamespace(CreateRepoRequest) returns (CreateRepoResponse);
   rpc PublishAgentTempRepo(PublishAgentTempRepoRequest) returns (PublishAgentTempRepoResponse);
   rpc CreateMirroredRepo(CreateMirroredRepoRequest) returns (CreateRepoResponse);
   rpc FilterMirrorableGithubRepos(FilterMirrorableGithubReposRequest) returns (FilterMirrorableGithubReposResponse);

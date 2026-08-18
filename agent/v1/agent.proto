@@ -165,6 +165,7 @@ enum SimulatedMsgReason {
   SIMULATED_MSG_REASON_AGENT_STORE_CONFLICT = 30;
   SIMULATED_MSG_REASON_GOAL_CONTINUATION = 31;
   SIMULATED_MSG_REASON_PROJECT_KICKOFF = 32;
+  SIMULATED_MSG_REASON_USER_QUICK_ACTION = 34;
 }
 
 enum SubscriptionSource {
@@ -780,6 +781,7 @@ message UserMessage {
   repeated HookAdditionalContext hook_additional_contexts = 21;
   optional CustomModeIntent custom_mode_intent = 22;
   optional ProjectDetails project_details = 23;
+  optional bool turn_steer = 24;
 }
 
 message AssistantMessage {
@@ -1086,6 +1088,8 @@ message AgentRunRequest {
   optional string agent_session_id = 26;
   optional bool client_supports_prompt_context_usage_rpc = 27;
   optional bool client_supports_routed_model_update = 28;
+  optional bool client_supports_preview_card = 31;
+  optional bool started_as_new_project = 32;
 }
 
 message TextDeltaUpdate {

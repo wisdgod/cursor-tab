@@ -770,6 +770,7 @@ message ConversationMessage {
   repeated agent.v1.SelectedPastChat past_chats = 93;
   bool past_chats_explicitly_set = 94;
   optional agent.v1.TriggeringUserInfo triggering_user_info = 96;
+  optional bool turn_steer = 99;
 }
 
 message CurrentFileLocationData {
