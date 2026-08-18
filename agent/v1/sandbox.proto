@@ -48,3 +48,9 @@ message SandboxPolicy {
   ReadBoundaryMode read_boundary = 14;
   repeated string additional_read_paths = 15;
 }
+
+message SandboxPolicyMergeSources {
+  optional SandboxPolicy per_user = 1;
+  optional SandboxPolicy per_repo = 2;
+  optional SandboxPolicy team_admin = 3;
+}

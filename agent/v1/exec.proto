@@ -65,6 +65,12 @@ message SpanContext {
   optional string trace_state = 4;
 }
 
+message AbortArgs {
+}
+
+message AbortResult {
+}
+
 message ExecServerMessage {
   uint32 id = 1;
   string exec_id = 15;

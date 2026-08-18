@@ -15,6 +15,12 @@ import "aiserver/v1/utils.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
+message McpOAuthStoredClientInfo {
+  string client_id = 1;
+  optional string client_secret = 2;
+  repeated string redirect_uris = 3;
+}
+
 enum ScmConnectIntentSource {
   SCM_CONNECT_INTENT_SOURCE_UNSPECIFIED = 0;
   SCM_CONNECT_INTENT_SOURCE_PORTAL = 1;
@@ -3924,6 +3930,7 @@ message GetTeamAdminSettingsResponse {
   optional bool enforce_hooks_readiness = 58;
   optional LlmGatewaySettings llm_gateway = 59;
   optional SandOnboardingState sand_onboarding = 62;
+  optional bool origin_disabled = 63;
 }
 
 message SandOnboardingState {
@@ -3996,6 +4003,7 @@ message UpdateTeamAdminSettingsRequest {
   optional string new_chat_nudge_all_to_smart_auto_optimize_for = 55;
   optional bool enforce_hooks_readiness = 56;
   optional LlmGatewaySettings llm_gateway = 58;
+  optional bool origin_disabled = 63;
 }
 
 message UpdateTeamAdminSettingsResponse {
@@ -4039,6 +4047,33 @@ message CreateTeamFreeTrialCodeRequest {
 
 message CreateTeamFreeTrialCodeResponse {
   string code = 1;
+}
+
+message SetTrialSpendLimitOverrideInternalRequest {
+  int32 team_id = 1;
+  optional int32 override_dollars = 2;
+  optional bool clear = 3;
+  optional string changed_by = 4;
+}
+
+message SetTrialSpendLimitOverrideInternalResponse {
+  int32 team_id = 1;
+  optional int32 override_dollars = 2;
+  int32 effective_limit_dollars = 3;
+}
+
+message GetTrialSpendLimitInternalRequest {
+  int32 team_id = 1;
+}
+
+message GetTrialSpendLimitInternalResponse {
+  int32 team_id = 1;
+  bool is_token_based_contract_trial = 2;
+  optional int32 override_dollars = 3;
+  int32 default_limit_dollars = 4;
+  int32 effective_limit_dollars = 5;
+  optional int64 membership_start_ms = 6;
+  optional int64 membership_expiration_ms = 7;
 }
 
 message CreateTeamsTrialV2ReferralCodeRequest {
@@ -4246,6 +4281,16 @@ message UseSandBankedResetResponse {
   google.protobuf.Timestamp new_current_period_start = 1;
 }
 
+message SandResetAlreadyAppliedError {
+}
+
+message SandResetTooRecentError {
+  google.protobuf.Timestamp retry_after = 1;
+}
+
+message SandResetUnavailableError {
+}
+
 message ListSandBankedResetsRequest {
 }
 
@@ -4323,6 +4368,8 @@ message GetSandUsageStatusRequest {
 message SandUpgradeRecommendation {
   ErrorButton cta = 1;
   bool disabled = 2;
+  optional string supporting_text = 3;
+  optional string kind = 4;
 }
 
 message GetSandUsageStatusResponse {
@@ -4336,6 +4383,8 @@ message GetSandUsageStatusResponse {
   bool has_non_zero_included_limit = 8;
   optional SandUpgradeRecommendation upgrade_recommendation = 9;
   optional google.protobuf.Timestamp sand_trial_expires_at = 10;
+  bool sand_trial_cancelable = 11;
+  repeated SandUpgradeRecommendation upgrade_recommendations = 12;
 }
 
 message StartSandTrialRequest {
@@ -4360,6 +4409,12 @@ message IsEligibleForSandTrialRequest {
 
 message IsEligibleForSandTrialResponse {
   bool is_eligible = 1;
+}
+
+message CancelSandTrialRequest {
+}
+
+message CancelSandTrialResponse {
 }
 
 message GetSandTrialClaimStatusRequest {
@@ -4417,6 +4472,13 @@ message VerifyAppleTransactionResponse {
 message GetCursorReviewEntitlementRequest {
 }
 
+message CursorReviewEntitlementScope {
+  oneof subject {
+    int32 team_id = 1;
+    string cursor_user_id = 2;
+  }
+}
+
 message GetCursorReviewEntitlementResponse {
   enum BillingContext {
     BILLING_CONTEXT_UNSPECIFIED = 0;
@@ -4429,6 +4491,8 @@ message GetCursorReviewEntitlementResponse {
     REASON_OK = 1;
     REASON_REQUIRES_TEAM_OR_ENTERPRISE = 2;
     REASON_CURSOR_REVIEW_DISABLED = 3;
+    REASON_REQUIRES_PAID_PLAN = 4;
+    REASON_CURSOR_IDENTITY_UNAVAILABLE = 5;
   }
   bool eligible_for_cursor_review = 1;
   bool requires_onboarding = 2;
@@ -4436,6 +4500,8 @@ message GetCursorReviewEntitlementResponse {
   Reason reason = 4;
   optional int32 team_id = 5;
   optional string team_name = 6;
+  optional CursorReviewEntitlementScope scope = 7;
+  bool eligible_for_origin_review = 8;
 }
 
 message GetUsageLimitPolicyStatusRequest {
@@ -4771,6 +4837,12 @@ message GetBugbotAnalyticsV2Response {
   int32 total_bugs_found = 16;
   int32 total_bugs_evaluated = 17;
   repeated BugbotAnalyticsDataPoint bugs_evaluated_series = 18;
+}
+
+message BugBotPRData {
+  optional string start_date = 1;
+  optional string end_date = 2;
+  optional string grouping = 3;
 }
 
 message BugbotAnalyticsDataPoint {
@@ -5625,6 +5697,20 @@ message ListBlockingCheckoutInvoicesResponse {
   repeated InvoiceInfo invoices = 1;
 }
 
+message ListPayableTeamInvoicesRequest {
+}
+
+message PayableTeamInvoices {
+  int32 team_id = 1;
+  string team_name = 2;
+  string subscription_status = 3;
+  repeated InvoiceInfo invoices = 4;
+}
+
+message ListPayableTeamInvoicesResponse {
+  repeated PayableTeamInvoices teams = 1;
+}
+
 message GetUserPrivacyModeRequest {
   PrivacyMode inferred_privacy_mode = 1;
   optional int32 team_id = 2;
@@ -5663,6 +5749,10 @@ message NeedsPrivacyModeMigrationRequest {
 
 message NeedsPrivacyModeMigrationResponse {
   bool needs_migration = 1;
+}
+
+message SerializablePrivacyMode {
+  PrivacyMode privacy_mode = 1;
 }
 
 message PrivacyModeCacheInfo {
@@ -5845,6 +5935,14 @@ message UpdateTeamDashboardAnalyticsSettingRequest {
 }
 
 message UpdateTeamDashboardAnalyticsSettingResponse {
+}
+
+message UpdateTeamOriginSettingRequest {
+  int32 team_id = 1;
+  bool origin_disabled = 2;
+}
+
+message UpdateTeamOriginSettingResponse {
 }
 
 message UpdateTeamScimRequireUserDirectorySettingRequest {
@@ -7666,6 +7764,16 @@ message SharedConversationLatestPlan {
   string content = 3;
 }
 
+message SharedConversationSnapshot {
+  repeated ConversationMessage messages = 1;
+  optional SharedConversationLatestPlan latest_plan = 2;
+}
+
+message SharedCanvasSnapshot {
+  bytes app_js = 1;
+  bytes data_json = 2;
+}
+
 message SharedCanvasCreator {
   string user_id = 1;
   optional string first_name = 2;
@@ -8152,6 +8260,8 @@ message SkillDescriptor {
   repeated string disabled_environments = 6;
   optional agent.v1.CustomModeDescriptor custom_mode = 7;
   optional string display_name = 8;
+  optional string icon = 9;
+  optional string color = 10;
 }
 
 message SubagentDescriptor {

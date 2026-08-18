@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package agent.v1;
+
+message SystemPromptSpec {
+  oneof spec {
+    string replace = 1;
+    string append = 2;
+  }
+}

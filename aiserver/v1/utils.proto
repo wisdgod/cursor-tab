@@ -156,6 +156,12 @@ message SimpleRange {
   int32 end_column = 4;
 }
 
+message SimpleFileChunk {
+  string relative_workspace_path = 1;
+  SimplestRange range = 2;
+  string chunk_hash = 3;
+}
+
 message CmdKDebugInfo {
   message UnsavedFiles {
     string relative_workspace_path = 1;
@@ -669,6 +675,13 @@ message CommitDiffString {
   string diff = 1;
 }
 
+message FullCommitNotes {
+  repeated CommitNote notes = 1;
+  string commit_hash = 2;
+  string repo_url = 3;
+  string files_changed_relative_path = 4;
+}
+
 message CrossExtHostHeader {
   string key = 1;
   string value = 2;
@@ -736,4 +749,16 @@ message RCPUIElementPicked {
   string extra = 4;
   optional string component = 5;
   optional string component_props_json = 6;
+}
+
+message RCPChatMessage {
+  string text = 1;
+}
+
+message RCPMessage {
+  oneof message {
+    RCPLogEntry console = 1;
+    RCPUIElementPicked ui_element_picked = 2;
+    RCPChatMessage chat_message = 3;
+  }
 }

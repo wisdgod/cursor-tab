@@ -256,3 +256,8 @@ message ShellSpawnError {
   string working_directory = 2;
   string error = 3;
 }
+
+message ShellPartialResult {
+  string stdout_delta = 1;
+  string stderr_delta = 2;
+}

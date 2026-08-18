@@ -95,3 +95,7 @@ message GrepContentMatch {
   bool content_truncated = 3;
   bool is_context_line = 4;
 }
+
+message GrepStream {
+  string pattern = 1;
+}
